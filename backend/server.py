@@ -57,8 +57,10 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "http://localhost:8000",
         "http://127.0.0.1:3000",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://mrbin2026dh-droid.github.io"
     ],
+    allow_origin_regex=r"https://.*\.github\.io|https://.*\.vercel\.app|https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
