@@ -4436,21 +4436,176 @@ function initStudentAuthPortal() {
     });
   }
 
-  // Lối vào Thầy/Cô đăng nhập Giáo viên bằng mã PIN trên Cổng đăng nhập
+  // PHÂN QUYỀN ĐĂNG NHẬP: TAB HỌC SINH VS TAB GIÁO VIÊN / QUẢN TRỊ
+  const tabStudent = document.getElementById("slTabStudent");
+  const tabTeacher = document.getElementById("slTabTeacher");
+  const panelStudent = document.getElementById("slPanelStudent");
+  const panelTeacher = document.getElementById("slPanelTeacher");
+  const roleBadge = document.getElementById("slPortalRoleBadge");
+
+  function switchLoginRole(role) {
+    if (role === "teacher") {
+      if (tabStudent) {
+        tabStudent.classList.remove("active");
+        tabStudent.setAttribute("aria-selected", "false");
+      }
+      if (tabTeacher) {
+        tabTeacher.classList.add("active");
+        tabTeacher.setAttribute("aria-selected", "true");
+      }
+      if (panelStudent) panelStudent.classList.add("hidden");
+      if (panelTeacher) panelTeacher.classList.remove("hidden");
+      if (roleBadge) roleBadge.textContent = "CỔNG GIÁO VIÊN & QUẢN TRỊ";
+      const pinInp = document.getElementById("slTeacherPinInput");
+      if (pinInp) setTimeout(() => pinInp.focus(), 120);
+    } else {
+      if (tabTeacher) {
+        tabTeacher.classList.remove("active");
+        tabTeacher.setAttribute("aria-selected", "false");
+      }
+      if (tabStudent) {
+        tabStudent.classList.add("active");
+        tabStudent.setAttribute("aria-selected", "true");
+      }
+      if (panelTeacher) panelTeacher.classList.add("hidden");
+      if (panelStudent) panelStudent.classList.remove("hidden");
+      if (roleBadge) roleBadge.textContent = "CỔNG HỌC SINH";
+    }
+  }
+
+  if (tabStudent) tabStudent.addEventListener("click", () => switchLoginRole("student"));
+  if (tabTeacher) tabTeacher.addEventListener("click", () => switchLoginRole("teacher"));
+
+  // Lối vào Thầy/Cô đăng nhập Giáo viên (chuyển sang tab Giáo viên)
   if (linkTeacherPin) {
     linkTeacherPin.addEventListener("click", () => {
-      portalDirectClose();
-      const teacherModal = document.getElementById("teacherModal");
-      const authBox = document.getElementById("teacherAuthBox");
-      const editorBox = document.getElementById("teacherEditorBox");
-      if (teacherModal) teacherModal.classList.remove("hidden");
-      if (authBox) authBox.classList.remove("hidden");
-      if (editorBox) editorBox.classList.add("hidden");
-      const pinInput = document.getElementById("teacherPinInput");
-      if (pinInput) {
-        pinInput.value = "";
-        setTimeout(() => pinInput.focus(), 150);
+      switchLoginRole("teacher");
+    });
+  }
+
+  // Nút ẩn / hiện mắt cho Mã PIN Giáo viên
+  const btnTogglePin = document.getElementById("slBtnTogglePin");
+  const portalTeacherPin = document.getElementById("slTeacherPinInput");
+  if (btnTogglePin && portalTeacherPin) {
+    btnTogglePin.addEventListener("click", () => {
+      const isPass = portalTeacherPin.type === "password";
+      portalTeacherPin.type = isPass ? "text" : "password";
+      btnTogglePin.textContent = isPass ? "🙈" : "👁";
+    });
+  }
+
+  // Nút Điền nhanh mã PIN mẫu để Thầy/Cô kiểm tra một chạm
+  const btnUseSamplePin = document.getElementById("slBtnUseSamplePin");
+  if (btnUseSamplePin && portalTeacherPin) {
+    btnUseSamplePin.addEventListener("click", () => {
+      portalTeacherPin.value = "Tch-8b6657ed96b64ad2";
+      portalTeacherPin.focus();
+    });
+  }
+
+  // Xử lý Đăng nhập Giáo viên tại Cổng Đăng nhập Phân quyền
+  async function handlePortalTeacherLogin() {
+    const pinInput = document.getElementById("slTeacherPinInput");
+    const pinVal = pinInput ? pinInput.value.trim() : "";
+    const msgEl = document.getElementById("slTeacherAuthMsg");
+    const btnLogin = document.getElementById("slBtnTeacherLogin");
+
+    if (!pinVal) {
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg error";
+        msgEl.textContent = "Vui lòng nhập mã PIN bảo mật của Giáo viên.";
+        msgEl.classList.remove("hidden");
       }
+      if (pinInput) pinInput.focus();
+      return;
+    }
+
+    if (btnLogin) {
+      btnLogin.disabled = true;
+      btnLogin.textContent = "⏳ Đang xác thực...";
+    }
+    if (msgEl) {
+      msgEl.className = "sl-auth-msg";
+      msgEl.textContent = "Đang kiểm tra quyền Giáo viên...";
+      msgEl.classList.remove("hidden");
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/teacher/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pinVal })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Mã PIN không chính xác! Vui lòng thử lại.");
+      }
+
+      const data = await res.json();
+      state.teacherToken = data.token;
+      state.teacherUnlocked = true;
+      state.isTeacher = true;
+
+      try {
+        sessionStorage.setItem("ai_sgk_teacher_token", data.token);
+      } catch (storageErr) {
+        console.warn("Lỗi lưu teacher token:", storageErr);
+      }
+
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg success";
+        msgEl.textContent = "✔ Xác thực thành công! Đang chuyển vào hệ thống...";
+        msgEl.classList.remove("hidden");
+      }
+
+      // Cập nhật giao diện: mở toàn bộ khối 6-9, hiện nút quản lý học sinh & giáo viên
+      updateHeaderStudentAuthUI();
+
+      setTimeout(() => {
+        portalDirectClose();
+        openStudentManagementStage();
+      }, 400);
+    } catch (err) {
+      if (msgEl) {
+        msgEl.className = "sl-auth-msg error";
+        msgEl.textContent = err.message || "Xác thực thất bại. Vui lòng kiểm tra lại mã PIN.";
+        msgEl.classList.remove("hidden");
+      }
+    } finally {
+      if (btnLogin) {
+        btnLogin.disabled = false;
+        btnLogin.replaceChildren();
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "18");
+        svg.setAttribute("height", "18");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2.2");
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", "7.5");
+        c.setAttribute("cy", "15.5");
+        c.setAttribute("r", "5.5");
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "m21 2-9.6 9.6M15.5 7.5l3 3");
+        svg.appendChild(c);
+        svg.appendChild(p);
+        const span = document.createElement("span");
+        span.textContent = "Đăng nhập Quyền Giáo viên";
+        btnLogin.appendChild(svg);
+        btnLogin.appendChild(span);
+      }
+    }
+  }
+
+  const btnTeacherLogin = document.getElementById("slBtnTeacherLogin");
+  if (btnTeacherLogin) {
+    btnTeacherLogin.addEventListener("click", handlePortalTeacherLogin);
+  }
+  if (portalTeacherPin) {
+    portalTeacherPin.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handlePortalTeacherLogin();
     });
   }
 
