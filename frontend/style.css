@@ -3010,6 +3010,90 @@ button, input, textarea, select {
   box-shadow: 0 0 14px rgba(2, 132, 199, 0.45);
 }
 
+.header-grade-pill.locked {
+  opacity: 0.52;
+  cursor: not-allowed !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #94a3b8 !important;
+}
+
+.header-grade-pill.locked:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.55) !important;
+  color: #fca5a5 !important;
+}
+
+.header-grade-pill .pill-lock-icon {
+  font-size: 11px;
+  margin-left: 2px;
+  display: inline-block;
+}
+
+/* Nút Thoát / Đăng xuất trực tiếp trên Header */
+.header-signout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+  margin-left: 6px;
+}
+
+.header-signout-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+}
+
+.header-signout-btn.hidden {
+  display: none !important;
+}
+
+/* Bộ chọn Khối lớp trong Cổng Đăng nhập */
+.sl-grade-selector {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.sl-grade-pill {
+  flex: 1;
+  padding: 8px 10px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.sl-grade-pill:hover {
+  background: #334155;
+  color: #f8fafc;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.sl-grade-pill.active {
+  background: rgba(14, 165, 233, 0.18);
+  color: #38bdf8;
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
 /* 2. Left Sidebar Lesson Cards (Chuẩn Gradient & Glow) */
 .lesson-tree-item {
   border-radius: 12px !important;
