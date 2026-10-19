@@ -26,11 +26,14 @@ const getApiBase = () => {
   }
 
   if (typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
-    return "http://127.0.0.1:8000/api";
+    if (window.location.port === "8000") {
+      return "http://127.0.0.1:8000/api";
+    }
+    return "";
   }
 
   if (!window.location.origin || window.location.origin === "null" || window.location.origin.startsWith("file:")) {
-    return "http://127.0.0.1:8000/api";
+    return "";
   }
 
   return `${window.location.origin}/api`;
@@ -1008,6 +1011,7 @@ async function initApp() {
 }
 
 async function loadCurriculumLessons() {
+  if (!API_BASE) return;
   try {
     const res = await fetch(`${API_BASE}/v2/curriculum/lessons/${state.grade}`);
     if (!res.ok) return;
@@ -1268,6 +1272,28 @@ function renderCurriculumCards(data) {
 
 // 6. Tải Dữ liệu Bài học từ Backend
 async function fetchLesson(grade, lessonId) {
+  if (!API_BASE) {
+    try {
+      const staticRes = await fetch(`./data/curriculum_v2_simple/tin${grade}/bai${lessonId}.json`);
+      if (staticRes && staticRes.ok) {
+        const data = await staticRes.json();
+        state.lessonData = data;
+        const sidebarNameEl = document.getElementById("roadmapLessonName");
+        if (sidebarNameEl) {
+          sidebarNameEl.textContent = `Bài ${data.lesson_id}: ${data.title}`;
+        }
+        const theoryContentEl = document.getElementById("theoryContent");
+        if (theoryContentEl) {
+          theoryContentEl.innerHTML = renderCurriculumCards(data) /* sanitize */;
+        }
+        renderCurriculumTree();
+        return;
+      }
+    } catch (e) {
+      console.warn("Lỗi nạp bài học tĩnh:", e);
+    }
+    return;
+  }
   try {
     const endpoint = `${API_BASE}/v2/lesson/${grade}/${lessonId}`;
     const res = await fetch(endpoint);
