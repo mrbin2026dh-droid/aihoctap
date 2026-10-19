@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "students": {
+      "$classCode": {
+        ".read": "auth != null || true",
+        ".indexOn": ["is_blocked", "email", "student_code"],
+        "$studentId": {
+          ".read": "auth != null || true",
+          ".write": "auth != null",
+          "is_blocked": {
+            ".write": "auth != null"
+          }
+        }
+      }
+    }
+  }
+}
