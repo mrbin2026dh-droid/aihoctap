@@ -1,8 +1,8 @@
 fastapi==0.141.1
 uvicorn==0.52.4
+gunicorn==26.2.0
+a2wsgi==1.10.10
 pydantic==2.13.5
 google-genai==2.23.0
 pymupdf==1.28.2
-pytest==9.1.1
-playwright==1.59.0
 python-dotenv==1.2.3
