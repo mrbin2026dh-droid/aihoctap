@@ -53,7 +53,7 @@ Sau khi học xong bài này, em sẽ:
 
 ---
 
-## HỘP GHI NHỚ (CỐT LÕI CẦN THUỘC)
+## Ghi nhớ trọng tâm
 1. **Dữ liệu** là các số, chữ, hình ảnh, âm thanh,...
 2. **Thông tin** là những hiểu biết thu nhận được sau khi não xử lý dữ liệu.
 3. **Vật mang tin** là vật chứa dữ liệu để lưu trữ và truyền tải.

@@ -1,0 +1,121 @@
+[
+  {
+    "lesson_id": 1,
+    "title": "Thông tin và dữ liệu",
+    "start_page": 5,
+    "end_page": 7,
+    "topic": "Chủ đề 1. Máy tính và cộng đồng"
+  },
+  {
+    "lesson_id": 2,
+    "title": "Xử lí thông tin",
+    "start_page": 8,
+    "end_page": 11,
+    "topic": "Chủ đề 1. Máy tính và cộng đồng"
+  },
+  {
+    "lesson_id": 3,
+    "title": "Thông tin trong máy tính",
+    "start_page": 12,
+    "end_page": 15,
+    "topic": "Chủ đề 1. Máy tính và cộng đồng"
+  },
+  {
+    "lesson_id": 4,
+    "title": "Mạng máy tính",
+    "start_page": 16,
+    "end_page": 19,
+    "topic": "Chủ đề 2. Mạng máy tính và Internet"
+  },
+  {
+    "lesson_id": 5,
+    "title": "Internet",
+    "start_page": 20,
+    "end_page": 22,
+    "topic": "Chủ đề 2. Mạng máy tính và Internet"
+  },
+  {
+    "lesson_id": 6,
+    "title": "Mạng thông tin toàn cầu",
+    "start_page": 23,
+    "end_page": 27,
+    "topic": "Chủ đề 3. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin"
+  },
+  {
+    "lesson_id": 7,
+    "title": "Tìm kiếm thông tin trên Internet",
+    "start_page": 28,
+    "end_page": 31,
+    "topic": "Chủ đề 3. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin"
+  },
+  {
+    "lesson_id": 8,
+    "title": "Thư điện tử",
+    "start_page": 32,
+    "end_page": 36,
+    "topic": "Chủ đề 3. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin"
+  },
+  {
+    "lesson_id": 9,
+    "title": "An toàn thông tin trên Internet",
+    "start_page": 37,
+    "end_page": 41,
+    "topic": "Chủ đề 4. Đạo đức, pháp luật và văn hoá trong môi trường số"
+  },
+  {
+    "lesson_id": 10,
+    "title": "Sơ đồ tư duy",
+    "start_page": 42,
+    "end_page": 47,
+    "topic": "Chủ đề 5. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 11,
+    "title": "Định dạng văn bản",
+    "start_page": 48,
+    "end_page": 52,
+    "topic": "Chủ đề 5. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 12,
+    "title": "Trình bày thông tin ở dạng bảng",
+    "start_page": 53,
+    "end_page": 57,
+    "topic": "Chủ đề 5. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 13,
+    "title": "Thực hành: Tìm kiếm và thay thế",
+    "start_page": 58,
+    "end_page": 60,
+    "topic": "Chủ đề 5. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 14,
+    "title": "Thực hành tổng hợp: Hoàn thiện sổ lưu niệm",
+    "start_page": 61,
+    "end_page": 62,
+    "topic": "Chủ đề 5. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 15,
+    "title": "Thuật toán",
+    "start_page": 63,
+    "end_page": 66,
+    "topic": "Chủ đề 6. Giải quyết vấn đề với sự trợ giúp của máy tính"
+  },
+  {
+    "lesson_id": 16,
+    "title": "Các cấu trúc điều khiển",
+    "start_page": 67,
+    "end_page": 70,
+    "topic": "Chủ đề 6. Giải quyết vấn đề với sự trợ giúp của máy tính"
+  },
+  {
+    "lesson_id": 17,
+    "title": "Chương trình máy tính",
+    "start_page": 71,
+    "end_page": 74,
+    "topic": "Chủ đề 6. Giải quyết vấn đề với sự trợ giúp của máy tính"
+  }
+]

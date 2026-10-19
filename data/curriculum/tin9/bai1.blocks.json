@@ -1,0 +1,123 @@
+{
+  "schema_version": "2.0",
+  "grade": 9,
+  "lesson_id": 1,
+  "title": "Thế giới kĩ thuật số",
+  "status": "published",
+  "source_file": null,
+  "extracted_pages": [5, 6, 7, 8, 9],
+  "updated_at": "2026-10-18T11:30:00.000000",
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 1 • TIN HỌC 9",
+      "title": "Thế giới kĩ thuật số",
+      "description": "Khám phá thế giới kĩ thuật số xung quanh chúng ta: bộ vi xử lí thông tin (CPU), các thiết bị số thông minh và 4 ưu thế vượt trội của máy tính trong thời đại mới."
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Nhận biết được các thiết bị có gắn bộ xử lí thông tin trong đời sống.",
+        "Nêu được chức năng cốt lõi của bộ xử lí thông tin (CPU).",
+        "Giải thích được 4 ưu thế vượt trội của máy tính so với con người và các ứng dụng tiêu biểu."
+      ]
+    },
+    {
+      "type": "grid_cards",
+      "title": "Thiết bị số trong đời sống",
+      "cards": [
+        {
+          "title": "Thiết bị gia dụng",
+          "desc": "Tivi thông minh, máy giặt tự động, robot hút bụi định vị bản đồ",
+          "icon": "home"
+        },
+        {
+          "title": "Dịch vụ công cộng",
+          "desc": "Máy ATM, hệ thống thu phí không dừng ETC, camera AI giao thông",
+          "icon": "shield"
+        },
+        {
+          "title": "Sản xuất & Nông nghiệp",
+          "desc": "Robot lắp ráp công nghiệp, hệ thống tưới tiêu tự động theo cảm biến",
+          "icon": "cpu"
+        }
+      ]
+    },
+    {
+      "type": "takeaways",
+      "title": "Bốn ưu thế vượt trội của máy tính",
+      "items": [
+        "Tốc độ xử lí cực nhanh (hàng tỷ phép tính/giây).",
+        "Độ chính xác tuyệt đối theo logic thuật toán.",
+        "Khả năng lưu trữ khối lượng dữ liệu khổng lồ.",
+        "Khả năng làm việc bền bỉ 24/7 trong mọi môi trường."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin9_b1_q1",
+      "cau_hoi": "Bộ phận nào sau đây đóng vai trò là 'bộ não' của các thiết bị kĩ thuật số, chịu trách nhiệm xử lý dữ liệu và thực hiện các lệnh?",
+      "lua_chon": {
+        "A": "Bộ vi xử lí (CPU)",
+        "B": "Màn hình hiển thị",
+        "C": "Vỏ kim loại bảo vệ",
+        "D": "Dây nguồn cung cấp điện"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Bộ vi xử lí (CPU - Central Processing Unit) là thành phần cốt lõi thực hiện các phép tính logic và điều khiển toàn bộ hoạt động của thiết bị số.",
+      "goi_y_khi_sai": "Em hãy nhớ lại: Thành phần nào được ví như 'bộ não' của máy tính và thiết bị thông minh? Xem lại Mục 1 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+      "trang_sgk": 5
+    },
+    {
+      "id": "tin9_b1_q2",
+      "cau_hoi": "Thiết bị nào sau đây KHÔNG PHẢI là một thiết bị số có tích hợp bộ xử lí thông tin?",
+      "lua_chon": {
+        "A": "Máy rút tiền tự động (ATM)",
+        "B": "Bảng đen lớp học viết bằng phấn",
+        "C": "Robot hút bụi tự động định vị trong nhà",
+        "D": "Điện thoại thông minh (Smartphone)"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Bảng đen viết phấn là công cụ vật lý truyền thống, không chứa mạch điện tử hay bộ vi xử lí thông tin.",
+      "goi_y_khi_sai": "Thiết bị số cần có vi mạch xử lý thông tin điện tử. Trong 4 phương án, vật dụng nào là đồ dùng học tập cơ học truyền thống? Xem lại Mục 1 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+      "trang_sgk": 6
+    },
+    {
+      "id": "tin9_b1_q3",
+      "cau_hoi": "Hệ thống thu phí tự động không dừng (ETC) tại các trạm thu phí đường bộ là ứng dụng của công nghệ số trong lĩnh vực nào?",
+      "lua_chon": {
+        "A": "Giao thông vận tải",
+        "B": "Nông nghiệp chăn nuôi",
+        "C": "Mỹ thuật và hội họa",
+        "D": "Thời trang may mặc"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Hệ thống ETC tự động nhận diện thẻ định danh phương tiện và trừ tiền qua tài khoản, giúp xe lưu thông liên tục trên đường cao tốc.",
+      "goi_y_khi_sai": "Trạm thu phí đường bộ phục vụ việc quản lý các phương tiện xe cộ qua lại, vậy nó thuộc lĩnh vực nào trong đời sống? Xem lại Mục 1 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí",
+      "trang_sgk": 7
+    },
+    {
+      "id": "tin9_b1_q4",
+      "cau_hoi": "Đặc điểm nào sau đây KHÔNG PHẢI là ưu thế vượt trội của máy tính điện tử so với con người?",
+      "lua_chon": {
+        "A": "Khả năng tính toán với tốc độ hàng tỷ phép tính mỗi giây",
+        "B": "Khả năng lưu trữ khối lượng dữ liệu khổng lồ",
+        "C": "Khả năng có cảm xúc, tình cảm và lòng trắc ẩn riêng",
+        "D": "Khả năng làm việc liên tục 24/7 không biết mệt mỏi"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Rất tốt! Máy tính là cỗ máy điện tử tính toán logic theo chỉ lệnh, không có cảm xúc, tình cảm hay tâm tư như con người.",
+      "goi_y_khi_sai": "Hãy tìm đặc điểm thuộc về tâm lý, tình cảm đặc trưng duy nhất của con người mà máy móc không thể có trong Mục 2 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 2: Ưu thế của máy tính",
+      "trang_sgk": 8
+    }
+  ]
+}

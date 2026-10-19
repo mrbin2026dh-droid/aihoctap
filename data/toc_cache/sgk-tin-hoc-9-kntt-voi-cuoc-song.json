@@ -1,0 +1,121 @@
+[
+  {
+    "lesson_id": 1,
+    "title": "Thế giới kĩ thuật số",
+    "start_page": 5,
+    "end_page": 9,
+    "topic": "Chủ đề 1. Máy tính và cộng đồng"
+  },
+  {
+    "lesson_id": 2,
+    "title": "Thông tin trong giải quyết vấn đề",
+    "start_page": 10,
+    "end_page": 14,
+    "topic": "Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin"
+  },
+  {
+    "lesson_id": 3,
+    "title": "Thực hành: Đánh giá chất lượng thông tin",
+    "start_page": 15,
+    "end_page": 18,
+    "topic": "Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin"
+  },
+  {
+    "lesson_id": 4,
+    "title": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+    "start_page": 19,
+    "end_page": 24,
+    "topic": "Chủ đề 3. Đạo đức, pháp luật và văn hoá trong môi trường số"
+  },
+  {
+    "lesson_id": 5,
+    "title": "Tìm hiểu phần mềm mô phỏng",
+    "start_page": 25,
+    "end_page": 29,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 6,
+    "title": "Thực hành: Khai thác phần mềm mô phỏng",
+    "start_page": 30,
+    "end_page": 34,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 7,
+    "title": "Trình bày thông tin trong trao đổi và hợp tác",
+    "start_page": 35,
+    "end_page": 39,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 8,
+    "title": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+    "start_page": 40,
+    "end_page": 44,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 9,
+    "title": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+    "start_page": 45,
+    "end_page": 54,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 10,
+    "title": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+    "start_page": 55,
+    "end_page": 59,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 11,
+    "title": "Làm quen với phần mềm biên tập video",
+    "start_page": 60,
+    "end_page": 64,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 12,
+    "title": "Dựng và hoàn thiện video theo kịch bản",
+    "start_page": 65,
+    "end_page": 69,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 13,
+    "title": "Biên tập và xuất bản video",
+    "start_page": 70,
+    "end_page": 74,
+    "topic": "Chủ đề 4. Ứng dụng tin học"
+  },
+  {
+    "lesson_id": 14,
+    "title": "Giải quyết vấn đề với sự trợ giúp của máy tính",
+    "start_page": 75,
+    "end_page": 79,
+    "topic": "Chủ đề 5. Giải quyết vấn đề với sự trợ giúp của máy tính"
+  },
+  {
+    "lesson_id": 15,
+    "title": "Bài toán tin học",
+    "start_page": 80,
+    "end_page": 84,
+    "topic": "Chủ đề 5. Giải quyết vấn đề với sự trợ giúp của máy tính"
+  },
+  {
+    "lesson_id": 16,
+    "title": "Thực hành: Lập chương trình máy tính",
+    "start_page": 85,
+    "end_page": 89,
+    "topic": "Chủ đề 5. Giải quyết vấn đề với sự trợ giúp của máy tính"
+  },
+  {
+    "lesson_id": 17,
+    "title": "Tin học và thế giới nghề nghiệp",
+    "start_page": 90,
+    "end_page": 96,
+    "topic": "Chủ đề 6. Hướng nghiệp với tin học"
+  }
+]

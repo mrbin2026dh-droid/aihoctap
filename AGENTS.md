@@ -9,7 +9,7 @@ Antigravity Agent KHÔNG ĐƯỢC PHÉP tự suy đoán cách làm. Bắt buộc
 ### BƯỚC 1: TRI GIÁC TÀI LIỆU & KIẾN TRÚC (BẮT BUỘC TRƯỚC KHI CODE)
 1. **Quét dự án**: Bắt buộc gọi skill `.codegraph` (hoặc MCP `codegraph_explore`) để lấy bản đồ tri thức toàn cục của dự án.
 2. **Quét tài liệu chuẩn**: CẤM đoán mò API. Bắt buộc kích hoạt skill `context7-docs` để tra cứu tài liệu thư viện mới nhất trước khi viết bất kỳ dòng code nào.
-3. **Lên kế hoạch**: Dùng skill `brainstorming` (Superpowers) chia nhỏ task.
+3. **Lên kế hoạch & Thẩm định tệp**: Dùng skill `brainstorming` (Superpowers) chia nhỏ task, xuất file kế hoạch `.md` và áp dụng skill `sonnet-file-audit-loop` để gửi đường dẫn tệp cho Claude 3.5 Sonnet thẩm định độc lập trước khi code. **QUY TẮC BẤT BIẾN**: CẤM TUYỆT ĐỐI gửi hình ảnh, file PDF scan hoặc dán text dài vào prompt của Sonnet. Mọi tài liệu nặng bắt buộc xử lý offline trên CPU cục bộ bằng Python (0 token) và chỉ gửi đường dẫn file văn bản `.md`/`.py` siêu nhẹ (< 3KB) để tiết kiệm token tối đa (< 3.000 tokens/lần audit).
 
 ### BƯỚC 2: RÀNG BUỘC CỨNG SẢN XUẤT UI/UX & FRONTEND
 Nếu tác vụ liên quan đến Giao diện, Agent BẮT BUỘC chạy tuần tự qua 3 màng lọc Kỹ năng sau, cấm bỏ sót:
@@ -26,7 +26,8 @@ Khi code xong, CẤM bàn giao ngay. Bắt buộc gọi chuỗi skill kiểm duy
 1. **Kiểm duyệt Cú pháp**: Chạy `alibaba-code-review` và `zero-bug-verification` (V8/Oxlint/Playwright).
 2. **Kiểm duyệt UX/Accessibility**: Bắt buộc chạy skill `web-design-guidelines` để Audit toàn bộ giao diện xem có vi phạm chuẩn trợ năng và WCAG hay không.
 3. **Kiểm duyệt Hiệu năng**: Bắt buộc chạy skill `web-perf` để đo đạc Core Web Vitals (LCP, INP, CLS) và chặn đứng các tài nguyên chặn render (render-blocking).
-4. **Vòng lặp Self-Healing**: Bất kỳ skill gác cổng nào ở trên văng lỗi (Exit Code 1) hoặc báo hiệu năng kém, Agent PHẢI IM LẶNG TỰ SỬA CODE cho đến khi đạt điểm tối đa.
+4. **Vòng lặp Phán quyết Sonnet (Sonnet File Audit Loop)**: Kích hoạt `sonnet-file-audit-loop`, đọc lại tệp `.md` phán quyết của Claude 3.5 Sonnet để phân tích từng điều kiện, tự động sửa đổi mã nguồn/kế hoạch và tái kiểm thử cho đến khi PASS 100%.
+5. **Vòng lặp Self-Healing**: Bất kỳ skill gác cổng nào ở trên văng lỗi (Exit Code 1) hoặc báo hiệu năng kém, Agent PHẢI IM LẶNG TỰ SỬA CODE cho đến khi đạt điểm tối đa.
 
 ---
-**Lệnh thực thi tối thượng**: Bất kỳ lúc nào sinh code, Agent phải rà soát xem mình đã gọi đủ tên các Skill: `context7-docs`, `stitch-type-safe-ui`, `design-taste-frontend`, `web-design-guidelines`, `web-perf`, `alibaba-code-review` hay chưa. Nếu thiếu một mắt xích, coi như vi phạm Hiến pháp!
+**Lệnh thực thi tối thượng**: Bất kỳ lúc nào sinh code, Agent phải rà soát xem mình đã gọi đủ tên các Skill: `context7-docs`, `stitch-type-safe-ui`, `design-taste-frontend`, `web-design-guidelines`, `web-perf`, `alibaba-code-review`, `sonnet-file-audit-loop` hay chưa. Nếu thiếu một mắt xích, coi như vi phạm Hiến pháp!

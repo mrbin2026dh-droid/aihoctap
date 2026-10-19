@@ -1,0 +1,102 @@
+{
+  "schema_version": "2.0",
+  "grade": 9,
+  "lesson_id": 4,
+  "title": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+  "status": "published",
+  "source_file": null,
+  "extracted_pages": [19, 20, 21, 22, 23, 24],
+  "updated_at": "2026-10-18T11:30:00.000000",
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 4 • TIN HỌC 9",
+      "title": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+      "description": "Nhận diện những tác động tiêu cực của không gian số, nắm vững các quy định pháp luật về bản quyền, bảo mật thông tin và trở thành công dân số có trách nhiệm."
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Nêu được một số tác động tiêu cực của Internet và công nghệ số đối với cá nhân và xã hội.",
+        "Trình bày được tác hại của rác thải điện tử đối với môi trường sống.",
+        "Nhận biết và tuân thủ các quy định pháp lý cơ bản khi sử dụng dịch vụ Internet: quyền tác giả, bảo mật thông tin cá nhân, ứng xử văn minh."
+      ]
+    },
+    {
+      "type": "takeaways",
+      "title": "Quy tắc vàng của công dân số có trách nhiệm",
+      "items": [
+        "Tuyệt đối không đăng tải, chia sẻ thông tin sai sự thật hoặc bôi nhọ người khác.",
+        "Tôn trọng quyền sở hữu trí tuệ: Xin phép hoặc trích dẫn nguồn tác giả đầy đủ.",
+        "Xử lý và thu gom rác thải điện tử đúng nơi quy định để bảo vệ môi trường.",
+        "Nói KHÔNG với bạo lực mạng (Cyberbullying) và luôn bảo vệ dữ liệu cá nhân."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin9_b4_q1",
+      "cau_hoi": "Hành vi nào sau đây là VI PHẠM PHÁP LUẬT khi tham gia các hoạt động trên môi trường Internet?",
+      "lua_chon": {
+        "A": "Sử dụng công cụ tìm kiếm để tra cứu thông tin học tập",
+        "B": "Đăng bài viết bịa đặt, vu khống làm ảnh hưởng xấu đến uy tín danh dự của người khác",
+        "C": "Gửi email chúc mừng sinh nhật cho thầy cô và bạn bè",
+        "D": "Tham gia nhóm học tập trực tuyến do nhà trường tổ chức"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Vu khống, xúc phạm nhân phẩm danh dự người khác trên không gian mạng là hành vi vi phạm pháp luật và sẽ bị xử phạt nghiêm khắc.",
+      "goi_y_khi_sai": "Hành vi nào gây tổn hại đến quyền lợi, danh dự của người khác được nêu trong danh mục cấm ở Mục 2? Xem lại nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 2: Sử dụng Internet đúng luật",
+      "trang_sgk": 20
+    },
+    {
+      "id": "tin9_b4_q2",
+      "cau_hoi": "Khi muốn sử dụng một bài thơ hay bức tranh của tác giả khác trên Internet vào bài báo tường của lớp, cách làm nào sau đây là ĐÚNG LUẬT bản quyền?",
+      "lua_chon": {
+        "A": "Tự ý xóa tên tác giả gốc và thay bằng tên của mình",
+        "B": "Xin phép tác giả hoặc ghi rõ ràng họ tên tác giả và nguồn trích dẫn hợp lệ",
+        "C": "Chỉnh sửa vài câu từ rồi nhận là sáng tác độc quyền của bản thân",
+        "D": "Sử dụng thoải mái vì tài nguyên trên mạng không có bản quyền"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Luật Sở hữu trí tuệ quy định khi sử dụng tác phẩm của người khác cần xin phép hoặc ghi rõ tác giả và nguồn gốc xuất xứ.",
+      "goi_y_khi_sai": "Tôn trọng quyền sở hữu trí tuệ đòi hỏi chúng ta phải làm gì đối với tên tuổi tác giả? Xem lại Mục 2 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 2: Sử dụng Internet đúng luật",
+      "trang_sgk": 21
+    },
+    {
+      "id": "tin9_b4_q3",
+      "cau_hoi": "Việc thải bỏ các thiết bị điện tử hỏng (pin, điện thoại cũ, màn hình vỡ) ra bãi rác sinh hoạt thông thường sẽ gây ra tác hại gì?",
+      "lua_chon": {
+        "A": "Tạo ra rác thải điện tử nguy hại, giải phóng các kim loại nặng làm ô nhiễm đất và nguồn nước",
+        "B": "Làm đất đai màu mỡ hơn nhờ chất khoáng",
+        "C": "Không gây tác hại gì vì các linh kiện sẽ tự phân hủy sinh học trong vài ngày",
+        "D": "Giúp tiết kiệm chi phí xử lý rác cho xã hội"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Rác thải điện tử chứa nhiều kim loại nặng cực kỳ độc hại như chì, thủy ngân, cadimi gây ô nhiễm môi trường lâu dài nếu không xử lý đúng quy trình.",
+      "goi_y_khi_sai": "Khái niệm rác thải điện tử (E-waste) và nguy cơ ô nhiễm môi trường sống được giải thích như thế nào trong Mục 1? Xem lại nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 1: Tác động tiêu cực",
+      "trang_sgk": 22
+    },
+    {
+      "id": "tin9_b4_q4",
+      "cau_hoi": "Hành vi sử dụng ngôn từ tục tĩu, cô lập, đe dọa hoặc bêu xấu bạn bè trên các diễn đàn mạng xã hội được gọi là gì?",
+      "lua_chon": {
+        "A": "Bạo lực mạng (Cyberbullying) - vi phạm chuẩn mực đạo đức và pháp luật",
+        "B": "Trò đùa vô hại của tuổi học trò",
+        "C": "Quyền tự do ngôn luận cá nhân",
+        "D": "Một hoạt động giao lưu trực tuyến bình thường"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất tốt! Bạo lực mạng (Cyberbullying) gây tổn thương tâm lý nghiêm trọng cho nạn nhân và là hành vi bị pháp luật nghiêm cấm.",
+      "goi_y_khi_sai": "Thuật ngữ chỉ hành vi quấy rối, bắt nạt hoặc lăng mạ người khác trên không gian mạng là gì? Xem lại Mục 1 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 1: Tác động tiêu cực",
+      "trang_sgk": 23
+    }
+  ]
+}

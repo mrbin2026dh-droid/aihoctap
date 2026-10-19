@@ -15,7 +15,7 @@ def test_lesson_1_conforms_to_proof_contract():
     lesson = LessonContract(**raw_data)
     assert lesson.grade == 6
     assert lesson.lesson_id == 1
-    assert "THÔNG TIN VÀ DỮ LIỆU" in lesson.title
+    assert "thông tin và dữ liệu" in lesson.title.lower()
     assert len(lesson.quiz) == 4
     for item in lesson.quiz:
         assert isinstance(item, QuizItemContract)

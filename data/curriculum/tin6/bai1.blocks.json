@@ -1,0 +1,163 @@
+{
+  "schema_version": "2.0",
+  "grade": 6,
+  "lesson_id": 1,
+  "title": "Thông tin và Dữ liệu",
+  "status": "published",
+  "source_file": null,
+  "extracted_pages": [],
+  "updated_at": "2026-10-14T22:05:20.228898",
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 1 • KHÁM PHÁ KIẾN THỨC",
+      "title": "Thông tin và Dữ liệu",
+      "description": "Khám phá cách con người tiếp nhận dữ liệu từ thế giới bên ngoài thông qua các giác quan và xử lý thành thông tin hữu ích để đưa ra các quyết định chính xác."
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Phân biệt được thông tin và dữ liệu.",
+        "Nêu được ví dụ về mối quan hệ giữa thông tin và dữ liệu.",
+        "Giải thích được tầm quan trọng của thông tin trong đời sống."
+      ]
+    },
+    {
+      "type": "comparison_table",
+      "left": {
+        "title": "Dữ liệu (Data)",
+        "badge": "MẮT THẤY - TAI NGHE",
+        "description": "Là các số, chữ, hình ảnh, âm thanh,... thô sơ thu nhận trực tiếp từ thế giới xung quanh qua giác quan.",
+        "examples": [
+          "Ánh sáng đèn màu đỏ tại cột đèn tín hiệu",
+          "Con số 39°C trên màn hình nhiệt kế điện tử",
+          "Dòng chữ 'Hà Nội 50km' trên tấm biển chỉ dẫn"
+        ]
+      },
+      "right": {
+        "title": "Thông tin (Information)",
+        "badge": "NÃO XỬ LÝ - Ý NGHĨA",
+        "description": "Là sự hiểu biết rút ra sau khi bộ não tiếp nhận và xử lý dữ liệu, mang lại ý nghĩa hành động.",
+        "examples": [
+          "Hiểu rằng: Cần dừng xe lại ngay để an toàn",
+          "Biết rằng: Cơ thể đang bị sốt cao, cần uống thuốc",
+          "Xác định được: Còn 50km nữa là sẽ tới thủ đô"
+        ]
+      }
+    },
+    {
+      "type": "grid_cards",
+      "title": "Vật mang tin (Information Carrier)",
+      "cards": [
+        {
+          "title": "Sách vở & Báo chí",
+          "desc": "Lưu trữ chữ viết, bảng biểu và hình vẽ",
+          "icon": "book"
+        },
+        {
+          "title": "Thẻ nhớ & USB",
+          "desc": "Lưu trữ văn bản, âm thanh, video dạng số",
+          "icon": "chip"
+        },
+        {
+          "title": "Biển báo giao thông",
+          "desc": "Chứa hình vẽ, biểu tượng cảnh báo trên đường",
+          "icon": "sign"
+        },
+        {
+          "title": "Tiếng trống trường",
+          "desc": "Truyền âm thanh báo hiệu giờ vào lớp, tan học",
+          "icon": "bell"
+        }
+      ]
+    },
+    {
+      "type": "takeaways",
+      "title": "Ghi nhớ trọng tâm",
+      "items": [
+        "Dữ liệu là các số, chữ, hình ảnh, âm thanh,... thô sơ thu nhận từ thế giới bên ngoài.",
+        "Thông tin là sự hiểu biết thu nhận được sau khi não xử lý dữ liệu.",
+        "Vật mang tin là vật thể chứa dữ liệu để lưu trữ và truyền tải.",
+        "Có thông tin đúng lúc giúp con người ra quyết định chính xác và hiệu quả."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin6_b1_q1",
+      "cau_hoi": "Khi nhìn thấy đèn tín hiệu giao thông chuyển sang màu đỏ, người đi đường dừng lại. Trong tình huống này, 'ánh sáng đèn màu đỏ' là gì?",
+      "lua_chon": {
+        "A": "Vật mang tin",
+        "B": "Dữ liệu",
+        "C": "Thông tin",
+        "D": "Quyết định"
+      },
+      "dap_an_dung": "B",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu",
+      "trang_sgk": 6,
+      "giai_thich_su_pham": "Chính xác! Ánh sáng màu đỏ là tín hiệu hình ảnh mà mắt em thu nhận từ thế giới bên ngoài, chưa qua bộ não suy nghĩ nên nó là Dữ liệu.",
+      "goi_y_khi_sai": "Em hãy nhớ lại: Những hình ảnh, màu sắc hay âm thanh mắt nhìn, tai nghe trực tiếp từ bên ngoài khi chưa qua suy nghĩ thì được gọi là gì? Xem lại Mục 1.a nhé!",
+      "source": "teacher_verified",
+      "grounding_verified": false,
+      "verified_by": "teacher",
+      "verified_at": "2026-10-14T22:04:54.538724"
+    },
+    {
+      "id": "tin6_b1_q2",
+      "cau_hoi": "Cũng trong tình huống trên, sự hiểu biết 'phải dừng xe lại trước vạch dừng' được gọi là gì?",
+      "lua_chon": {
+        "A": "Dữ liệu",
+        "B": "Thông tin",
+        "C": "Vật mang tin",
+        "D": "Phương tiện giao thông"
+      },
+      "dap_an_dung": "B",
+      "muc_sgk": "Mục 1: Thông tin và dữ liệu",
+      "trang_sgk": 6,
+      "giai_thich_su_pham": "Rất tốt! Sự hiểu biết mà bộ não rút ra sau khi nhìn thấy đèn đỏ chính là Thông tin, giúp em ra quyết định dừng xe an toàn.",
+      "goi_y_khi_sai": "Hãy chú ý cụm từ 'sự hiểu biết của con người'. Khái niệm nào trong SGK định nghĩa là sự hiểu biết thu nhận được sau khi não xử lý? Xem lại Mục 1.a nhé!",
+      "source": "teacher_verified",
+      "grounding_verified": false,
+      "verified_by": "teacher",
+      "verified_at": "2026-10-14T22:05:04.912501"
+    },
+    {
+      "id": "tin6_b1_q3",
+      "cau_hoi": "Vật nào sau đây KHÔNG PHẢI là một 'vật mang tin'?",
+      "lua_chon": {
+        "A": "Cuốn vở ghi bài môn Tin học",
+        "B": "Thẻ nhớ điện thoại chứa ảnh chụp",
+        "C": "Suy nghĩ trong đầu của học sinh",
+        "D": "Tấm biển báo cấm đi ngược chiều"
+      },
+      "dap_an_dung": "C",
+      "muc_sgk": "Mục 2: Vật mang tin",
+      "trang_sgk": 7,
+      "giai_thich_su_pham": "Chuẩn xác! Vật mang tin phải là một vật thể/phương tiện hữu hình bên ngoài chứa dữ liệu. Suy nghĩ trong đầu là quá trình tư duy của bộ não, không phải vật thể.",
+      "goi_y_khi_sai": "Vật mang tin là phương tiện, vật thể chứa và truyền đạt dữ liệu (như giấy, nhựa, kim loại). Trong 4 đáp án trên, cái nào chỉ diễn ra bên trong tâm trí con người? Xem lại Mục 2 nhé!",
+      "source": "teacher_verified",
+      "grounding_verified": false,
+      "verified_by": "teacher",
+      "verified_at": "2026-10-14T22:05:09.178481"
+    },
+    {
+      "id": "tin6_b1_q4",
+      "cau_hoi": "Tầm quan trọng lớn nhất của thông tin đối với con người là gì?",
+      "lua_chon": {
+        "A": "Giúp con người giải trí mỗi ngày",
+        "B": "Giúp con người lưu trữ thật nhiều sách vở",
+        "C": "Giúp con người hiểu biết và đưa ra quyết định đúng đắn",
+        "D": "Giúp tăng tốc độ xử lý của máy tính"
+      },
+      "dap_an_dung": "C",
+      "muc_sgk": "Mục 3: Tầm quan trọng của thông tin",
+      "trang_sgk": 7,
+      "giai_thich_su_pham": "Tuyệt vời! Thông tin giúp con người nâng cao hiểu biết và quan trọng nhất là đưa ra những quyết định, hành động kịp thời, chính xác.",
+      "goi_y_khi_sai": "Khi biết ngày mai trời trở rét hay biết lịch kiểm tra, điều đó giúp em làm gì? Hãy đọc lại Mục 3 về Tầm quan trọng của thông tin nhé!",
+      "source": "teacher_verified",
+      "grounding_verified": false,
+      "verified_by": "teacher",
+      "verified_at": "2026-10-14T22:05:13.956070"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "schema_version": "2.0",
+  "grade": 6,
+  "lesson_id": 2,
+  "title": "XỬ LÍ THÔNG TIN",
+  "status": "draft",
+  "source_file": null,
+  "extracted_pages": [],
+  "updated_at": "2026-10-15T21:41:58.756824",
+  "note": null,
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 2 • TIN HỌC 6",
+      "title": "Xử lí thông tin",
+      "description": "Tìm hiểu về các hoạt động cơ bản trong quá trình xử lí thông tin của con người và cách máy tính hỗ trợ con người thực hiện các hoạt động đó một cách hiệu quả.",
+      "source": "generated",
+      "teacher_reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Nêu được các hoạt động cơ bản trong xử lí thông tin.",
+        "Giải thích được máy tính là công cụ hiệu quả để xử lí thông tin.",
+        "Nêu được ví dụ minh hoạ cụ thể."
+      ],
+      "source": "generated",
+      "teacher_reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "type": "grid_cards",
+      "title": "Các hoạt động xử lí thông tin cốt lõi",
+      "cards": [
+        {
+          "title": "Thu nhận thông tin",
+          "desc": "Nhờ các giác quan để tiếp nhận thông tin từ thế giới bên ngoài.",
+          "icon": "eye"
+        },
+        {
+          "title": "Lưu trữ thông tin",
+          "desc": "Bộ nhớ ghi nhớ lại thông tin để không bị mất đi.",
+          "icon": "hard-drive"
+        },
+        {
+          "title": "Xử lí thông tin",
+          "desc": "So sánh, phân tích, suy luận để đưa ra kết luận hoặc quyết định mới.",
+          "icon": "cpu"
+        },
+        {
+          "title": "Truyền thông tin",
+          "desc": "Chuyển thông tin đến các bộ phận cơ thể hoặc chia sẻ với người khác.",
+          "icon": "share-2"
+        }
+      ],
+      "source": "generated",
+      "teacher_reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "type": "takeaways",
+      "title": "Ghi nhớ trọng tâm",
+      "items": [
+        "Quá trình xử lí thông tin gồm bốn hoạt động cơ bản: Thu nhận, lưu trữ, xử lí và truyền thông tin.",
+        "Máy tính là công cụ hiệu quả để thu nhận, lưu trữ, xử lí và truyền thông tin với tốc độ cao và độ chính xác lớn.",
+        "Máy tính có đủ bốn thành phần thực hiện các hoạt động xử lí thông tin: Thiết bị vào, bộ nhớ, bộ xử lí và thiết bị ra."
+      ],
+      "source": "generated",
+      "teacher_reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin6_b2_q1",
+      "cau_hoi": "Máy tính gồm mấy thành phần để có thể thực hiện được các hoạt động xử lí thông tin?",
+      "lua_chon": {
+        "A": "3",
+        "B": "4",
+        "C": "5",
+        "D": "6"
+      },
+      "dap_an_dung": "B",
+      "muc_sgk": "2. Xử lí thông tin trong máy tính",
+      "trang_sgk": 10,
+      "giai_thich_su_pham": "Máy tính có đủ 4 thành phần để thực hiện các hoạt động xử lí thông tin gồm: thiết bị vào, bộ nhớ, bộ xử lí và thiết bị ra.",
+      "goi_y_khi_sai": "Em hãy quan sát hình 1.2 trong sách giáo khoa trang 10 để đếm số lượng các khối chức năng chính của máy tính nhé.",
+      "forbidden_keywords": [
+        "4",
+        "bốn"
+      ],
+      "source": "teacher_verified",
+      "grounding_verified": false,
+      "verified_by": "teacher",
+      "verified_at": "2026-10-15T21:41:52.392455"
+    }
+  ]
+}

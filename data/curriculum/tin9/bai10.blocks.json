@@ -1,0 +1,125 @@
+{
+  "schema_version": "2.0",
+  "grade": 9,
+  "lesson_id": 10,
+  "title": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+  "status": "published",
+  "source_file": null,
+  "extracted_pages": [
+    55,
+    56,
+    57,
+    58,
+    59
+  ],
+  "updated_at": "2026-10-18T12:21:11.036460",
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 10 • TIN HỌC 9",
+      "title": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+      "description": "Chủ đề 4. Ứng dụng tin học"
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Nắm vững lý thuyết cốt lõi của Bài 10: Thực hành: Xử lý dữ liệu bảng tính nâng cao.",
+        "Vận dụng thành thạo vào bài tập tình huống thực tế và câu hỏi trắc nghiệm.",
+        "Rèn luyện tư duy tin học và phương pháp giải quyết vấn đề bằng công nghệ."
+      ]
+    },
+    {
+      "type": "takeaways",
+      "title": "Ghi nhớ trọng tâm",
+      "items": [
+        "Chủ động thực hành và đối chiếu kết quả với lý thuyết SGK.",
+        "Ghi nhớ các quy tắc cú pháp và nguyên tắc an toàn số."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin9_b10_q1",
+      "section_ref": "Mục 1: Các hàm thống kê có điều kiện COUNTIF và SUMIF",
+      "muc_sgk": "Mục 1: Hàm COUNTIF",
+      "trang_sgk": 55,
+      "cau_hoi": "Để đếm xem trong danh sách học sinh có bao nhiêu bạn được xếp loại học lực 'Tốt' ở cột Xếp loại (từ ô F2 đến F40), ta sử dụng công thức nào sau đây?",
+      "lua_chon": {
+        "A": "=SUM(F2:F40, \"Tốt\")",
+        "B": "=COUNTIF(F2:F40, \"Tốt\")",
+        "C": "=IF(F2:F40=\"Tốt\")",
+        "D": "=AVERAGE(F2:F40)"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Hàm COUNTIF nhận vùng dữ liệu F2:F40 và đếm số lượng ô có chứa giá trị chuỗi \"Tốt\".",
+      "goi_y_khi_sai": "Hàm nào trong tiếng Anh có nghĩa là ĐẾM (COUNT) kết hợp với NẾU (IF)? Xem lại cú pháp ở Mục 1 nhé!",
+      "forbidden_keywords": [
+        "COUNTIF",
+        "đáp án B"
+      ]
+    },
+    {
+      "id": "tin9_b10_q2",
+      "section_ref": "Mục 1: Các hàm thống kê có điều kiện COUNTIF và SUMIF",
+      "muc_sgk": "Mục 1: Phân biệt SUM và SUMIF",
+      "trang_sgk": 56,
+      "cau_hoi": "Điểm khác biệt cơ bản nhất giữa hàm SUM và hàm SUMIF là gì?",
+      "lua_chon": {
+        "A": "Hàm SUM chỉ cộng được 2 ô, còn hàm SUMIF cộng được 100 ô",
+        "B": "Hàm SUM cộng tất cả các ô trong vùng chỉ định, còn hàm SUMIF chỉ cộng những ô thỏa mãn một điều kiện nhất định",
+        "C": "Hàm SUM là để đếm, còn SUMIF là để tính trung bình cộng",
+        "D": "Hai hàm này hoàn toàn giống nhau, không có gì khác biệt"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! SUM là tính tổng toàn bộ các số trong vùng, còn SUMIF bổ sung thêm tiêu chí lọc điều kiện trước khi tính tổng.",
+      "goi_y_khi_sai": "Chữ 'IF' ở cuối tên hàm SUMIF có nghĩa là gì? Điều đó đem lại tính năng gì khác biệt so với hàm SUM thông thường? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": [
+        "thỏa mãn một điều kiện",
+        "tất cả các ô",
+        "đáp án B"
+      ]
+    },
+    {
+      "id": "tin9_b10_q3",
+      "section_ref": "Mục 1: Các hàm thống kê có điều kiện COUNTIF và SUMIF",
+      "muc_sgk": "Mục 1: Cú pháp hàm SUMIF",
+      "trang_sgk": 57,
+      "cau_hoi": "Trong công thức =SUMIF(A2:A15, \"Sách giáo khoa\", C2:C15), đối số vùng ô C2:C15 đóng vai trò là gì?",
+      "lua_chon": {
+        "A": "Vùng chứa tiêu chí kiểm tra điều kiện",
+        "B": "Vùng chứa các giá trị số cần tính tổng (sum_range)",
+        "C": "Tên của trang tính",
+        "D": "Tiêu đề của cột cần xóa"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Cú pháp SUMIF là (vùng_kiểm_tra, điều_kiện, vùng_tính_tổng). Cột C2:C15 ở vị trí thứ ba chính là vùng chứa các số thực tế để máy cộng tổng lại.",
+      "goi_y_khi_sai": "C2:C15 nằm ở vị trí thứ 3 trong hàm SUMIF. Vị trí này chứa dữ liệu gì để máy cộng lại? Xem lại cú pháp ở Mục 1 nhé!",
+      "forbidden_keywords": [
+        "cần tính tổng",
+        "sum_range",
+        "đáp án B"
+      ]
+    },
+    {
+      "id": "tin9_b10_q4",
+      "section_ref": "Mục 2: Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính",
+      "muc_sgk": "Mục 2: Lọc dữ liệu Filter",
+      "trang_sgk": 58,
+      "cau_hoi": "Khi muốn trích xuất nhanh danh sách các học sinh đạt học lực Xuất sắc để gửi khen thưởng mà KHÔNG làm mất hoặc xáo trộn dữ liệu của các bạn khác trong bảng, ta nên sử dụng công cụ nào?",
+      "lua_chon": {
+        "A": "Dùng phím Delete để xóa hết những bạn không đạt Xuất sắc",
+        "B": "Công cụ Lọc dữ liệu tự động (AutoFilter)",
+        "C": "Vẽ hình tròn che lại các dòng khác",
+        "D": "Tắt máy tính đi bật lại"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Công cụ AutoFilter tạm thời ẩn đi những dòng không thỏa mãn điều kiện và chỉ hiển thị đúng các dòng học sinh Xuất sắc, toàn bộ dữ liệu gốc vẫn được bảo toàn nguyên vẹn 100%.",
+      "goi_y_khi_sai": "Công cụ có biểu tượng hình chiếc phễu chuyên dùng để lọc dữ liệu theo tiêu chí mà không làm mất hàng là gì? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": [
+        "AutoFilter",
+        "Lọc dữ liệu",
+        "đáp án B"
+      ]
+    }
+  ]
+}

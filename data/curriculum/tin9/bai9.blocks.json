@@ -1,0 +1,129 @@
+{
+  "schema_version": "2.0",
+  "grade": 9,
+  "lesson_id": 9,
+  "title": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+  "status": "published",
+  "source_file": null,
+  "extracted_pages": [
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54
+  ],
+  "updated_at": "2026-10-18T12:21:11.035465",
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 9 • TIN HỌC 9",
+      "title": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+      "description": "Chủ đề 4. Ứng dụng tin học"
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Nắm vững lý thuyết cốt lõi của Bài 9: Sử dụng công cụ xác thực dữ liệu và hàm điều kiện.",
+        "Vận dụng thành thạo vào bài tập tình huống thực tế và câu hỏi trắc nghiệm.",
+        "Rèn luyện tư duy tin học và phương pháp giải quyết vấn đề bằng công nghệ."
+      ]
+    },
+    {
+      "type": "takeaways",
+      "title": "Ghi nhớ trọng tâm",
+      "items": [
+        "Chủ động thực hành và đối chiếu kết quả với lý thuyết SGK.",
+        "Ghi nhớ các quy tắc cú pháp và nguyên tắc an toàn số."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin9_b9_q1",
+      "section_ref": "Mục 1: Công cụ xác thực dữ liệu (Data Validation)",
+      "muc_sgk": "Mục 1: Công cụ Data Validation",
+      "trang_sgk": 45,
+      "cau_hoi": "Mục đích chính của công cụ Xác thực dữ liệu (Data Validation) trong phần mềm bảng tính điện tử là gì?",
+      "lua_chon": {
+        "A": "Tô màu nền toàn bộ bảng tính cho rực rỡ",
+        "B": "Kiểm soát và giới hạn dữ liệu được phép nhập vào ô tính, ngăn chặn việc nhập sai kiểu dữ liệu ngay từ đầu",
+        "C": "Xóa toàn bộ dữ liệu trong máy vi tính",
+        "D": "Tự động tắt nguồn máy tính khi nhập điểm kém"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Data Validation đóng vai trò như một người gác cổng, chỉ cho phép dữ liệu hợp lệ đi qua và từ chối các giá trị sai quy tắc.",
+      "goi_y_khi_sai": "Data Validation giúp người nhập liệu tránh được sai sót gì khi gõ số liệu vào ô tính? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": [
+        "Kiểm soát và giới hạn",
+        "ngăn chặn",
+        "đáp án B"
+      ]
+    },
+    {
+      "id": "tin9_b9_q2",
+      "section_ref": "Mục 1: Công cụ xác thực dữ liệu (Data Validation)",
+      "muc_sgk": "Mục 1: Thiết lập tiêu chí",
+      "trang_sgk": 47,
+      "cau_hoi": "Trong phần mềm bảng tính, để quy định một cột điểm chỉ được phép nhập số thực từ 0 đến 10, trong hộp thoại Data Validation ta cần chọn tiêu chí nào?",
+      "lua_chon": {
+        "A": "Kiểu văn bản (Text length) bằng 100 ký tự",
+        "B": "Kiểu số thực (Decimal) với điều kiện 'between' từ 0 đến 10",
+        "C": "Kiểu ngày tháng năm bất kỳ",
+        "D": "Không cần thiết lập gì cả"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Điểm số thường có số lẻ (như 7.5 hay 8.25), do đó cần chọn kiểu số thực (Decimal) trong khoảng (between) từ 0 đến 10.",
+      "goi_y_khi_sai": "Điểm số học sinh có chứa phần thập phân không? Ta chọn kiểu Whole number (nguyên) hay Decimal (thực)? Xem lại Mục 1 nhé!",
+      "forbidden_keywords": [
+        "Decimal",
+        "between từ 0 đến 10",
+        "đáp án B"
+      ]
+    },
+    {
+      "id": "tin9_b9_q3",
+      "section_ref": "Mục 2: Hàm điều kiện IF và biểu thức logic",
+      "muc_sgk": "Mục 2: Cú pháp hàm IF",
+      "trang_sgk": 49,
+      "cau_hoi": "Cú pháp chuẩn của hàm điều kiện IF trong Excel và Google Sheets gồm có bao nhiêu đối số?",
+      "lua_chon": {
+        "A": "1 đối số duy nhất",
+        "B": "2 đối số",
+        "C": "3 đối số: (điều_kiện_logic, giá_trị_nếu_đúng, giá_trị_nếu_sai)",
+        "D": "10 đối số bắt buộc"
+      },
+      "dap_an_dung": "C",
+      "giai_thich_su_pham": "Chính xác! Hàm IF có đúng 3 đối số: thứ nhất là điều kiện kiểm tra, thứ hai là kết quả trả về khi điều kiện đúng, thứ ba là kết quả trả về khi điều kiện sai.",
+      "goi_y_khi_sai": "Cú pháp =IF(..., ..., ...) có mấy vị trí ngăn cách nhau bởi dấu phẩy? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": [
+        "3 đối số",
+        "đáp án C"
+      ]
+    },
+    {
+      "id": "tin9_b9_q4",
+      "section_ref": "Mục 2: Hàm điều kiện IF và biểu thức logic",
+      "muc_sgk": "Mục 2: Tính toán hàm IF",
+      "trang_sgk": 51,
+      "cau_hoi": "Cho công thức tại ô D2 là: =IF(C2 >= 5, \"Đạt\", \"Chưa đạt\"). Nếu ô C2 đang chứa giá trị số 7 thì kết quả hiển thị tại ô D2 sẽ là gì?",
+      "lua_chon": {
+        "A": "Chưa đạt",
+        "B": "Đạt",
+        "C": "Báo lỗi #VALUE!",
+        "D": "Ô D2 hoàn toàn để trống"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất chuẩn! Do giá trị 7 lớn hơn hoặc bằng 5 là điều kiện ĐÚNG (TRUE), nên hàm IF trả về đối số thứ hai là chuỗi chữ \"Đạt\".",
+      "goi_y_khi_sai": "Số 7 có lớn hơn hoặc bằng 5 không? Khi điều kiện đúng thì hàm IF chọn giá trị ở vị trí thứ hai hay thứ ba? Xem lại Mục 2 nhé!",
+      "forbidden_keywords": [
+        "Đạt",
+        "đáp án B"
+      ]
+    }
+  ]
+}

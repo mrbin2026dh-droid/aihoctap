@@ -1,0 +1,101 @@
+{
+  "schema_version": "2.0",
+  "grade": 9,
+  "lesson_id": 3,
+  "title": "Thực hành: Đánh giá chất lượng thông tin",
+  "status": "published",
+  "source_file": null,
+  "extracted_pages": [15, 16, 17, 18],
+  "updated_at": "2026-10-18T11:30:00.000000",
+  "blocks": [
+    {
+      "type": "hero",
+      "badge": "BÀI 3 • THỰC HÀNH TIN 9",
+      "title": "Thực hành: Đánh giá chất lượng thông tin",
+      "description": "Luyện tập kỹ năng tìm kiếm, sàng lọc và đối chiếu đa nguồn thông tin trên Internet qua tình huống thực tế: Lựa chọn hướng học tập sau khi tốt nghiệp THCS."
+    },
+    {
+      "type": "goals",
+      "items": [
+        "Biết cách chọn từ khóa tìm kiếm chính xác, hiệu quả trên Internet.",
+        "Sàng lọc và nhận diện được các dấu hiệu của thông tin kém chất lượng hoặc tin giả.",
+        "Thực hiện đối chiếu chéo giữa nhiều nguồn thông tin để kiểm chứng độ chính xác."
+      ]
+    },
+    {
+      "type": "takeaways",
+      "title": "Quy trình 3 bước thực hành chuẩn",
+      "items": [
+        "Bước 1: Xác định mục tiêu và chuẩn bị từ khóa tìm kiếm cụ thể.",
+        "Bước 2: Sàng lọc nguồn tin cậy (.gov.vn, .edu.vn) và đối chiếu chéo ít nhất 2 nguồn độc lập.",
+        "Bước 3: Tổng hợp dữ liệu vào bảng so sánh hoặc bài trình chiếu để báo cáo."
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "id": "tin9_b3_q1",
+      "cau_hoi": "Khi tìm kiếm thông tin trên Internet, dấu hiệu nào sau đây cho thấy một nguồn tin có ĐỘ TIN CẬY KÉM hoặc có nguy cơ là tin giả?",
+      "lua_chon": {
+        "A": "Website sử dụng tên miền giáo dục hoặc cơ quan nhà nước (.edu.vn, .gov.vn)",
+        "B": "Tiêu đề giật gân, bài viết giấu tên tác giả và không có ngày tháng cập nhật",
+        "C": "Bài viết có trích dẫn nguồn số liệu thống kê rõ ràng",
+        "D": "Nội dung được nhiều chuyên gia và báo chí chính thống dẫn lại"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Chính xác! Tiêu đề giật gân, thiếu tên tác giả và không ghi ngày đăng là những dấu hiệu điển hình của trang tin giả mạo câu tương tác.",
+      "goi_y_khi_sai": "Dấu hiệu đáng ngờ của các trang tin không chính thống là gì? Hãy tìm đặc điểm thiếu minh bạch trong Mục 2 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 2: Quy trình thực hành",
+      "trang_sgk": 15
+    },
+    {
+      "id": "tin9_b3_q2",
+      "cau_hoi": "Để tìm kiếm thông tin hiệu quả và tiết kiệm thời gian trên các máy tìm kiếm (Google, Bing), bước đầu tiên em cần làm là gì?",
+      "lua_chon": {
+        "A": "Xác định rõ mục tiêu cần tìm và chuẩn bị các từ khóa phù hợp, cụ thể",
+        "B": "Mở cùng lúc 30 tab trình duyệt để duyệt nhanh",
+        "C": "Nhấp chuột ngẫu nhiên vào đường link quảng cáo đầu tiên",
+        "D": "Tải tất cả các tệp đính kèm lạ về máy tính"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Rất chuẩn! Xác định mục tiêu và chọn từ khóa ngắn gọn, đúng trọng tâm là chìa khóa giúp máy tìm kiếm trả về kết quả chính xác nhất.",
+      "goi_y_khi_sai": "Trước khi gõ vào thanh tìm kiếm, việc chuẩn bị từ khóa có vai trò như thế nào? Xem lại Bước 1 ở Mục 2 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 2: Quy trình thực hành",
+      "trang_sgk": 16
+    },
+    {
+      "id": "tin9_b3_q3",
+      "cau_hoi": "Khi bắt gặp một bài viết gây xôn xao trên mạng xã hội về quy chế thi mới, hành động nào sau đây là văn minh và đúng phương pháp đánh giá thông tin?",
+      "lua_chon": {
+        "A": "Bấm chia sẻ ngay lập tức về trang cá nhân để cảnh báo bạn bè",
+        "B": "Đối chiếu, kiểm chứng lại với văn bản chính thức trên Cổng thông tin của Bộ hoặc Sở GD&ĐT",
+        "C": "Viết bình luận kích động tranh cãi dưới bài đăng",
+        "D": "Tin ngay vì bài đăng có hàng nghìn lượt thích (like)"
+      },
+      "dap_an_dung": "B",
+      "giai_thich_su_pham": "Rất tốt! Đối chiếu với văn bản pháp quy từ cơ quan nhà nước là nguyên tắc vàng để bảo vệ bản thân và cộng đồng khỏi tin đồn thất thiệt.",
+      "goi_y_khi_sai": "Phương pháp đối chiếu chéo với các nguồn tin chính thống được trình bày ở Bước 2 như thế nào? Xem lại nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 2: Quy trình thực hành",
+      "trang_sgk": 17
+    },
+    {
+      "id": "tin9_b3_q4",
+      "cau_hoi": "Trong chủ đề tìm hiểu hướng học tập sau THCS, việc chỉ biết tên trường mà không biết tổ hợp môn học lựa chọn, khoảng cách và học phí thì đã vi phạm tiêu chí nào?",
+      "lua_chon": {
+        "A": "Tính đầy đủ",
+        "B": "Tính mới",
+        "C": "Tính hợp pháp",
+        "D": "Tính dung lượng"
+      },
+      "dap_an_dung": "A",
+      "giai_thich_su_pham": "Chính xác! Thiếu các dữ liệu quan trọng liên quan đến quyết định chọn trường có nghĩa là thông tin thu thập chưa đạt Tính đầy đủ.",
+      "goi_y_khi_sai": "Thông tin cần bao quát toàn diện các khía cạnh cần thiết của vấn đề là tiêu chí nào? Xem lại Mục 1 và Mục 2 nhé!",
+      "source": "teacher_verified",
+      "muc_sgk": "Mục 1: Mục tiêu thực hành",
+      "trang_sgk": 18
+    }
+  ]
+}
