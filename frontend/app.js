@@ -5925,17 +5925,16 @@ function updateStudentDashboardRealData() {
 
 
 /* ==========================================================================
-   MODULE BÀI KIỂM TRA TRẮC NGHIỆM & ASSESSMENT CENTER (TEACHER & STUDENT)
-   - Tải file Excel mẫu & Upload đề từ file Excel
-   - Phòng thi trắc nghiệm độc lập (Immersive Arena >= 85vh, Mobile Responsive)
-   - AI Sư phạm Socrates chấm điểm, nhận diện lỗ hổng & đề xuất mục SGK ôn tập
+   MODULE BÀI KIỂM TRA TRẮC NGHIỆM (ONLINE ASSESSMENT & AI SOCRATIC GRADING)
+   Hỗ trợ chế độ Hybrid: Backend FastAPI (local/render) & Static Client (GitHub Pages / Offline)
    ========================================================================== */
 
 let currentExamList = [];
 let currentEditingExamQuestions = [];
+let activeStudentExam = null;
+let activeStudentExamFull = null; // Lưu đáp án chuẩn cho chế độ offline fallback
 let examTakingState = {
-  exam: null,
-  currentQIndex: 0,
+  currentQuestionIndex: 0,
   answers: {},
   timeLeftSeconds: 0,
   timerInterval: null
@@ -5951,6 +5950,30 @@ function getExamApiRoot() {
   return "http://127.0.0.1:8000/api";
 }
 
+// Hàm lấy danh sách bài kiểm tra dự phòng (default_exams.json + localStorage)
+async function getFallbackExams() {
+  let list = [];
+  try {
+    const res = await fetch("./data/exams/default_exams.json");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.exams)) list = data.exams;
+    }
+  } catch (err) {
+    console.debug("Không thể nạp default_exams.json tĩnh:", err);
+  }
+
+  try {
+    const localSaved = JSON.parse(localStorage.getItem("AISGK_CUSTOM_EXAMS") || "[]");
+    if (Array.isArray(localSaved)) {
+      list = [...list, ...localSaved];
+    }
+  } catch (err) {
+    console.debug("Không thể đọc AISGK_CUSTOM_EXAMS từ localStorage:", err);
+  }
+  return list;
+}
+
 function openExamHub() {
   if (typeof closePopup === "function") closePopup();
   const canvas = document.getElementById("focusCanvas");
@@ -5964,7 +5987,7 @@ function openExamHub() {
   if (!examStage) return;
   examStage.classList.remove("hidden");
 
-  // Update Header button states
+  // Cập nhật trạng thái nút Header
   const btnNavExam = document.getElementById("btnNavExamHub");
   if (btnNavExam) btnNavExam.classList.add("active");
   const btnDashboard = document.getElementById("btnNavDashboard");
@@ -6009,18 +6032,15 @@ async function loadTeacherExams() {
 
   try {
     const res = await fetch(`${getExamApiRoot()}/exams/list`);
-    if (!res.ok) throw new Error("Không thể tải danh sách đề thi");
+    if (!res.ok) throw new Error("API chưa phản hồi");
     const data = await res.json();
     currentExamList = data.exams || [];
     renderTeacherExamCards();
   } catch (err) {
-    console.warn("Lỗi tải đề kiểm tra:", err);
-    grid.replaceChildren();
-    const errP = document.createElement("p");
-    errP.style.color = "#ef4444";
-    errP.style.padding = "1rem";
-    errP.textContent = "Không thể kết nối đến máy chủ để tải danh sách đề thi.";
-    grid.appendChild(errP);
+    console.debug("Backend API offline hoặc chưa nạp, sử dụng bộ nhớ dự phòng:", err);
+    const fallback = await getFallbackExams();
+    currentExamList = fallback;
+    renderTeacherExamCards();
   }
 }
 
@@ -6077,21 +6097,19 @@ function renderTeacherExamCards() {
     meta.className = "exam-card-meta";
     meta.innerHTML = /* sanitize */ `
       <div>⏱ Thời gian: <strong>${escapeHtml(exam.duration_minutes || 15)} phút</strong></div>
-      <div>📝 Quy mô: <strong>${escapeHtml(exam.total_questions || 0)} câu hỏi trắc nghiệm</strong></div>
-      <div>📅 Ngày đăng: ${escapeHtml(exam.created_at ? new Date(exam.created_at).toLocaleDateString('vi-VN') : 'Hôm nay')}</div>
+      <div>📝 Quy mô: <strong>${escapeHtml(exam.total_questions || (exam.questions ? exam.questions.length : 0))} câu hỏi trắc nghiệm</strong></div>
     `;
 
     const footer = document.createElement("div");
     footer.className = "exam-card-footer";
-    
+
     const btnResults = document.createElement("button");
     btnResults.type = "button";
-    btnResults.className = "btn-exam-secondary";
-    btnResults.innerHTML = /* sanitize */ `<span>📊 Xem bảng điểm</span>`;
+    btnResults.className = "btn-exam-outline";
+    btnResults.innerHTML = /* sanitize */ `<span>📊 Xem kết quả nộp bài</span>`;
     btnResults.onclick = () => openTeacherExamResults(exam.exam_id, exam.title);
 
     footer.appendChild(btnResults);
-
     card.appendChild(header);
     card.appendChild(titleEl);
     card.appendChild(meta);
@@ -6105,7 +6123,40 @@ function initTeacherExamEvents() {
   const btnTemplate = document.getElementById("btnExamDownloadTemplate");
   if (btnTemplate) {
     btnTemplate.addEventListener("click", () => {
-      window.open(`${getExamApiRoot()}/exams/template`, "_blank");
+      // Ưu tiên tải trực tiếp file mẫu tĩnh có sẵn trong repo để hoạt động mượt trên mọi môi trường (kể cả GitHub Pages)
+      const downloadStaticTemplate = () => {
+        const a = document.createElement("a");
+        a.href = "./data/exams/exam_template.xlsx";
+        a.download = "De_Kiem_Tra_Mau.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      if (typeof window !== "undefined" && window.location && (window.location.hostname.endsWith("github.io") || window.location.protocol === "file:")) {
+        downloadStaticTemplate();
+        return;
+      }
+
+      fetch(`${getExamApiRoot()}/exams/template`)
+        .then(res => {
+          if (!res.ok) throw new Error("Lỗi API tải mẫu");
+          return res.blob();
+        })
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "De_Kiem_Tra_Mau.xlsx";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(err => {
+          console.debug("Tải qua API thất bại, chuyển sang file mẫu tĩnh:", err);
+          downloadStaticTemplate();
+        });
     });
   }
 
@@ -6126,6 +6177,62 @@ function initTeacherExamEvents() {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      const applyParsedQuestions = (questions, fileName) => {
+        currentEditingExamQuestions = questions;
+        openCreateExamModal();
+        renderModalQuestionsPreview();
+        const titleInput = document.getElementById("examFormTitle");
+        if (titleInput && (!titleInput.value || titleInput.value.trim() === "")) {
+          titleInput.value = fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
+        }
+        alert(`✔ Đã bóc tách thành công ${questions.length} câu hỏi từ file "${fileName}"!`);
+      };
+
+      // Ưu tiên 1: Đọc bằng thư viện SheetJS phía Client (0ms latency, không phụ thuộc backend)
+      if (typeof XLSX !== "undefined") {
+        try {
+          const buffer = await file.arrayBuffer();
+          const wb = XLSX.read(buffer, { type: "array" });
+          const firstSheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          const questions = [];
+          const startIdx = (rows.length > 0 && typeof rows[0][0] === "string" && (rows[0][0].toLowerCase().includes("mã") || rows[0][0].toLowerCase().includes("câu"))) ? 1 : 0;
+          for (let i = startIdx; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length < 7) continue;
+            const qId = String(row[0] || `q_${i}`).trim();
+            const content = String(row[1] || "").trim();
+            const optA = String(row[2] || "").trim();
+            const optB = String(row[3] || "").trim();
+            const optC = String(row[4] || "").trim();
+            const optD = String(row[5] || "").trim();
+            const correct = String(row[6] || "A").trim().toUpperCase();
+            const expl = String(row[7] || "").trim();
+            const topic = String(row[8] || "Kiến thức chung").trim();
+
+            if (!content || !optA || !optB) continue;
+            questions.push({
+              id: qId,
+              cau_hoi: content,
+              lua_chon: { "A": optA, "B": optB, "C": optC, "D": optD },
+              dap_an_dung: ["A", "B", "C", "D"].includes(correct) ? correct : "A",
+              giai_thich: expl || `Đáp án đúng là ${correct}`,
+              muc_sgk: topic
+            });
+          }
+
+          if (questions.length > 0) {
+            applyParsedQuestions(questions, file.name);
+            fileInput.value = "";
+            return;
+          }
+        } catch (clientErr) {
+          console.debug("SheetJS client parse error, trying backend:", clientErr);
+        }
+      }
+
+      // Ưu tiên 2: Gửi lên Backend FastAPI nếu có
       const formData = new FormData();
       formData.append("file", file);
 
@@ -6142,14 +6249,7 @@ function initTeacherExamEvents() {
 
         const data = await res.json();
         if (data.success && data.questions) {
-          currentEditingExamQuestions = data.questions;
-          openCreateExamModal();
-          renderModalQuestionsPreview();
-          const titleInput = document.getElementById("examFormTitle");
-          if (titleInput && (!titleInput.value || titleInput.value.trim() === "")) {
-            titleInput.value = file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ");
-          }
-          alert(`✔ Đã bóc tách thành công ${data.total_questions} câu hỏi từ file "${file.name}"!`);
+          applyParsedQuestions(data.questions, file.name);
         }
       } catch (err) {
         alert("Lỗi tải file Excel: " + err.message);
@@ -6190,15 +6290,15 @@ function initTeacherExamEvents() {
           "D": "Phương án lựa chọn D"
         },
         dap_an_dung: "A",
-        muc_sgk: "Mục kiến thức SGK",
-        giai_thich_su_pham: "Giải thích phương án đúng theo SGK."
+        giai_thich: "Giải thích đáp án chuẩn cho câu hỏi này.",
+        muc_sgk: "Mục 1: Kiến thức trọng tâm"
       });
       renderModalQuestionsPreview();
     });
   }
 
-  // 6. Lưu và Đăng bài kiểm tra
-  const btnSavePublish = document.getElementById("btnExamSaveAndPublish");
+  // 6. Lưu và xuất bản bài kiểm tra
+  const btnSavePublish = document.getElementById("btnModalSavePublishExam");
   if (btnSavePublish) {
     btnSavePublish.addEventListener("click", async () => {
       const titleInput = document.getElementById("examFormTitle");
@@ -6206,15 +6306,15 @@ function initTeacherExamEvents() {
       const classSelect = document.getElementById("examFormClass");
       const durationInput = document.getElementById("examFormDuration");
 
-      const title = titleInput?.value.trim() || "";
+      const title = titleInput?.value?.trim();
       if (!title) {
-        alert("Vui lòng nhập tiêu đề bài kiểm tra!");
+        alert("Vui lòng nhập Tiêu đề bài kiểm tra!");
         titleInput?.focus();
         return;
       }
 
-      if (!currentEditingExamQuestions || currentEditingExamQuestions.length === 0) {
-        alert("Bài kiểm tra cần có ít nhất 1 câu hỏi! Thầy/Cô vui lòng bấm 'Nạp từ Excel' hoặc 'Thêm câu hỏi'.");
+      if (currentEditingExamQuestions.length === 0) {
+        alert("Bài kiểm tra cần có ít nhất 1 câu hỏi! Thầy/Cô có thể bấm 'Nạp từ Excel' hoặc 'Thêm câu hỏi'.");
         return;
       }
 
@@ -6230,25 +6330,40 @@ function initTeacherExamEvents() {
         duration_minutes: durationVal,
         status: "published",
         created_at: new Date().toISOString(),
-        questions: currentEditingExamQuestions
+        questions: currentEditingExamQuestions,
+        total_questions: currentEditingExamQuestions.length
       };
 
       try {
         btnSavePublish.disabled = true;
         btnSavePublish.textContent = "Đang đăng...";
 
-        const res = await fetch(`${getExamApiRoot()}/teacher/exams/create`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(examPayload)
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || "Không thể đăng bài kiểm tra.");
+        // Lưu vào localStorage dự phòng ngay lập tức (đảm bảo không bao giờ mất bài)
+        try {
+          const localList = JSON.parse(localStorage.getItem("AISGK_CUSTOM_EXAMS") || "[]");
+          localList.unshift(examPayload);
+          localStorage.setItem("AISGK_CUSTOM_EXAMS", JSON.stringify(localList));
+        } catch (errLocal) {
+          console.debug("Lưu localStorage lỗi:", errLocal);
         }
 
-        alert("✔ Đã đăng bài kiểm tra thành công! Học sinh các lớp tương ứng đã có thể truy cập.");
+        // Thử gửi lên backend nếu có
+        let backendOk = false;
+        try {
+          const res = await fetch(`${getExamApiRoot()}/teacher/exams/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(examPayload)
+          });
+          if (res.ok) backendOk = true;
+        } catch (errBackend) {
+          console.debug("Backend API offline, lưu offline hoàn tất:", errBackend);
+        }
+
+        alert(backendOk
+          ? "✔ Đã đăng bài kiểm tra thành công lên hệ thống!"
+          : "✔ Đã lưu và xuất bản bài kiểm tra thành công vào bộ nhớ trình duyệt!");
+
         closeCreateExamModal();
         loadTeacherExams();
       } catch (err) {
@@ -6331,43 +6446,63 @@ function renderModalQuestionsPreview() {
 
 async function openTeacherExamResults(examId, examTitle) {
   const modal = document.getElementById("examTeacherResultsModal");
-  const titleEl = document.getElementById("teacherResultsExamTitle");
-  const tbody = document.getElementById("teacherResultsTableBody");
-
+  const titleSpan = document.getElementById("modalExamResultTitle");
+  const tbody = document.getElementById("teacherExamResultsTableBody");
   if (!modal || !tbody) return;
-  if (titleEl) titleEl.textContent = `Bảng Điểm: ${examTitle}`;
+
+  if (titleSpan) titleSpan.textContent = examTitle;
+  modal.classList.remove("hidden");
   tbody.replaceChildren();
 
   const loadingTr = document.createElement("tr");
-  loadingTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #94a3b8; padding: 1.5rem;">Đang tải danh sách bài nộp...</td>`;
+  loadingTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #94a3b8; padding: 1.5rem;">Đang tải danh sách bài nộp của học sinh...</td>`;
   tbody.appendChild(loadingTr);
-  modal.classList.remove("hidden");
 
   try {
-    const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/results`, {
-      headers: { "x-teacher-token": state.teacherToken || "" }
-    });
-    if (!res.ok) throw new Error("Không thể tải kết quả bài nộp");
-    const data = await res.json();
-    const subs = data.submissions || [];
+    let submissions = [];
+    try {
+      const res = await fetch(`${getExamApiRoot()}/teacher/exams/${examId}/results`);
+      if (res.ok) {
+        const data = await res.json();
+        submissions = data.submissions || [];
+      }
+    } catch (errApi) {
+      console.debug("API results fetch failed, using local submissions:", errApi);
+    }
+
+    // Nạp thêm các bài nộp đã lưu trong localStorage
+    try {
+      const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
+      const matchingLocal = localSubs.filter(s => s.exam_id === examId);
+      submissions = [...submissions, ...matchingLocal];
+    } catch (errLocal) {
+      console.debug("Local submissions read failed:", errLocal);
+    }
 
     tbody.replaceChildren();
-    if (subs.length === 0) {
+
+    if (submissions.length === 0) {
       const emptyTr = document.createElement("tr");
-      emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có học sinh nào nộp bài thi này.</td>`;
+      emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có học sinh nào nộp bài kiểm tra này.</td>`;
       tbody.appendChild(emptyTr);
       return;
     }
 
-    subs.forEach((s, idx) => {
+    submissions.forEach((s, idx) => {
       const tr = document.createElement("tr");
       const evalData = s.evaluation || {};
-      const score = evalData.score !== undefined ? evalData.score : "--";
-      const scoreColor = score >= 8 ? "#34d399" : (score >= 5 ? "#38bdf8" : "#f87171");
+      const score = evalData.score !== undefined ? evalData.score : (s.score !== undefined ? s.score : "--");
+      const scoreNum = parseFloat(score);
+      let scoreColor = "#38bdf8";
+      if (!isNaN(scoreNum)) {
+        if (scoreNum >= 8) scoreColor = "#34d399";
+        else if (scoreNum >= 5) scoreColor = "#fbbf24";
+        else scoreColor = "#f87171";
+      }
 
       tr.innerHTML = /* sanitize */ `
         <td>${idx + 1}</td>
-        <td><strong>${escapeHtml(s.student_name || 'Học sinh')}</strong></td>
+        <td><strong>${escapeHtml(s.student_name || s.student_code || 'Học sinh')}</strong></td>
         <td>${escapeHtml(s.class_code || '9A')}</td>
         <td><strong style="color: ${scoreColor}; font-size: 1.05rem;">${escapeHtml(score)} / 10</strong></td>
         <td>${evalData.correct_count !== undefined ? `${escapeHtml(evalData.correct_count)}/${escapeHtml(evalData.total_questions)}` : '--'}</td>
@@ -6401,156 +6536,174 @@ async function loadStudentExams() {
   const grade = studentAuthState.grade || state.grade || 9;
   const classCode = studentAuthState.classCode || "9A";
 
+  let exams = [];
   try {
     const res = await fetch(`${getExamApiRoot()}/exams/list?grade=${grade}&class_code=${encodeURIComponent(classCode)}`);
-    if (!res.ok) throw new Error("Không thể tải danh sách bài kiểm tra");
-    const data = await res.json();
-    const exams = data.exams || [];
-
-    grid.replaceChildren();
-    if (exams.length === 0) {
-      const emptyBox = document.createElement("div");
-      emptyBox.className = "exam-card-item";
-      emptyBox.style.gridColumn = "1 / -1";
-      emptyBox.style.textAlign = "center";
-      emptyBox.style.padding = "2.5rem 1rem";
-      emptyBox.innerHTML = /* sanitize */ `
-        <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🎉</div>
-        <h3 style="color: #f1f5f9; margin-bottom: 0.35rem;">Hiện chưa có bài kiểm tra mới</h3>
-        <p style="color: #64748b; font-size: 0.88rem;">Khi Thầy/Cô đăng bài kiểm tra mới cho lớp ${escapeHtml(classCode)}, bài thi sẽ xuất hiện ở đây.</p>
-      `;
-      grid.appendChild(emptyBox);
-      return;
+    if (res.ok) {
+      const data = await res.json();
+      exams = data.exams || [];
+    } else {
+      throw new Error("Không thể tải danh sách");
     }
-
-    exams.forEach(exam => {
-      const card = document.createElement("div");
-      card.className = "exam-card-item";
-
-      const header = document.createElement("div");
-      header.className = "exam-card-header";
-      header.innerHTML = /* sanitize */ `
-        <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • Lớp ${escapeHtml(classCode)}</span>
-        <span class="exam-status-pill open">● Đang mở</span>
-      `;
-
-      const titleEl = document.createElement("h3");
-      titleEl.className = "exam-card-title";
-      titleEl.textContent = exam.title;
-
-      const meta = document.createElement("div");
-      meta.className = "exam-card-meta";
-      meta.innerHTML = /* sanitize */ `
-        <div>⏱ Thời gian làm bài: <strong>${escapeHtml(exam.duration_minutes || 15)} phút</strong></div>
-        <div>📝 Số lượng: <strong>${escapeHtml(exam.total_questions || 0)} câu hỏi trắc nghiệm</strong></div>
-      `;
-
-      const footer = document.createElement("div");
-      footer.className = "exam-card-footer";
-      footer.style.justifyContent = "flex-end";
-
-      const btnStart = document.createElement("button");
-      btnStart.type = "button";
-      btnStart.className = "btn-exam-primary";
-      btnStart.innerHTML = /* sanitize */ `<span>▶ Bắt đầu làm bài</span>`;
-      btnStart.onclick = () => startStudentExam(exam.exam_id);
-
-      footer.appendChild(btnStart);
-      card.appendChild(header);
-      card.appendChild(titleEl);
-      card.appendChild(meta);
-      card.appendChild(footer);
-      grid.appendChild(card);
-    });
   } catch (err) {
-    grid.replaceChildren();
-    const errP = document.createElement("p");
-    errP.style.color = "#ef4444";
-    errP.style.padding = "1rem";
-    errP.textContent = "Không thể tải danh sách bài kiểm tra. Vui lòng kiểm tra lại kết nối mạng.";
-    grid.appendChild(errP);
+    console.debug("Không thể kết nối máy chủ, nạp danh sách đề dự phòng:", err);
+    const fallback = await getFallbackExams();
+    exams = fallback.filter(e => {
+      if (String(e.grade) !== String(grade)) return false;
+      const targets = e.target_classes || [];
+      if (targets.length > 0 && !targets.includes("Tất cả") && !targets.includes(classCode)) return false;
+      return true;
+    });
   }
+
+  grid.replaceChildren();
+  if (exams.length === 0) {
+    const emptyBox = document.createElement("div");
+    emptyBox.className = "exam-card-item";
+    emptyBox.style.gridColumn = "1 / -1";
+    emptyBox.style.textAlign = "center";
+    emptyBox.style.padding = "2.5rem 1rem";
+    emptyBox.innerHTML = /* sanitize */ `
+      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🎉</div>
+      <h3 style="color: #f1f5f9; margin-bottom: 0.35rem;">Hiện chưa có bài kiểm tra mới</h3>
+      <p style="color: #64748b; font-size: 0.88rem;">Khi Thầy/Cô đăng bài kiểm tra mới cho lớp ${escapeHtml(classCode)}, bài thi sẽ xuất hiện ở đây.</p>
+    `;
+    grid.appendChild(emptyBox);
+    return;
+  }
+
+  exams.forEach(exam => {
+    const card = document.createElement("div");
+    card.className = "exam-card-item";
+
+    const header = document.createElement("div");
+    header.className = "exam-card-header";
+    header.innerHTML = /* sanitize */ `
+      <span class="exam-card-tag">Khối ${escapeHtml(exam.grade)} • Lớp ${escapeHtml(classCode)}</span>
+      <span class="exam-status-pill open">● Đang mở</span>
+    `;
+
+    const titleEl = document.createElement("h3");
+    titleEl.className = "exam-card-title";
+    titleEl.textContent = exam.title;
+
+    const meta = document.createElement("div");
+    meta.className = "exam-card-meta";
+    meta.innerHTML = /* sanitize */ `
+      <div>⏱ Thời gian làm bài: <strong>${escapeHtml(exam.duration_minutes || 15)} phút</strong></div>
+      <div>📝 Số lượng: <strong>${escapeHtml(exam.total_questions || (exam.questions ? exam.questions.length : 0))} câu hỏi trắc nghiệm</strong></div>
+    `;
+
+    const footer = document.createElement("div");
+    footer.className = "exam-card-footer";
+    footer.style.justifyContent = "flex-end";
+
+    const btnStart = document.createElement("button");
+    btnStart.type = "button";
+    btnStart.className = "btn-exam-primary";
+    btnStart.innerHTML = /* sanitize */ `<span>▶ Bắt đầu làm bài</span>`;
+    btnStart.onclick = () => startStudentExam(exam.exam_id);
+
+    footer.appendChild(btnStart);
+    card.appendChild(header);
+    card.appendChild(titleEl);
+    card.appendChild(meta);
+    card.appendChild(footer);
+    grid.appendChild(card);
+  });
 }
 
 async function startStudentExam(examId) {
-  if (typeof closePopup === "function") closePopup();
   try {
-    const res = await fetch(`${getExamApiRoot()}/exams/${examId}`);
-    if (!res.ok) throw new Error("Không thể tải nội dung đề thi");
-    const data = await res.json();
-    const exam = data.exam;
+    let examData = null;
+    let fullExamData = null;
 
-    if (!exam || !exam.questions || exam.questions.length === 0) {
-      alert("Đề thi này chưa có câu hỏi!");
-      return;
-    }
-
-    // Khởi tạo trạng thái phòng thi
-    let savedAnswers = {};
     try {
-      const raw = localStorage.getItem(`temp_exam_answers_${examId}`);
-      if (raw) savedAnswers = JSON.parse(raw);
-    } catch (e) {
-      console.debug("Không thể đọc draft cũ:", e);
+      const res = await fetch(`${getExamApiRoot()}/exams/${examId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exam) examData = data.exam;
+      }
+    } catch (errApi) {
+      console.debug("API fetch exam failed, trying fallback:", errApi);
     }
 
-    if (examTakingState.timerInterval) {
-      clearInterval(examTakingState.timerInterval);
+    if (!examData) {
+      const fallbackList = await getFallbackExams();
+      const found = fallbackList.find(e => e.exam_id === examId);
+      if (found) {
+        fullExamData = JSON.parse(JSON.stringify(found));
+        examData = JSON.parse(JSON.stringify(found));
+        // Ẩn đáp án đúng và giải thích trên đề thi của học sinh
+        if (examData.questions) {
+          examData.questions.forEach(q => {
+            delete q.dap_an_dung;
+            delete q.giai_thich;
+          });
+        }
+      }
     }
+
+    if (!examData) {
+      throw new Error("Không tìm thấy thông tin bài kiểm tra!");
+    }
+
+    activeStudentExam = examData;
+    activeStudentExamFull = fullExamData;
 
     examTakingState = {
-      exam: exam,
-      currentQIndex: 0,
-      answers: savedAnswers || {},
-      timeLeftSeconds: (exam.duration_minutes || 15) * 60,
+      currentQuestionIndex: 0,
+      answers: {},
+      timeLeftSeconds: (activeStudentExam.duration_minutes || 15) * 60,
       timerInterval: null
     };
 
-    // Chuyển view sang phòng thi Immersive Arena
+    // Ẩn Student Hub, mở Taking Stage
     const studentView = document.getElementById("examStudentView");
-    const teacherView = document.getElementById("examTeacherView");
     const takingView = document.getElementById("examTakingView");
     const resultView = document.getElementById("examResultView");
 
     if (studentView) studentView.classList.add("hidden");
-    if (teacherView) teacherView.classList.add("hidden");
     if (resultView) resultView.classList.add("hidden");
     if (takingView) takingView.classList.remove("hidden");
 
-    // Đặt tên bài thi
+    // Điền tiêu đề và meta
     const titleEl = document.getElementById("takingExamTitle");
-    const tagEl = document.getElementById("takingExamTag");
-    if (titleEl) titleEl.textContent = exam.title;
-    if (tagEl) tagEl.textContent = `Khối ${exam.grade}`;
+    if (titleEl) titleEl.textContent = activeStudentExam.title;
+    const metaEl = document.getElementById("takingExamMeta");
+    if (metaEl) {
+      metaEl.textContent = `Học sinh: ${studentAuthState.studentName || 'Học sinh'} • Lớp ${studentAuthState.classCode || '9A'} • Khối ${activeStudentExam.grade}`;
+    }
 
-    // Khởi tạo bảng Palette và câu hỏi đầu tiên
     renderTakingPalette();
     renderTakingQuestion(0);
-    updateTakingAnsweredCount();
-
-    // Khởi động đồng hồ đếm ngược
     startExamCountdownTimer();
   } catch (err) {
-    alert("Lỗi tải đề thi: " + err.message);
+    alert("Không thể bắt đầu bài kiểm tra: " + err.message);
   }
 }
 
 function startExamCountdownTimer() {
-  const timerValEl = document.getElementById("takingCountdownVal");
-
-  function updateDisplay() {
-    if (!timerValEl) return;
-    const m = Math.floor(examTakingState.timeLeftSeconds / 60);
-    const s = examTakingState.timeLeftSeconds % 60;
-    const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    timerValEl.textContent = formatted;
-
-    if (examTakingState.timeLeftSeconds <= 60) {
-      timerValEl.classList.add("warning");
-    } else {
-      timerValEl.classList.remove("warning");
-    }
+  if (examTakingState.timerInterval) {
+    clearInterval(examTakingState.timerInterval);
   }
+
+  const timerEl = document.getElementById("takingTimerDisplay");
+  const updateDisplay = () => {
+    if (!timerEl) return;
+    const minutes = Math.floor(examTakingState.timeLeftSeconds / 60);
+    const seconds = examTakingState.timeLeftSeconds % 60;
+    const formatted = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    timerEl.textContent = `⏱ ${formatted}`;
+
+    if (examTakingState.timeLeftSeconds <= 120) {
+      timerEl.style.color = "#ef4444";
+      timerEl.style.borderColor = "#ef4444";
+    } else {
+      timerEl.style.color = "#38bdf8";
+      timerEl.style.borderColor = "rgba(56, 189, 248, 0.4)";
+    }
+  };
 
   updateDisplay();
 
@@ -6560,7 +6713,7 @@ function startExamCountdownTimer() {
       clearInterval(examTakingState.timerInterval);
       examTakingState.timerInterval = null;
       updateDisplay();
-      alert("⏱ Hết giờ làm bài! Hệ thống tự động nộp bài thi của em ngay bây giờ.");
+      alert("⏰ Đã hết thời gian làm bài! Hệ thống đang tự động nộp bài của em.");
       submitStudentExam();
     } else {
       updateDisplay();
@@ -6570,152 +6723,137 @@ function startExamCountdownTimer() {
 
 function renderTakingPalette() {
   const container = document.getElementById("takingPaletteContainer");
-  if (!container || !examTakingState.exam) return;
+  if (!container || !activeStudentExam) return;
   container.replaceChildren();
 
-  const questions = examTakingState.exam.questions || [];
-  questions.forEach((q, idx) => {
+  const total = activeStudentExam.questions ? activeStudentExam.questions.length : 0;
+  for (let i = 0; i < total; i++) {
+    const q = activeStudentExam.questions[i];
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "palette-q-btn";
-    btn.textContent = idx + 1;
+    btn.className = "q-palette-btn";
+    btn.textContent = String(i + 1);
 
-    const isAnswered = !!examTakingState.answers[q.id];
-    const isCurrent = (idx === examTakingState.currentQIndex);
-
-    if (isAnswered) btn.classList.add("answered");
-    if (isCurrent) btn.classList.add("active");
+    if (i === examTakingState.currentQuestionIndex) {
+      btn.classList.add("current");
+    }
+    if (examTakingState.answers[q.id]) {
+      btn.classList.add("answered");
+    }
 
     btn.onclick = () => {
-      renderTakingQuestion(idx);
+      renderTakingQuestion(i);
     };
 
     container.appendChild(btn);
-  });
-}
-
-function renderTakingQuestion(index) {
-  const exam = examTakingState.exam;
-  if (!exam || !exam.questions) return;
-  const questions = exam.questions;
-  if (index < 0 || index >= questions.length) return;
-
-  examTakingState.currentQIndex = index;
-  const q = questions[index];
-
-  // 1. Cập nhật số thứ tự và mục SGK
-  const idxEl = document.getElementById("takingQCurrentIndex");
-  const sectionEl = document.getElementById("takingQSectionBadge");
-  const textEl = document.getElementById("takingQQuestionText");
-
-  if (idxEl) idxEl.textContent = `Câu ${index + 1} / ${questions.length}`;
-  if (sectionEl) sectionEl.textContent = q.muc_sgk || "Kiến thức SGK";
-  if (textEl) textEl.textContent = q.cau_hoi;
-
-  // 2. Render 4 lựa chọn A, B, C, D to bản
-  const optionsContainer = document.getElementById("takingOptionsContainer");
-  if (optionsContainer) {
-    optionsContainer.replaceChildren();
-    const choices = q.lua_chon || {};
-    const keys = ["A", "B", "C", "D"];
-
-    keys.forEach(k => {
-      const optText = choices[k];
-      if (optText === undefined) return;
-
-      const optCard = document.createElement("div");
-      optCard.className = "taking-opt-card";
-      if (examTakingState.answers[q.id] === k) {
-        optCard.classList.add("selected");
-      }
-
-      optCard.innerHTML = /* sanitize */ `
-        <div class="opt-letter-badge">${escapeHtml(k)}</div>
-        <div class="opt-text-val">${escapeHtml(optText)}</div>
-      `;
-
-      optCard.onclick = () => {
-        selectTakingOption(q.id, k);
-      };
-
-      optionsContainer.appendChild(optCard);
-    });
   }
 
-  // 3. Cập nhật nút Trước / Tiếp theo
-  const btnPrev = document.getElementById("btnTakingPrevQ");
-  const btnNext = document.getElementById("btnTakingNextQ");
-
-  if (btnPrev) {
-    btnPrev.disabled = (index === 0);
-    btnPrev.style.opacity = (index === 0) ? "0.4" : "1";
-    btnPrev.onclick = () => renderTakingQuestion(index - 1);
-  }
-
-  if (btnNext) {
-    if (index === questions.length - 1) {
-      btnNext.textContent = "Nộp bài 🏁";
-      btnNext.onclick = () => confirmAndSubmitStudentExam();
-    } else {
-      btnNext.textContent = "Câu tiếp ➡";
-      btnNext.onclick = () => renderTakingQuestion(index + 1);
-    }
-  }
-
-  // 4. Đồng bộ active trên Palette
-  const paletteBtns = document.querySelectorAll(".palette-q-btn");
-  paletteBtns.forEach((b, i) => {
-    b.classList.toggle("active", i === index);
-  });
-}
-
-function selectTakingOption(qId, key) {
-  examTakingState.answers[qId] = key;
-
-  // Lưu tạm vào LocalStorage để chống mất bài khi lỡ tay F5 hoặc rớt mạng
-  try {
-    localStorage.setItem(`temp_exam_answers_${examTakingState.exam.exam_id}`, JSON.stringify(examTakingState.answers));
-  } catch (e) {
-    console.debug("Không thể lưu draft vào localStorage:", e);
-  }
-
-  // Cập nhật giao diện lựa chọn
-  const options = document.querySelectorAll(".taking-opt-card");
-  options.forEach(opt => {
-    const badge = opt.querySelector(".opt-letter-badge");
-    if (badge && badge.textContent === key) {
-      opt.classList.add("selected");
-    } else {
-      opt.classList.remove("selected");
-    }
-  });
-
-  // Đổi màu nút câu hỏi trên palette
-  renderTakingPalette();
   updateTakingAnsweredCount();
 }
 
+function renderTakingQuestion(index) {
+  if (!activeStudentExam || !activeStudentExam.questions || !activeStudentExam.questions[index]) return;
+  examTakingState.currentQuestionIndex = index;
+
+  const q = activeStudentExam.questions[index];
+  const total = activeStudentExam.questions.length;
+
+  // Cập nhật số câu
+  const numSpan = document.getElementById("takingQuestionNumber");
+  if (numSpan) numSpan.textContent = `Câu ${index + 1} / ${total}:`;
+
+  // Cập nhật nội dung câu hỏi
+  const textEl = document.getElementById("takingQuestionText");
+  if (textEl) textEl.textContent = q.cau_hoi;
+
+  // Cập nhật các lựa chọn
+  const optionsContainer = document.getElementById("takingOptionsContainer");
+  if (optionsContainer) {
+    optionsContainer.replaceChildren();
+
+    const selectedChoice = examTakingState.answers[q.id];
+    const letters = ["A", "B", "C", "D"];
+
+    letters.forEach(letter => {
+      const optionText = q.lua_chon ? q.lua_chon[letter] : "";
+      if (!optionText) return;
+
+      const card = document.createElement("div");
+      card.className = "taking-option-card";
+      if (selectedChoice === letter) {
+        card.classList.add("selected");
+      }
+
+      card.innerHTML = /* sanitize */ `
+        <div class="option-indicator">${letter}</div>
+        <div class="option-text">${escapeHtml(optionText)}</div>
+      `;
+
+      card.onclick = () => {
+        selectTakingOption(q.id, letter);
+      };
+
+      optionsContainer.appendChild(card);
+    });
+  }
+
+  // Điều khiển nút Trước / Tiếp theo
+  const btnPrev = document.getElementById("btnTakingPrev");
+  const btnNext = document.getElementById("btnTakingNext");
+  if (btnPrev) btnPrev.disabled = (index === 0);
+  if (btnNext) btnNext.disabled = (index === total - 1);
+
+  renderTakingPalette();
+}
+
+function selectTakingOption(questionId, letter) {
+  examTakingState.answers[questionId] = letter;
+
+  const optionsContainer = document.getElementById("takingOptionsContainer");
+  if (optionsContainer) {
+    const cards = optionsContainer.querySelectorAll(".taking-option-card");
+    const letters = ["A", "B", "C", "D"];
+    cards.forEach((card, idx) => {
+      if (letters[idx] === letter) {
+        card.classList.add("selected");
+      } else {
+        card.classList.remove("selected");
+      }
+    });
+  }
+
+  renderTakingPalette();
+}
+
 function updateTakingAnsweredCount() {
-  const answeredEl = document.getElementById("takingAnsweredCount");
-  if (!answeredEl || !examTakingState.exam) return;
-  const total = examTakingState.exam.questions?.length || 0;
+  if (!activeStudentExam || !activeStudentExam.questions) return;
+  const total = activeStudentExam.questions.length;
   const answered = Object.keys(examTakingState.answers).length;
-  answeredEl.textContent = `${answered}/${total} câu`;
+
+  const countSpan = document.getElementById("takingAnsweredCount");
+  if (countSpan) countSpan.textContent = `${answered}/${total}`;
+
+  const fillBar = document.getElementById("takingProgressFill");
+  if (fillBar) {
+    const pct = total > 0 ? (answered / total) * 100 : 0;
+    fillBar.style.width = `${pct}%`;
+  }
 }
 
 function confirmAndSubmitStudentExam() {
-  const total = examTakingState.exam?.questions?.length || 0;
+  if (!activeStudentExam || !activeStudentExam.questions) return;
+  const total = activeStudentExam.questions.length;
   const answered = Object.keys(examTakingState.answers).length;
-  const unanswered = total - answered;
 
-  let msg = "Em có chắc chắn muốn nộp bài kiểm tra ngay không?";
-  if (unanswered > 0) {
-    msg = `⚠️ Em còn ${unanswered} câu chưa trả lời. Em có chắc chắn muốn nộp bài thi ngay không?`;
+  if (answered < total) {
+    const confirmSubmit = confirm(`Em mới trả lời ${answered}/${total} câu hỏi. Em có chắc chắn muốn nộp bài sớm không?`);
+    if (!confirmSubmit) return;
+  } else {
+    const confirmSubmit = confirm("Em đã hoàn thành tất cả các câu hỏi! Bấm OK để nộp bài và nhận đánh giá AI tức thì.");
+    if (!confirmSubmit) return;
   }
 
-  if (confirm(msg)) {
-    submitStudentExam();
-  }
+  submitStudentExam();
 }
 
 async function submitStudentExam() {
@@ -6724,107 +6862,197 @@ async function submitStudentExam() {
     examTakingState.timerInterval = null;
   }
 
-  const exam = examTakingState.exam;
-  if (!exam) return;
+  const takingView = document.getElementById("examTakingView");
+  const resultView = document.getElementById("examResultView");
 
-  const btnSubmit = document.getElementById("btnTakingSubmitExam");
-  if (btnSubmit) {
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = "Đang chấm điểm...";
-  }
-
-  const subPayload = {
-    exam_id: exam.exam_id,
-    student_id: studentAuthState.uid || "std_hs",
-    student_name: studentAuthState.studentName || (studentAuthState.studentCode ? `Học sinh ${studentAuthState.studentCode}` : "Học sinh"),
+  const payload = {
+    exam_id: activeStudentExam.exam_id,
+    student_id: studentAuthState.uid || "std_demo",
+    student_name: studentAuthState.studentName || "Học sinh",
+    student_code: studentAuthState.studentCode || "HS001",
     class_code: studentAuthState.classCode || "9A",
-    grade: studentAuthState.grade || state.grade || 9,
     answers: examTakingState.answers
   };
 
   try {
-    const res = await fetch(`${getExamApiRoot()}/exams/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(subPayload)
-    });
+    let result = null;
 
-    if (!res.ok) throw new Error("Lỗi nộp bài thi tới máy chủ.");
-    const data = await res.json();
-    const evaluation = data.evaluation;
-
-    // Dọn dẹp bản nháp tạm sau khi đã nộp thành công
+    // Ưu tiên 1: Gửi lên Backend chấm bài
     try {
-      localStorage.removeItem(`temp_exam_answers_${exam.exam_id}`);
-    } catch (e) {
-      console.debug("Không thể xóa draft tạm:", e);
+      const res = await fetch(`${getExamApiRoot()}/exams/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        result = data.evaluation;
+      }
+    } catch (apiErr) {
+      console.debug("Backend submit offline, executing client-side Socratic grading:", apiErr);
     }
 
-    renderExamResult(evaluation, exam);
+    // Ưu tiên 2: Chấm bài phía Client nếu Backend offline (Chế độ độc lập trên GitHub Pages)
+    if (!result) {
+      let questionsWithAnswers = [];
+      if (activeStudentExamFull && activeStudentExamFull.questions) {
+        questionsWithAnswers = activeStudentExamFull.questions;
+      } else {
+        const fallbackList = await getFallbackExams();
+        const found = fallbackList.find(e => e.exam_id === activeStudentExam.exam_id);
+        if (found && found.questions) questionsWithAnswers = found.questions;
+      }
+
+      let correctCount = 0;
+      const totalQ = questionsWithAnswers.length || 1;
+      const details = [];
+      const weakTopics = [];
+
+      questionsWithAnswers.forEach(q => {
+        const studentChoice = examTakingState.answers[q.id];
+        const isCorrect = (studentChoice === q.dap_an_dung);
+        if (isCorrect) correctCount++;
+        else {
+          if (q.muc_sgk && !weakTopics.includes(q.muc_sgk)) {
+            weakTopics.push(q.muc_sgk);
+          }
+        }
+        details.push({
+          id: q.id,
+          cau_hoi: q.cau_hoi,
+          is_correct: isCorrect,
+          student_choice: studentChoice,
+          correct_option: q.dap_an_dung,
+          giai_thich: q.giai_thich || "",
+          muc_sgk: q.muc_sgk || "Kiến thức chung"
+        });
+      });
+
+      const score = Math.round((correctCount / totalQ) * 100) / 10;
+      let socraticAdvice = "";
+      if (score >= 9) {
+        socraticAdvice = "Xuất sắc! Em đã nắm rất vững kiến thức bài học. Hãy thử sức thêm các câu hỏi phân hóa nâng cao!";
+      } else if (score >= 7) {
+        socraticAdvice = "Khá tốt! Em đã hiểu bài, chỉ cần rà soát lại một vài câu lý thuyết chi tiết để đạt điểm tuyệt đối.";
+      } else if (score >= 5) {
+        socraticAdvice = "Em đã đạt yêu cầu cơ bản. Hãy chú ý đọc kỹ đề bài và xem lại các mục kiến thức SGK bên dưới.";
+      } else {
+        socraticAdvice = "Em cần ôn tập kỹ lại bài học này. Hãy dành 15 phút mở lại các mục SGK được đề xuất để củng cố nền tảng nhé!";
+      }
+
+      result = {
+        score: score,
+        correct_count: correctCount,
+        total_questions: totalQ,
+        weak_topics: weakTopics,
+        socratic_advice: socraticAdvice,
+        details: details,
+        recommended_lessons: [
+          { grade: activeStudentExam.grade || 9, lesson_id: 1, title: "Bài 1: Ôn tập kiến thức trọng tâm", muc_sgk: weakTopics[0] || "Mục 1" }
+        ],
+        submitted_at: new Date().toISOString()
+      };
+    }
+
+    // Lưu bài nộp vào localStorage dự phòng
+    try {
+      const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
+      localSubs.unshift({
+        ...payload,
+        evaluation: result
+      });
+      localStorage.setItem("AISGK_SUBMISSIONS", JSON.stringify(localSubs));
+    } catch (eSub) {
+      console.debug("Lưu localStorage submission thất bại:", eSub);
+    }
+
+    if (takingView) takingView.classList.add("hidden");
+    if (resultView) resultView.classList.remove("hidden");
+    renderExamResult(result);
   } catch (err) {
     alert("Lỗi khi nộp bài: " + err.message);
-  } finally {
-    if (btnSubmit) {
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = "Nộp bài";
-    }
   }
 }
 
-function renderExamResult(evaluation, exam) {
-  const takingView = document.getElementById("examTakingView");
-  const resultView = document.getElementById("examResultView");
+function renderExamResult(evaluation) {
+  const scoreNum = evaluation.score !== undefined ? evaluation.score : 0;
+  const scoreEl = document.getElementById("resScoreBig");
+  const countEl = document.getElementById("resCorrectCount");
+  const badgeEl = document.getElementById("resBadgePill");
 
-  if (takingView) takingView.classList.add("hidden");
-  if (resultView) resultView.classList.remove("hidden");
+  if (scoreEl) scoreEl.textContent = `${scoreNum} / 10`;
+  if (countEl) countEl.textContent = `${evaluation.correct_count} / ${evaluation.total_questions}`;
 
-  // 1. Điểm số & Tỷ lệ
-  const scoreNum = document.getElementById("resultScoreNum");
-  const examTitle = document.getElementById("resultExamTitle");
-  const correctCount = document.getElementById("resultCorrectCount");
-  const percentRatio = document.getElementById("resultPercentRatio");
-
-  if (scoreNum) scoreNum.textContent = evaluation.score !== undefined ? evaluation.score : "--";
-  if (examTitle) examTitle.textContent = `Kết quả: ${exam.title}`;
-  if (correctCount) correctCount.textContent = `✔ ${evaluation.correct_count}/${evaluation.total_questions} câu đúng`;
-  if (percentRatio) percentRatio.textContent = `⚡ Đạt ${evaluation.percentage}%`;
-
-  // 2. AI Sư phạm Socrates Nhận xét
-  const aiFeedbackText = document.getElementById("resultAIFeedbackText");
-  const aiEval = evaluation.ai_evaluation || {};
-  if (aiFeedbackText) {
-    aiFeedbackText.textContent = aiEval.overall_comment || "Em đã hoàn thành bài thi!";
+  if (badgeEl) {
+    if (scoreNum >= 9) {
+      badgeEl.textContent = "🏆 Xuất sắc";
+      badgeEl.style.background = "rgba(16, 185, 129, 0.25)";
+      badgeEl.style.color = "#34d399";
+    } else if (scoreNum >= 7.5) {
+      badgeEl.textContent = "⭐ Giỏi";
+      badgeEl.style.background = "rgba(56, 189, 248, 0.25)";
+      badgeEl.style.color = "#38bdf8";
+    } else if (scoreNum >= 5) {
+      badgeEl.textContent = "✔ Đạt yêu cầu";
+      badgeEl.style.background = "rgba(245, 158, 11, 0.25)";
+      badgeEl.style.color = "#fbbf24";
+    } else {
+      badgeEl.textContent = "⚠️ Cần bồi dưỡng";
+      badgeEl.style.background = "rgba(239, 68, 68, 0.25)";
+      badgeEl.style.color = "#f87171";
+    }
   }
 
-  // 3. Đề xuất các mục SGK ôn lại
-  const recList = document.getElementById("resultRecommendList");
-  const recBox = document.getElementById("resultRecommendationsBox");
-  if (recList && recBox) {
-    recList.replaceChildren();
-    const recs = aiEval.recommendations || [];
-    if (recs.length === 0) {
-      recBox.style.display = "none";
+  // Lời khuyên Socrates
+  const adviceEl = document.getElementById("resAiPedagogicalAdvice");
+  if (adviceEl) {
+    adviceEl.textContent = evaluation.socratic_advice || "Em hãy chú ý đọc kỹ các giải thích chi tiết bên dưới để điều chỉnh phương pháp học tập phù hợp hơn.";
+  }
+
+  // Danh sách chủ đề yếu
+  const weakBox = document.getElementById("resWeakTopicsBox");
+  const weakList = document.getElementById("resWeakTopicsList");
+  if (weakBox && weakList) {
+    const weakTopics = evaluation.weak_topics || [];
+    if (weakTopics.length > 0) {
+      weakBox.classList.remove("hidden");
+      weakList.replaceChildren();
+      weakTopics.forEach(topic => {
+        const li = document.createElement("li");
+        li.textContent = topic;
+        weakList.appendChild(li);
+      });
     } else {
-      recBox.style.display = "block";
-      recs.forEach(r => {
+      weakBox.classList.add("hidden");
+    }
+  }
+
+  // Đề xuất bài học SGK
+  const recList = document.getElementById("resRecommendedLessonsList");
+  if (recList) {
+    recList.replaceChildren();
+    const recs = evaluation.recommended_lessons || [];
+    if (recs.length === 0) {
+      const p = document.createElement("p");
+      p.style.color = "#94a3b8";
+      p.style.fontStyle = "italic";
+      p.textContent = "Em đã làm rất tốt, không có chủ đề nào cần phải ôn lại gấp!";
+      recList.appendChild(p);
+    } else {
+      recs.forEach(rec => {
         const item = document.createElement("div");
-        item.className = "recommend-item";
+        item.className = "recommendation-item";
         item.innerHTML = /* sanitize */ `
-          <div class="recommend-item-info">
-            <span style="font-size: 1.15rem;">📌</span>
-            <div>
-              <div style="font-weight: 700; color: #f1f5f9;">${escapeHtml(r.topic)}</div>
-              <div style="font-size: 0.82rem; color: #94a3b8;">${escapeHtml(r.advice)}</div>
-            </div>
+          <div>
+            <div style="font-weight: 700; color: #f1f5f9; margin-bottom: 2px;">${escapeHtml(rec.title)}</div>
+            <div style="font-size: 0.8rem; color: #94a3b8;">Chủ đề cần đọc: <span style="color: #38bdf8;">${escapeHtml(rec.muc_sgk || '')}</span></div>
           </div>
-          <button type="button" class="btn-open-sgk-topic">${escapeHtml(r.action_text || 'Mở bài học để ôn lại')}</button>
+          <button type="button" class="btn-review-topic">📖 Học ngay</button>
         `;
 
-        const btnOpen = item.querySelector("button");
-        if (btnOpen) {
-          btnOpen.onclick = () => {
-            openSGKTopicFromRecommendation(r.lesson_id, exam.grade);
-          };
+        const btn = item.querySelector("button");
+        if (btn) {
+          btn.onclick = () => openSGKTopicFromRecommendation(rec.grade, rec.lesson_id, rec.muc_sgk);
         }
 
         recList.appendChild(item);
@@ -6832,81 +7060,93 @@ function renderExamResult(evaluation, exam) {
     }
   }
 
-  // 4. Xem lại chi tiết từng câu hỏi
-  const reviewList = document.getElementById("resultReviewQuestionsList");
-  if (reviewList) {
-    reviewList.replaceChildren();
+  // Chi tiết câu hỏi và đáp án
+  const detailsList = document.getElementById("resQuestionsDetailList");
+  if (detailsList) {
+    detailsList.replaceChildren();
     const details = evaluation.details || [];
     details.forEach((d, idx) => {
-      const qCard = document.createElement("div");
-      qCard.className = `review-q-card ${d.is_correct ? 'correct' : 'wrong'}`;
+      const card = document.createElement("div");
+      card.className = "res-detail-card";
 
-      const userChoiceText = d.lua_chon?.[d.user_choice] ? `${d.user_choice}. ${d.lua_chon[d.user_choice]}` : (d.user_choice ? d.user_choice : 'Chưa chọn');
-      const correctChoiceText = d.lua_chon?.[d.correct_choice] ? `${d.correct_choice}. ${d.lua_chon[d.correct_choice]}` : d.correct_choice;
+      const isCorrect = d.is_correct;
+      const statusIcon = isCorrect ? "✔ Đúng" : "✖ Sai";
+      const statusClass = isCorrect ? "correct" : "incorrect";
 
-      qCard.innerHTML = /* sanitize */ `
-        <div class="review-q-title"><strong>Câu ${idx + 1}:</strong> ${escapeHtml(d.cau_hoi)}</div>
-        <div class="review-ans-row">
-          <span>Câu trả lời của em: <span class="review-ans-tag ${d.is_correct ? 'correct' : 'chosen'}">${escapeHtml(userChoiceText)}</span></span>
-          ${!d.is_correct ? `<span>Đáp án đúng: <span class="review-ans-tag correct">${escapeHtml(correctChoiceText)}</span></span>` : ''}
+      card.innerHTML = /* sanitize */ `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <strong style="color: #f1f5f9; font-size: 0.95rem;">Câu ${idx + 1}: ${escapeHtml(d.cau_hoi)}</strong>
+          <span class="res-status-tag ${statusClass}">${statusIcon}</span>
         </div>
-        <div class="review-explanation">
-          💡 <strong>Giải thích SGK:</strong> ${escapeHtml(d.giai_thich_su_pham)}
+        <div style="font-size: 0.88rem; color: #94a3b8; margin-bottom: 0.35rem;">
+          Lựa chọn của em: <strong style="color: ${isCorrect ? '#34d399' : '#f87171'};">${escapeHtml(d.student_choice || 'Chưa trả lời')}</strong>
+          ${!isCorrect ? ` • Đáp án chuẩn: <strong style="color: #34d399;">${escapeHtml(d.correct_option || '')}</strong>` : ''}
         </div>
+        ${d.giai_thich ? `<div style="background: rgba(15, 23, 42, 0.5); padding: 8px 12px; border-radius: 6px; font-size: 0.83rem; color: #cbd5e1; border-left: 3px solid #38bdf8;"><strong>Giải thích:</strong> ${escapeHtml(d.giai_thich)}</div>` : ''}
       `;
-      reviewList.appendChild(qCard);
-    });
-  }
 
-  // 5. Nút Quay lại
-  const btnBack = document.getElementById("btnResultBackToList");
-  if (btnBack) {
-    btnBack.onclick = () => {
-      openExamHub();
-    };
+      detailsList.appendChild(card);
+    });
   }
 }
 
-function openSGKTopicFromRecommendation(lessonId, grade) {
-  // Đóng sân khấu bài thi
+function openSGKTopicFromRecommendation(grade, lessonId, mucSgk) {
   const examStage = document.getElementById("examStage");
   if (examStage) examStage.classList.add("hidden");
+
   const canvas = document.getElementById("focusCanvas");
   if (canvas) canvas.classList.remove("hidden");
-  const sidebar = document.getElementById("roadmapSidebar");
-  if (sidebar) sidebar.classList.remove("hidden");
 
-  const btnNavExam = document.getElementById("btnNavExamHub");
-  if (btnNavExam) btnNavExam.classList.remove("active");
-  const btnDashboard = document.getElementById("btnNavDashboard");
-  if (btnDashboard) btnDashboard.classList.remove("active");
-
-  const g = grade || state.grade || 9;
-  if (state.grade !== g) {
-    switchGrade(g).then(() => {
-      switchToLesson(lessonId || 1);
-      switchView("theory");
-    });
-  } else {
-    switchToLesson(lessonId || 1);
-    switchView("theory");
+  // Nạp bài học SGK tương ứng
+  if (typeof state !== "undefined") {
+    state.grade = grade;
+    state.lessonId = lessonId;
   }
+
+  if (typeof loadLesson === "function") {
+    loadLesson(grade, lessonId);
+  }
+
+  // Cuộn đến mục SGK nếu có
+  setTimeout(() => {
+    if (mucSgk) {
+      alert(`Hệ thống đã mở SGK Lớp ${grade} - Bài ${lessonId} để em ôn lại phần: "${mucSgk}".`);
+    }
+  }, 400);
 }
 
-// Khởi chạy gắn sự kiện khi trang web tải xong
-if (typeof window !== "undefined") {
-  window.openExamHub = openExamHub;
-  window.startStudentExam = startStudentExam;
-  window.submitStudentExam = submitStudentExam;
-  window.loadTeacherExams = loadTeacherExams;
-  window.loadStudentExams = loadStudentExams;
-
-  // Lắng nghe nút Nộp bài trong phòng thi
+// Khởi tạo các sự kiện khi load trang
+if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     initTeacherExamEvents();
-    const btnSubmit = document.getElementById("btnTakingSubmitExam");
-    if (btnSubmit) {
-      btnSubmit.addEventListener("click", confirmAndSubmitStudentExam);
+
+    const btnTakingPrev = document.getElementById("btnTakingPrev");
+    const btnTakingNext = document.getElementById("btnTakingNext");
+    const btnTakingSubmit = document.getElementById("btnTakingSubmit");
+
+    if (btnTakingPrev) {
+      btnTakingPrev.addEventListener("click", () => {
+        if (examTakingState.currentQuestionIndex > 0) {
+          renderTakingQuestion(examTakingState.currentQuestionIndex - 1);
+        }
+      });
+    }
+
+    if (btnTakingNext) {
+      btnTakingNext.addEventListener("click", () => {
+        if (activeStudentExam && activeStudentExam.questions && examTakingState.currentQuestionIndex < activeStudentExam.questions.length - 1) {
+          renderTakingQuestion(examTakingState.currentQuestionIndex + 1);
+        }
+      });
+    }
+
+    if (btnTakingSubmit) {
+      btnTakingSubmit.addEventListener("click", confirmAndSubmitStudentExam);
+    }
+
+    const btnBackHub = document.getElementById("btnExamBackToHub");
+    if (btnBackHub) {
+      btnBackHub.addEventListener("click", openExamHub);
     }
   });
 }
