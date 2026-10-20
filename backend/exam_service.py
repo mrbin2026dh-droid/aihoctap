@@ -259,6 +259,19 @@ def list_exams(grade: Optional[int] = None, class_code: Optional[str] = None) ->
     return exams
 
 
+def delete_exam(exam_id: str) -> bool:
+    """Xóa bài kiểm tra theo exam_id."""
+    file_path = EXAMS_DIR / f"{exam_id}.json"
+    if file_path.exists():
+        try:
+            file_path.unlink()
+            return True
+        except Exception as e:
+            print(f"Lỗi khi xóa file đề thi {exam_id}: {e}")
+            return False
+    return False
+
+
 def get_exam(exam_id: str, hide_answers: bool = True) -> Optional[Dict[str, Any]]:
     """Lấy thông tin đề kiểm tra. Nếu hide_answers=True, ẩn đáp án đúng để chống gian lận F12."""
     file_path = EXAMS_DIR / f"{exam_id}.json"

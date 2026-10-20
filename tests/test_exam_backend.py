@@ -98,6 +98,10 @@ def test_create_and_list_exam():
     assert "recommendations" in ai_eval
     assert len(ai_eval["recommendations"]) >= 1
     assert "Mục 2: Thông tin và dữ liệu" in str(ai_eval["weak_topics"])
+    from backend.exam_service import delete_exam
+    del_ok = delete_exam("exam_test_unit_01")
+    assert del_ok is True
+    assert get_exam("exam_test_unit_01") is None
     print("TEST BACKEND EXAM SERVICE PASS 100%")
 
 if __name__ == "__main__":

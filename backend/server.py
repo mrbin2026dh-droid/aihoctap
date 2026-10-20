@@ -33,7 +33,7 @@ from backend.grounding import (
 from backend.agent import chat_with_tutor, grade_quiz_submission, analyze_class_pedagogy
 from backend.exam_service import (
     export_exam_template_excel, parse_exam_excel_file, create_or_update_exam,
-    list_exams, get_exam, grade_exam_submission, ExamModel, ExamSubmissionRequest,
+    delete_exam, list_exams, get_exam, grade_exam_submission, ExamModel, ExamSubmissionRequest,
     QuestionItem, EXAMS_DIR, SUBMISSIONS_DIR
 )
 from backend.contracts import (
@@ -726,6 +726,20 @@ def create_exam_endpoint(exam: ExamModel):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi lưu đề kiểm tra: {str(e)}")
+
+
+@app.delete("/api/teacher/exams/{exam_id}")
+def delete_exam_endpoint(exam_id: str):
+    """Giáo viên xóa bài kiểm tra."""
+    try:
+        success = delete_exam(exam_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy đề thi hoặc không thể xóa: {exam_id}")
+        return {"success": True, "message": f"Đã xóa bài kiểm tra {exam_id} thành công!"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xóa đề: {str(e)}")
 
 
 @app.get("/api/exams/list")

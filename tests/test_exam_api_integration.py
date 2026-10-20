@@ -94,6 +94,11 @@ def test_api_create_and_submit_exam():
     assert "ai_evaluation" in result
     assert len(result["ai_evaluation"]["recommendations"]) >= 1
 
+    # 5. Giao vien xoa de kiem tra
+    del_res = client.delete("/api/teacher/exams/exam_api_test_01")
+    assert del_res.status_code == 200
+    assert del_res.json()["success"] is True
+
     print("ALL EXAM API INTEGRATION TESTS PASSED!")
 
 if __name__ == "__main__":
