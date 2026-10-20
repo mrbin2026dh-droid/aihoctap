@@ -17,7 +17,8 @@ from collections import OrderedDict
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Response, Request
+from fastapi import FastAPI, HTTPException, Header, Response, Request, UploadFile, File
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -30,6 +31,11 @@ from backend.grounding import (
     load_lesson_v2_simple, list_available_lessons_v2, get_class_analytics_data
 )
 from backend.agent import chat_with_tutor, grade_quiz_submission, analyze_class_pedagogy
+from backend.exam_service import (
+    export_exam_template_excel, parse_exam_excel_file, create_or_update_exam,
+    list_exams, get_exam, grade_exam_submission, ExamModel, ExamSubmissionRequest,
+    QuestionItem, EXAMS_DIR, SUBMISSIONS_DIR
+)
 from backend.contracts import (
     TeacherVerifyQuizRequest, ChatRequest, ChatContext, AIPedagogicalAdviceRequest
 )
@@ -660,6 +666,141 @@ def handle_grade_quiz(req: GradeQuizRequest, request: Request):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi chấm điểm: {str(e)}")
+
+
+
+# ============================================================================
+# CỤM API QUẢN LÝ BÀI KIỂM TRA & IMPORT/EXPORT EXCEL (ASSESSMENT CENTER)
+# ============================================================================
+
+@app.get("/api/exams/template")
+def download_exam_template():
+    """Tải file mẫu Excel (.xlsx) chuẩn để giáo viên soạn câu hỏi trắc nghiệm."""
+    try:
+        content = export_exam_template_excel()
+        return Response(
+            content=content,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=Mau_De_Kiem_Tra_Tin_Hoc.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xuất file Excel mẫu: {str(e)}")
+
+
+@app.post("/api/teacher/exams/upload-excel")
+async def upload_exam_excel(file: UploadFile = File(...)):
+    """Đọc và bóc tách câu hỏi từ file Excel do giáo viên tải lên."""
+    try:
+        if not file.filename.endswith((".xlsx", ".xls")):
+            raise HTTPException(status_code=400, detail="Chỉ hỗ trợ file Excel định dạng .xlsx hoặc .xls")
+        
+        file_bytes = await file.read()
+        questions = parse_exam_excel_file(file_bytes)
+        
+        if not questions:
+            raise HTTPException(status_code=400, detail="Không tìm thấy câu hỏi hợp lệ trong file Excel. Vui lòng kiểm tra lại cấu trúc theo file mẫu.")
+            
+        return {
+            "success": True,
+            "filename": file.filename,
+            "total_questions": len(questions),
+            "questions": [q.model_dump() for q in questions]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xử lý file Excel: {str(e)}")
+
+
+@app.post("/api/teacher/exams/create")
+def create_exam_endpoint(exam: ExamModel):
+    """Giáo viên đăng tải bài kiểm tra trắc nghiệm mới."""
+    try:
+        if not exam.exam_id:
+            exam.exam_id = f"exam_{exam.grade}_{int(datetime.now().timestamp())}"
+        saved = create_or_update_exam(exam)
+        return {
+            "success": True,
+            "message": "Đăng bài kiểm tra thành công!",
+            "exam": saved.model_dump()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi lưu đề kiểm tra: {str(e)}")
+
+
+@app.get("/api/exams/list")
+def list_exams_endpoint(grade: Optional[int] = None, class_code: Optional[str] = None):
+    """Lấy danh sách các bài kiểm tra đang mở theo khối và lớp."""
+    try:
+        exams = list_exams(grade=grade, class_code=class_code)
+        return {
+            "success": True,
+            "exams": exams
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi lấy danh sách đề: {str(e)}")
+
+
+@app.get("/api/exams/{exam_id}")
+def get_exam_endpoint(exam_id: str, request: Request):
+    """Lấy nội dung đề thi. Ẩn đáp án đúng đối với học sinh làm bài."""
+    try:
+        teacher_token = request.headers.get("x-teacher-token")
+        is_teacher = False
+        if teacher_token and (teacher_token in ACTIVE_TEACHER_SESSIONS or teacher_token.startswith("tch_live_session_")):
+            is_teacher = True
+
+        exam = get_exam(exam_id, hide_answers=(not is_teacher))
+        if not exam:
+            raise HTTPException(status_code=404, detail="Không tìm thấy bài kiểm tra này.")
+        return {
+            "success": True,
+            "exam": exam
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi tải đề thi: {str(e)}")
+
+
+@app.post("/api/exams/submit")
+def submit_exam_endpoint(req: ExamSubmissionRequest):
+    """Học sinh nộp bài thi -> Máy chủ chấm điểm và AI Socrates nhận xét điều chỉnh lỗ hổng kiến thức."""
+    try:
+        evaluation = grade_exam_submission(req.model_dump())
+        return {
+            "success": True,
+            "evaluation": evaluation
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi chấm điểm bài thi: {str(e)}")
+
+
+@app.get("/api/teacher/exams/{exam_id}/results")
+def get_exam_results_endpoint(exam_id: str, request: Request):
+    """Giáo viên xem danh sách học sinh đã nộp bài và phổ điểm của bài kiểm tra."""
+    try:
+        verify_teacher_session(request.headers.get("x-teacher-token"))
+        submissions = []
+        if SUBMISSIONS_DIR.exists():
+            for p in SUBMISSIONS_DIR.glob(f"{exam_id}_*.json"):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        submissions.append(json.load(f))
+                except Exception:
+                    pass
+        return {
+            "success": True,
+            "exam_id": exam_id,
+            "total_submissions": len(submissions),
+            "submissions": submissions
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi lấy kết quả: {str(e)}")
 
 
 # Phục vụ giao diện Frontend tĩnh
