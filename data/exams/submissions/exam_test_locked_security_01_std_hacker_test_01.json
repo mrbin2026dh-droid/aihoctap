@@ -1,0 +1,46 @@
+{
+  "exam_id": "exam_test_locked_security_01",
+  "student_id": "std_hacker_test_01",
+  "student_name": "Test Hacker",
+  "class_code": "9A",
+  "grade": 9,
+  "answers": {
+    "1": "A"
+  },
+  "score": 10.0,
+  "correct_count": 1,
+  "total_questions": 1,
+  "percentage": 100,
+  "evaluation": {
+    "score": 10.0,
+    "total_questions": 1,
+    "correct_count": 1,
+    "percentage": 100,
+    "socratic_advice": "Xuất sắc! Em đã nắm rất vững toàn bộ kiến thức trọng tâm của bài kiểm tra. Hãy tiếp tục phát huy nhé!",
+    "recommended_lessons": [],
+    "weak_topics": [],
+    "ai_evaluation": {
+      "overall_comment": "Xuất sắc! Em đã nắm rất vững toàn bộ kiến thức trọng tâm của bài kiểm tra. Hãy tiếp tục phát huy nhé!",
+      "weak_topics": {},
+      "recommendations": []
+    },
+    "details": [
+      {
+        "id": "1",
+        "cau_hoi": "Câu hỏi test bảo mật?",
+        "lua_chon": {
+          "A": "Đáp án A",
+          "B": "Đáp án B"
+        },
+        "user_choice": "A",
+        "correct_choice": "A",
+        "is_correct": true,
+        "muc_sgk": "Mục kiến thức SGK",
+        "giai_thich_su_pham": "Giải thích A",
+        "goi_y_khi_sai": "Xem lại Mục kiến thức SGK"
+      }
+    ],
+    "submitted_at": "2026-10-20T23:41:43.543667"
+  },
+  "submitted_at": "2026-10-20T23:41:43.543667"
+}

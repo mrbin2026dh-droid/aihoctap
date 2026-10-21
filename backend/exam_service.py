@@ -11,10 +11,31 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+import urllib.request
+import urllib.error
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 EXAMS_DIR = DATA_DIR / "exams"
 SUBMISSIONS_DIR = EXAMS_DIR / "submissions"
+
+FIREBASE_RTDB_URL = os.getenv("FIREBASE_DATABASE_URL", "https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app")
+
+def sync_to_firebase_rtdb(path_str: str, data: Any = None, method: str = "PUT") -> bool:
+    """Đồng bộ dữ liệu sang Firebase Realtime Database qua REST API an toàn."""
+    try:
+        url = f"{FIREBASE_RTDB_URL.rstrip('/')}/{path_str.lstrip('/')}.json"
+        body = json.dumps(data).encode("utf-8") if data is not None else None
+        req = urllib.request.Request(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json"} if body else {},
+            method=method
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            return resp.status in (200, 204)
+    except Exception:
+        return False
 
 # Đảm bảo các thư mục dữ liệu tồn tại
 EXAMS_DIR.mkdir(parents=True, exist_ok=True)
@@ -213,10 +234,12 @@ def parse_exam_excel_file(file_bytes: bytes) -> List[QuestionItem]:
 
 
 def create_or_update_exam(exam: ExamModel) -> ExamModel:
-    """Lưu đề kiểm tra vào hệ thống đĩa cứng."""
+    """Lưu đề kiểm tra vào hệ thống đĩa cứng và đồng bộ Firebase Realtime DB."""
     file_path = EXAMS_DIR / f"{exam.exam_id}.json"
+    exam_dict = exam.model_dump()
     with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(exam.model_dump(), f, ensure_ascii=False, indent=2)
+        json.dump(exam_dict, f, ensure_ascii=False, indent=2)
+    sync_to_firebase_rtdb(f"exams/{exam.exam_id}", exam_dict)
     return exam
 
 
@@ -260,27 +283,57 @@ def list_exams(grade: Optional[int] = None, class_code: Optional[str] = None) ->
 
 
 def delete_exam(exam_id: str) -> bool:
-    """Xóa bài kiểm tra theo exam_id."""
+    """Xóa bài kiểm tra theo exam_id và đồng bộ xóa trên Firebase."""
     file_path = EXAMS_DIR / f"{exam_id}.json"
+    deleted = False
     if file_path.exists():
         try:
             file_path.unlink()
-            return True
+            deleted = True
         except Exception as e:
             print(f"Lỗi khi xóa file đề thi {exam_id}: {e}")
-            return False
-    return False
+            deleted = False
+    sync_to_firebase_rtdb(f"exams/{exam_id}", method="DELETE")
+    return deleted
 
+
+def _load_exam_data(exam_id: str) -> Optional[Dict[str, Any]]:
+    """Tải dữ liệu đề kiểm tra từ đĩa cứng hoặc tự động kéo từ Firebase Realtime Database nếu là đề mới."""
+    file_path = EXAMS_DIR / f"{exam_id}.json"
+    if file_path.exists():
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Lỗi đọc file đề {exam_id}: {e}")
+
+    # Tải từ Firebase Realtime Database nếu chưa có trên đĩa cứng
+    try:
+        url = f"{FIREBASE_RTDB_URL.rstrip('/')}/exams/{exam_id}.json"
+        req = urllib.request.Request(url, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            if resp.status == 200:
+                raw = resp.read().decode("utf-8")
+                fb_data = json.loads(raw)
+                if fb_data and isinstance(fb_data, dict) and "questions" in fb_data:
+                    try:
+                        with open(file_path, "w", encoding="utf-8") as cf:
+                            json.dump(fb_data, cf, ensure_ascii=False, indent=2)
+                    except Exception:
+                        pass
+                    return fb_data
+    except Exception as e_fb:
+        print(f"Không thể kéo đề {exam_id} từ Firebase: {e_fb}")
+
+    return None
 
 def get_exam(exam_id: str, hide_answers: bool = True) -> Optional[Dict[str, Any]]:
     """Lấy thông tin đề kiểm tra. Nếu hide_answers=True, ẩn đáp án đúng để chống gian lận F12."""
-    file_path = EXAMS_DIR / f"{exam_id}.json"
-    if not file_path.exists():
+    data = _load_exam_data(exam_id)
+    if not data:
         return None
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
 
         if hide_answers:
             # Ẩn dap_an_dung và giai_thich_su_pham để học sinh không soi được qua Network/Console
@@ -306,12 +359,17 @@ def grade_exam_submission(submission: Dict[str, Any]) -> Dict[str, Any]:
     3. Đề xuất trực tiếp các mục SGK cần ôn tập kèm hướng dẫn điều chỉnh.
     """
     exam_id = submission.get("exam_id")
-    file_path = EXAMS_DIR / f"{exam_id}.json"
-    if not file_path.exists():
+    exam_data = _load_exam_data(exam_id)
+    if not exam_data:
         raise ValueError(f"Không tìm thấy đề kiểm tra: {exam_id}")
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        exam_data = json.load(f)
+    # Chốt chặn bảo mật phía máy chủ (Server-side Fail-Closed Security):
+    # Từ chối nộp bài nếu đề thi đang bị Giáo viên khóa hoặc đang ở trạng thái nháp
+    exam_status = exam_data.get("status", "published")
+    if exam_status == "closed":
+        raise ValueError("Bài kiểm tra này hiện đang bị Thầy/Cô khóa. Không thể nộp bài vào thời điểm này!")
+    if exam_status == "draft":
+        raise ValueError("Bài kiểm tra đang ở trạng thái bản nháp. Chưa mở cho học sinh nộp bài!")
 
     questions_map = {q["id"]: q for q in exam_data.get("questions", [])}
     answers = submission.get("answers", {})
@@ -376,6 +434,9 @@ def grade_exam_submission(submission: Dict[str, Any]) -> Dict[str, Any]:
         "total_questions": total_q,
         "correct_count": correct_count,
         "percentage": round((correct_count / total_q) * 100) if total_q > 0 else 0,
+        "socratic_advice": overall_comment,
+        "recommended_lessons": recommendations,
+        "weak_topics": list(weak_topics.keys()),
         "ai_evaluation": {
             "overall_comment": overall_comment,
             "weak_topics": weak_topics,
@@ -385,10 +446,53 @@ def grade_exam_submission(submission: Dict[str, Any]) -> Dict[str, Any]:
         "submitted_at": datetime.now().isoformat()
     }
 
-    # Lưu bài nộp vào thư mục submissions
+    # Lưu bài nộp vào thư mục submissions và đồng bộ Firebase
     student_id = submission.get("student_id", "anonymous")
+    sub_payload = {
+        **submission,
+        "score": score,
+        "correct_count": correct_count,
+        "total_questions": total_q,
+        "percentage": round((correct_count / total_q) * 100) if total_q > 0 else 0,
+        "evaluation": evaluation,
+        "submitted_at": evaluation["submitted_at"]
+    }
     sub_file = SUBMISSIONS_DIR / f"{exam_id}_{student_id}.json"
     with open(sub_file, "w", encoding="utf-8") as f:
-        json.dump({**submission, "evaluation": evaluation}, f, ensure_ascii=False, indent=2)
+        json.dump(sub_payload, f, ensure_ascii=False, indent=2)
+
+    # 1. Đồng bộ kết quả chi tiết lên Firebase
+    sync_to_firebase_rtdb(f"exam_submissions/{exam_id}/{student_id}", sub_payload)
+
+    # 2. Đồng bộ kết quả vào hồ sơ học sinh trên Firebase
+    class_code = submission.get("class_code", "9A")
+    sync_to_firebase_rtdb(f"students/{class_code}/{student_id}/exams/{exam_id}", {
+        "exam_id": exam_id,
+        "exam_title": exam_data.get("title", "Bài kiểm tra"),
+        "score": score,
+        "correct_count": correct_count,
+        "total_questions": total_q,
+        "percentage": round((correct_count / total_q) * 100) if total_q > 0 else 0,
+        "submitted_at": evaluation["submitted_at"]
+    })
 
     return evaluation
+
+
+def update_exam_status(exam_id: str, new_status: str) -> bool:
+    """Cập nhật trạng thái mở/khóa đề kiểm tra (published / closed) và đồng bộ Firebase."""
+    file_path = EXAMS_DIR / f"{exam_id}.json"
+    if file_path.exists():
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            data["status"] = new_status
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Lỗi cập nhật file đề thi {exam_id}: {e}")
+
+    # Đồng bộ trực tiếp lên Firebase RTDB
+    sync_to_firebase_rtdb(f"exams/{exam_id}/status", new_status, method="PUT")
+    return True
+

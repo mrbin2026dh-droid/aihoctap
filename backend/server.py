@@ -33,7 +33,7 @@ from backend.grounding import (
 from backend.agent import chat_with_tutor, grade_quiz_submission, analyze_class_pedagogy
 from backend.exam_service import (
     export_exam_template_excel, parse_exam_excel_file, create_or_update_exam,
-    delete_exam, list_exams, get_exam, grade_exam_submission, ExamModel, ExamSubmissionRequest,
+    delete_exam, list_exams, get_exam, grade_exam_submission, update_exam_status, ExamModel, ExamSubmissionRequest,
     QuestionItem, EXAMS_DIR, SUBMISSIONS_DIR
 )
 from backend.contracts import (
@@ -728,6 +728,23 @@ def create_exam_endpoint(exam: ExamModel):
         raise HTTPException(status_code=500, detail=f"Lỗi lưu đề kiểm tra: {str(e)}")
 
 
+
+class ExamStatusUpdateRequest(BaseModel):
+    status: str
+
+@app.api_route("/api/teacher/exams/{exam_id}/status", methods=["PATCH", "POST", "PUT"])
+def update_exam_status_endpoint(exam_id: str, req: ExamStatusUpdateRequest):
+    """Giáo viên mở hoặc khóa bài kiểm tra."""
+    try:
+        success = update_exam_status(exam_id, req.status)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy đề thi {exam_id}")
+        return {"success": True, "exam_id": exam_id, "status": req.status}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete("/api/teacher/exams/{exam_id}")
 def delete_exam_endpoint(exam_id: str):
     """Giáo viên xóa bài kiểm tra."""
@@ -787,7 +804,9 @@ def submit_exam_endpoint(req: ExamSubmissionRequest):
             "evaluation": evaluation
         }
     except ValueError as ve:
-        raise HTTPException(status_code=404, detail=str(ve))
+        err_msg = str(ve)
+        status_code = 403 if ("khóa" in err_msg.lower() or "nháp" in err_msg.lower()) else 404
+        raise HTTPException(status_code=status_code, detail=err_msg)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi chấm điểm bài thi: {str(e)}")
 

@@ -1,16 +1,24 @@
 {
   "rules": {
+    ".read": true,
+    ".write": true,
     "students": {
       "$classCode": {
-        ".read": "auth != null || true",
-        ".indexOn": ["is_blocked", "email", "student_code"],
-        "$studentId": {
-          ".read": "auth != null || true",
-          ".write": "auth != null",
-          "is_blocked": {
-            ".write": "auth != null"
-          }
-        }
+        ".read": true,
+        ".write": true,
+        ".indexOn": ["is_blocked", "email", "student_code"]
+      }
+    },
+    "exams": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["grade", "status"]
+    },
+    "exam_submissions": {
+      "$examId": {
+        ".read": true,
+        ".write": true,
+        ".indexOn": ["student_id", "class_code", "score"]
       }
     }
   }

@@ -20,3 +20,5 @@ tests/artifacts_v2/
 tests/logs/
 tools/logs/
 tests/*.png
+scratch/
+.worktrees/
