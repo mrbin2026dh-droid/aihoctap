@@ -289,6 +289,17 @@ def teacher_logout(
     return {"success": True, "message": "Đã đăng xuất phiên giáo viên thành công."}
 
 
+@app.get("/api/health", summary="Health check cho UptimeRobot và Render Keep-Alive")
+@app.get("/health", summary="Health check cho UptimeRobot và Render Keep-Alive (root alias)")
+def api_health():
+    """Endpoint siêu nhẹ để đánh thức Render và kiểm tra tình trạng dịch vụ (0% DB, 0% AI)."""
+    return {
+        "status": "healthy",
+        "service": "aisgk-backend",
+        "timestamp": time.time()
+    }
+
+
 @app.get("/api/curriculum/lessons/{grade}")
 def get_curriculum_lessons(grade: str, request: Request):
     """Lấy danh sách các bài học hiện có trong khối lớp kèm trạng thái draft/published."""
