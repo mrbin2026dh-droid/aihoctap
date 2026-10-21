@@ -223,6 +223,31 @@ def verify_teacher_session(
     raise HTTPException(status_code=401, detail="Yêu cầu xác thực quyền Giáo viên (Token không hợp lệ hoặc đã hết hạn)")
 
 
+FIREBASE_RTDB_URL = "https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app"
+_cached_firebase_pin = {"pin": None, "ts": 0}
+
+def get_firebase_teacher_pin() -> Optional[str]:
+    """Lấy mã PIN Giáo viên mới nhất từ Firebase Realtime Database (đồng bộ đa máy)."""
+    now = time.time()
+    if _cached_firebase_pin["pin"] and (now - _cached_firebase_pin["ts"] < 30):
+        return _cached_firebase_pin["pin"]
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            f"{FIREBASE_RTDB_URL}/system/teacher_pin.json",
+            headers={"User-Agent": "FastAPI-Backend"}
+        )
+        with urllib.request.urlopen(req, timeout=2.0) as res:
+            if res.status == 200:
+                val = json.loads(res.read().decode("utf-8"))
+                if isinstance(val, str) and len(val.strip()) >= 6:
+                    _cached_firebase_pin["pin"] = val.strip()
+                    _cached_firebase_pin["ts"] = now
+                    return _cached_firebase_pin["pin"]
+    except Exception:
+        pass
+    return None
+
 @app.post("/api/teacher/auth")
 def teacher_auth(req: TeacherAuthRequest, request: Request):
     """Xác thực mã PIN Giáo viên, kiểm soát Brute-force rate-limiting và cấp Session Token (P0-1/P0-2/P1-9, N5, N8)."""
@@ -253,6 +278,10 @@ def teacher_auth(req: TeacherAuthRequest, request: Request):
             is_valid = secrets.compare_digest(pin_bytes, expected_bytes) or secrets.compare_digest(pin_bytes, default_bytes)
             if not is_valid and req.pin.strip() in ("123456", "admin", "gv2026"):
                 is_valid = True
+            if not is_valid:
+                fb_pin = get_firebase_teacher_pin()
+                if fb_pin and secrets.compare_digest(pin_bytes, fb_pin.strip().encode("utf-8")):
+                    is_valid = True
     except Exception:
         is_valid = False
 
