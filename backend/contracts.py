@@ -2,7 +2,7 @@
 Module Contracts: Khế ước Toán học & Định kiểu Chặt chẽ (Bend Proof-Driven Development)
 Đảm bảo 100% dữ liệu đi qua hệ thống đều được kiểm chứng hình thức bằng Pydantic.
 """
-from typing import Dict, List, Literal, Any, Optional
+from typing import Dict, List, Literal, Any, Optional, Union
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -119,10 +119,26 @@ class ChatContext(BaseModel):
         return None
 
 
+def parse_safe_grade(grade_input: Any, default_grade: int = 9) -> int:
+    """Chuyển đổi an toàn bất kỳ định dạng grade (str, int, 'all') thành số nguyên hợp lệ trong khoảng [6, 9]."""
+    if grade_input is None:
+        return default_grade
+    s = str(grade_input).strip().lower()
+    if s in {"all", "tatca", "*"}:
+        return default_grade
+    try:
+        val = int(s)
+        if 6 <= val <= 9:
+            return val
+    except (ValueError, TypeError):
+        pass
+    return default_grade
+
+
 class ChatRequest(BaseModel):
     """Khế ước cho yêu cầu hỏi đáp của học sinh."""
-    grade: int = Field(..., ge=6, le=9)
-    lesson_id: int = Field(..., ge=1)
+    grade: Union[int, str] = Field(default=9, description="Khối lớp (6-9)")
+    lesson_id: int = Field(default=1, ge=1)
     message: str = Field(..., min_length=1, max_length=2000)
     context: Optional[ChatContext] = Field(default=None, description="Ngữ cảnh học tập hiện tại")
     history: List[Dict[str, str]] = Field(
@@ -130,6 +146,11 @@ class ChatRequest(BaseModel):
         max_length=10,
         description="Tối đa 10 lượt hội thoại gần nhất"
     )
+
+    @field_validator("grade", mode="before")
+    @classmethod
+    def sanitize_grade(cls, v: Any) -> int:
+        return parse_safe_grade(v, default_grade=9)
 
     @field_validator("history")
     @classmethod

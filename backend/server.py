@@ -37,6 +37,7 @@ from backend.exam_service import (
     QuestionItem, EXAMS_DIR, SUBMISSIONS_DIR
 )
 from backend.contracts import (
+    parse_safe_grade,
     TeacherVerifyQuizRequest, ChatRequest, ChatContext, AIPedagogicalAdviceRequest
 )
 
@@ -289,17 +290,18 @@ def teacher_logout(
 
 
 @app.get("/api/curriculum/lessons/{grade}")
-def get_curriculum_lessons(grade: int, request: Request):
+def get_curriculum_lessons(grade: str, request: Request):
     """Lấy danh sách các bài học hiện có trong khối lớp kèm trạng thái draft/published."""
     try:
+        g = parse_safe_grade(grade, default_grade=9)
         is_v2 = request.headers.get("x-curriculum-version") == "v2"
         if is_v2:
-            lessons = list_available_lessons_v2(grade)
+            lessons = list_available_lessons_v2(g)
         else:
-            lessons = list_available_lessons(grade)
+            lessons = list_available_lessons(g)
         return {
             "success": True,
-            "grade": grade,
+            "grade": g,
             "total": len(lessons),
             "lessons": lessons
         }
@@ -308,15 +310,16 @@ def get_curriculum_lessons(grade: int, request: Request):
 
 
 @app.get("/api/lesson/{grade}/{lesson_id}")
-def get_lesson(grade: int, lesson_id: int, request: Request):
+def get_lesson(grade: str, lesson_id: int, request: Request):
     """Lấy nội dung bài học SGK cho học sinh (đã giấu đáp án đúng)."""
     try:
+        g = parse_safe_grade(grade, default_grade=9)
         is_v2 = request.headers.get("x-curriculum-version") == "v2"
         data = None
         if is_v2:
-            data = load_lesson_v2_simple(grade, lesson_id)
+            data = load_lesson_v2_simple(g, lesson_id)
         if not data:
-            data = load_lesson_data(grade, lesson_id)
+            data = load_lesson_data(g, lesson_id)
             # Khóa cứng P0-5: Học sinh chỉ được đọc bài đã published; cấm xem bài draft đang biên soạn
             if data.get("status") == "draft":
                 raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được giáo viên xuất bản.")
@@ -347,13 +350,14 @@ def get_lesson(grade: int, lesson_id: int, request: Request):
 
 
 @app.get("/api/v2/curriculum/lessons/{grade}")
-def get_curriculum_lessons_v2(grade: int):
+def get_curriculum_lessons_v2(grade: str):
     """Liệt kê danh mục bài học V2 Tinh giản."""
     try:
-        lessons = list_available_lessons_v2(grade)
+        g = parse_safe_grade(grade, default_grade=9)
+        lessons = list_available_lessons_v2(g)
         return {
             "success": True,
-            "grade": grade,
+            "grade": g,
             "total": len(lessons),
             "lessons": lessons
         }
@@ -362,12 +366,13 @@ def get_curriculum_lessons_v2(grade: int):
 
 
 @app.get("/api/v2/lesson/{grade}/{lesson_id}")
-def get_lesson_v2(grade: int, lesson_id: int):
+def get_lesson_v2(grade: str, lesson_id: int):
     """Lấy nội dung bài học V2 Tinh giản (đã giấu đáp án đúng cho học sinh)."""
-    data = load_lesson_v2_simple(grade, lesson_id)
+    g = parse_safe_grade(grade, default_grade=9)
+    data = load_lesson_v2_simple(g, lesson_id)
     if not data:
         # Tự động khởi tạo dữ liệu bản nháp cho bài học đang số hóa
-        lesson_meta = next((l for l in list_available_lessons_v2(grade) if l["lesson_id"] == lesson_id), None)
+        lesson_meta = next((l for l in list_available_lessons_v2(g) if l["lesson_id"] == lesson_id), None)
         title = lesson_meta["title"] if lesson_meta else f"Bài {lesson_id}"
         topic = lesson_meta.get("topic", "SGK Tin học 6") if lesson_meta else "SGK Tin học 6"
         start_page = lesson_meta.get("start_page", 1) if lesson_meta else 1
