@@ -144,10 +144,14 @@ def test_h1_forward_lock_and_h2_to_h5_features():
         assert not overflow_taking, "Màn hình làm bài thi bị tràn ngang trên mobile!"
         print("  ✔ [H2 PASS] Màn hình thi trên mobile chuẩn responsive: Không gãy dòng 'Câu 1 / 10', 0 tràn ngang.")
 
-        # Kiểm tra H1: Nút Câu tiếp theo phải bị DISABLED khi chưa chọn đáp án
+        # Kiểm tra H2: Bấm nút Câu tiếp theo khi chưa chọn đáp án phải hiển thị Toast thông báo và chặn chuyển
         btn_next = page.locator("#btnTakingNextQ")
-        assert btn_next.is_disabled(), "Nút 'Câu tiếp theo' không bị disable khi chưa chọn đáp án!"
-        print("  ✔ [H1 PASS] Nút 'Câu tiếp theo' bị vô hiệu hóa khi câu hiện tại chưa có đáp án.")
+        btn_next.click()
+        time.sleep(0.3)
+        assert "Câu 1" in page.locator("#takingQCurrentIndex").text_content(), "Bị nhảy sang câu khác khi chưa trả lời!"
+        toast_btn = page.locator("#examToastAlert")
+        assert toast_btn.is_visible() and "chọn đáp án" in toast_btn.text_content(), "Toast cảnh báo không hiển thị khi bấm nút Câu tiếp!"
+        print("  ✔ [H2 PASS] Bấm nút 'Câu tiếp' khi chưa chọn đáp án được chặn đứng và Toast cảnh báo xuất hiện chuẩn xác.")
 
         # Kiểm tra H1: Bấm nút Câu 2 trên Palette câu hỏi không cho chuyển
         palette_btn_2 = page.locator(".palette-q-btn:has-text('2')")
@@ -168,9 +172,9 @@ def test_h1_forward_lock_and_h2_to_h5_features():
         page.locator(".taking-opt-card").first.click()
         time.sleep(0.3)
 
-        # Bây giờ nút Tiếp theo phải được ENABLE
-        assert not btn_next.is_disabled(), "Nút 'Câu tiếp theo' vẫn bị disabled sau khi đã chọn đáp án!"
-        print("  ✔ [H1 PASS] Nút 'Câu tiếp theo' được kích hoạt ngay khi học sinh chọn đáp án.")
+        # Bây giờ nút Tiếp theo không còn class needs-answer
+        assert "needs-answer" not in (btn_next.get_attribute("class") or ""), "Nút 'Câu tiếp theo' vẫn còn class needs-answer sau khi đã chọn đáp án!"
+        print("  ✔ [H2 PASS] Nút 'Câu tiếp theo' gỡ bỏ needs-answer ngay khi học sinh chọn đáp án.")
 
         # Bấm Câu tiếp theo để chuyển sang Câu 2
         btn_next.click()
@@ -180,9 +184,13 @@ def test_h1_forward_lock_and_h2_to_h5_features():
         assert "Câu 2" in q2_index_text, f"Không chuyển được sang Câu 2: {q2_index_text}"
         print("  ✔ [H1 PASS] Chuyển sang Câu 2 thành công sau khi đã hoàn thành Câu 1.")
 
-        # Ở Câu 2: Nút Tiếp theo lại phải bị DISABLED vì Câu 2 chưa có đáp án!
-        assert btn_next.is_disabled(), "Ở Câu 2 nút Tiếp theo không bị disabled khi chưa chọn đáp án!"
-        print("  ✔ [H1 PASS] Ở Câu 2, nút Tiếp theo tự động khóa lại cho đến khi học sinh chọn đáp án.")
+        # Ở Câu 2: Nút Tiếp theo lại có class needs-answer và bật Toast cảnh báo khi bấm chưa chọn đáp án
+        assert "needs-answer" in (btn_next.get_attribute("class") or ""), "Ở Câu 2 nút Tiếp theo không có class needs-answer!"
+        btn_next.click()
+        time.sleep(0.3)
+        assert "Câu 2" in page.locator("#takingQCurrentIndex").text_content(), "Bị chuyển câu dù chưa chọn đáp án Câu 2!"
+        assert page.locator("#examToastAlert").is_visible(), "Toast cảnh báo không xuất hiện ở Câu 2!"
+        print("  ✔ [H2 PASS] Ở Câu 2, nút Tiếp theo bật cảnh báo khi bấm mà chưa chọn đáp án.")
 
         # Học sinh có quyền quay lại Câu 1 (bằng nút Câu trước hoặc nút 1 trên Palette)
         btn_prev = page.locator("#btnTakingPrevQ")
