@@ -30,3 +30,9 @@ Alibaba đạt nhưng bộ tự chạy F12 của nó không tìm thấy frontend
 - Luồng gia sư chạy lại riêng: **1 PASS**, lab LCP **436 ms**, CLS **0.0774** khi cô lập dịch vụ ngoài; `scratch/release-perf.log`. Không dùng số đo lab để tuyên bố chất lượng production.
 - Các tệp kiểm thử/hỗ trợ cần thiết được đưa cùng bản sửa; các tài liệu và script chưa theo dõi ngoài tác vụ được giữ nguyên, không đưa vào commit.
 - Bản sửa được chuẩn bị để fast-forward main theo yêu cầu, không force push. Kiểm tra health Render trước phát hành trả HTTP 200 nhưng mã JavaScript còn cũ; Git push và xác nhận hosting là hai bằng chứng riêng.
+
+## Bổ sung cấu hình phát hành Pages
+
+Main đã được đẩy tại `b0bef4d`; SHA đọc lại từ GitHub trùng bản đã kiểm thử. Render sau đó trả health healthy và nội dung app.js khớp bản này.
+
+GitHub Pages thực tế lấy từ nhánh `gh-pages`, không phải main. Bản Pages cần cấu hình backend Render riêng và phiên bản URL script mới, giữ nguyên custom backend của người dùng. Hook static preview tái hiện lỗi 404 API, rồi lỗi CORS trên cổng localhost ngẫu nhiên. Backend được bổ sung đúng origin localhost/127.0.0.1 với cổng tùy chọn, không thêm domain Internet khác. Test trước sửa: 2 FAIL, 4 PASS; sau sửa cùng hồi quy danh tính/phân quyền/backend: **20 PASS**, gồm 6 ca CORS mới (GET/preflight và domain giả mạo). Full-suite 443 ở trên được đo trước bổ sung CORS; không gọi đó là một lần full-suite 449.
