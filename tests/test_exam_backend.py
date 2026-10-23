@@ -82,6 +82,7 @@ def test_create_and_list_exam():
         "student_name": "Nguyễn Minh Khang",
         "class_code": "9A",
         "grade": 9,
+        "allow_retake": True,
         "answers": {
             "q_test_1": "A", # Đúng
             "q_test_2": "C"  # Sai

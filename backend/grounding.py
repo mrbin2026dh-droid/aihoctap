@@ -13,8 +13,9 @@ from typing import Dict, Any, Optional, List
 from backend.contracts import LessonBlockPackageContract
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CURRICULUM_DIR = Path(os.getenv("CURRICULUM_DIR_OVERRIDE") or (BASE_DIR / "data" / "curriculum"))
-CURRICULUM_V2_DIR = Path(os.getenv("CURRICULUM_V2_DIR_OVERRIDE") or (BASE_DIR / "data" / "curriculum_v2_simple"))
+DATA_DIR = BASE_DIR / "data"
+CURRICULUM_DIR = Path(os.getenv("CURRICULUM_DIR_OVERRIDE") or (DATA_DIR / "curriculum"))
+CURRICULUM_V2_DIR = Path(os.getenv("CURRICULUM_V2_DIR_OVERRIDE") or (DATA_DIR / "curriculum_v2_simple"))
 
 
 def load_lesson_v2_simple(grade: int, lesson_id: int) -> Optional[Dict[str, Any]]:
@@ -481,19 +482,55 @@ def save_lesson_blocks(
 
     os.replace(temp_name, str(target_file))
 
+    # R07 & V3-06: Thống nhất nguồn dữ liệu - Đồng bộ sang curriculum_v2_simple khi giáo viên lưu hoặc xuất bản
+    v2_synced = False
+    v2_error = None
+    try:
+        v2_grade_dir = CURRICULUM_V2_DIR / f"tin{grade}"
+        v2_grade_dir.mkdir(parents=True, exist_ok=True)
+        v2_target = v2_grade_dir / f"bai{lesson_id}.json"
+
+        # V3-06: Tự động dựng content_markdown từ validated blocks nếu Teacher Studio chỉ gửi blocks
+        content_md = payload.get("content_markdown", "")
+        if not content_md and sanitized_blocks:
+            content_md = blocks_to_markdown(payload.get("title", f"Bài {lesson_id}"), sanitized_blocks)
+
+        v2_data = {
+            "grade": grade,
+            "lesson_id": lesson_id,
+            "title": payload.get("title", f"Bài {lesson_id}"),
+            "status": target_status,
+            "blocks": sanitized_blocks,
+            "content_markdown": content_md,
+            "quiz": payload.get("quiz", []),
+            "schema_version": "3.0_clean"
+        }
+        with tempfile.NamedTemporaryFile("w", dir=str(v2_grade_dir), delete=False, encoding="utf-8") as v2_tf:
+            json.dump(v2_data, v2_tf, ensure_ascii=False, indent=2)
+            v2_tf.flush()
+            os.fsync(v2_tf.fileno())
+            v2_temp = v2_tf.name
+        os.replace(v2_temp, str(v2_target))
+        v2_synced = True
+    except Exception as e_v2:
+        v2_error = str(e_v2)
+        print(f"Lỗi đồng bộ curriculum_v2_simple: {e_v2}")
+
     return {
         "success": True,
         "message": f"Đã lưu thành công bài học Tin {grade} - Bài {lesson_id}",
         "path": str(target_file),
         "backup_created": backup_created,
-        "status": target_status
+        "status": target_status,
+        "v2_synced": v2_synced,
+        "v2_error": v2_error
     }
 
 
 def get_class_analytics_data(grade: int, class_name: str) -> Any:
     """
     Cung cấp dữ liệu phân tích số liệu lớp học chuẩn hóa theo khế ước ClassAnalyticsResponse.
-    Phục vụ Teacher Analytics Dashboard (Sẵn sàng hoán đổi sang Cloud Firestore).
+    Lấy dữ liệu thực tế theo từng lớp và khối học sinh (L16: Không hardcode cố định 35 HS / KPI 8.4 cho mọi lớp).
     """
     from backend.contracts import (
         ClassAnalyticsResponse,
@@ -501,6 +538,8 @@ def get_class_analytics_data(grade: int, class_name: str) -> Any:
         StudentOverviewItem,
         TopicMasteryStatus
     )
+    import json
+    from pathlib import Path
 
     topics_meta = [
         ("the_gioi_ki_thuat_so", "Thế giới kĩ thuật số"),
@@ -510,90 +549,176 @@ def get_class_analytics_data(grade: int, class_name: str) -> Any:
         ("phan_mem_ma_nguon_mo", "Phần mềm mã nguồn mở")
     ]
 
-    names = [
-        ("Nguyễn Minh Anh", "HS001", 100, 9.2, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Trần Gia Bảo", "HS002", 92, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Lê Khánh Chi", "HS003", 71, 7.8, "needs_support", ["mastered", "mastered", "warning", "not_started", "not_started"]),
-        ("Phạm Đức Duy", "HS004", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Hoàng Ngọc Hà", "HS005", 57, 7.2, "needs_support", ["mastered", "mastered", "warning", "warning", "not_started"]),
-        ("Vũ Hải Đăng", "HS006", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Đỗ Thùy Linh", "HS007", 100, 9.4, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Bùi Anh Tuấn", "HS008", 88, 8.2, "completed", ["mastered", "mastered", "warning", "mastered", "mastered"]),
-        ("Đặng Quang Huy", "HS009", 50, 6.5, "needs_support", ["warning", "warning", "warning", "mastered", "not_started"]),
-        ("Ngô Khánh Linh", "HS010", 100, 8.9, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Dương Quốc Bảo", "HS011", 100, 8.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Lý Thu Thảo", "HS012", 100, 9.1, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Tạ Minh Khôi", "HS013", 100, 8.7, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Phan Thanh Trúc", "HS014", 60, 6.8, "needs_support", ["warning", "mastered", "warning", "not_started", "not_started"]),
-        ("Hồ Văn Nam", "HS015", 100, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Mai Phương Thảo", "HS016", 100, 9.3, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Đinh Trọng Nghĩa", "HS017", 90, 8.0, "completed", ["mastered", "warning", "mastered", "mastered", "mastered"]),
-        ("Lâm Gia Hưng", "HS018", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Võ Quỳnh Như", "HS019", 100, 9.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Trịnh Bá Kiên", "HS020", 45, 6.0, "needs_support", ["warning", "warning", "warning", "warning", "not_started"]),
-        ("Nguyễn Lan Hương", "HS021", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Trần Thanh Tùng", "HS022", 100, 8.4, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Lê Bảo Ngọc", "HS023", 100, 9.2, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Phạm Thùy Trang", "HS024", 100, 8.7, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Hoàng Minh Triết", "HS025", 92, 8.1, "completed", ["mastered", "mastered", "warning", "mastered", "mastered"]),
-        ("Vũ Cẩm Ly", "HS026", 100, 8.9, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Đỗ Nhật Nam", "HS027", 100, 8.3, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Bùi Yến Nhi", "HS028", 100, 9.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Đặng Tiến Đạt", "HS029", 95, 8.0, "completed", ["mastered", "warning", "mastered", "mastered", "mastered"]),
-        ("Ngô Gia Khiêm", "HS030", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Cao Thái Sơn", "HS031", 100, 8.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Lương Mỹ Hạnh", "HS032", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Chu Đình Trọng", "HS033", 100, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
-        ("Nghiêm Xuân Tú", "HS034", 15, 4.5, "learning", ["warning", "not_started", "not_started", "not_started", "not_started"]),
-        ("Dương Thùy Chi", "HS035", 15, 5.0, "learning", ["warning", "not_started", "not_started", "not_started", "not_started"]),
-    ]
+    # Kiểm tra nếu là lớp Demo được yêu cầu tường minh
+    is_demo = str(class_name).strip().upper() in ("DEMO", "9A_DEMO", "SAMPLE")
 
-    students: List[StudentOverviewItem] = []
-    for full_name, code, progress, score, status, topic_states in names:
-        student_topics = []
-        for (tid, tname), tstate in zip(topics_meta, topic_states):
-            t_score = score if tstate == "mastered" else (score - 2.0 if tstate == "warning" else 0.0)
-            t_score = max(0.0, min(10.0, round(t_score, 1)))
-            student_topics.append(TopicMasteryStatus(
+    if is_demo:
+        names = [
+            ("Nguyễn Minh Anh", "HS001", 100, 9.2, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Trần Gia Bảo", "HS002", 92, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Lê Khánh Chi", "HS003", 71, 7.8, "needs_support", ["mastered", "mastered", "warning", "not_started", "not_started"]),
+            ("Phạm Đức Duy", "HS004", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Hoàng Ngọc Hà", "HS005", 57, 7.2, "needs_support", ["mastered", "mastered", "warning", "warning", "not_started"]),
+            ("Vũ Hải Đăng", "HS006", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Đỗ Thùy Linh", "HS007", 100, 9.4, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Bùi Anh Tuấn", "HS008", 88, 8.2, "completed", ["mastered", "mastered", "warning", "mastered", "mastered"]),
+            ("Đặng Quang Huy", "HS009", 50, 6.5, "needs_support", ["warning", "warning", "warning", "mastered", "not_started"]),
+            ("Ngô Khánh Linh", "HS010", 100, 8.9, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Dương Quốc Bảo", "HS011", 100, 8.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Lý Thu Thảo", "HS012", 100, 9.1, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Tạ Minh Khôi", "HS013", 100, 8.7, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Phan Thanh Trúc", "HS014", 60, 6.8, "needs_support", ["warning", "mastered", "warning", "not_started", "not_started"]),
+            ("Hồ Văn Nam", "HS015", 100, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Mai Phương Thảo", "HS016", 100, 9.3, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Đinh Trọng Nghĩa", "HS017", 90, 8.0, "completed", ["mastered", "warning", "mastered", "mastered", "mastered"]),
+            ("Lâm Gia Hưng", "HS018", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Võ Quỳnh Như", "HS019", 100, 9.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Trịnh Bá Kiên", "HS020", 45, 6.0, "needs_support", ["warning", "warning", "warning", "warning", "not_started"]),
+            ("Nguyễn Lan Hương", "HS021", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Trần Thanh Tùng", "HS022", 100, 8.4, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Lê Bảo Ngọc", "HS023", 100, 9.2, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Phạm Thùy Trang", "HS024", 100, 8.7, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Hoàng Minh Triết", "HS025", 92, 8.1, "completed", ["mastered", "mastered", "warning", "mastered", "mastered"]),
+            ("Vũ Cẩm Ly", "HS026", 100, 8.9, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Đỗ Nhật Nam", "HS027", 100, 8.3, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Bùi Yến Nhi", "HS028", 100, 9.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Đặng Tiến Đạt", "HS029", 95, 8.0, "completed", ["mastered", "warning", "mastered", "mastered", "mastered"]),
+            ("Ngô Gia Khiêm", "HS030", 100, 8.8, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Cao Thái Sơn", "HS031", 100, 8.5, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Lương Mỹ Hạnh", "HS032", 100, 9.0, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Chu Đình Trọng", "HS033", 100, 8.6, "completed", ["mastered", "mastered", "mastered", "mastered", "mastered"]),
+            ("Nghiêm Xuân Tú", "HS034", 15, 4.5, "learning", ["warning", "not_started", "not_started", "not_started", "not_started"]),
+            ("Dương Thùy Chi", "HS035", 15, 5.0, "learning", ["warning", "not_started", "not_started", "not_started", "not_started"]),
+        ]
+        students = []
+        for full_name, code, progress, score, status, topic_states in names:
+            student_topics = []
+            for (tid, tname), tstate in zip(topics_meta, topic_states):
+                t_score = score if tstate == "mastered" else (score - 2.0 if tstate == "warning" else 0.0)
+                t_score = max(0.0, min(10.0, round(t_score, 1)))
+                student_topics.append(TopicMasteryStatus(
+                    topic_id=tid,
+                    topic_name=tname,
+                    score=t_score,
+                    status=tstate
+                ))
+            students.append(StudentOverviewItem(
+                id=f"hs-{code.lower()}",
+                student_code=code,
+                full_name=full_name,
+                progress_percent=progress,
+                average_score=score,
+                topics=student_topics,
+                status=status
+            ))
+        kpi = ClassKPIMetrics(
+            total_students=35,
+            completed_count=28,
+            completed_percent=80.0,
+            average_score=8.4,
+            score_delta_month=0.6,
+            improved_count=30,
+            improved_percent=86.0,
+            needs_support_count=5,
+            needs_support_percent=14.0
+        )
+        topic_averages = {
+            "the_gioi_ki_thuat_so": 8.6,
+            "thong_tin_giai_quyet_van_de": 8.1,
+            "danh_gia_chat_luong_thong_tin": 7.8,
+            "su_dung_dich_vu_internet": 8.5,
+            "phan_mem_ma_nguon_mo": 8.9
+        }
+        donut = {"completed": 28, "learning": 5, "not_started": 2}
+        return ClassAnalyticsResponse(
+            grade=grade,
+            class_name=class_name,
+            semester="Học kì I (2026 - 2027) [Demo]",
+            kpi=kpi,
+            topic_averages=topic_averages,
+            donut_progress=donut,
+            students=students
+        )
+
+    # Đọc dữ liệu thực tế từ students_registry.json
+    base_dir = Path(__file__).resolve().parent.parent
+    reg_file = base_dir / "data" / "students_registry.json"
+    real_students_data = []
+    if reg_file.exists():
+        try:
+            with open(reg_file, "r", encoding="utf-8") as f:
+                all_regs = json.load(f)
+            for s_code, s_info in all_regs.items():
+                if str(s_info.get("class_code", "")).strip().upper() == str(class_name).strip().upper():
+                    real_students_data.append(s_info)
+        except Exception as e:
+            print(f"Lỗi đọc students_registry: {e}")
+
+    students = []
+    completed_count = 0
+    learning_count = 0
+    not_started_count = 0
+    total_score = 0.0
+
+    for s_info in real_students_data:
+        code = s_info.get("student_code", "")
+        name = s_info.get("full_name", f"Học sinh {code}")
+        progress = int(s_info.get("progress_percent", 0))
+        score = float(s_info.get("average_score", 0.0))
+        total_score += score
+        st = "not_started"
+        if progress >= 100:
+            st = "completed"
+            completed_count += 1
+        elif progress > 0:
+            st = "learning"
+            learning_count += 1
+        else:
+            not_started_count += 1
+
+        student_topics = [
+            TopicMasteryStatus(
                 topic_id=tid,
                 topic_name=tname,
-                score=t_score,
-                status=tstate
-            ))
+                score=score,
+                status="mastered" if score >= 8.0 else ("warning" if score >= 5.0 else "not_started")
+            )
+            for tid, tname in topics_meta
+        ]
+
         students.append(StudentOverviewItem(
-            id=f"hs-{code.lower()}",
+            id=f"std_{code}",
             student_code=code,
-            full_name=full_name,
+            full_name=name,
             progress_percent=progress,
             average_score=score,
             topics=student_topics,
-            status=status
+            status=st
         ))
 
+    total = len(students)
+    avg_score = round(total_score / total, 1) if total > 0 else 0.0
+    comp_pct = round((completed_count / total) * 100, 1) if total > 0 else 0.0
+    needs_support = not_started_count
+    needs_pct = round((needs_support / total) * 100, 1) if total > 0 else 0.0
+
     kpi = ClassKPIMetrics(
-        total_students=35,
-        completed_count=28,
-        completed_percent=80.0,
-        average_score=8.4,
-        score_delta_month=0.6,
-        improved_count=30,
-        improved_percent=86.0,
-        needs_support_count=5,
-        needs_support_percent=14.0
+        total_students=total,
+        completed_count=completed_count,
+        completed_percent=comp_pct,
+        average_score=avg_score,
+        score_delta_month=0.0,
+        improved_count=completed_count,
+        improved_percent=comp_pct,
+        needs_support_count=needs_support,
+        needs_support_percent=needs_pct
     )
 
-    topic_averages = {
-        "the_gioi_ki_thuat_so": 8.6,
-        "thong_tin_giai_quyet_van_de": 8.1,
-        "danh_gia_chat_luong_thong_tin": 7.8,
-        "su_dung_dich_vu_internet": 8.5,
-        "phan_mem_ma_nguon_mo": 8.9
-    }
-
+    topic_averages = {tid: avg_score for tid, _ in topics_meta}
     donut = {
-        "completed": 28,
-        "learning": 5,
-        "not_started": 2
+        "completed": completed_count,
+        "learning": learning_count,
+        "not_started": not_started_count
     }
 
     return ClassAnalyticsResponse(

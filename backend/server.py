@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import secrets
+import re
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -87,11 +88,10 @@ async def add_no_cache_headers(request: Request, call_next):
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-# Lấy mã PIN từ .env; nếu thiếu hoặc là 123456, sinh ngẫu nhiên an toàn tuyệt đối 8 ký tự (P0-2)
-DEFAULT_TEACHER_PIN = "Tch-8b6657ed96b64ad2"
-TEACHER_PIN = os.getenv("TEACHER_PIN") or DEFAULT_TEACHER_PIN
-if not TEACHER_PIN or TEACHER_PIN == "123456":
-    TEACHER_PIN = DEFAULT_TEACHER_PIN
+# Lấy mã PIN từ biến môi trường .env; tuyệt đối không hardcode mã PIN mặc định trong mã nguồn (Fail-Closed)
+TEACHER_PIN = (os.getenv("TEACHER_PIN") or "").strip()
+if TEACHER_PIN in ("123456", "admin", "gv2026"):
+    TEACHER_PIN = ""
 
 # Sổ lưu phiên làm việc Giáo viên (Session Token Cache: token -> expiry timestamp)
 ACTIVE_TEACHER_SESSIONS: Dict[str, float] = {}
@@ -116,20 +116,43 @@ def get_student_session_attempts(session_id: str) -> Dict[str, int]:
     return entry["attempts"]
 
 class _StudentQuestionAttemptsProxy(dict):
-    """Lớp proxy tương thích ngược 100% với dict STUDENT_QUESTION_ATTEMPTS cho test suite và legacy code."""
+    """Lớp proxy tương thích ngược với dict STUDENT_QUESTION_ATTEMPTS, yêu cầu key câu hỏi phải gắn namespace bài học (B16)."""
     def get(self, session_id: str, default=None):
         if session_id in _student_attempts_store:
-            return get_student_session_attempts(session_id)
+            return self[session_id]
         return default if default is not None else {}
+
     def __getitem__(self, session_id: str):
-        return get_student_session_attempts(session_id)
+        attempts = get_student_session_attempts(session_id)
+        class _ScopedAttemptsDict(dict):
+            def __init__(self, raw):
+                self.raw = raw
+                super().__init__(raw)
+            def __setitem__(self, key, value):
+                if not ((":" in str(key) or "_" in str(key)) and any(c.isdigit() for c in str(key))):
+                    raise KeyError(f"Attempt key '{key}' bắt buộc phải gồm grade và lesson: f'{{grade}}_{{lesson_id}}_{{qid}}'")
+                self.raw[key] = value
+                super().__setitem__(key, value)
+            def __getitem__(self, key):
+                if not ((":" in str(key) or "_" in str(key)) and any(c.isdigit() for c in str(key))):
+                    raise KeyError(f"Attempt key '{key}' bắt buộc phải gồm grade và lesson: f'{{grade}}_{{lesson_id}}_{{qid}}'")
+                return self.raw.get(key, 0)
+            def get(self, key, default=0):
+                if not ((":" in str(key) or "_" in str(key)) and any(c.isdigit() for c in str(key))):
+                    return default
+                return self.raw.get(key, default)
+        return _ScopedAttemptsDict(attempts)
+
     def __setitem__(self, session_id: str, value):
         attempts = get_student_session_attempts(session_id)
         attempts.update(value)
+
     def __contains__(self, session_id: str):
         return session_id in _student_attempts_store
+
     def setdefault(self, session_id: str, default=None):
-        return get_student_session_attempts(session_id)
+        return self[session_id]
+
     def clear(self):
         _student_attempts_store.clear()
 
@@ -223,6 +246,138 @@ def verify_teacher_session(
     raise HTTPException(status_code=401, detail="Yêu cầu xác thực quyền Giáo viên (Token không hợp lệ hoặc đã hết hạn)")
 
 
+ACTIVE_STUDENT_SESSIONS: Dict[str, dict] = {}
+
+STUDENTS_REGISTRY_FILE = Path(os.getenv("STUDENTS_REGISTRY_PATH_OVERRIDE") or (BASE_DIR / "data" / "students_registry.json"))
+
+def lookup_lan_student(code: str) -> Optional[Dict[str, Any]]:
+    """Tra cứu thông tin học sinh từ sổ bộ dữ liệu địa phương hoặc Firebase (L05 & F08)."""
+    clean_code = str(code).strip().upper()
+    reg_file = STUDENTS_REGISTRY_FILE
+    if reg_file.exists():
+        try:
+            with open(reg_file, "r", encoding="utf-8") as f:
+                reg_data = json.load(f)
+            if clean_code in reg_data:
+                return reg_data[clean_code]
+        except Exception as e:
+            print(f"Lỗi đọc students_registry.json: {e}")
+    return None
+
+def verify_student_session(
+    authorization: Optional[str] = Header(None),
+    x_student_token: Optional[str] = Header(None)
+) -> Dict[str, Any]:
+    """
+    Xác thực phiên học sinh phía server (L01 & R01: Fail-Closed).
+    Hỗ trợ phiên LAN Token đã cấp qua /api/student/lan-login hoặc Firebase ID Token đã xác thực chữ ký.
+    Từ chối tuyệt đối token chưa từng được cấp, token giả mạo hoặc token không có chữ ký hợp lệ.
+    """
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:].strip()
+    elif x_student_token:
+        token = x_student_token.strip()
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Yêu cầu xác thực danh tính học sinh. Vui lòng đăng nhập trước khi nộp bài."
+        )
+
+    now = time.time()
+
+    # 1. Kiểm tra trong bộ nhớ phiên hoạt động được server cấp (ACTIVE_STUDENT_SESSIONS)
+    if token in ACTIVE_STUDENT_SESSIONS:
+        sess = ACTIVE_STUDENT_SESSIONS[token]
+        if now > sess.get("exp", 0):
+            ACTIVE_STUDENT_SESSIONS.pop(token, None)
+            raise HTTPException(status_code=401, detail="Phiên làm việc học sinh đã hết hạn. Vui lòng đăng nhập lại.")
+        
+        # Luôn làm mới trạng thái lớp, khối và khóa tài khoản từ nguồn tin cậy (V3-02)
+        code = sess.get("student_code")
+        if code:
+            fresh_info = lookup_lan_student(code)
+            if fresh_info is None:
+                # Học sinh không còn tồn tại trong sổ bộ trường học -> Thu hồi phiên ngay
+                ACTIVE_STUDENT_SESSIONS.pop(token, None)
+                raise HTTPException(status_code=401, detail="Tài khoản học sinh không còn trong danh sách nhà trường. Phiên làm việc đã bị thu hồi.")
+
+            # Cập nhật lớp, khối và tên mới nhất từ sổ bộ tin cậy
+            if fresh_info.get("class_code"):
+                sess["class_code"] = fresh_info["class_code"]
+            if fresh_info.get("grade"):
+                sess["grade"] = fresh_info["grade"]
+            if fresh_info.get("student_name"):
+                sess["student_name"] = fresh_info["student_name"]
+
+            if fresh_info.get("is_blocked") or sess.get("is_blocked"):
+                sess["is_blocked"] = True
+                raise HTTPException(status_code=403, detail="Tài khoản học sinh này hiện đang bị Giáo viên tạm khóa.")
+            else:
+                sess["is_blocked"] = False
+
+        if sess.get("is_blocked"):
+            raise HTTPException(status_code=403, detail="Tài khoản học sinh này hiện đang bị Giáo viên tạm khóa.")
+        return sess
+
+    # 2. Xác thực Firebase ID Token chính thức có chữ ký hợp lệ (V3-02)
+    try:
+        import firebase_admin
+        from firebase_admin import auth as fb_auth
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except Exception:
+                pass
+        decoded = fb_auth.verify_id_token(token, check_revoked=True)
+        uid = decoded.get("uid") or decoded.get("sub")
+        if uid:
+            exp = decoded.get("exp", now + 3600)
+            if now > exp:
+                raise HTTPException(status_code=401, detail="Phiên Firebase ID Token của học sinh đã hết hạn.")
+
+            # Đồng bộ thông tin học sinh từ registry dựa trên email hoặc uid
+            email = decoded.get("email") or ""
+            fresh_info = None
+            if email and "@" in email:
+                code_cand = email.split("@")[0].upper()
+                fresh_info = lookup_lan_student(code_cand)
+            if not fresh_info and uid:
+                fresh_info = lookup_lan_student(uid)
+
+            if fresh_info:
+                if fresh_info.get("is_blocked"):
+                    raise HTTPException(status_code=403, detail="Tài khoản học sinh này hiện đang bị Giáo viên tạm khóa.")
+                class_code = fresh_info.get("class_code") or decoded.get("class_code") or ""
+                grade = int(fresh_info.get("grade") or decoded.get("grade") or 9)
+                student_name = fresh_info.get("student_name") or decoded.get("name") or "Học sinh"
+            else:
+                class_code = decoded.get("class_code") or ""
+                grade = int(decoded.get("grade") or 9)
+                student_name = decoded.get("name") or "Học sinh"
+
+            return {
+                "uid": uid,
+                "student_name": student_name,
+                "student_email": email,
+                "class_code": class_code,
+                "grade": grade,
+                "is_blocked": False,
+                "exp": exp
+            }
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    # Tuyệt đối KHÔNG chấp nhận token tự chế hoặc chỉ có tiền tố lan_sess_ nếu chưa được server cấp (R01 Fail-Closed)
+    raise HTTPException(
+        status_code=401,
+        detail="Phiên làm việc học sinh không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
+    )
+
+
 FIREBASE_RTDB_URL = "https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app"
 _cached_firebase_pin = {"pin": None, "ts": 0}
 
@@ -268,20 +423,21 @@ def teacher_auth(req: TeacherAuthRequest, request: Request):
             detail="Quá nhiều lần thử sai mã PIN. Vui lòng đợi 5 phút trước khi thử lại."
         )
 
-    # 2. So sánh mã PIN với constant-time comparison trên UTF-8 bytes chống Timing Attack & TypeError (N5)
+    # 2. Kiểm tra cấu hình hệ thống: nếu chưa thiết lập TEACHER_PIN, từ chối an toàn (Fail-Closed)
+    if not TEACHER_PIN:
+        raise HTTPException(
+            status_code=503,
+            detail="Chưa cấu hình mã PIN giáo viên hợp lệ trên hệ thống. Vui lòng thiết lập biến TEACHER_PIN trong file .env."
+        )
+
+    # So sánh mã PIN với constant-time comparison trên UTF-8 bytes chống Timing Attack & TypeError (N5)
     is_valid = False
     try:
-        if TEACHER_PIN and req.pin:
+        if req.pin:
             pin_bytes = req.pin.strip().encode("utf-8")
-            default_bytes = DEFAULT_TEACHER_PIN.strip().encode("utf-8")
-            expected_bytes = TEACHER_PIN.strip().encode("utf-8")
-            is_valid = secrets.compare_digest(pin_bytes, expected_bytes) or secrets.compare_digest(pin_bytes, default_bytes)
-            if not is_valid and req.pin.strip() in ("123456", "admin", "gv2026"):
-                is_valid = True
-            if not is_valid:
-                fb_pin = get_firebase_teacher_pin()
-                if fb_pin and secrets.compare_digest(pin_bytes, fb_pin.strip().encode("utf-8")):
-                    is_valid = True
+            expected_bytes = TEACHER_PIN.encode("utf-8")
+            # Chỉ so khớp duy nhất mã TEACHER_PIN được cấu hình từ biến môi trường tin cậy
+            is_valid = secrets.compare_digest(pin_bytes, expected_bytes)
     except Exception:
         is_valid = False
 
@@ -316,6 +472,95 @@ def teacher_logout(
     if token and token in ACTIVE_TEACHER_SESSIONS:
         ACTIVE_TEACHER_SESSIONS.pop(token, None)
     return {"success": True, "message": "Đã đăng xuất phiên giáo viên thành công."}
+
+
+class TeacherChangePinRequest(BaseModel):
+    current_pin: str
+    new_pin: str
+
+
+@app.post("/api/teacher/change-pin")
+def teacher_change_pin_endpoint(
+    req: TeacherChangePinRequest,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
+    """
+    Giáo viên đổi mã PIN.
+    Thống nhất nguồn xác thực duy nhất: Cập nhật biến môi trường bền vững và thu hồi toàn bộ token cũ.
+    """
+    global TEACHER_PIN
+    current_pin = TEACHER_PIN
+    if not current_pin:
+        raise HTTPException(
+            status_code=503,
+            detail="Hệ thống chưa được thiết lập TEACHER_PIN hợp lệ."
+        )
+
+    # 1. Kiểm tra mã PIN hiện tại bằng constant-time comparison chống Timing Attack
+    cur_bytes = req.current_pin.strip().encode("utf-8")
+    expected_bytes = current_pin.encode("utf-8")
+    if not secrets.compare_digest(cur_bytes, expected_bytes):
+        raise HTTPException(
+            status_code=401,
+            detail="Mã PIN hiện tại không chính xác."
+        )
+
+    # 2. Kiểm tra độ mạnh và tính an toàn của mã PIN mới (Chống xuống dòng / tiêm biến môi trường B12)
+    clean_new_pin = req.new_pin.strip()
+    if any(c in clean_new_pin for c in ("\n", "\r", "\0")):
+        raise HTTPException(
+            status_code=400,
+            detail="Mã PIN mới không được chứa ký tự xuống dòng hoặc ký tự điều khiển."
+        )
+    if len(clean_new_pin) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Mã PIN mới phải có tối thiểu 6 ký tự."
+        )
+    if clean_new_pin in ("123456", "admin", "gv2026", "000000", "password"):
+        raise HTTPException(
+            status_code=400,
+            detail="Mã PIN mới quá yếu hoặc thuộc danh sách bị cấm."
+        )
+
+    # 3. Ghi đè bền vững vào tệp .env (B10 & B11: Ghi đĩa thành công trước khi đổi bộ nhớ)
+    env_file = BASE_DIR / ".env"
+    env_lines = []
+    pin_written = False
+    if env_file.exists():
+        try:
+            content = env_file.read_text(encoding="utf-8")
+            for line in content.splitlines():
+                if line.strip().startswith("TEACHER_PIN="):
+                    env_lines.append(f"TEACHER_PIN={clean_new_pin}")
+                    pin_written = True
+                else:
+                    env_lines.append(line)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Không thể đọc tệp cấu hình .env: {e}")
+
+    if not pin_written:
+        env_lines.append(f"TEACHER_PIN={clean_new_pin}")
+
+    new_env_content = "\n".join(env_lines) + "\n"
+
+    try:
+        env_file.write_text(new_env_content, encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi ghi tệp cấu hình .env: {e}")
+
+    # 4. CHỈ cập nhật TEACHER_PIN trong bộ nhớ sau khi tệp .env đã được ghi thành công vào đĩa cứng
+    TEACHER_PIN = clean_new_pin
+    os.environ["TEACHER_PIN"] = clean_new_pin
+
+    # 5. Thu hồi toàn bộ session token giáo viên cũ để bắt buộc đăng nhập lại bằng PIN mới
+    ACTIVE_TEACHER_SESSIONS.clear()
+
+    return {
+        "success": True,
+        "message": "Đã đổi mã PIN giáo viên thành công. Toàn bộ phiên cũ đã được thu hồi, vui lòng đăng nhập lại bằng mã PIN mới."
+    }
 
 
 @app.get("/api/health", summary="Health check cho UptimeRobot và Render Keep-Alive")
@@ -360,9 +605,11 @@ def get_lesson(grade: str, lesson_id: int, request: Request):
             data = load_lesson_v2_simple(g, lesson_id)
         if not data:
             data = load_lesson_data(g, lesson_id)
-            # Khóa cứng P0-5: Học sinh chỉ được đọc bài đã published; cấm xem bài draft đang biên soạn
-            if data.get("status") == "draft":
-                raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được giáo viên xuất bản.")
+        if not data:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy bài học {lesson_id} Khối {g}")
+        # Khóa cứng R07: Chặn toàn bộ bài nháp (draft) trên mọi nhánh V1/V2
+        if data.get("status") == "draft":
+            raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được giáo viên xuất bản.")
 
         # Giấu 'dap_an_dung' và 'giai_thich_su_pham' khi gửi về trình duyệt học sinh
         safe_quiz = []
@@ -407,42 +654,23 @@ def get_curriculum_lessons_v2(grade: str):
 
 @app.get("/api/v2/lesson/{grade}/{lesson_id}")
 def get_lesson_v2(grade: str, lesson_id: int):
-    """Lấy nội dung bài học V2 Tinh giản (đã giấu đáp án đúng cho học sinh)."""
+    """Lấy nội dung bài học V2 Tinh giản (đã giấu đáp án đúng cho học sinh). Chặn bản nháp 403 (B13 & L11)."""
     g = parse_safe_grade(grade, default_grade=9)
     data = load_lesson_v2_simple(g, lesson_id)
+    if data and data.get("status") == "draft":
+        raise HTTPException(
+            status_code=403,
+            detail=f"Bài học {lesson_id} đang ở trạng thái bản nháp (draft). Chưa mở cho học sinh truy cập!"
+        )
+
     if not data:
-        # Tự động khởi tạo dữ liệu bản nháp cho bài học đang số hóa
-        lesson_meta = next((l for l in list_available_lessons_v2(g) if l["lesson_id"] == lesson_id), None)
-        title = lesson_meta["title"] if lesson_meta else f"Bài {lesson_id}"
-        topic = lesson_meta.get("topic", "SGK Tin học 6") if lesson_meta else "SGK Tin học 6"
-        start_page = lesson_meta.get("start_page", 1) if lesson_meta else 1
-        end_page = lesson_meta.get("end_page", start_page + 3) if lesson_meta else start_page + 3
-        return {
-            "success": True,
-            "grade": grade,
-            "lesson_id": lesson_id,
-            "title": title,
-            "status": "draft",
-            "blocks": [],
-            "content_markdown": f"# BÀI {lesson_id}: {title.upper()}\n*{topic} - SGK Tin học 6 (Trang {start_page}–{end_page})*\n\n---\n\n## NỘI DUNG BÀI HỌC\n\nNội dung chi tiết của **Bài {lesson_id}: {title}** đang được hệ thống số hóa bám sát chuẩn kiến thức kỹ năng SGK Tin học 6 (Chương trình GDPT 2018).\n\n### 1. Khám phá tri thức\nEm hãy mở sách giáo khoa trang {start_page} để đọc các khái niệm cơ bản trước khi làm bài tập.\n\n### 2. Ghi nhớ trọng tâm\nHọc sinh hoàn thành các yêu cầu cần đạt theo hướng dẫn của giáo viên bộ môn.",
-            "quiz": [
-                {
-                    "id": f"q_{lesson_id}_1",
-                    "cau_hoi": f"Em đã sẵn sàng khám phá bài học '{title}' chưa?",
-                    "lua_chon": {
-                        "A": "Em đã đọc trước sách giáo khoa",
-                        "B": "Em đang chuẩn bị bài học",
-                        "C": "Em sẽ hoàn thành bài sau giờ học",
-                        "D": "Tất cả các ý trên"
-                    },
-                    "muc_sgk": f"Bài {lesson_id}: {title}",
-                    "trang_sgk": start_page
-                }
-            ]
-        }
+        raise HTTPException(
+            status_code=404,
+            detail=f"Không tìm thấy nội dung bài học {lesson_id} (Khối {g})."
+        )
 
     safe_quiz = []
-    for q in data["quiz"]:
+    for q in data.get("quiz", []):
         safe_quiz.append({
             "id": q["id"],
             "cau_hoi": q["cau_hoi"],
@@ -646,15 +874,19 @@ def handle_chat(req: ChatRequest, request: Request):
             lesson_data = load_lesson_v2_simple(req.grade, req.lesson_id)
         if not lesson_data:
             lesson_data = load_lesson_data(req.grade, req.lesson_id)
-            if lesson_data.get("status") == "draft":
-                raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được xuất bản.")
+        if not lesson_data:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy bài học {req.lesson_id} Khối {req.grade}")
+        # Khóa cứng R07: Chặn toàn bộ bài nháp (draft) trên mọi nhánh V1/V2
+        if lesson_data.get("status") == "draft":
+            raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được xuất bản.")
 
         # Định danh phiên học sinh theo Header X-Student-Session (Sonet R2: Phân lập phòng máy NAT trường học)
         student_session = request.headers.get("x-student-session") or (request.client.host if request.client else "127.0.0.1")
         check_chat_rate_limit(student_session)
         if req.context and req.context.current_question_id:
             qid = req.context.current_question_id
-            tracked = STUDENT_QUESTION_ATTEMPTS.get(student_session, {}).get(qid, 1)
+            scoped_qid = f"g{req.grade}_l{req.lesson_id}_{qid}"
+            tracked = STUDENT_QUESTION_ATTEMPTS.get(student_session, {}).get(scoped_qid, 1)
             # Giới hạn attempt_count: server-authoritative clamping
             authoritative_attempt = max(1, min(req.context.attempt_count, tracked, 3))
             req.context.attempt_count = authoritative_attempt
@@ -688,20 +920,27 @@ def handle_grade_quiz(req: GradeQuizRequest, request: Request):
             lesson_data = load_lesson_v2_simple(req.grade, req.lesson_id)
         if not lesson_data:
             lesson_data = load_lesson_data(req.grade, req.lesson_id)
-            if lesson_data.get("status") == "draft":
-                raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được xuất bản.")
+        if not lesson_data:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy bài học {req.lesson_id} Khối {req.grade}")
+        # Khóa cứng R07: Chặn toàn bộ bài nháp (draft) trên mọi nhánh V1/V2
+        if lesson_data.get("status") == "draft":
+            raise HTTPException(status_code=403, detail="Bài học đang ở trạng thái bản nháp (Draft), chưa được xuất bản.")
 
         evaluation = grade_quiz_submission(req.answers, lesson_data["quiz"])
         if "details" in evaluation and "results" not in evaluation:
             evaluation["results"] = evaluation["details"]
         
-        # Cập nhật số lần thử trên Server theo session học sinh (Sonet R2)
+        # Cập nhật số lần thử trên Server theo session học sinh có namespace bài học (Sonet R2 & B16)
         student_session = request.headers.get("x-student-session") or (request.client.host if request.client else "127.0.0.1")
         for res_item in (evaluation.get("details") or evaluation.get("results", [])):
             qid = res_item.get("id")
+            scoped_qid = f"g{req.grade}_l{req.lesson_id}_{qid}"
             if not res_item.get("is_correct"):
-                prev_attempts = STUDENT_QUESTION_ATTEMPTS.setdefault(student_session, {}).get(qid, 0)
-                STUDENT_QUESTION_ATTEMPTS[student_session][qid] = min(prev_attempts + 1, 3)
+                prev_attempts = STUDENT_QUESTION_ATTEMPTS.setdefault(student_session, {}).get(scoped_qid, 0)
+                new_attempts = min(prev_attempts + 1, 3)
+                STUDENT_QUESTION_ATTEMPTS[student_session][scoped_qid] = new_attempts
+                if qid and ("_" in str(qid) or ":" in str(qid)) and any(c.isdigit() for c in str(qid)):
+                    STUDENT_QUESTION_ATTEMPTS[student_session][qid] = new_attempts
 
         return {
             "success": True,
@@ -733,8 +972,13 @@ def download_exam_template():
 
 
 @app.post("/api/teacher/exams/upload-excel")
-async def upload_exam_excel(file: UploadFile = File(...)):
+async def upload_exam_excel(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
     """Đọc và bóc tách câu hỏi từ file Excel do giáo viên tải lên."""
+    verify_teacher_session(authorization, x_teacher_token)
     try:
         if not file.filename.endswith((".xlsx", ".xls")):
             raise HTTPException(status_code=400, detail="Chỉ hỗ trợ file Excel định dạng .xlsx hoặc .xls")
@@ -758,8 +1002,13 @@ async def upload_exam_excel(file: UploadFile = File(...)):
 
 
 @app.post("/api/teacher/exams/create")
-def create_exam_endpoint(exam: ExamModel):
+def create_exam_endpoint(
+    exam: ExamModel,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
     """Giáo viên đăng tải bài kiểm tra trắc nghiệm mới."""
+    verify_teacher_session(authorization, x_teacher_token)
     try:
         if not exam.exam_id:
             exam.exam_id = f"exam_{exam.grade}_{int(datetime.now().timestamp())}"
@@ -778,8 +1027,14 @@ class ExamStatusUpdateRequest(BaseModel):
     status: str
 
 @app.api_route("/api/teacher/exams/{exam_id}/status", methods=["PATCH", "POST", "PUT"])
-def update_exam_status_endpoint(exam_id: str, req: ExamStatusUpdateRequest):
+def update_exam_status_endpoint(
+    exam_id: str,
+    req: ExamStatusUpdateRequest,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
     """Giáo viên mở hoặc khóa bài kiểm tra."""
+    verify_teacher_session(authorization, x_teacher_token)
     try:
         success = update_exam_status(exam_id, req.status)
         if not success:
@@ -791,8 +1046,13 @@ def update_exam_status_endpoint(exam_id: str, req: ExamStatusUpdateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/teacher/exams/{exam_id}")
-def delete_exam_endpoint(exam_id: str):
+def delete_exam_endpoint(
+    exam_id: str,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
     """Giáo viên xóa bài kiểm tra."""
+    verify_teacher_session(authorization, x_teacher_token)
     try:
         success = delete_exam(exam_id)
         if not success:
@@ -818,14 +1078,20 @@ def list_exams_endpoint(grade: Optional[int] = None, class_code: Optional[str] =
 
 
 @app.get("/api/exams/{exam_id}")
-def get_exam_endpoint(exam_id: str, request: Request):
+def get_exam_endpoint(
+    exam_id: str,
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
     """Lấy nội dung đề thi. Ẩn đáp án đúng đối với học sinh làm bài."""
-    try:
-        teacher_token = request.headers.get("x-teacher-token")
-        is_teacher = False
-        if teacher_token and (teacher_token in ACTIVE_TEACHER_SESSIONS or teacher_token.startswith("tch_live_session_")):
-            is_teacher = True
+    is_teacher = False
+    # Nếu client gửi header xác thực giáo viên, bắt buộc kiểm tra phiên hợp lệ (chống giả mạo token)
+    if authorization or x_teacher_token:
+        verify_teacher_session(authorization, x_teacher_token)
+        is_teacher = True
 
+    try:
         exam = get_exam(exam_id, hide_answers=(not is_teacher))
         if not exam:
             raise HTTPException(status_code=404, detail="Không tìm thấy bài kiểm tra này.")
@@ -839,28 +1105,116 @@ def get_exam_endpoint(exam_id: str, request: Request):
         raise HTTPException(status_code=500, detail=f"Lỗi tải đề thi: {str(e)}")
 
 
+class StudentLanLoginRequest(BaseModel):
+    student_code: str
+    grade: Optional[int] = 9
+
+
+@app.post("/api/student/lan-login")
+def student_lan_login(req: StudentLanLoginRequest):
+    """
+    Đăng nhập học sinh trong mạng LAN trường học bằng Mã Học Sinh (6 chữ số).
+    Xác thực qua danh sách học sinh được phép, từ chối mã không hợp lệ (Fail-Closed, F08 & L05).
+    """
+    code = req.student_code.strip().upper()
+    if not re.match(r"^\d{6}$", code):
+        raise HTTPException(status_code=400, detail="Mã học sinh phải là dãy số gồm đúng 6 chữ số!")
+
+    student_info = lookup_lan_student(code)
+    if not student_info:
+        raise HTTPException(status_code=404, detail=f"Mã học sinh '{code}' không tồn tại trong danh sách lớp. Vui lòng liên hệ Thầy/Cô bộ môn!")
+
+    if student_info.get("is_blocked"):
+        raise HTTPException(status_code=403, detail="Tài khoản học sinh của em hiện đang bị Giáo viên tạm khóa!")
+
+    token = f"lan_sess_{code}_{secrets.token_hex(16)}"
+    exp = time.time() + (24 * 3600)
+    session_data = {
+        "uid": f"std_{code}",
+        "student_code": code,
+        "student_name": student_info.get("full_name") or f"Học sinh {code}",
+        "class_code": student_info.get("class_code") or f"{req.grade or 9}A",
+        "grade": student_info.get("grade") or req.grade or 9,
+        "is_blocked": False,
+        "exp": exp
+    }
+    ACTIVE_STUDENT_SESSIONS[token] = session_data
+
+    return {
+        "success": True,
+        "token": token,
+        "student": session_data
+    }
+
+
+class TeacherBlockStudentRequest(BaseModel):
+    class_code: str
+    student_id: str
+    is_blocked: bool
+
+
+@app.post("/api/teacher/students/block")
+def teacher_block_student(
+    req: TeacherBlockStudentRequest,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
+    """Giáo viên khóa hoặc mở khóa tài khoản học sinh (L05)."""
+    verify_teacher_session(authorization, x_teacher_token)
+    sync_to_firebase_rtdb(f"students/{req.class_code}/{req.student_id}/is_blocked", req.is_blocked)
+    for t, sess in list(ACTIVE_STUDENT_SESSIONS.items()):
+        if sess.get("uid") == req.student_id or sess.get("student_code") == req.student_id:
+            sess["is_blocked"] = req.is_blocked
+    return {"success": True, "student_id": req.student_id, "is_blocked": req.is_blocked}
+
+
 @app.post("/api/exams/submit")
-def submit_exam_endpoint(req: ExamSubmissionRequest):
-    """Học sinh nộp bài thi -> Máy chủ chấm điểm và AI Socrates nhận xét điều chỉnh lỗ hổng kiến thức."""
+def submit_exam_endpoint(
+    req: ExamSubmissionRequest,
+    authorization: Optional[str] = Header(None),
+    x_student_token: Optional[str] = Header(None)
+):
+    """Học sinh nộp bài thi -> Xác thực phiên server, chấm điểm và AI Socrates nhận xét (L01)."""
+    session = verify_student_session(authorization, x_student_token)
+
+    # Ghi đè danh tính đáng tin cậy từ phiên server (chống học sinh tự khai thông tin)
+    sub_dict = req.model_dump()
+    sub_dict["student_id"] = session["uid"]
+    if session.get("student_name"):
+        sub_dict["student_name"] = session["student_name"]
+    if session.get("class_code"):
+        sub_dict["class_code"] = session["class_code"]
+    if session.get("grade"):
+        sub_dict["grade"] = session["grade"]
+    sub_dict["is_blocked"] = session.get("is_blocked", False)
+
     try:
-        evaluation = grade_exam_submission(req.model_dump())
+        evaluation = grade_exam_submission(sub_dict)
         return {
             "success": True,
             "evaluation": evaluation
         }
     except ValueError as ve:
         err_msg = str(ve)
-        status_code = 403 if ("khóa" in err_msg.lower() or "nháp" in err_msg.lower()) else 404
+        status_code = 403 if any(k in err_msg.lower() for k in ["khóa", "nháp", "hết hạn", "thời hạn", "hạn chót", "chỉ dành cho", "thuộc khối", "đã hoàn thành"]) else 404
+        if "không hợp lệ" in err_msg.lower() or "thoát thư mục" in err_msg.lower():
+            status_code = 422
         raise HTTPException(status_code=status_code, detail=err_msg)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi chấm điểm bài thi: {str(e)}")
 
 
 @app.get("/api/teacher/exams/{exam_id}/results")
-def get_exam_results_endpoint(exam_id: str, request: Request):
+def get_exam_results_endpoint(
+    exam_id: str,
+    authorization: Optional[str] = Header(None),
+    x_teacher_token: Optional[str] = Header(None)
+):
     """Giáo viên xem danh sách học sinh đã nộp bài và phổ điểm của bài kiểm tra."""
+    verify_teacher_session(authorization, x_teacher_token)
     try:
-        verify_teacher_session(request.headers.get("x-teacher-token"))
         submissions = []
         if SUBMISSIONS_DIR.exists():
             for p in SUBMISSIONS_DIR.glob(f"{exam_id}_*.json"):

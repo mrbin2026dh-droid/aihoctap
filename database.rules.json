@@ -1,25 +1,52 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true,
+    ".read": false,
+    ".write": false,
+    "system": {
+      ".read": false,
+      ".write": false
+    },
     "students": {
       "$classCode": {
-        ".read": true,
-        ".write": true,
-        ".indexOn": ["is_blocked", "email", "student_code"]
+        ".read": "auth != null && auth.token.admin === true",
+        "$studentId": {
+          ".read": "auth != null && (auth.uid === $studentId || auth.token.admin === true)",
+          ".write": "auth != null && (auth.token.admin === true || (auth.uid === $studentId && (!data.child('is_blocked').exists() || data.child('is_blocked').val() === false) && (!data.child('is_blocked').exists() ? !newData.child('is_blocked').exists() : newData.child('is_blocked').val() === data.child('is_blocked').val()) && (!data.child('exams').exists() ? !newData.child('exams').exists() : newData.child('exams').val() === data.child('exams').val())))",
+          ".indexOn": ["is_blocked", "email", "student_code"],
+          "presence": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid === $studentId"
+          }
+        }
       }
     },
     "exams": {
       ".read": true,
-      ".write": true,
+      ".write": "auth != null && auth.token.admin === true",
       ".indexOn": ["grade", "status"]
+    },
+    "exam_answers": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
     },
     "exam_submissions": {
       "$examId": {
-        ".read": true,
-        ".write": true,
-        ".indexOn": ["student_id", "class_code", "score"]
+        "$studentId": {
+          ".read": "auth != null && (auth.uid === $studentId || auth.token.admin === true)",
+          ".write": "auth != null && (auth.token.admin === true || (auth.uid === $studentId && !newData.hasChildren(['score']) && !newData.hasChildren(['evaluation'])))",
+          ".indexOn": ["student_id", "class_code", "score"]
+        }
       }
+    },
+    "documents": {
+      ".read": "auth != null",
+      "$docId": {
+        ".write": "auth != null && auth.token.admin === true"
+      }
+    },
+    "documents_meta": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin === true"
     }
   }
 }

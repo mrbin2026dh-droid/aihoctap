@@ -22,3 +22,7 @@ tools/logs/
 tests/*.png
 scratch/
 .worktrees/
+
+# Du lieu van hanh & bao ve thong tin hoc sinh
+data/students_registry.json
+.bridge/
