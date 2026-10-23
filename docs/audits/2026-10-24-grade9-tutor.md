@@ -1,5 +1,7 @@
 # Gia sư lớp 9 - bản sửa 24/10/2026
 
+**Cập nhật phạm vi:** theo yêu cầu tiếp theo, đã sửa đủ 20 ca hồi quy còn lỗi; toàn-suite đạt **443 PASS**, JavaScript **19 PASS**. Xem [báo cáo sửa toàn dự án và phát hành](2026-10-24-release-all-tests.md). Nội dung bên dưới ghi lại kết quả và phạm vi tại thời điểm hoàn tất riêng phần gia sư.
+
 ## Hành vi đã sửa
 - Gợi ý ba tầng bám bài và câu hỏi đang học, không dùng lời giải sẵn ở tầng 3.
 - Chặn đáp án viết trực tiếp, từ khóa cấm, định dạng ẩn/Markdown, chỉ thứ tự lựa chọn, loại phương án và công thức hoàn chỉnh trong câu đang làm.

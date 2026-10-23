@@ -1455,6 +1455,22 @@ def analyze_class_pedagogy(class_data: Any) -> Any:
     lowest_topics = sorted(topic_averages.items(), key=lambda x: x[1])
     lowest_topic_str = ", ".join([f"'{name}' ({score}/10)" for name, score in lowest_topics[:2]])
 
+    if kpi.total_students == 0:
+        return AIPedagogicalAdviceResponse(
+            general_assessment=f"Lớp {class_data.class_name} chưa có học sinh trong sổ bộ.",
+            critical_concerns="Chưa đủ dữ liệu để đánh giá kết quả học tập hoặc tiến bộ.",
+            actionable_recommendations=["Kiểm tra danh sách lớp và tài khoản học sinh trước khi giao bài."]
+        )
+    if not lowest_topics:
+        return AIPedagogicalAdviceResponse(
+            general_assessment=f"Lớp {class_data.class_name} có {kpi.total_students} học sinh; {kpi.completed_count} em đã hoàn thành, điểm trung bình ghi nhận {kpi.average_score}/10.",
+            critical_concerns="Chưa có kết quả theo từng chủ đề để xác định nội dung học sinh cần củng cố.",
+            actionable_recommendations=[
+                "Thu thập một bài luyện tập ngắn theo chủ đề trước khi đánh giá mức độ thành thạo.",
+                "Hỏi học sinh về bước suy luận đang vướng và hướng dẫn tự kiểm tra lại."
+            ]
+        )
+
     prompt = f"""Bạn là Chuyên gia Cố vấn Sư phạm Tin học THCS giàu kinh nghiệm.
 Dưới đây là bảng số liệu học tập của lớp {class_data.class_name} (Khối {class_data.grade}, {class_data.semester}):
 - Sĩ số: {kpi.total_students} học sinh
@@ -1503,15 +1519,14 @@ Hãy xuất ra phản hồi dạng JSON hợp lệ (không kèm Markdown code bl
             pass
 
     # Fallback Rule-Based Sư phạm Thông minh (Khi offline hoặc không có API Key)
-    delta_text = f"cao hơn {kpi.score_delta_month} so với tháng trước" if kpi.score_delta_month >= 0 else f"giảm {abs(kpi.score_delta_month)} so với tháng trước"
     
-    general = f"Lớp {class_data.class_name} có tiến độ tốt ({kpi.completed_percent}%), điểm TB {kpi.average_score} – {delta_text}. Có {kpi.improved_count} em ({kpi.improved_percent}%) ghi nhận sự tiến bộ rõ rệt."
+    general = f"Lớp {class_data.class_name} có {kpi.completed_count}/{kpi.total_students} học sinh hoàn thành ({kpi.completed_percent}%), điểm TB {kpi.average_score}/10. Cần đối chiếu kết quả giữa các lần đánh giá để kết luận về tiến bộ."
     
-    concerns = f"{kpi.needs_support_count} học sinh cần được hỗ trợ thêm ({kpi.needs_support_percent}% sĩ số), đặc biệt ở các chủ đề {lowest_topic_str} do còn nhiều câu trắc nghiệm nhầm lẫn."
+    concerns = f"{kpi.needs_support_count} học sinh cần được hỗ trợ thêm ({kpi.needs_support_percent}% sĩ số). Các kết quả thấp hơn nằm ở {lowest_topic_str}; cần xem chi tiết bài làm để xác định nguyên nhân."
     
     recs = [
         f"Tổ chức 1 buổi ôn tập nhanh 15 phút đầu giờ để củng cố trọng tâm chủ đề {lowest_topics[0][0].replace('_', ' ').title()}.",
-        "Áp dụng phương pháp 'Đôi bạn cùng tiến': Phân công các em đạt Xuất sắc hỗ trợ kèm cặp nhóm 5 học sinh cần hỗ trợ.",
+        f"Trao đổi trực tiếp với {kpi.needs_support_count} học sinh cần hỗ trợ, dựa trên từng bài làm đã ghi nhận.",
         "Giao thêm 3-5 câu hỏi tương tác tình huống thực tế trên hệ thống để học sinh luyện phản xạ trước giờ kiểm tra định kỳ."
     ]
     
@@ -1520,4 +1535,3 @@ Hãy xuất ra phản hồi dạng JSON hợp lệ (không kèm Markdown code bl
         critical_concerns=concerns,
         actionable_recommendations=recs
     )
-

@@ -7,6 +7,7 @@ import json
 import os
 import shutil
 import tempfile
+import math
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
@@ -16,6 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 CURRICULUM_DIR = Path(os.getenv("CURRICULUM_DIR_OVERRIDE") or (DATA_DIR / "curriculum"))
 CURRICULUM_V2_DIR = Path(os.getenv("CURRICULUM_V2_DIR_OVERRIDE") or (DATA_DIR / "curriculum_v2_simple"))
+STUDENTS_REGISTRY_FILE = Path(os.getenv("STUDENTS_REGISTRY_PATH_OVERRIDE") or (DATA_DIR / "students_registry.json"))
 
 
 def load_lesson_v2_simple(grade: int, lesson_id: int) -> Optional[Dict[str, Any]]:
@@ -641,65 +643,141 @@ def get_class_analytics_data(grade: int, class_name: str) -> Any:
         )
 
     # Đọc dữ liệu thực tế từ students_registry.json
-    base_dir = Path(__file__).resolve().parent.parent
-    reg_file = base_dir / "data" / "students_registry.json"
+    reg_file = STUDENTS_REGISTRY_FILE
     real_students_data = []
     if reg_file.exists():
         try:
             with open(reg_file, "r", encoding="utf-8") as f:
                 all_regs = json.load(f)
             for s_code, s_info in all_regs.items():
-                if str(s_info.get("class_code", "")).strip().upper() == str(class_name).strip().upper():
-                    real_students_data.append(s_info)
+                if not isinstance(s_info, dict):
+                    continue
+                row_class = str(s_info.get("class_code", "")).strip()
+                row_grade = str(s_info.get("grade", row_class[:1])).strip()
+                if row_class.upper() == str(class_name).strip().upper() and row_grade == str(grade):
+                    real_students_data.append({**s_info, "student_code": str(s_code)})
         except Exception as e:
             print(f"Lỗi đọc students_registry: {e}")
+
+    # Read only server-persisted results. No cloud fetch or client evaluation is trusted here.
+    from backend import exam_service
+    submissions_by_student = {}
+    local_exam_titles = {}
+    for result_path in exam_service.SUBMISSIONS_DIR.glob("*.json"):
+        try:
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            if not isinstance(result, dict):
+                continue
+            if str(result.get("grade")) != str(grade) or str(result.get("class_code", "")).strip().upper() != str(class_name).strip().upper():
+                continue
+            result_score = float(result.get("score"))
+            if not math.isfinite(result_score) or not 0 <= result_score <= 10:
+                continue
+            owner = str(result.get("student_id", ""))
+            exam_id = str(result.get("exam_id", ""))
+            if not owner or not exam_id:
+                continue
+            by_exam = submissions_by_student.setdefault(owner, {})
+            previous = by_exam.get(exam_id)
+            if previous and str(previous.get("submitted_at", "")) >= str(result.get("submitted_at", "")):
+                continue
+            by_exam[exam_id] = {"score": result_score, "submitted_at": result.get("submitted_at", "")}
+            exam_path = (exam_service.EXAMS_DIR / f"{exam_id}.json").resolve()
+            exam_path.relative_to(exam_service.EXAMS_DIR.resolve())
+            if exam_path.is_file():
+                exam_meta = json.loads(exam_path.read_text(encoding="utf-8"))
+                local_exam_titles[exam_id] = str(exam_meta.get("title") or exam_id)
+            else:
+                local_exam_titles[exam_id] = exam_id
+        except (OSError, ValueError, TypeError):
+            continue
 
     students = []
     completed_count = 0
     learning_count = 0
     not_started_count = 0
+    needs_support_count = 0
     total_score = 0.0
+    observed_students = 0
+    topic_scores = {tid: [] for tid, _ in topics_meta}
+    topic_scores.update({exam_id: [] for exam_id in local_exam_titles})
+
+    def bounded_number(value: Any, maximum: float) -> float:
+        try:
+            number = float(value)
+            return max(0.0, min(number, maximum)) if math.isfinite(number) else 0.0
+        except (TypeError, ValueError):
+            return 0.0
 
     for s_info in real_students_data:
         code = s_info.get("student_code", "")
-        name = s_info.get("full_name", f"Học sinh {code}")
-        progress = int(s_info.get("progress_percent", 0))
-        score = float(s_info.get("average_score", 0.0))
-        total_score += score
+        name = s_info.get("full_name") or s_info.get("student_name") or f"Học sinh {code}"
+        student_id = s_info.get("uid") or f"std_{code}"
+        local_scores = submissions_by_student.get(student_id, {})
+        progress = int(bounded_number(s_info.get("progress_percent", 0), 100))
+        score_count = len(local_scores) if local_scores else int(bounded_number(s_info.get("score_count", 0), 1000000))
+        observed = bool(local_scores) or "average_score" in s_info
+        score = (round(sum(item["score"] for item in local_scores.values()) / len(local_scores), 1)
+                 if local_scores else bounded_number(s_info.get("average_score", 0.0), 10))
+        if observed:
+            total_score += score
+            observed_students += 1
         st = "not_started"
         if progress >= 100:
             st = "completed"
             completed_count += 1
-        elif progress > 0:
+        elif progress > 0 or observed:
             st = "learning"
             learning_count += 1
         else:
             not_started_count += 1
 
-        student_topics = [
-            TopicMasteryStatus(
+        if (observed and score < 5) or s_info.get("needs_support") is True:
+            st = "needs_support"
+            needs_support_count += 1
+
+        recorded_scores = s_info.get("topic_scores", {})
+        if not isinstance(recorded_scores, dict):
+            recorded_scores = {}
+        student_topics = []
+        for tid, tname in topics_meta:
+            topic_score = bounded_number(recorded_scores.get(tid, 0), 10)
+            recorded = tid in recorded_scores
+            if recorded:
+                topic_scores[tid].append(topic_score)
+            student_topics.append(TopicMasteryStatus(
                 topic_id=tid,
                 topic_name=tname,
-                score=score,
-                status="mastered" if score >= 8.0 else ("warning" if score >= 5.0 else "not_started")
-            )
-            for tid, tname in topics_meta
-        ]
+                score=topic_score,
+                status=("mastered" if topic_score >= 8 else "warning") if recorded else "not_started"
+            ))
+        for exam_id, title in local_exam_titles.items():
+            recorded_result = local_scores.get(exam_id)
+            if recorded_result:
+                topic_scores[exam_id].append(recorded_result["score"])
+            student_topics.append(TopicMasteryStatus(
+                topic_id=exam_id, topic_name=title,
+                score=recorded_result["score"] if recorded_result else 0,
+                status=("mastered" if recorded_result["score"] >= 8 else "warning") if recorded_result else "not_started"
+            ))
 
         students.append(StudentOverviewItem(
-            id=f"std_{code}",
+            id=student_id,
             student_code=code,
             full_name=name,
             progress_percent=progress,
             average_score=score,
+            score_count=score_count,
+            is_blocked=bool(s_info.get("is_blocked", False)),
+            presence=s_info.get("presence") if isinstance(s_info.get("presence"), dict) else {},
             topics=student_topics,
             status=st
         ))
 
     total = len(students)
-    avg_score = round(total_score / total, 1) if total > 0 else 0.0
+    avg_score = round(total_score / observed_students, 1) if observed_students > 0 else 0.0
     comp_pct = round((completed_count / total) * 100, 1) if total > 0 else 0.0
-    needs_support = not_started_count
+    needs_support = needs_support_count
     needs_pct = round((needs_support / total) * 100, 1) if total > 0 else 0.0
 
     kpi = ClassKPIMetrics(
@@ -708,13 +786,14 @@ def get_class_analytics_data(grade: int, class_name: str) -> Any:
         completed_percent=comp_pct,
         average_score=avg_score,
         score_delta_month=0.0,
-        improved_count=completed_count,
-        improved_percent=comp_pct,
+        improved_count=0,
+        improved_percent=0.0,
         needs_support_count=needs_support,
         needs_support_percent=needs_pct
     )
 
-    topic_averages = {tid: avg_score for tid, _ in topics_meta}
+    topic_averages = {tid: round(sum(scores) / len(scores), 1)
+                      for tid, scores in topic_scores.items() if scores}
     donut = {
         "completed": completed_count,
         "learning": learning_count,
@@ -730,4 +809,3 @@ def get_class_analytics_data(grade: int, class_name: str) -> Any:
         donut_progress=donut,
         students=students
     )
-

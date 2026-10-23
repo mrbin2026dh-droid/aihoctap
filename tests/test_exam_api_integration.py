@@ -8,9 +8,25 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from fastapi.testclient import TestClient
-from backend.server import app
+from backend.server import app, TEACHER_PIN, FAILED_LOGIN_ATTEMPTS
 
 client = TestClient(app)
+
+
+def get_teacher_headers():
+    FAILED_LOGIN_ATTEMPTS.clear()
+    res = client.post("/api/teacher/auth", json={"pin": TEACHER_PIN})
+    assert res.status_code == 200
+    token = res.json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def get_student_headers():
+    res = client.post("/api/student/lan-login", json={"student_code": "123456", "grade": 9})
+    assert res.status_code == 200
+    token = res.json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
 
 def test_api_exam_template():
     response = client.get("/api/exams/template")
@@ -18,18 +34,21 @@ def test_api_exam_template():
     assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     assert len(response.content) > 1000
 
+    headers = get_teacher_headers()
     # Dùng chính file tải về để test upload-excel
     files = {
         "file": ("Mau_De_Kiem_Tra.xlsx", response.content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     }
-    upload_res = client.post("/api/teacher/exams/upload-excel", files=files)
+    upload_res = client.post("/api/teacher/exams/upload-excel", headers=headers, files=files)
     assert upload_res.status_code == 200
     data = upload_res.json()
     assert data["success"] is True
     assert data["total_questions"] >= 2
     assert len(data["questions"]) >= 2
 
+
 def test_api_create_and_submit_exam():
+    teacher_headers = get_teacher_headers()
     # 1. Tạo bài kiểm tra
     exam_payload = {
         "exam_id": "exam_api_test_01",
@@ -58,7 +77,7 @@ def test_api_create_and_submit_exam():
         ]
     }
 
-    create_res = client.post("/api/teacher/exams/create", json=exam_payload)
+    create_res = client.post("/api/teacher/exams/create", headers=teacher_headers, json=exam_payload)
     assert create_res.status_code == 200
     assert create_res.json()["success"] is True
 
@@ -74,7 +93,8 @@ def test_api_create_and_submit_exam():
     exam_detail = get_res.json()["exam"]
     assert "dap_an_dung" not in exam_detail["questions"][0]
 
-    # 4. Học sinh nộp bài
+    # 4. Học sinh nộp bài với token xác thực
+    student_headers = get_student_headers()
     sub_payload = {
         "exam_id": "exam_api_test_01",
         "student_id": "std_minhkhang_01",
@@ -83,10 +103,10 @@ def test_api_create_and_submit_exam():
         "grade": 9,
         "answers": {
             "q1": "A",
-            "q2": "A" # Chọn sai
+            "q2": "A"  # Chọn sai
         }
     }
-    sub_res = client.post("/api/exams/submit", json=sub_payload)
+    sub_res = client.post("/api/exams/submit", headers=student_headers, json=sub_payload)
     assert sub_res.status_code == 200
     result = sub_res.json()["evaluation"]
     assert result["score"] == 5.0
@@ -94,12 +114,13 @@ def test_api_create_and_submit_exam():
     assert "ai_evaluation" in result
     assert len(result["ai_evaluation"]["recommendations"]) >= 1
 
-    # 5. Giao vien xoa de kiem tra
-    del_res = client.delete("/api/teacher/exams/exam_api_test_01")
+    # 5. Giáo viên xóa đề kiểm tra
+    del_res = client.delete("/api/teacher/exams/exam_api_test_01", headers=teacher_headers)
     assert del_res.status_code == 200
     assert del_res.json()["success"] is True
 
     print("ALL EXAM API INTEGRATION TESTS PASSED!")
+
 
 if __name__ == "__main__":
     test_api_exam_template()

@@ -232,10 +232,13 @@ class StudentOverviewItem(BaseModel):
     avatar_url: Optional[str] = Field(default=None, description="Đường dẫn ảnh đại diện")
     progress_percent: int = Field(..., ge=0, le=100, description="Tiến độ học tập tổng thể (%)")
     average_score: float = Field(..., ge=0.0, le=10.0, description="Điểm trung bình luyện tập")
+    score_count: int = Field(default=0, ge=0, description="Số kết quả điểm thực sự đã ghi nhận")
+    is_blocked: bool = False
+    presence: Dict[str, Any] = Field(default_factory=dict)
     topics: List[TopicMasteryStatus] = Field(default_factory=list, description="Mức độ thành thạo theo 5 chủ đề")
-    status: Literal["completed", "learning", "needs_support"] = Field(
+    status: Literal["completed", "learning", "needs_support", "not_started"] = Field(
         ..., 
-        description="Trạng thái: completed (hoàn thành), learning (đang học), needs_support (cần hỗ trợ)"
+        description="Trạng thái: completed, learning, needs_support hoặc not_started (chưa học)"
     )
 
 
@@ -287,6 +290,3 @@ class AIPedagogicalAdviceResponse(BaseModel):
         min_length=1, 
         description="Danh sách các hành động sư phạm khuyến nghị cho giáo viên"
     )
-
-
-

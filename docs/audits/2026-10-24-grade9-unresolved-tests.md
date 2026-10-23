@@ -1,5 +1,7 @@
 # Tests ngoài phạm vi gia sư chưa đạt - 24/10/2026
 
+**Cập nhật sau yêu cầu sửa toàn dự án:** toàn bộ 20 node ID bên dưới đã PASS trong lần chạy cuối **443 PASS, 0 FAIL**. Xem [báo cáo phát hành](2026-10-24-release-all-tests.md). Các kết quả và giới hạn bên dưới được giữ làm lịch sử của đợt gia sư trước.
+
 Full run: 409 passed, 20 failed, 9 warnings, 400.16s.
 Số toàn-suite đo trên workspace còn test_exam_api_integration.py sửa sẵn chưa commit; không phải kết quả checkout sạch. Gate AI riêng không dùng tệp đó.
 Không xác nhận toàn dự án sẵn sàng phát hành. Không sửa PIN/đăng nhập/thi/dashboard trong tác vụ này.

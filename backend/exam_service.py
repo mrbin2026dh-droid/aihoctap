@@ -728,6 +728,7 @@ def grade_exam_submission(submission: Dict[str, Any]) -> Dict[str, Any]:
     # Lưu bài nộp an toàn vào thư mục submissions
     sub_payload = {
         **submission,
+        "exam_title": exam_data.get("title", "Bài kiểm tra"),
         "score": score,
         "correct_count": correct_count,
         "total_questions": total_q,
@@ -788,4 +789,3 @@ def update_exam_status(exam_id: str, new_status: str) -> bool:
 
     sync_to_firebase_rtdb(f"exams/{clean_id}/status", clean_status, method="PUT")
     return True
-

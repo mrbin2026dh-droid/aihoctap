@@ -67,7 +67,7 @@ test('feedback tutor receives the real selected choice', () => {
 });
 test('ordinary tutor receives the real selected choice', () => {
   const h = harness();
-  vm.runInContext(section('let contextPayload = null;', '\n  try {\n    const chatGrade') + '\nglobalThis.payload = contextPayload;', h.context);
+  vm.runInContext(section('let contextPayload = null;', '    const chatGrade') .replace(/\s*try\s*\{\s*$/, '') + '\nglobalThis.payload = contextPayload;', h.context);
   assert.equal(h.context.payload.student_choice, 'B');
 });
 test('restart clears attempts alongside quiz answers', () => {

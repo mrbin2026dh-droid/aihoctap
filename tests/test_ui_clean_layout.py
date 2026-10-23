@@ -13,6 +13,7 @@ import sys
 import time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+from tests.ui_release_helpers import teacher_login, show_lesson
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -25,7 +26,7 @@ if sys.platform == "win32":
         pass
 
 
-def test_clean_layout_verification():
+def test_clean_layout_verification(live_server, teacher_pin):
     console_errors = []
 
     with sync_playwright() as p:
@@ -42,7 +43,11 @@ def test_clean_layout_verification():
 
         # [1] Truy cập ứng dụng
         print("[1/5] Tải ứng dụng tại http://127.0.0.1:8000...")
-        page.goto("http://127.0.0.1:8000")
+        context.route("https://**/*", lambda route: route.fulfill(status=200, body="", content_type="application/javascript"))
+        context.add_init_script("delete window.BroadcastChannel;")
+        page.goto(live_server)
+        teacher_login(page, teacher_pin)
+        show_lesson(page)
         page.wait_for_selector(".lesson-tree-item", state="visible", timeout=10000)
         time.sleep(1)
 

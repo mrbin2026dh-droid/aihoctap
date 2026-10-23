@@ -193,10 +193,7 @@ const getBackendPool = () => {
   }
 
   if (typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
-    if (window.location.port === "8000") {
-      return ["http://127.0.0.1:8000/api"];
-    }
-    return [""];
+    return [`${window.location.origin}/api`];
   }
 
   if (!window.location.origin || window.location.origin === "null" || window.location.origin.startsWith("file:")) {
@@ -841,11 +838,26 @@ async function getTeacherExamsForGrade(grade = 9, className = null) {
   const g = parseInt(grade, 10) || 9;
   let allExams = [];
 
+  // Backend cũng là nguồn đề chính thức khi chạy LAN hoặc không có Firebase.
+  try {
+    const query = new URLSearchParams({ grade: String(g) });
+    if (className) query.set("class_code", className);
+    const response = await fetch(`${getExamApiRoot()}/exams/list?${query}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data.exams)) allExams = data.exams;
+    }
+  } catch (err) {
+    console.debug("Backend exam list unavailable:", err);
+  }
+
   // 1. Ưu tiên đọc trực tiếp từ Firebase Realtime Database
   try {
     const fbExams = await fetchExamsFromFirebase();
-    if (Array.isArray(fbExams) && fbExams.length > 0) {
-      allExams = fbExams;
+    if (Array.isArray(fbExams)) {
+      const byId = new Map(allExams.map(e => [String(e.exam_id || e.id || e.title), e]));
+      fbExams.forEach(e => byId.set(String(e.exam_id || e.id || e.title), e));
+      allExams = [...byId.values()];
     }
   } catch (err) {
     console.debug("fetchExamsFromFirebase:", err);
@@ -1241,11 +1253,13 @@ async function initApp() {
     console.warn("Lỗi đọc URL params:", urlErr);
   }
 
+  const initialGradeLabel = document.getElementById("sidebarGradeLabel");
+  if (initialGradeLabel) initialGradeLabel.textContent = `TIN HỌC ${state.grade}`;
   renderCurriculumTree(); // Render ngay lập tức cây mục lục
   await loadCurriculumLessons();
   await fetchLesson(state.grade, state.lessonId);
   renderApp();
-  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked) {
+  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked && !(state.teacherUnlocked && state.teacherToken)) {
     switchView("dashboard");
   } else {
     switchView("theory");
@@ -1875,13 +1889,9 @@ function renderApp() {
     }
   }
 
-  // Cập nhật Thanh tiến độ Sidebar (Khớp hình 25% và Đã hoàn thành 2/8 bài)
-  const evaluatedCount = Object.keys(state.evaluatedQuestions).length;
-  const completedLessons = 2;
-  const totalLessons = 8;
-  const progressPercent = evaluatedCount > 0 
-    ? Math.round((evaluatedCount / quiz.length) * 100) 
-    : Math.round((completedLessons / totalLessons) * 100);
+  // Cập nhật Thanh tiến độ Sidebar từ câu trả lời đúng đã xác thực của bài hiện tại.
+  const correctCount = quiz.filter(q => state.evaluatedQuestions[String(q.id)]?.is_correct === true).length;
+  const progressPercent = quiz.length ? Math.round((correctCount / quiz.length) * 100) : 0;
 
   const percentEl = document.getElementById("roadmapProgressPercent");
   if (percentEl) percentEl.textContent = `${progressPercent}%`;
@@ -1890,11 +1900,7 @@ function renderApp() {
 
   const subtextEl = document.getElementById("roadmapProgressSubtext");
   if (subtextEl) {
-    if (evaluatedCount > 0) {
-      subtextEl.textContent = `Đã hoàn thành ${evaluatedCount}/${quiz.length} câu hỏi`;
-    } else {
-      subtextEl.textContent = `Đã hoàn thành ${completedLessons}/${totalLessons} bài`;
-    }
+    subtextEl.textContent = `Đã làm đúng ${correctCount}/${quiz.length} câu hỏi`;
   }
 
   renderPromptSuggestions();
@@ -2087,7 +2093,7 @@ async function switchGrade(newGrade) {
   await loadCurriculumLessons();
   await fetchLesson(state.grade, state.lessonId);
   renderApp();
-  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked) {
+  if (studentAuthState && studentAuthState.isLoggedIn && !studentAuthState.isBlocked && !(state.teacherUnlocked && state.teacherToken)) {
     switchView("dashboard");
   } else {
     switchView("theory");
@@ -3853,10 +3859,11 @@ class StudentDataAdapter {
         const total = students.length;
         const completed = students.filter(s => s.status === "completed").length;
         const learning = students.filter(s => s.status === "learning").length;
-        const needsSupport = students.filter(s => s.status === "needs_support").length;
-        const notStarted = Math.max(0, total - completed - learning - needsSupport);
+        const needsSupport = students.filter(s => s.status === "needs_support" || (s.score_count > 0 && s.average_score < 5)).length;
+        const notStarted = students.filter(s => s.status === "not_started").length;
+        const observed = students.filter(s => s.score_count > 0);
         const compPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
-        const avgScore = total > 0 ? Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1)) : 0;
+        const avgScore = observed.length > 0 ? Number((observed.reduce((acc, s) => acc + s.average_score, 0) / observed.length).toFixed(1)) : 0;
 
         const overview = {
           grade: Number(gNum),
@@ -3868,8 +3875,8 @@ class StudentDataAdapter {
             completed_percent: compPercent,
             average_score: avgScore,
             score_delta_month: 0.0,
-            improved_count: Math.max(0, total - needsSupport),
-            improved_percent: total > 0 ? Math.round(((total - needsSupport) / total) * 100) : 0,
+            improved_count: 0,
+            improved_percent: 0,
             needs_support_count: needsSupport,
             needs_support_percent: total > 0 ? Math.round((needsSupport / total) * 100) : 0
           },
@@ -3886,6 +3893,24 @@ class StudentDataAdapter {
         return overview;
       } catch (err) {
         console.warn("Lỗi đọc học sinh từ Firebase Realtime Database:", err);
+      }
+    }
+
+    // Máy chủ LAN giữ danh sách học sinh ngay cả khi Firebase không được tải.
+    if (state.teacherToken) {
+      try {
+        const response = await fetch(`${getExamApiRoot()}/teacher/students-overview/${gNum}/${encodeURIComponent(className)}`, {
+          headers: { Authorization: `Bearer ${state.teacherToken}` }
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data && Array.isArray(result.data.students) && result.data.kpi) {
+            this.cachedOverview = result.data;
+            return result.data;
+          }
+        }
+      } catch (err) {
+        console.debug("Backend student overview unavailable:", err);
       }
     }
 
@@ -3935,21 +3960,22 @@ class StudentDataAdapter {
     }
 
     const completed = students.filter(s => s.status === "completed" || s.progress_percent >= 100).length;
-    const notStarted = students.filter(s => s.progress_percent === 0).length;
+    const notStarted = students.filter(s => s.status === "not_started").length;
     const compPercent = Math.round((completed / total) * 100);
-    const avgScore = Number((students.reduce((acc, s) => acc + (s.average_score || 0), 0) / total).toFixed(1));
-    const needsSupport = students.filter(s => s.status === "needs_support" || (s.average_score > 0 && s.average_score < 5.0)).length;
+    const observed = students.filter(s => s.score_count > 0);
+    const avgScore = observed.length ? Number((observed.reduce((acc, s) => acc + s.average_score, 0) / observed.length).toFixed(1)) : 0;
+    const needsSupport = students.filter(s => s.status === "needs_support" || (s.score_count > 0 && s.average_score < 5.0)).length;
 
     let general = "";
     let concerns = "";
-    if (avgScore === 0 && compPercent === 0) {
+    if (observed.length === 0 && compPercent === 0) {
       general = `Lớp ${className} có ${total} học sinh. Các em mới tham gia lớp học và chưa hoàn thành bài luyện tập nào (Tiến độ 0%, Điểm TB 0/10).`;
       concerns = `Hiện tại có ${notStarted} học sinh chưa bắt đầu làm bài. Giáo viên nên hướng dẫn các em mở bài 1 để làm quen với hệ thống.`;
     } else {
       general = `Lớp ${className} có ${total} học sinh, tiến độ hoàn thành đạt ${compPercent}%, điểm trung bình toàn lớp đạt ${avgScore}/10.`;
       concerns = needsSupport > 0 
         ? `Có ${needsSupport} học sinh cần được hỗ trợ thêm do điểm trung bình dưới 5.0.`
-        : "Tất cả học sinh trong lớp đều đang duy trì kết quả học tập tốt.";
+        : "Chưa ghi nhận điểm dưới 5; cần xem từng bài làm và học sinh chưa có kết quả trước khi kết luận.";
     }
 
     return {
@@ -4289,7 +4315,10 @@ async function loadStudentManagementData() {
 
   renderKPIs(data.kpi);
   renderDonutChart(data.donut_progress, data.kpi.completed_percent);
-  renderTopicBarChart(data.topic_averages);
+  const topicLabels = new Map((data.students || []).flatMap(student =>
+    (student.topics || []).map(topic => [topic.topic_id, topic.topic_name])));
+  renderTopicBarChart(Object.fromEntries(Object.entries(data.topic_averages || {})
+    .map(([id, score]) => [topicLabels.get(id) || id, score])));
   filterAndRenderStudentTable();
   refreshAIPedagogyAdvice(); // Cập nhật nhận xét AI động theo số liệu thực tế
 }
@@ -5095,6 +5124,9 @@ async function handleStudentGoogleSignIn() {
         }
       }
 
+      if (typeof user.getIdToken !== "function") throw new Error("Không nhận được xác thực Google.");
+      const googleIdToken = await user.getIdToken();
+      if (!googleIdToken) throw new Error("Không nhận được xác thực Google.");
       studentAuthState.isLoggedIn = true;
       studentAuthState.uid = user.uid;
       studentAuthState.studentName = user.displayName || "Học sinh";
@@ -5104,15 +5136,6 @@ async function handleStudentGoogleSignIn() {
       studentAuthState.grade = selectedGrade;
       studentAuthState.isBlocked = isBlocked;
 
-      // Lấy Google Firebase ID Token chính thức để gửi xác thực backend (V3-01 & V3-02)
-      let googleIdToken = null;
-      if (typeof user.getIdToken === "function") {
-        try {
-          googleIdToken = await user.getIdToken();
-        } catch (tokenErr) {
-          console.warn("Lỗi lấy Google ID Token:", tokenErr);
-        }
-      }
       studentAuthState.token = googleIdToken;
 
       // Lưu vào localStorage để ghi nhớ tự động vĩnh viễn (Persistent Login)
@@ -5148,19 +5171,7 @@ async function handleStudentGoogleSignIn() {
 
       checkAndListenStudentStatus(classCodeVal, user.uid);
     } else {
-      // Fallback khi không có kết nối Firebase Auth
-      await new Promise(r => setTimeout(r, 400));
-      studentAuthState.isLoggedIn = true;
-      studentAuthState.uid = "std_" + Math.random().toString(36).substring(2, 9);
-      studentAuthState.studentName = "Nguyễn Minh Khang";
-      studentAuthState.studentEmail = "minhkhang.hs@thcs.edu.vn";
-      studentAuthState.studentAvatar = "";
-      studentAuthState.classCode = classCodeVal;
-      studentAuthState.grade = selectedGrade;
-      studentAuthState.isBlocked = false;
-      studentAuthState.token = null;
-      localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
-      updateHeaderStudentAuthUI();
+      throw new Error("Kết nối Google chưa sẵn sàng. Em hãy đăng nhập bằng Mã HS hoặc thử lại sau.");
     }
 
     portalDirectClose();
@@ -5171,7 +5182,7 @@ async function handleStudentGoogleSignIn() {
     }
     switchView("dashboard");
   } catch (err) {
-    console.error("Lỗi đăng nhập Google:", err);
+    console.warn("Đăng nhập Google chưa hoàn tất:", err);
     if (err.code === "auth/popup-closed-by-user") {
       // Học sinh đóng popup
     } else if (err.code === "auth/unauthorized-domain") {
@@ -5254,30 +5265,15 @@ async function handleStudentFacebookSignIn() {
           return;
         }
 
-        // Khi Firebase Console chưa kích hoạt Facebook Provider (auth/operation-not-allowed) hoặc thiếu App ID:
-        // Tự động cấp phiên Facebook an toàn cho học sinh để vào học ngay lập tức, triệt tiêu lỗi popup technical
-        console.info("Firebase Facebook provider chưa kích hoạt trong Console. Đang tạo phiên làm việc Facebook an toàn cho học sinh.");
-        const fallbackUid = "fb_" + (studentAuthState.uid ? studentAuthState.uid.replace(/^fb_/, "") : Math.random().toString(36).substring(2, 9));
-        user = {
-          uid: fallbackUid,
-          displayName: "Học sinh Facebook",
-          email: `${fallbackUid}@thcs.edu.vn`,
-          photoURL: ""
-        };
+        throw new Error("Kết nối Facebook chưa sẵn sàng. Em hãy đăng nhập bằng Mã HS hoặc thử lại sau.");
       }
     } else {
-      // Khi không có kết nối Firebase Auth
-      await new Promise(r => setTimeout(r, 400));
-      const fallbackUid = "fb_" + Math.random().toString(36).substring(2, 9);
-      user = {
-        uid: fallbackUid,
-        displayName: "Học sinh Facebook",
-        email: `${fallbackUid}@thcs.edu.vn`,
-        photoURL: ""
-      };
+      throw new Error("Kết nối Facebook chưa sẵn sàng. Em hãy đăng nhập bằng Mã HS hoặc thử lại sau.");
     }
 
-    if (!user) return;
+    if (!user || typeof user.getIdToken !== "function") throw new Error("Không nhận được xác thực Facebook.");
+    const facebookIdToken = await user.getIdToken();
+    if (!facebookIdToken) throw new Error("Không nhận được xác thực Facebook.");
 
     // Kiểm tra hồ sơ học sinh đã tồn tại trên Firebase Database để giữ đúng Lớp học & Khối
     if (window.firebase && firebase.database) {
@@ -5315,6 +5311,7 @@ async function handleStudentFacebookSignIn() {
     studentAuthState.classCode = classCodeVal;
     studentAuthState.grade = selectedGrade;
     studentAuthState.isBlocked = isBlocked;
+    studentAuthState.token = facebookIdToken;
 
     localStorage.setItem("ai_sgk_student_auth", JSON.stringify(studentAuthState));
     updateHeaderStudentAuthUI();
@@ -5356,7 +5353,8 @@ async function handleStudentFacebookSignIn() {
     }
     switchView("dashboard");
   } catch (err) {
-    console.error("Lỗi đăng nhập Facebook:", err);
+    console.warn("Đăng nhập Facebook chưa hoàn tất:", err);
+    showExamToast("Facebook chưa sẵn sàng. Em hãy dùng Mã HS hoặc thử lại sau.");
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -8168,7 +8166,9 @@ function renderStudentExamKPIs(exams, studentSubs, classSubs, classRoster) {
     }
   }
   if (elTotalInClass) {
-    elTotalInClass.textContent = `/${totalClassParticipants} bạn trong lớp`;
+    elTotalInClass.textContent = myRankIndex >= 0
+      ? `/${totalClassParticipants} bạn trong lớp`
+      : "Chưa đủ dữ liệu xếp hạng";
   }
 }
 
@@ -8419,7 +8419,7 @@ function renderClassLeaderboard(examIdFilter = "all") {
 
   if (rankedList.length === 0) {
     const emptyTr = document.createElement("tr");
-    emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có học sinh nào nộp bài kiểm tra trong danh mục này.</td>`;
+    emptyTr.innerHTML = /* sanitize */ `<td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">Chưa có dữ liệu xếp hạng cho danh mục này.</td>`;
     tbody.appendChild(emptyTr);
     return;
   }
@@ -9264,6 +9264,7 @@ async function submitStudentExam() {
       const localSubs = JSON.parse(localStorage.getItem("AISGK_SUBMISSIONS") || "[]");
       localSubs.unshift({
         ...payload,
+        exam_title: activeStudentExam.title,
         time_spent: timeSpentStr,
         evaluation: result
       });

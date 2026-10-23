@@ -1187,15 +1187,21 @@ def submit_exam_endpoint(
     """Học sinh nộp bài thi -> Xác thực phiên server, chấm điểm và AI Socrates nhận xét (L01)."""
     session = verify_student_session(authorization, x_student_token)
 
+    if not str(session.get("class_code") or "").strip() or session.get("grade") not in (6, 7, 8, 9):
+        raise HTTPException(
+            status_code=403,
+            detail="Tài khoản chưa có thông tin lớp và khối lớp đã xác thực. Vui lòng liên hệ Thầy/Cô trước khi nộp bài."
+        )
+
     # Ghi đè danh tính đáng tin cậy từ phiên server (chống học sinh tự khai thông tin)
     sub_dict = req.model_dump()
     sub_dict["student_id"] = session["uid"]
-    if session.get("student_name"):
-        sub_dict["student_name"] = session["student_name"]
-    if session.get("class_code"):
-        sub_dict["class_code"] = session["class_code"]
-    if session.get("grade"):
-        sub_dict["grade"] = session["grade"]
+    # The roster identity must not be supplied by the browser. Firebase sessions
+    # without a roster code leave it empty rather than accepting a forged code.
+    sub_dict["student_code"] = session.get("student_code") or ""
+    sub_dict["student_name"] = session.get("student_name") or "Học sinh"
+    sub_dict["class_code"] = session["class_code"]
+    sub_dict["grade"] = session["grade"]
     sub_dict["is_blocked"] = session.get("is_blocked", False)
 
     try:
