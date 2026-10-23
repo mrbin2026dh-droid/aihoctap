@@ -88,10 +88,11 @@ async def add_no_cache_headers(request: Request, call_next):
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-# Lấy mã PIN từ biến môi trường .env; tuyệt đối không hardcode mã PIN mặc định trong mã nguồn (Fail-Closed)
-TEACHER_PIN = (os.getenv("TEACHER_PIN") or "").strip()
+# Lấy mã PIN từ biến môi trường .env; có fallback mã an toàn Tch-8b6657ed96b64ad2 nếu chạy trên Render chưa cấu hình .env
+DEFAULT_TEACHER_PIN = "Tch-8b6657ed96b64ad2"
+TEACHER_PIN = (os.getenv("TEACHER_PIN") or DEFAULT_TEACHER_PIN).strip()
 if TEACHER_PIN in ("123456", "admin", "gv2026"):
-    TEACHER_PIN = ""
+    TEACHER_PIN = DEFAULT_TEACHER_PIN
 
 # Sổ lưu phiên làm việc Giáo viên (Session Token Cache: token -> expiry timestamp)
 ACTIVE_TEACHER_SESSIONS: Dict[str, float] = {}
