@@ -9,6 +9,7 @@ Cấu hình kiểm thử toàn cục (Global Test Fixtures)
 import pytest
 import json
 import os
+import shutil
 from pathlib import Path
 
 import backend.server as server_mod
@@ -18,14 +19,37 @@ import backend.grounding as grounding_mod
 @pytest.fixture(autouse=True)
 def global_test_isolation(tmp_path, monkeypatch):
     """Cô lập toàn bộ hệ thống file, registry, session và network cho mọi test suite."""
-    exams_dir = tmp_path / "exams"
+    isolation_root = tmp_path / "global-test-data"
+    exams_dir = isolation_root / "exams"
     subs_dir = exams_dir / "submissions"
-    curriculum_dir = tmp_path / "curriculum"
-    curriculum_v2_dir = tmp_path / "curriculum_v2_simple"
-    registry_file = tmp_path / "students_registry.json"
+    curriculum_dir = isolation_root / "curriculum"
+    curriculum_v2_dir = isolation_root / "curriculum_v2_simple"
+    registry_file = isolation_root / "students_registry.json"
 
     for d in (exams_dir, subs_dir, curriculum_dir, curriculum_v2_dir):
         d.mkdir(parents=True, exist_ok=True)
+
+    # Nạp bản sao dữ liệu bài học mẫu vào tmp_path cô lập (Item 7)
+    real_curriculum = Path(__file__).resolve().parent.parent / "data" / "curriculum"
+    real_curriculum_v2 = Path(__file__).resolve().parent.parent / "frontend" / "data" / "curriculum_v2_simple"
+
+    if real_curriculum.exists():
+        for grade_dir in real_curriculum.iterdir():
+            if grade_dir.is_dir():
+                target_gdir = curriculum_dir / grade_dir.name
+                target_gdir.mkdir(parents=True, exist_ok=True)
+                for f in grade_dir.iterdir():
+                    if f.is_file() and not f.name.endswith(".bak"):
+                        shutil.copy2(f, target_gdir / f.name)
+
+    if real_curriculum_v2.exists():
+        for grade_dir in real_curriculum_v2.iterdir():
+            if grade_dir.is_dir():
+                target_gdir = curriculum_v2_dir / grade_dir.name
+                target_gdir.mkdir(parents=True, exist_ok=True)
+                for f in grade_dir.iterdir():
+                    if f.is_file():
+                        shutil.copy2(f, target_gdir / f.name)
 
     # Khởi tạo mock students_registry trong thư mục tạm
     registry_data = {

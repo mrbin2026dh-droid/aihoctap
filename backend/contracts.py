@@ -90,9 +90,9 @@ class ChatContext(BaseModel):
         max_length=64,
         description="Hành động gần nhất"
     )
-    active_tab: Optional[Literal["quiz", "theory"]] = Field(
+    active_tab: Optional[Literal["quiz", "theory", "dashboard", "exam"]] = Field(
         default="quiz",
-        description="Tab đang mở: quiz hoặc theory"
+        description="Tab đang mở: quiz, theory, dashboard hoặc exam"
     )
     attempt_count: int = Field(
         default=1,
@@ -100,6 +100,16 @@ class ChatContext(BaseModel):
         le=3,
         description="Số lần học sinh đã thử trả lời câu hỏi hiện tại (tối đa 3 tầng giàn giáo)"
     )
+
+    @field_validator("active_tab", mode="before")
+    @classmethod
+    def normalize_active_tab(cls, v: Any) -> str:
+        if not v:
+            return "quiz"
+        v_str = str(v).strip().lower()
+        if v_str in {"quiz", "theory", "dashboard", "exam"}:
+            return v_str
+        return "quiz"
 
     @field_validator("attempt_count", mode="before")
     @classmethod

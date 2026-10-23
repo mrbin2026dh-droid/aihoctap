@@ -7,6 +7,7 @@ import sys
 import time
 import secrets
 import re
+import uuid
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -31,7 +32,7 @@ from backend.grounding import (
     load_lesson_data, save_lesson_blocks, list_available_lessons, CURRICULUM_DIR, 
     load_lesson_v2_simple, list_available_lessons_v2, get_class_analytics_data
 )
-from backend.agent import chat_with_tutor, grade_quiz_submission, analyze_class_pedagogy
+from backend.agent import chat_with_tutor, grade_quiz_submission, analyze_class_pedagogy, sanitize_error_detail
 from backend.exam_service import (
     export_exam_template_excel, parse_exam_excel_file, create_or_update_exam,
     delete_exam, list_exams, get_exam, grade_exam_submission, update_exam_status, ExamModel, ExamSubmissionRequest,
@@ -868,6 +869,7 @@ def handle_analyze_class(
 @app.post("/api/chat")
 def handle_chat(req: ChatRequest, request: Request):
     """Xử lý hội thoại hỏi đáp với Gia sư Socrates AI (Hỗ trợ V2 Tinh giản, Chặn bài nháp 403 P0-B)."""
+    request_id = str(uuid.uuid4())[:8]
     try:
         is_v2 = request.headers.get("x-curriculum-version") == "v2"
         lesson_data = None
@@ -899,16 +901,23 @@ def handle_chat(req: ChatRequest, request: Request):
             history=req.history,
             curriculum_text=lesson_data["content_markdown"],
             context=req.context,
-            quiz_data=lesson_data.get("quiz", [])
+            quiz_data=lesson_data.get("quiz", []),
+            request_id=request_id
         )
         return {
             "success": True,
-            "reply": reply
+            "reply": reply,
+            "request_id": request_id
         }
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi xử lý AI: {str(e)}")
+        sanitized_err = sanitize_error_detail(str(e))
+        print(f"[INTERNAL_ERROR] request_id={request_id} error={sanitized_err}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Hệ thống AI đang bận hoặc gặp sự cố xử lý. Mã yêu cầu: {request_id}"
+        )
 
 
 @app.post("/api/grade-quiz")

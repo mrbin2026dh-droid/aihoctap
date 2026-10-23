@@ -46,7 +46,7 @@ async function updateTeacherPin(currentPin, newPin) {
     try {
       const errJson = await res.json();
       if (errJson && errJson.detail) errorDetail = errJson.detail;
-    } catch (_err) {
+    } catch {
       console.warn("[AISGK-AUTH] Không thể phân tích phản hồi lỗi JSON từ máy chủ khi đổi mã PIN.");
     }
     throw new Error(errorDetail);
@@ -258,6 +258,8 @@ const state = {
   teacherUnlocked: false,
   questionAttempts: {},
   isChatSubmitting: false,
+  chatTurnId: 0,
+  activeChatAbortController: null,
   availableLessons: [],
   catalogFilterTopic: "all",
   catalogSearchQuery: ""
@@ -1369,6 +1371,21 @@ async function switchToLesson(newLessonId) {
     closeCatalogModal();
     return;
   }
+  // Hủy fetch chat in-flight nếu có để chống rò rỉ phản hồi cũ sang bài mới
+  if (state.activeChatAbortController) {
+    try { state.activeChatAbortController.abort(); } catch {}
+    state.activeChatAbortController = null;
+  }
+  state.isChatSubmitting = false;
+  state.chatTurnId = (state.chatTurnId || 0) + 1;
+  const chatInputEl = document.getElementById("chatInput");
+  if (chatInputEl) chatInputEl.disabled = false;
+  const btnSendEl = document.getElementById("btnSendChat") || document.getElementById("chatSendBtn");
+  if (btnSendEl) btnSendEl.disabled = false;
+  const btnHeaderEl = document.getElementById("btnHeaderTutor") || document.getElementById("btnAskSocrates");
+  if (btnHeaderEl) btnHeaderEl.disabled = false;
+  document.querySelectorAll(".prompt-chip").forEach(chip => chip.disabled = false);
+
   state.lessonId = newLessonId;
   state.currentQuestionIndex = 0;
   state.userSelections = {};
@@ -1804,7 +1821,12 @@ function renderApp() {
     const evalData = state.evaluatedQuestions[qid];
     feedbackBox.className = "feedback-box active";
 
-    if (evalData.is_correct) {
+    if (evalData.is_network_error) {
+      feedbackTitle.textContent = "Chưa thể kiểm tra câu trả lời";
+      feedbackSourceTag.textContent = "";
+      feedbackDesc.textContent = evalData.feedback || "Em hãy kiểm tra kết nối rồi thử chấm lại câu này.";
+      feedbackSocratesAction.style.display = "none";
+    } else if (evalData.is_correct) {
       feedbackBox.classList.add("correct-theme");
       feedbackTitle.textContent = "🎉 Rất chính xác! Em đã hiểu đúng bài học.";
       feedbackSourceTag.textContent = evalData.muc_sgk ? `[${evalData.muc_sgk}]` : "";
@@ -1836,6 +1858,12 @@ function renderApp() {
     if (!isEvaluated) {
       btnActionText.textContent = "Kiểm tra đáp án";
       btnAction.disabled = !userChoice;
+    } else if (state.evaluatedQuestions[qid].is_network_error) {
+      btnActionText.textContent = "Kiểm tra lại kết nối";
+      btnAction.disabled = !userChoice;
+    } else if (!state.evaluatedQuestions[qid].is_correct) {
+      btnActionText.textContent = "Thử lại câu này";
+      btnAction.disabled = false;
     } else {
       if (state.currentQuestionIndex < quiz.length - 1) {
         btnActionText.textContent = "Câu tiếp theo ➔";
@@ -2009,6 +2037,21 @@ async function switchGrade(newGrade) {
   }
 
   if (state.grade === newGrade) return;
+  // Hủy fetch chat in-flight nếu có khi đổi khối lớp
+  if (state.activeChatAbortController) {
+    try { state.activeChatAbortController.abort(); } catch {}
+    state.activeChatAbortController = null;
+  }
+  state.isChatSubmitting = false;
+  state.chatTurnId = (state.chatTurnId || 0) + 1;
+  const chatInputElGrade = document.getElementById("chatInput");
+  if (chatInputElGrade) chatInputElGrade.disabled = false;
+  const btnSendElGrade = document.getElementById("btnSendChat") || document.getElementById("chatSendBtn");
+  if (btnSendElGrade) btnSendElGrade.disabled = false;
+  const btnHeaderElGrade = document.getElementById("btnHeaderTutor") || document.getElementById("btnAskSocrates");
+  if (btnHeaderElGrade) btnHeaderElGrade.disabled = false;
+  document.querySelectorAll(".prompt-chip").forEach(chip => chip.disabled = false);
+
   state.grade = newGrade;
   state.lessonId = 1;
   state.currentQuestionIndex = 0;
@@ -2196,8 +2239,13 @@ function setupEventListeners() {
     const qid = currentQ.id;
     const isEvaluated = Boolean(state.evaluatedQuestions[qid]);
 
-    if (!isEvaluated) {
+    if (!isEvaluated || state.evaluatedQuestions[qid].is_network_error) {
       await evaluateCurrentQuestion(qid);
+    } else if (!state.evaluatedQuestions[qid].is_correct) {
+      // Học sinh áp dụng gợi ý rồi tự chọn lại; giữ số lần thử cho giàn giáo.
+      delete state.evaluatedQuestions[qid];
+      delete state.userSelections[qid];
+      renderApp();
     } else {
       if (state.currentQuestionIndex < quiz.length - 1) {
         state.currentQuestionIndex++;
@@ -2214,7 +2262,7 @@ function setupEventListeners() {
     const currentQ = state.lessonData && state.lessonData.quiz ? state.lessonData.quiz[state.currentQuestionIndex] : null;
     if (!currentQ) return;
     const qid = currentQ.id;
-    const choice = state.answers ? state.answers[qid] : null;
+    const choice = state.userSelections[qid] || null;
     const attempts = state.questionAttempts[qid] || 1;
     const prompt = choice 
       ? `Thầy ơi, ở câu "${currentQ.cau_hoi}" em chọn phương án ${choice} chưa đúng, thầy gợi ý giúp em cách suy luận nhé!`
@@ -3053,6 +3101,7 @@ function setupEventListeners() {
     state.currentQuestionIndex = 0;
     state.userSelections = {};
     state.evaluatedQuestions = {};
+    state.questionAttempts = {};
     document.getElementById("completionCard").classList.remove("active");
     document.getElementById("quizView").classList.add("active");
     renderApp();
@@ -3067,6 +3116,13 @@ function switchView(tabName) {
       openStudentManagementStage();
       return;
     }
+  }
+  if (tabName !== state.activeTab && (tabName === "dashboard" || tabName === "exam")) {
+    if (state.activeChatAbortController) {
+      try { state.activeChatAbortController.abort(); } catch {}
+      state.activeChatAbortController = null;
+    }
+    state.isChatSubmitting = false;
   }
   state.activeTab = tabName;
   const dashboardView = document.getElementById("dashboardView");
@@ -3213,7 +3269,6 @@ async function evaluateCurrentQuestion(qid) {
         muc_sgk: quizItem.muc_sgk || "SGK",
         student_choice: choice
       };
-      state.questionAttempts[qid] = (state.questionAttempts[qid] || 0) + 1;
     } else {
       // Khi mất mạng và đáp án đã giấu: KHÔNG ĐƯỢC COI LÀ SAI VÀ KHÔNG ĐƯỢC TĂNG ATTEMPTS (F05 & L12)
       state.evaluatedQuestions[qid] = {
@@ -3368,6 +3423,16 @@ async function sendChatMessage(messageText, customContext = null) {
     return; // Chặn double-click và race condition
   }
 
+  // Hủy bộ điều khiển in-flight trước đó nếu có
+  if (state.activeChatAbortController) {
+    try {
+      state.activeChatAbortController.abort();
+    } catch {}
+    state.activeChatAbortController = null;
+  }
+  const abortController = new AbortController();
+  state.activeChatAbortController = abortController;
+
   state.isChatSubmitting = true;
   state.chatTurnId = (state.chatTurnId || 0) + 1;
   const currentTurnId = state.chatTurnId;
@@ -3383,9 +3448,15 @@ async function sendChatMessage(messageText, customContext = null) {
   if (btnHeaderTutor) btnHeaderTutor.disabled = true;
   document.querySelectorAll(".prompt-chip").forEach(chip => chip.disabled = true);
 
-  // Bộ giám sát thời gian tối đa (30s Watchdog): Chống kẹt Mutex vĩnh viễn trong mọi tình huống hy hữu
+  // Bộ giám sát thời gian tối đa (30s Watchdog): Hủy fetch và giải phóng khóa Mutex
   let watchdogTimer = setTimeout(() => {
-    console.warn("⚠️ [Watchdog] Typewriter timeout vượt 30s. Tự động giải phóng khóa Mutex.");
+    console.warn("⚠️ [Watchdog] Typewriter/Fetch timeout vượt 30s. Tự động hủy fetch và giải phóng khóa Mutex.");
+    try {
+      abortController.abort();
+    } catch {}
+    if (loadingBubble && loadingBubble.parentNode) {
+      loadingBubble.innerHTML = "⏱️ <em>Yêu cầu phản hồi quá 30 giây đã được hủy để bảo vệ kết nối. Em có thể gửi lại câu hỏi nhé!</em>" /* sanitize */;
+    }
     releaseChatMutex(currentTurnId);
   }, 30000);
 
@@ -3402,6 +3473,9 @@ async function sendChatMessage(messageText, customContext = null) {
     if (watchdogTimer) {
       clearTimeout(watchdogTimer);
       watchdogTimer = null;
+    }
+    if (state.activeChatAbortController === abortController) {
+      state.activeChatAbortController = null;
     }
     state.isChatSubmitting = false;
     if (chatInput) chatInput.disabled = false;
@@ -3447,7 +3521,7 @@ async function sendChatMessage(messageText, customContext = null) {
   } else if (state.lessonData && state.lessonData.quiz && state.lessonData.quiz[state.currentQuestionIndex]) {
     const currentQ = state.lessonData.quiz[state.currentQuestionIndex];
     const qid = currentQ.id;
-    const studentChoice = state.answers ? state.answers[qid] : null;
+    const studentChoice = state.userSelections[qid] || null;
     const evalState = state.evaluatedQuestions ? state.evaluatedQuestions[qid] : null;
     const attempts = state.questionAttempts[qid] || 1;
     contextPayload = {
@@ -3471,7 +3545,7 @@ async function sendChatMessage(messageText, customContext = null) {
       history: state.chatHistory.slice(-4)
     };
 
-    const headers = { 
+    const headers = {
       "Content-Type": "application/json",
       "X-Student-Session": getOrCreateStudentSession(),
       "X-Curriculum-Version": "v2"
@@ -3487,7 +3561,8 @@ async function sendChatMessage(messageText, customContext = null) {
         const attemptRes = await fetch(`${currentBase}/chat`, {
           method: "POST",
           headers,
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: abortController.signal
         });
         if (attemptRes.ok) {
           res = attemptRes;
@@ -3510,6 +3585,23 @@ async function sendChatMessage(messageText, customContext = null) {
     const data = await res.json();
     const reply = data.reply;
 
+    // Kiểm tra xem lượt gọi có còn hợp lệ không trước khi cập nhật DOM và lịch sử (Anti-Stale Callback)
+    const isStillValid = (
+      state.chatTurnId === currentTurnId &&
+      state.grade === chatGrade &&
+      state.lessonId === chatLessonId &&
+      !abortController.signal.aborted
+    );
+
+    if (!isStillValid) {
+      console.warn(`[Chat] Bỏ qua phản hồi cũ của lượt ${currentTurnId} do đã chuyển bài, chuyển lượt hoặc bị hủy.`);
+      if (loadingBubble && loadingBubble.parentNode) {
+        loadingBubble.remove();
+      }
+      releaseChatMutex(currentTurnId);
+      return;
+    }
+
     // Kích hoạt Hiệu ứng Đánh máy (Typewriter Effect - Sonet R3: Giữ khóa mutex cho đến khi gõ xong)
     typeWriterEffect(loadingBubble, reply, () => {
       releaseChatMutex(currentTurnId);
@@ -3519,6 +3611,14 @@ async function sendChatMessage(messageText, customContext = null) {
     state.chatHistory.push({ role: "user", content: cleanMessage });
     state.chatHistory.push({ role: "assistant", content: reply });
   } catch (err) {
+    if (abortController.signal.aborted || (err && err.name === "AbortError")) {
+      console.warn(`[Chat] Lượt gọi ${currentTurnId} đã được hủy chủ động.`);
+      if (state.chatTurnId !== currentTurnId && loadingBubble && loadingBubble.parentNode) {
+        loadingBubble.remove();
+      }
+      releaseChatMutex(currentTurnId);
+      return;
+    }
     console.error("Lỗi kết nối AI Socrates:", err);
     loadingBubble.innerHTML = "⚠️ <em>Máy chủ AI đang khởi động hoặc đang cập nhật kết nối. Em vui lòng thử lại sau giây lát nhé!</em>" /* sanitize */;
     releaseChatMutex(currentTurnId);
@@ -4840,7 +4940,7 @@ function handleTeacherLogout() {
         method: "POST",
         headers: { "x-teacher-token": currentToken }
       }).catch(() => console.warn("[AISGK-AUTH] Lỗi mạng khi gọi endpoint đăng xuất giáo viên từ xa."));
-    } catch (_err) {
+    } catch {
       console.warn("[AISGK-AUTH] Không thể kích hoạt request đăng xuất giáo viên.");
     }
   }
@@ -6682,7 +6782,7 @@ async function syncExamToFirebase(exam) {
   try {
     // R04: Bảo vệ đáp án - Chỉ lưu đề thi công khai (đã lọc dap_an_dung & giai_thich_su_pham) vào node exams
     const sanitizedQuestions = (exam.questions || []).map(q => {
-      const { dap_an_dung, giai_thich_su_pham, ...safeQ } = q;
+      const { dap_an_dung: _answer, giai_thich_su_pham: _explanation, ...safeQ } = q;
       return safeQ;
     });
     const publicExam = {
@@ -9071,7 +9171,7 @@ async function submitStudentExam() {
         try {
           const errData = await res.json();
           if (errData && errData.detail) errDetail = errData.detail;
-        } catch (_err) {
+        } catch {
           console.warn("[AISGK-EXAM] Không thể đọc nội dung JSON chi tiết của thông báo lỗi từ chối bài thi.");
         }
         backendRejectMsg = `Máy chủ từ chối tiếp nhận bài thi (${errDetail}). Bài nộp không được chấp nhận!`;
@@ -9437,7 +9537,7 @@ async function flushPendingExamSubmissions() {
     let initialQueue = [];
     try {
       initialQueue = JSON.parse(localStorage.getItem("aisgk_offline_submissions") || "[]");
-    } catch (_) {
+    } catch {
       return;
     }
     if (!Array.isArray(initialQueue) || !initialQueue.length) return;
@@ -9479,7 +9579,7 @@ async function flushPendingExamSubmissions() {
               if (typeof syncSubmissionToFirebase === "function") {
                 try {
                   await syncSubmissionToFirebase(item, data.evaluation);
-                } catch (_err) {
+                } catch {
                   console.warn("[AISGK-OUTBOX] Đồng bộ bài nộp sang Firebase client-side thất bại sau khi đã ACK.");
                 }
               }
@@ -9490,7 +9590,7 @@ async function flushPendingExamSubmissions() {
             console.warn("[AISGK-OUTBOX] Server chưa ACK hợp lệ hoặc evaluation không đúng hợp đồng:", item.submission_id, data);
           }
         }
-      } catch (_) {
+      } catch {
         // Gặp lỗi mạng hoặc exception: Không thêm vào ackedSubIds để giữ lại thử lại sau
       }
     }
@@ -9504,7 +9604,7 @@ async function flushPendingExamSubmissions() {
           const remainingQueue = freshQueue.filter(entry => entry && !ackedSubIds.has(entry.submission_id));
           localStorage.setItem("aisgk_offline_submissions", JSON.stringify(remainingQueue));
         }
-      } catch (_err) {
+      } catch {
         console.warn("[AISGK-OUTBOX] Lỗi khi cập nhật hàng đợi bài nộp ngoại tuyến trên bộ nhớ cục bộ.");
       }
     }

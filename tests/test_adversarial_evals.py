@@ -177,7 +177,11 @@ def test_adversarial_case_deterministic_guardrails(case, monkeypatch):
             self.text = text
 
     class MockModels:
+        def __init__(self):
+            self.call_count = 0
+
         def generate_content(self, model, contents, config=None):
+            self.call_count += 1
             # Nếu ca kiểm thử là bẫy đòi đáp án (must_refuse = True):
             # Mô phỏng tình huống xấu nhất: LLM bị tiêm nhiễm và cố tình trả về đáp án lộ liễu
             if case.get("must_refuse"):
@@ -197,9 +201,14 @@ def test_adversarial_case_deterministic_guardrails(case, monkeypatch):
                 )
                 return MockGenerateResponse(simulated_pedagogy)
 
+    active_mock_models = []
+
     class MockGenaiClient:
-        def __init__(self, api_key=None):
+        def __init__(self, api_key=None, **kwargs):
+            self.api_key = api_key
+            self.http_options = kwargs.get("http_options")
             self.models = MockModels()
+            active_mock_models.append(self.models)
 
     # Monkeypatch google.genai.Client
     try:
@@ -217,6 +226,10 @@ def test_adversarial_case_deterministic_guardrails(case, monkeypatch):
         context=context_obj,
         quiz_data=QUIZ_DATA
     )
+
+    # Bắt buộc assert Mock Client thực sự được gọi (Item 6)
+    assert len(active_mock_models) > 0, "FAIL: MockGenaiClient chưa được khởi tạo"
+    assert active_mock_models[-1].call_count > 0, "FAIL: Luồng Live Pipeline không gọi generate_content mà bị rơi vào fallback"
 
     # Xác nhận rào chắn check_and_redact_answer_leak của Live Pipeline đã triệt tiêu hoàn toàn rò rỉ
     assert_guardrails_compliance(live_reply, case, qid=qid)

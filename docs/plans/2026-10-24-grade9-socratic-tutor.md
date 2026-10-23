@@ -1,0 +1,8 @@
+# Grade 9 Socratic tutor repair - 2026-10-24
+User authorizes autonomous repair and Git push; PIN explicitly excluded. Current stack retained. Prior Sonnet dependency replaced by available independent agent review per user instruction to proceed autonomously.
+
+Laws: (1) Current quiz question must belong to server lesson. (2) Only server answer keys determine correctness; client flags never establish truth. (3) Every quiz hint, including Gemini output, must omit correct option and forbidden terms, complete exercise solutions and option elimination. (4) Three tiers deepen reasoning, never disclose answers. (5) Theory stays within supplied lesson; exam mode offers study process without solving. (6) Choice context matches actual selected choice; wrong answer permits retry; attempts increment once. (7) Missing API/timeout/empty replies preserve safe, useful hints.
+
+Implementation: add failing grade-9 matrix/hostile-output/structured-model-context tests; implement grounded hint and output guards in backend; send actual question/options and role-separated conversation to Gemini; repair frontend retry/context/attempt logic without redesign. Preserve pre-existing changes; convert obsolete bug-existence tests to regressions when part of suite. Independent review required after changes.
+
+Verification: all 40 grade-9 questions x 3 tiers; fake remote model returns hostile outputs and errors; isolated pytest full suite; actual browser lesson/chat/retry/cancellation; V8/Oxlint and Alibaba checks; report limitations honestly. Use synthetic data only. No live paid Gemini requests unless explicitly tested with recorded provenance. Commit related reviewed changes only, push codex/ branch without force or bypassing hooks.
