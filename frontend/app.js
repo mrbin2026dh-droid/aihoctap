@@ -46,7 +46,9 @@ async function updateTeacherPin(currentPin, newPin) {
     try {
       const errJson = await res.json();
       if (errJson && errJson.detail) errorDetail = errJson.detail;
-    } catch (_) {}
+    } catch (_err) {
+      console.warn("[AISGK-AUTH] Không thể phân tích phản hồi lỗi JSON từ máy chủ khi đổi mã PIN.");
+    }
     throw new Error(errorDetail);
   }
 
@@ -4837,8 +4839,10 @@ function handleTeacherLogout() {
       fetch("/api/teacher/logout", {
         method: "POST",
         headers: { "x-teacher-token": currentToken }
-      }).catch(err => console.debug("Teacher logout backend error:", err));
-    } catch (_) {}
+      }).catch(() => console.warn("[AISGK-AUTH] Lỗi mạng khi gọi endpoint đăng xuất giáo viên từ xa."));
+    } catch (_err) {
+      console.warn("[AISGK-AUTH] Không thể kích hoạt request đăng xuất giáo viên.");
+    }
   }
 
   state.teacherToken = null;
@@ -9067,7 +9071,9 @@ async function submitStudentExam() {
         try {
           const errData = await res.json();
           if (errData && errData.detail) errDetail = errData.detail;
-        } catch (_) {}
+        } catch (_err) {
+          console.warn("[AISGK-EXAM] Không thể đọc nội dung JSON chi tiết của thông báo lỗi từ chối bài thi.");
+        }
         backendRejectMsg = `Máy chủ từ chối tiếp nhận bài thi (${errDetail}). Bài nộp không được chấp nhận!`;
       }
     } catch (apiErr) {
@@ -9473,7 +9479,9 @@ async function flushPendingExamSubmissions() {
               if (typeof syncSubmissionToFirebase === "function") {
                 try {
                   await syncSubmissionToFirebase(item, data.evaluation);
-                } catch (_) {}
+                } catch (_err) {
+                  console.warn("[AISGK-OUTBOX] Đồng bộ bài nộp sang Firebase client-side thất bại sau khi đã ACK.");
+                }
               }
             } else {
               console.warn("[AISGK-OUTBOX] Phản hồi nộp bài đến muộn sau khi đã đổi tài khoản. Không cập nhật UI tài khoản mới.");
@@ -9496,7 +9504,9 @@ async function flushPendingExamSubmissions() {
           const remainingQueue = freshQueue.filter(entry => entry && !ackedSubIds.has(entry.submission_id));
           localStorage.setItem("aisgk_offline_submissions", JSON.stringify(remainingQueue));
         }
-      } catch (_) {}
+      } catch (_err) {
+        console.warn("[AISGK-OUTBOX] Lỗi khi cập nhật hàng đợi bài nộp ngoại tuyến trên bộ nhớ cục bộ.");
+      }
     }
   } finally {
     flushPendingExamSubmissions._isRunning = false;
