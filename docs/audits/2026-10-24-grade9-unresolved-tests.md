@@ -1,6 +1,7 @@
 # Tests ngoài phạm vi gia sư chưa đạt - 24/10/2026
 
 Full run: 409 passed, 20 failed, 9 warnings, 400.16s.
+Số toàn-suite đo trên workspace còn test_exam_api_integration.py sửa sẵn chưa commit; không phải kết quả checkout sạch. Gate AI riêng không dùng tệp đó.
 Không xác nhận toàn dự án sẵn sàng phát hành. Không sửa PIN/đăng nhập/thi/dashboard trong tác vụ này.
 Chi tiết lỗi và trace: scratch/tutor-release-suite.log (cục bộ).
 
