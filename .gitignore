@@ -25,4 +25,5 @@ scratch/
 
 # Du lieu van hanh & bao ve thong tin hoc sinh
 data/students_registry.json
+data/exams/submissions/
 .bridge/
