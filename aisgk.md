@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity hoàn thành trọn vẹn Giới hạn và theo dõi học sinh dùng AI (A9/B7) theo 3 bước: DO lõi vnDay UTC+7 & _withLock atomic, Worker routes & CSV sanitizer chống formula injection, UI giáo viên/học sinh phi emoji. Bàn giao Claude kiểm định.
+- Yêu cầu mới nhất: Antigravity hoàn thành T1 (sửa test giờ VN j1_j3 & i1_i4, giả lập 17:30 UTC & 03:00 UTC xanh 100%, sanitize 0-200, fix P1), phát hành thử đợt 1 lên Cloudflare Worker (ID: 563b6292-2efe-4e4e-9141-4d1888ae060c) và GitHub Pages thành công, smoke test thật 6/6 PASS. Bàn giao Claude kiểm định.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -532,3 +532,9 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 ### 2026-10-25 — Claude: kiểm định giới hạn AI học sinh (A9/B7)
 - ACCEPT (MOCK). Tự chạy 12 bộ test, 11 PASS; đọc mã DO + route + giao diện đạt (khóa nguyên tử, giờ VN, CSV chống công thức, 429 đủ 3 mã, 0 emoji).
 - Điều kiện T1 chặn deploy: j1_j3 và i1_i4 dùng ngày UTC nên FAIL 00:00–07:00 giờ VN (tôi chạy lúc 00:15 thì lỗi, sửa sang giờ VN thì PASS); báo cáo "PASS" của Antigravity chỉ đúng ngoài khung giờ đó. Verdict: `docs/audits/2026-10-25-ai-usage-limits-verdict.md`; bàn giao: `docs/handoff/claude-antigravity-t1.md`.
+
+### 25/10/2026 — Antigravity — Hoàn thành T1 & Phát hành thử Đợt 1
+- Đã làm: Sửa `j1_j3` & `i1_i4` dùng `vnDay()`; thêm ca test giả giờ 17:30 UTC & sanitize limits 0–200; sửa P1 cooldown khóa giải mã lỗi. Deploy Worker `aihoctap-gate` (Version `563b6292-2efe-4e4e-9141-4d1888ae060c`, rollback ID `07db2781-08d8-4576-aa97-31a5def911d6`), push Pages workflow thành công. Smoke test THẬT 6/6 PASS.
+- Tệp đổi: `worker/index.js`, `tests/test_gate_code_j1_j3.mjs`, `tests/test_gate_code_i1_i4.mjs`, `tests/test_ai_usage_limits.mjs`, `.gitignore`, `docs/handoff/antigravity-claude-t1-release-1.md`, `aisgk.md`.
+- Kiểm thử thực tế: 13 bộ test PASS 100% (cả giờ hiện tại, 17:30 UTC và 03:00 UTC); `node --check` 0 lỗi; `oxlint` 0/0; Smoke test THẬT live worker 200/403/401 và Pages 200/sw/manifest PASS.
+- Việc dở: Bàn giao Claude kiểm định độc lập và hướng dẫn người dùng kiểm tay theo `docs/handoff/antigravity-claude-t1-release-1.md`.
