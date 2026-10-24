@@ -1,6 +1,6 @@
 // @ts-check
-const remote = location.hostname === 'mrbin2026dh-droid.github.io';
-export const API_BASE = remote ? 'https://aisgk.onrender.com/api' : `${location.origin}/api`;
+const isLocalhostBackend = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port === '8000';
+export const API_BASE = isLocalhostBackend ? `${location.origin}/api` : 'https://aihoctap-gate.mrbin2026dh.workers.dev/api';
 export class ApiError extends Error {
   /** @param {number} status @param {string} message */
   constructor(status, message) { super(message); this.status = status; }

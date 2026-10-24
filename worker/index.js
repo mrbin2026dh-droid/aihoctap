@@ -710,7 +710,9 @@ export default {
       }
     }
 
-    const corsOrigin = env.ALLOWED_ORIGIN || '*';
+    const reqOrigin = request.headers.get('Origin') || '';
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(reqOrigin);
+    const corsOrigin = isLocalhost ? reqOrigin : (env.ALLOWED_ORIGIN || '*');
     const corsHeaders = {
       'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
