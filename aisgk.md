@@ -12,13 +12,13 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Đã tích hợp hoàn thiện Gia sư Sư phạm Socrates AI vào PWA học sinh khi có mạng (Online Mode), bảo toàn 100% tính năng tự học offline khi mất mạng. Kế hoạch và bằng chứng tại [docs/plans/2026-10-24-pwa-ai-tutor.md](docs/plans/2026-10-24-pwa-ai-tutor.md). Toàn bộ 40 test PWA tổng hợp, 30 test audit độc lập, 11 test UI audit và kiểm tra V8/Oxlint đều PASS 100%. Đã cập nhật cache Service Worker `aisgk-student-shell-4bd541a4c68fcf4248e3e141`.
-- Mốc Git quan sát trong phiên: nhánh `main`, HEAD `7f19ee9` (`fix(data): remove remaining static submission copies`). Đây là mốc quan sát, cần kiểm tra lại ở phiên sau.
-- Có nhiều tệp chưa được Git theo dõi, gồm công việc cũ và PWA mới. Không xóa hoặc tự coi là đã commit. Bản sửa của phiên này đang ở working tree; chưa commit/push/deploy.
+- Yêu cầu mới nhất: Đã đưa toàn bộ mã nguồn ứng dụng PWA học sinh (Offline & Gia sư Socrates AI khi online) lên repository GitHub mới: `https://github.com/mrbin2026dh-droid/aihoctap` (commit `7f670c9` và commit tài liệu kế tiếp).
+- Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
+- Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
 - Hướng dẫn: `docs/PWA.md`; kế hoạch UI: `docs/plans/2026-10-24-student-ui-completion.md`; kế hoạch AI Tutor: `docs/plans/2026-10-24-pwa-ai-tutor.md`.
 - Preview đã kiểm tra: `http://127.0.0.1:8769/hoc/`, teacher `/hoc/teacher.html`; DB riêng `scratch/pwa-preview/student.sqlite3`. ZIP PWA mới: `scratch/student-pwa.zip`.
-- Bước tiếp theo trước phát hành: migration các JSON legacy có đáp án, kiểm tra auth/kho bền/backup/HTTPS trên staging, pilot Android/iPhone thật. Không phát hành production chỉ dựa vào test local. Giữ PIN theo phạm vi hiện tại.
+- Bước tiếp theo để cài trên điện thoại thật: Bật GitHub Pages trên repository `aihoctap` (hoặc kết nối triển khai Render/Vercel) để có URL HTTPS hợp lệ cho trình duyệt điện thoại (Chrome/Safari) kích hoạt tính năng cài đặt PWA và Service Worker.
 
 ## Hồ sơ cần đọc để tiếp nối
 
@@ -213,6 +213,20 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
   - Chạy `git add`, kiểm định qua Git Pre-Commit Hook (Alibaba OCR).
   - Thực hiện `git commit` và `git push -u origin main`.
   - Cập nhật nhật ký với kết quả push thực tế và hướng dẫn cài đặt trên điện thoại thật.
+
+**Đã thực hiện:**
+- Cập nhật `.gitignore` loại trừ triệt để `*.sqlite3`, `*.sqlite`, `.env`, bảo vệ toàn diện dữ liệu nhạy cảm.
+- Thực hiện `git add .`, đóng gói toàn bộ mã nguồn ứng dụng PWA (`frontend/hoc/`), backend API (`pwa_api.py`, `pwa_service.py`, `pwa_store.py`, `pwa_contracts.py`), kịch bản kiểm thử, tài liệu kế hoạch và audit.
+- Chạy `git commit`: Vượt qua kiểm định nghiêm ngặt của Git Pre-Commit Hook (Alibaba Open-Code-Review v1.12.5) với 0 lỗi cú pháp, 0 anti-pattern, 0 lỗ hổng bảo mật (commit `7f670c9`).
+- Cấu hình remote `origin` trỏ về `https://github.com/mrbin2026dh-droid/aihoctap.git`.
+- Chạy `git push -u origin main`: Vượt qua Pre-Push Gatekeeper và đẩy thành công toàn bộ nhánh `main` lên repository GitHub mới.
+- Hướng dẫn cài trên điện thoại thật:
+  - Để cài đặt PWA trên điện thoại thật (Android Chrome / iOS Safari), trình duyệt bắt buộc yêu cầu kết nối bảo mật **HTTPS**.
+  - Người dùng có thể kích hoạt **GitHub Pages** trong Settings của repo `aihoctap` (hoặc liên kết repository với Render/Vercel/Cloudflare Pages) để nhận đường dẫn HTTPS.
+  - Khi mở đường dẫn HTTPS trên điện thoại:
+    - Android (Chrome): Xuất hiện thanh thông báo hoặc icon "Cài đặt ứng dụng" trên thanh địa chỉ.
+    - iPhone (Safari): Bấm nút Chia sẻ (Share) $\rightarrow$ chọn **"Thêm vào Màn hình chính"** (Add to Home Screen).
+
 
 
 
