@@ -18,6 +18,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
 - Hướng dẫn: `docs/PWA.md`; kế hoạch UI: `docs/plans/2026-10-24-student-ui-completion.md`; kế hoạch AI Tutor: `docs/plans/2026-10-24-pwa-ai-tutor.md`.
 - Preview đã kiểm tra: `http://127.0.0.1:8769/hoc/`, teacher `/hoc/teacher.html`; DB riêng `scratch/pwa-preview/student.sqlite3`. ZIP PWA mới: `scratch/student-pwa.zip`.
+- Kế hoạch chuyển đổi mới: Chuyển đổi sang kiến trúc Firebase Serverless (Zero-Server) để vận hành 100% không cần máy chủ riêng, chi tiết tại [docs/plans/2026-10-24-firebase-serverless-migration.md](docs/plans/2026-10-24-firebase-serverless-migration.md).
 - Bước tiếp theo để cài trên điện thoại thật: Bật GitHub Pages trên repository `aihoctap` (hoặc kết nối triển khai Render/Vercel) để có URL HTTPS hợp lệ cho trình duyệt điện thoại (Chrome/Safari) kích hoạt tính năng cài đặt PWA và Service Worker.
 
 ## Hồ sơ cần đọc để tiếp nối
@@ -226,6 +227,20 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
   - Khi mở đường dẫn HTTPS trên điện thoại:
     - Android (Chrome): Xuất hiện thanh thông báo hoặc icon "Cài đặt ứng dụng" trên thanh địa chỉ.
     - iPhone (Safari): Bấm nút Chia sẻ (Share) $\rightarrow$ chọn **"Thêm vào Màn hình chính"** (Add to Home Screen).
+
+### 24/10/2026 — Antigravity — Kế hoạch Chuyển đổi sang Firebase Serverless (Zero-Server Architecture)
+
+**Kế hoạch trước khi thực hiện:**
+- Bối cảnh: Người dùng không có máy chủ riêng (VPS/Cloud trả phí), cần giải pháp vận hành hoàn toàn không phụ thuộc server vật lý (Zero-Server) để học sinh cài và dùng PWA trên điện thoại thật 24/7.
+- Tài liệu kế hoạch chi tiết đã tạo: [docs/plans/2026-10-24-firebase-serverless-migration.md](docs/plans/2026-10-24-firebase-serverless-migration.md).
+- Kiến trúc đề xuất:
+  1. Frontend PWA: Host miễn phí trên GitHub Pages / Firebase Hosting (có HTTPS mặc định cho điện thoại).
+  2. Cơ sở dữ liệu: Dùng Firebase Realtime Database (đã có sẵn quy tắc bảo mật [database.rules.json](database.rules.json)), tách biệt `/packages/public` (học sinh) và `/packages_private` (giáo viên).
+  3. Cơ chế thích ứng: Xây dựng `firebase_adapter.js` theo mô hình Dual Storage Driver (chạy SQLite khi local dev và Firebase khi chạy serverless).
+  4. Bảo vệ Gemini Key: Sử dụng Cloudflare Worker proxy miễn phí để che giấu API key khi gọi Gia sư AI Socrates.
+  5. Bảo toàn 100% chế độ Offline: Tiếp tục dùng IndexedDB trên máy học sinh làm tầng đệm ngoại tuyến.
+- Bước tiếp theo: Gửi hồ sơ kế hoạch cho Claude 3.5 Sonnet thẩm định độc lập theo quy chuẩn `sonnet-file-audit-loop` trước khi triển khai code.
+
 
 
 
