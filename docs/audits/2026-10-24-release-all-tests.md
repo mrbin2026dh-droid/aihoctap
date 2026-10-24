@@ -22,7 +22,7 @@ CodeGraph và Context7 đã được sử dụng. Các agent độc lập đã t
 
 Alibaba đạt nhưng bộ tự chạy F12 của nó không tìm thấy frontend/index.html nên bỏ qua browser. Bằng chứng trình duyệt đến từ Playwright riêng. Kiểm tra responsive, điều khiển bàn phím/Escape và console nằm trong suite; không tuyên bố chứng nhận WCAG toàn ứng dụng hoặc Core Web Vitals production. Chỉ số lab LCP/CLS được ghi riêng; chưa có INP thực địa.
 
-## Kết quả cuối
+## Kiểm chứng trước bổ sung cấu hình hosting
 
 - Toàn-suite: **443 passed, 9 warnings, 226.74s**; không failed/skipped/xfail. Log cục bộ: `scratch/release-final.log`. Đối chiếu từng node ID trong danh sách ban đầu: **20/20 PASS**.
 - JavaScript: **19/19 PASS**, lệnh `node --test tests/backend_routing.test.cjs tests/student_progress.test.cjs tests/tutor_frontend.test.cjs`.
@@ -36,3 +36,15 @@ Alibaba đạt nhưng bộ tự chạy F12 của nó không tìm thấy frontend
 Main đã được đẩy tại `b0bef4d`; SHA đọc lại từ GitHub trùng bản đã kiểm thử. Render sau đó trả health healthy và nội dung app.js khớp bản này.
 
 GitHub Pages thực tế lấy từ nhánh `gh-pages`, không phải main. Bản Pages cần cấu hình backend Render riêng và phiên bản URL script mới, giữ nguyên custom backend của người dùng. Hook static preview tái hiện lỗi 404 API, rồi lỗi CORS trên cổng localhost ngẫu nhiên. Backend được bổ sung đúng origin localhost/127.0.0.1 với cổng tùy chọn, không thêm domain Internet khác. Test trước sửa: 2 FAIL, 4 PASS; sau sửa cùng hồi quy danh tính/phân quyền/backend: **20 PASS**, gồm 6 ca CORS mới (GET/preflight và domain giả mạo). Full-suite 443 ở trên được đo trước bổ sung CORS; không gọi đó là một lần full-suite 449.
+
+## Xác nhận bản đang phục vụ
+
+- Main chứa mã sửa tại `9dc9ddb` (bản tổng hợp `b0bef4d` + CORS). Pages tại `560d75f`; đã đọc SHA thật của hai ref từ GitHub, trùng local. Không force push.
+- Render trả health `healthy`; app.js trả về giống nội dung main sau chuẩn hóa xuống dòng. Origin localhost nhận đúng header CORS sau triển khai; không dùng việc thiếu schema analytics trong OpenAPI để suy ra phiên bản (endpoint này không khai báo response_model).
+- URL học sinh: https://mrbin2026dh-droid.github.io/aisgk/ . HTML đã chứa backend-config.js và app.js phiên bản mới; app.js công khai khớp bản main được kiểm thử. Hai bản app.js trên Pages là cùng mã nguồn ứng dụng; chỉ bản hosting thêm cấu hình Render và URL chống cache cũ.
+- Kiểm tra Chromium trực tiếp trên URL trên: không đăng nhập, chỉ cho GET/HEAD/OPTIONS; curriculum/lesson HTTP 200 từ Render, reload vẫn hiện cổng đăng nhập, không tạo phiên giả, **0 lỗi console/pageerror**, không tràn ở 1920x1080, 1366x768, 375x667. Log: `scratch/live-published-smoke.log`. Không gửi bài nộp, dữ liệu học sinh hay gọi Gemini production.
+- Hook Pages lần cuối: **12/12 PASS** (DOM, console, responsive, F5). Ba unit test cấu hình hosting PASS, lưu tại `gh-pages:deployment-tests/static_backend.test.cjs`. Lỗi 404/CORS trước đó được sửa và chạy lại, không bỏ qua hook.
+
+## Gate cuối trên main đã phát hành
+
+**449 passed, 0 failed, 9 warnings trong 146.25s**, gồm sáu ca CORS bổ sung. Không skipped/xfail. Log `scratch/main-published.log`; 20 node ID ban đầu đều PASS. Chạy lại JavaScript trên main: **19/19 PASS** (`scratch/main-published-node.log`); thêm **3/3 PASS** của cấu hình trên Pages. Gate cuối không sửa dữ liệu vận hành và không gọi AI trả phí. Phần cảnh báo còn lại là deprecation của thư viện, không làm test thất bại.
