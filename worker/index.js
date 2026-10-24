@@ -731,6 +731,63 @@ export default {
       });
     }
 
+    // 0a. PWA Catalog endpoint
+    if (url.pathname === '/api/pwa/catalog' && request.method === 'GET') {
+      if (env.FIREBASE_DATABASE_URL) {
+        try {
+          const res = await fetch(`${env.FIREBASE_DATABASE_URL}/catalog.json`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.courses) {
+              const etag = `"${data.revision || 'v1'}"`;
+              if (request.headers.get('if-none-match') === etag) {
+                return new Response(null, { status: 304, headers: { ...corsHeaders, ETag: etag } });
+              }
+              return new Response(JSON.stringify(data), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json', ETag: etag, 'Cache-Control': 'no-cache' }
+              });
+            }
+          }
+        } catch (e) {
+          console.error('[RTDB_CATALOG_ERROR]', e);
+        }
+      }
+      return new Response(JSON.stringify({ detail: 'Chưa tải được danh mục.' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 0b. PWA Lesson endpoint: /api/pwa/lessons/{course_id}/{lesson_id}/{version}
+    if (url.pathname.startsWith('/api/pwa/lessons/') && request.method === 'GET') {
+      const parts = url.pathname.slice('/api/pwa/lessons/'.length).split('/');
+      if (parts.length >= 2) {
+        const [courseId, lessonId] = parts;
+        if (IdValidationContract.isValidId(courseId) && IdValidationContract.isValidId(lessonId)) {
+          if (env.FIREBASE_DATABASE_URL) {
+            try {
+              const pkgKey = encodeURIComponent(`${courseId}:${lessonId}`);
+              const res = await fetch(`${env.FIREBASE_DATABASE_URL}/packages/${pkgKey}.json`);
+              if (res.ok) {
+                const lesson = await res.json();
+                if (lesson) {
+                  return new Response(JSON.stringify(lesson), {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' }
+                  });
+                }
+              }
+            } catch (e) {
+              console.error('[RTDB_LESSON_ERROR]', e);
+            }
+          }
+        }
+      }
+      return new Response(JSON.stringify({ detail: 'Không tìm thấy bài học.' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // G4: Fail-closed when env.GATE_DO is missing (NEVER silently mock in production)
     if (!DurableObjectContract.isConfigured(env)) {
       return new Response(JSON.stringify({
@@ -746,6 +803,112 @@ export default {
 
     // G2, H2, H3: Load Service Account signing keys
     const signingKeys = await loadOrDeriveServiceAccountKeys(env);
+
+    // 0c. Student LAN login: /api/student/lan-login
+    if (url.pathname === '/api/student/lan-login' && request.method === 'POST') {
+      const { student_code } = await request.json().catch(() => ({}));
+      const code = String(student_code || '').trim().toUpperCase();
+      if (!code || !/^\d{6}$/.test(code)) {
+        return new Response(JSON.stringify({ detail: 'Mã học sinh phải là dãy số gồm đúng 6 chữ số!' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const studentId = `std_${code}`;
+      const token = await createFirebaseCustomToken(
+        studentId,
+        {
+          role: 'student',
+          grade: 9,
+          class_code: '9A',
+          name: `Học sinh ${code}`
+        },
+        signingKeys.privateKey,
+        env.FIREBASE_CLIENT_EMAIL,
+        env.FIREBASE_PRIVATE_KEY_ID
+      );
+      return new Response(JSON.stringify({
+        success: true,
+        token,
+        student: {
+          uid: studentId,
+          student_code: code,
+          student_name: `Học sinh ${code}`,
+          class_code: '9A',
+          grade: 9
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 0d. Student Identity: /api/pwa/me
+    if (url.pathname === '/api/pwa/me' && request.method === 'GET') {
+      const authHeader = request.headers.get('Authorization') || '';
+      if (!authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const token = authHeader.slice(7).trim();
+      const authResult = await verifyJwtToken(token, signingKeys?.publicKey);
+      if (!authResult.valid) {
+        return new Response(JSON.stringify({ detail: authResult.error }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const claims = authResult.payload.claims || {};
+      return new Response(JSON.stringify({
+        uid: authResult.payload.uid,
+        student_name: claims.name || `Học sinh ${authResult.payload.uid}`,
+        grade: claims.grade || 9,
+        class_code: claims.class_code || '9A'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 0e. Student Progress: /api/pwa/progress
+    if (url.pathname === '/api/pwa/progress' && request.method === 'GET') {
+      const authHeader = request.headers.get('Authorization') || '';
+      if (!authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const token = authHeader.slice(7).trim();
+      const authResult = await verifyJwtToken(token, signingKeys?.publicKey);
+      if (!authResult.valid) {
+        return new Response(JSON.stringify({ detail: authResult.error }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      let attempts = [];
+      if (env.FIREBASE_DATABASE_URL) {
+        const safeUid = encodeURIComponent(authResult.payload.uid);
+        const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+        try {
+          const res = await fetch(`${env.FIREBASE_DATABASE_URL}/attempts/${safeUid}.json`, {
+            headers: getRtdbHeaders(rtdbAccessToken)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data === 'object') {
+              attempts = Object.values(data);
+            }
+          }
+        } catch (e) {
+          console.error('[RTDB_PROGRESS_ERROR]', e);
+        }
+      }
+      return new Response(JSON.stringify({ attempts }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // 1. Login endpoint (F1, F3, G2, H1, H3, H4, I1)
     if (url.pathname === '/api/login' && request.method === 'POST') {
@@ -974,8 +1137,8 @@ export default {
       });
     }
 
-    // 3. Submit endpoint (F4, G2, G3, H1, H4, I1, I4)
-    if (url.pathname === '/api/submit' && request.method === 'POST') {
+    // 3. Submit endpoint (F4, G2, G3, H1, H4, I1, I4, PWA attempts)
+    if ((url.pathname === '/api/submit' || url.pathname === '/api/pwa/attempts') && request.method === 'POST') {
       const authHeader = request.headers.get('Authorization') || '';
       if (!authHeader.startsWith('Bearer ')) {
         return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
@@ -1069,13 +1232,14 @@ export default {
         });
       }
 
-      // Grade answers
+      // Grade answers with both q.id and positional fallback q1..qn
       const questions = privatePackage.questions || [];
       let correctCount = 0;
       const total = questions.length;
 
-      for (const q of questions) {
-        const studentAns = answers?.[q.id];
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        const studentAns = answers?.[q.id] || answers?.[`q${i + 1}`];
         if (studentAns && studentAns === q.correct_answer) {
           correctCount += 1;
         }
@@ -1152,8 +1316,8 @@ export default {
       });
     }
 
-    // 4. AI Tutor proxy endpoint (F4, G3, H5, I3, I4)
-    if (url.pathname === '/api/tutor' && request.method === 'POST') {
+    // 4. AI Tutor proxy endpoint (F4, G3, H5, I3, I4, PWA tutor)
+    if ((url.pathname === '/api/tutor' || url.pathname === '/api/pwa/tutor') && request.method === 'POST') {
       const authHeader = request.headers.get('Authorization') || '';
       if (!authHeader.startsWith('Bearer ')) {
         return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
@@ -1205,7 +1369,7 @@ export default {
       // H5: Real Gemini API proxy using header x-goog-api-key (NEVER in URL query)
       if (env.GEMINI_API_KEY) {
         try {
-          const modelName = env.GEMINI_MODEL || 'gemini-2.5-flash';
+          const modelName = env.GEMINI_MODEL || 'gemini-3.5-flash';
           const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
           const geminiRes = await fetch(geminiUrl, {
             method: 'POST',

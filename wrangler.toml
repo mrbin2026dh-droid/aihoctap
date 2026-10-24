@@ -13,4 +13,4 @@ tag = "v1"
 new_sqlite_classes = ["GateDurableObject"]
 
 [vars]
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash"
