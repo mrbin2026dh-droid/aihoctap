@@ -30,3 +30,10 @@ data/students_registry.json
 data/exams/submissions/
 frontend/data/exams/submissions/
 .bridge/
+
+# M4: Bao ve thong tin ma PIN va danh sach phan bo hoc sinh
+*students_credentials*.csv
+*students_roster*.csv
+*students*.csv
+*students*.json
+.wrangler/

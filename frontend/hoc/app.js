@@ -46,6 +46,31 @@ function updateTutorStatus() {
   if (submit) submit.disabled = !isOnline || tutorPending;
 }
 
+async function refreshTutorQuota() {
+  const badge = document.getElementById('tutor-quota-badge');
+  if (!badge) return;
+  if (!session || !navigator.onLine) {
+    badge.textContent = '';
+    return;
+  }
+  try {
+    /** @type {{ used: number, limit: number, remaining: number, locked: boolean, exam_mode: boolean }} */
+    const quota = await api('/pwa/ai-quota', { token: session.token });
+    if (quota.exam_mode) {
+      badge.textContent = 'Đang trong giờ thi: tắt gia sư';
+      badge.className = 'tutor-quota-badge is-locked';
+    } else if (quota.locked) {
+      badge.textContent = 'Gia sư đang tạm khóa';
+      badge.className = 'tutor-quota-badge is-locked';
+    } else {
+      badge.textContent = `Còn ${quota.remaining} lượt hôm nay`;
+      badge.className = 'tutor-quota-badge';
+    }
+  } catch {
+    badge.textContent = '';
+  }
+}
+
 /** @param {string|null} [questionId] */
 function openTutor(questionId = null) {
   if (!active) { notify('Hãy mở bài học trước.', true); return; }
@@ -66,6 +91,7 @@ function openTutor(questionId = null) {
     msgs.append(greeting);
   }
   updateTutorStatus();
+  refreshTutorQuota().catch(() => {});
   dialog.showModal();
   /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
@@ -95,7 +121,7 @@ function identityUI() {
 function show(name) {
   viewGeneration++;
   currentView = name;
-  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress']) node(`${view}-view`).hidden = view !== name;
+  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'materials']) node(`${view}-view`).hidden = view !== name;
   const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name;
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
@@ -447,8 +473,10 @@ form('login-form').addEventListener('submit', async event => {
     const guestLesson = !session ? active : null;
     const guestAnswers = guestLesson ? Object.fromEntries(new FormData(form('question-form')).entries()) : null;
     await saveDraft();
-    const code = String(new FormData(form('login-form')).get('code') || '').trim();
-    const response = await api('/student/lan-login', {method:'POST', body:{student_code:code}});
+    const loginData = new FormData(form('login-form'));
+    const code = String(loginData.get('code') || '').trim();
+    const pin = String(loginData.get('pin') || '').trim();
+    const response = await api('/login', {method:'POST', body:{student_id:code, pin}});
     const identity = await api('/pwa/me', {token:response.token});
     const next = {token:response.token, identity};
     await db.put('meta', 'session', next); session = next;
@@ -482,6 +510,110 @@ on('download', async () => {
   notify('Đã tải đủ bài. Em có thể mở lại khi mất mạng.');
   if (navigator.storage?.persist) await navigator.storage.persist();
 });
+async function materials() {
+  show('materials');
+  const generation = viewGeneration;
+  const select = /** @type {HTMLSelectElement} */ (node('materials-course-select'));
+  const list = node('materials-list');
+
+  if (!select.options.length && catalog?.courses?.length) {
+    for (const course of catalog.courses) {
+      const opt = el('option', `${course.title} · Lớp ${course.grade}`);
+      opt.value = course.id;
+      select.append(opt);
+    }
+    select.addEventListener('change', () => {
+      materials().catch(report);
+    });
+  }
+
+  const courseId = select.value || catalog?.courses?.[0]?.id;
+  if (!courseId) {
+    list.replaceChildren();
+    empty(list, 'Chưa có môn học', 'Hãy chọn môn học để xem tài liệu.');
+    return;
+  }
+
+  list.replaceChildren();
+  const loading = el('div', '', 'lesson-skeleton');
+  list.append(loading);
+
+  try {
+    const data = await api(`/pwa/materials/${encodeURIComponent(courseId)}`);
+    if (generation !== viewGeneration) return;
+    list.replaceChildren();
+
+    const items = data.materials || [];
+    if (!items.length) {
+      empty(list, 'Chưa có tài liệu', 'Giáo viên chưa đăng tải tài liệu bổ trợ cho môn học này.');
+      return;
+    }
+
+    const cache = 'caches' in window ? await caches.open('aisgk-materials-v1') : null;
+
+    for (const mat of items) {
+      const card = el('article', '', 'download-card');
+      const desc = el('div', '', 'lesson-description');
+      desc.append(
+        el('h3', mat.title),
+        el('p', mat.description || 'Tài liệu tóm tắt bài học', 'meta')
+      );
+
+      const fileUrl = `/api/pwa/materials/${encodeURIComponent(mat.course_id)}/${encodeURIComponent(mat.id)}/file`;
+      const isCached = cache ? Boolean(await cache.match(fileUrl)) : false;
+
+      const actions = el('div', '', 'actions');
+      const statusBadge = el('span', isCached ? 'Đã lưu offline' : 'Chưa tải', 'offline-label');
+      statusBadge.style.fontSize = '13px';
+      statusBadge.style.color = isCached ? 'var(--blue)' : 'var(--muted)';
+      actions.append(statusBadge);
+
+      if (isCached) {
+        actions.append(button('Mở xem', async () => {
+          if (!cache) return;
+          const res = await cache.match(fileUrl);
+          if (res) {
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+          }
+        }));
+        actions.append(button('Xóa offline', async () => {
+          if (!cache) return;
+          await cache.delete(fileUrl);
+          await materials();
+          notify('Đã xóa bản offline của tài liệu.');
+        }, 'danger'));
+      } else {
+        actions.append(button('Tải về học offline', async () => {
+          if (!navigator.onLine) {
+            notify('Cần có kết nối mạng để tải tài liệu.', true);
+            return;
+          }
+          try {
+            notify('Đang tải tài liệu PDF...');
+            const fetchHeaders = session?.token ? { Authorization: `Bearer ${session.token}` } : {};
+            const res = await fetch(fileUrl, { headers: fetchHeaders });
+            if (!res.ok) throw new Error(`Tải lỗi HTTP ${res.status}`);
+            if (cache) await cache.put(fileUrl, res.clone());
+            await materials();
+            notify('Đã tải tài liệu về máy thành công.');
+          } catch (err) {
+            report(err instanceof Error ? err : new Error('Không thể tải tài liệu.'));
+          }
+        }, 'primary'));
+      }
+
+      card.append(desc, actions);
+      list.append(card);
+    }
+  } catch {
+    if (generation !== viewGeneration) return;
+    list.replaceChildren();
+    empty(list, 'Không tải được tài liệu', 'Em hãy kiểm tra lại kết nối mạng hoặc thử lại sau nhé.');
+  }
+}
+
 on('sync', async () => {await sync(); await progress();});
 for (const tab of document.querySelectorAll('button[data-tab]')) tab.addEventListener('click', async () => {
   viewGeneration++;
@@ -490,6 +622,7 @@ for (const tab of document.querySelectorAll('button[data-tab]')) tab.addEventLis
     if (name === 'downloads') await downloads();
     else if (name === 'progress') await progress();
     else if (name === 'practice') {show('practice'); renderPractice();}
+    else if (name === 'materials') await materials();
     else {show('catalog'); renderCatalog();}
   } catch (error) {report(error instanceof Error ? error : new Error('Chưa chuyển được trang.'));}
 });
@@ -575,11 +708,24 @@ form('tutor-form').addEventListener('submit', async event => {
     msgs.append(botMsg);
     tutorHistory.push({ role: 'user', content: text });
     tutorHistory.push({ role: 'model', content: res.reply || '' });
-  } catch {
+    refreshTutorQuota().catch(() => {});
+  } catch (err) {
     loadingMsg.remove();
     const errMsg = el('div', '', 'tutor-msg tutor-bot');
-    errMsg.append(el('p', 'Chưa kết nối được với Gia sư AI. Em hãy kiểm tra lại mạng hoặc thử lại sau nhé.'));
+    let messageText = 'Chưa kết nối được với Gia sư AI. Em hãy kiểm tra lại mạng hoặc thử lại sau nhé.';
+    const errCode = (err && typeof err === 'object' && 'code' in err) ? /** @type {any} */ (err).code : null;
+    if (errCode === 'AI_LIMIT_REACHED') {
+      messageText = 'Em đã dùng hết lượt hỏi gia sư hôm nay. Hãy tự ôn tập và quay lại vào ngày mai nhé!';
+    } else if (errCode === 'AI_LOCKED') {
+      messageText = 'Giáo viên đã tạm khóa gia sư với em. Hãy hỏi thầy/cô nhé.';
+    } else if (errCode === 'AI_DISABLED_IN_EXAM') {
+      messageText = 'Đang trong giờ thi, gia sư tạm tắt.';
+    } else if (err && typeof err === 'object' && ('status' in err && err.status === 429)) {
+      messageText = 'Gia sư đang nghỉ ngơi một chút, em hãy tự suy nghĩ thêm hoặc quay lại sau nhé!';
+    }
+    errMsg.append(el('p', messageText));
     msgs.append(errMsg);
+    refreshTutorQuota().catch(() => {});
   } finally {
     tutorPending = false;
     updateTutorStatus();

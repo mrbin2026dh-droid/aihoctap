@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 import pymupdf
 
-PDF_PATH = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+PDF_PATH = r"sgk-sample.pdf"
 LOG_DIR = Path("tools/logs")
 LOG_FILE = LOG_DIR / "benchmark_pymupdf_77_pages.log"
 

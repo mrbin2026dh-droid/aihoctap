@@ -13,7 +13,7 @@
    - Khi **Có mạng (Online)**: Nút AI kích hoạt tức thì. Học sinh có thể bấm để nhận hướng dẫn sư phạm Socrates.
 
 2. **Nguyên tắc Sư phạm Bất biến (Zero-Direct-Answer & Strict Grounding)**:
-   - Sử dụng lại `chat_with_tutor()` từ [backend/agent.py](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/agent.py).
+   - Sử dụng lại `chat_with_tutor()` từ [backend/agent.py](file:///~/Desktop/AI%20AGENT%20SGK/backend/agent.py).
    - Tuyệt đối KHÔNG mớm đáp án trắc nghiệm hay giải hộ bài tập.
    - Bám sát 100% nội dung bài học SGK từ bảng `packages` (SQLite).
    - Vành đai chống rò rỉ đáp án (`LEAK_PATTERNS`) và cơ chế Fallback Socratic cục bộ khi không có Gemini API key hoặc lỗi mạng.

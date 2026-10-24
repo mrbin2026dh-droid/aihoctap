@@ -6,9 +6,9 @@ Chúng tôi đã khắc phục toàn bộ các vấn đề P0 và P1 bạn đã 
 Các tệp trên đĩa cứng cần bạn đọc và đối chiếu trực tiếp:
 1. Báo cáo giải trình 7 điều kiện (Vòng 6):
    - Đường dẫn tương đối: `.kilo/plans/1791967657542-sonet-tkinter-remediation-resolution-v6.md`
-   - Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v6.md`
+   - Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v6.md`
 2. Kế hoạch kiến trúc V2.2:
-   - `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
+   - `.\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 3. Mã nguồn và log thực nghiệm:
    - Timeout 30000ms: `backend/extraction_engine.py` (L313-345) & `backend/agent.py` (L350-385)
    - Test mock timeout: `tests/test_extraction_engine.py` (L315-370)

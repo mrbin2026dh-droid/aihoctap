@@ -1,9 +1,9 @@
 // @ts-check
-const remote = location.hostname === 'mrbin2026dh-droid.github.io';
-export const API_BASE = remote ? 'https://aisgk.onrender.com/api' : `${location.origin}/api`;
+const isLocalhostBackend = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port === '8000';
+export const API_BASE = isLocalhostBackend ? `${location.origin}/api` : 'https://aihoctap-gate.mrbin2026dh.workers.dev/api';
 export class ApiError extends Error {
-  /** @param {number} status @param {string} message */
-  constructor(status, message) { super(message); this.status = status; }
+  /** @param {number} status @param {string} message @param {string} [code] */
+  constructor(status, message, code) { super(message); this.status = status; this.code = code; }
 }
 /** @template T @param {string} path @param {{method?:string,body?:object,token?:string,timeout?:number}} [options] @returns {Promise<T>} */
 export async function api(path, options = {}) {
@@ -17,7 +17,8 @@ export async function api(path, options = {}) {
     const data = await response.json().catch(() => ({detail:'Phản hồi máy chủ không hợp lệ.'}));
     if (!response.ok) {
       const detail = typeof data.detail === 'string' ? data.detail : 'Dữ liệu chưa hợp lệ. Kiểm tra lại nội dung.';
-      throw new ApiError(response.status, detail);
+      const code = typeof data.error === 'string' ? data.error : undefined;
+      throw new ApiError(response.status, detail, code);
     }
     return data;
   } catch (error) {

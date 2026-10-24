@@ -1,53 +1,38 @@
-# Kế hoạch Chuyển đổi sang Firebase Serverless (Zero-Server Architecture)
+# Kế hoạch Firebase Serverless V3 (D1–D6)
+24/10/2026 · Antigravity · Trọng tài: Claude · 0đ, 0 lộ đáp án, 0 cần thẻ, bảo toàn Offline.
 
-**Ngày lập**: 24/10/2026  
-**Người lập**: Antigravity Agent  
-**Mục tiêu**: Vận hành PWA học sinh và trang giáo viên 100% không cần máy chủ riêng (Zero-Server), lưu trữ và đồng bộ đám mây qua Firebase Realtime Database / Firestore, duy trì 100% tính năng học offline khi mất mạng.
+### 1. D1: Schema & Rules (Sửa C1)
+- `/courses`, `/packages/.../public`: `.read: true`, `.write: admin`
+- `/packages_private`: `.read: false`, `.write: admin`
+- `/attempts/{uid}/{id}`: `.read: "auth!=null && (auth.uid===$uid || auth.token.admin===true)"`, `.write: "auth!=null && (auth.token.admin===true || (auth.uid===$uid && !data.exists() && !newData.child('score').exists() && !newData.child('ack').exists()))"`
+- Chặn sửa/xóa bài (`!data.exists()`), chặn ghi `score`/`ack` riêng.
+- **Kiểm chứng**: Rules test: Ghi `score` lẻ -> 403; sửa bài cũ -> 403; đọc private -> 403; admin ghi 200.
 
----
+### 2. D2: Lịch sử Git, Đề thi & Pages (Sửa C3)
+- **Làm sạch Git**: git-filter-repo xóa 17 JSON legacy khỏi lịch sử (gồm commit 7f670c9); force push.
+- **Thay đề thi**: Thay mới 4 đề trong `frontend/data/exams/` (đã lộ trên repo public).
+- **Quét sạch**: Script quét đệ quy mọi trường: `dap_an_dung`, `correct_answer`, `dap_an`, `answer`, `giai_thich`, `explanation`, `solution`.
+- **Deploy Pages**: GitHub Actions chỉ deploy artifact `frontend/hoc/` lên Pages (loại trừ `data/`).
+- **Kiểm chứng**: `git log -S "dap_an_dung"` = 0; Pages URL `data/` trả 404.
 
-## 1. Kiến trúc Đề xuất (Zero-Server Architecture)
+### 3. D3: Xác thực Học sinh & Chống Mạo danh (Sửa C6)
+- Bỏ Anonymous Auth. Worker `/api/login` xác thực Mã HS + PIN, cấp Custom Token `uid = studentId`.
+- Chống mạo danh & reset storage vượt rate-limit. Giáo viên dùng Email/Google claim `{admin: true}`.
+- **Kiểm chứng**: Mã sai -> 401; cấp đúng `uid`; xóa storage login lại vẫn giữ đúng `uid`.
 
-```
-[ Điện thoại Học sinh (PWA) ] ── (IndexedDB Offline / Cache)
-             │
-             ├── (Đọc bài / Đồng bộ bài nộp)
-             ▼
-[ Google Firebase Realtime Database ] ◄── (Xuất bản bài / Chấm điểm) ── [ Trang Giáo viên ]
-             ▲
-             └── (Ủy quyền bảo mật: database.rules.json)
-```
+### 4. D4: Chấm Bài & Chống Dò Đáp án (Sửa C2)
+- `/api/submit` idempotent theo `attempt_id` (trả kết quả cũ nếu trùng, an toàn retry).
+- Giới hạn N lần nộp (N=2 luyện tập, N=1 thi). Không trả cờ đúng/sai từng câu trước khi chốt để chống vét cạn.
+- **Kiểm chứng**: Gửi trùng id tính 1 lần; vượt N lần -> 403; payload không lộ đúng/sai từng câu.
 
-1. **Hosting Tĩnh Miễn phí 100%**:
-   - Host toàn bộ thư mục `frontend/hoc/` trên **GitHub Pages** hoặc **Firebase Hosting** (0 chi phí duy trì, hoạt động 24/7, có sẵn HTTPS hợp lệ cho PWA).
-2. **Kho Dữ liệu Đám mây (Firebase RTDB)**:
-   - `/courses/{course_id}`: Danh mục môn và bài học (`public`).
-   - `/packages/{course_id}/{lesson_id}/{version}/public`: Bài học công khai (lý thuyết Markdown, câu hỏi, lựa chọn, gợi ý; KHÔNG có đáp án).
-   - `/packages_private/{course_id}/{lesson_id}/{version}`: Đáp án đúng và barem chấm (chỉ tài khoản giáo viên mới có quyền đọc).
-   - `/attempts/{uid}/{attempt_id}`: Bài làm và điểm số học sinh nộp (đồng bộ thời gian thực).
-3. **Bộ điều hợp Kép (Dual Storage Driver)**:
-   - Giữ nguyên giao thức API hiện có (`api.js`), tạo adapter `frontend/hoc/firebase_adapter.js`.
-   - Nếu chạy có server local: dùng FastAPI + SQLite.
-   - Nếu chạy không server (GitHub Pages/Hosting): PWA tự động kích hoạt `firebase_adapter.js` kết nối trực tiếp Firebase SDK.
+### 5. D5: Worker Security, Rate-Limit & Gemini (Sửa C2/C4)
+- GCP SA quyền tối thiểu (`roles/firebasedatabase.admin`) lưu Worker Secret.
+- Xác minh JWT Google (iss, aud, exp, sub) qua Web Crypto.
+- Rate Limiting binding (5 req/phút/UID) + trần 1000 req/ngày cho Gemini.
+- Gemini proxy không gửi PII, tuân thủ chính sách Gemini Free.
+- **Kiểm chứng**: Token sai -> 401; >5 req/phút -> 429; SA không vào repo.
 
----
-
-## 2. Giải pháp An toàn & Sư phạm
-
-1. **Bảo vệ Đáp án (Zero-Answer-Leak Law)**:
-   - Áp dụng triệt để [database.rules.json](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/database.rules.json): Học sinh chỉ đọc được nhánh `/public`, nhánh `/packages_private` bị khóa cứng (`auth.token.admin === true`).
-   - Chấm điểm trắc nghiệm: Thực hiện qua cơ chế so khớp hash SHA-256 client-side (với salt per-question) hoặc Cloud Function siêu nhẹ để học sinh không đọc được đáp án gốc.
-2. **Bảo vệ Gemini API Key cho Gia sư Socrates**:
-   - Không hardcode API key vào JavaScript public trên GitHub Pages.
-   - Sử dụng 1 Cloudflare Worker (hoặc Vercel Edge Serverless Function) miễn phí làm proxy bảo mật che giấu `GEMINI_API_KEY`, kiểm soát Rate-Limiting theo IP/UID.
-3. **Bảo toàn Chế độ Offline**:
-   - Mọi bài học khi tải từ Firebase sẽ được ghi thẳng vào IndexedDB (`aisgk-student-pwa`). Mất mạng hoàn toàn ứng dụng vẫn mở học và làm bài tập bình thường.
-
----
-
-## 3. Các bước triển khai tuần tự (TDD)
-
-* **Bước 1**: Tạo cấu hình Firebase và kiểm thử kết nối (`tests/test_firebase_pwa_adapter.py`).
-* **Bước 2**: Xây dựng `firebase_adapter.js` tương thích 100% hợp đồng `contracts.d.ts`.
-* **Bước 3**: Thiết lập Cloudflare Worker proxy cho Gia sư Socrates AI.
-* **Bước 4**: Kiểm thử Playwright 2 Browser Contexts xác minh phân quyền `database.rules.json` (chặn học sinh đọc đáp án, đồng bộ thời gian thực đến giáo viên).
+### 6. D6: Bundle SDK & Kiểm thử Offline-First (Sửa C5)
+- `esbuild` bundle Firebase SDK lite vào `vendor/firebase.js`; thêm `sw.js` + stamp hash.
+- Test Playwright offline SAU KHI login + nạp cache: F5 ngắt mạng chạy mượt từ SW, lưu outbox, có mạng tự sync.
+- **Kiểm chứng**: Playwright offline F5 0 error console, sync 200 khi online.

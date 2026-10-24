@@ -51,7 +51,7 @@ flowchart TD
     - Đặt mặc định: `source = "generated"`, `grounding_verified = false`.
 
 ### Tầng 3: Kiểm chứng Nguồn Xác định (Deterministic Grounding Gatekeeper)
-- Gọi module có sẵn [`backend/grounding_verifier.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/grounding_verifier.py):
+- Gọi module có sẵn [`backend/grounding_verifier.py`](file:///~/Desktop/AI%20AGENT%20SGK/backend/grounding_verifier.py):
   - Chuẩn hóa Unicode NFC và làm sạch khoảng trắng.
   - So khớp `cau_hoi` và 4 phương án lựa chọn với trang PDF nguồn theo thuật toán SequenceMatcher với ngưỡng $\ge 80\%$.
   - Nếu khớp $\ge 80\% \to$ Tự động bật `grounding_verified = true`.

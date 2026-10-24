@@ -6,13 +6,21 @@
       ".read": false,
       ".write": false
     },
+    "students_auth": {
+      ".read": false,
+      ".write": false
+    },
     "students": {
       "$classCode": {
         ".read": "auth != null && auth.token.admin === true",
         "$studentId": {
           ".read": "auth != null && (auth.uid === $studentId || auth.token.admin === true)",
           ".write": "auth != null && (auth.token.admin === true || (auth.uid === $studentId && (!data.child('is_blocked').exists() || data.child('is_blocked').val() === false) && (!data.child('is_blocked').exists() ? !newData.child('is_blocked').exists() : newData.child('is_blocked').val() === data.child('is_blocked').val()) && (!data.child('exams').exists() ? !newData.child('exams').exists() : newData.child('exams').val() === data.child('exams').val())))",
-          ".indexOn": ["is_blocked", "email", "student_code"],
+          ".indexOn": [
+            "is_blocked",
+            "email",
+            "student_code"
+          ],
           "presence": {
             ".read": "auth != null",
             ".write": "auth != null && auth.uid === $studentId"
@@ -23,7 +31,10 @@
     "exams": {
       ".read": true,
       ".write": "auth != null && auth.token.admin === true",
-      ".indexOn": ["grade", "status"]
+      ".indexOn": [
+        "grade",
+        "status"
+      ]
     },
     "exam_answers": {
       ".read": "auth != null && auth.token.admin === true",
@@ -34,7 +45,11 @@
         "$studentId": {
           ".read": "auth != null && (auth.uid === $studentId || auth.token.admin === true)",
           ".write": "auth != null && (auth.token.admin === true || (auth.uid === $studentId && !newData.hasChildren(['score']) && !newData.hasChildren(['evaluation'])))",
-          ".indexOn": ["student_id", "class_code", "score"]
+          ".indexOn": [
+            "student_id",
+            "class_code",
+            "score"
+          ]
         }
       }
     },
@@ -47,6 +62,28 @@
     "documents_meta": {
       ".read": "auth != null",
       ".write": "auth != null && auth.token.admin === true"
+    },
+    "courses": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "packages": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "packages_private": {
+      ".read": false,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "attempts": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+        ".write": "auth != null && auth.token.admin === true",
+        "$attemptId": {
+          ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+          ".write": "auth != null && auth.token.admin === true"
+        }
+      }
     }
   }
 }

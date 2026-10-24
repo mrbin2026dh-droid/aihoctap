@@ -155,7 +155,7 @@ Chạy lệnh thực tế: `python -m pytest tests/ -v`
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.0, pytest-9.1.1, pluggy-1.6.0
-rootdir: C:\Users\HPZBook\Desktop\AI AGENT SGK
+rootdir: .
 plugins: anyio-4.14.2
 collected 26 items
 

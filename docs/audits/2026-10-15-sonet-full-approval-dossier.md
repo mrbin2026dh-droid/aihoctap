@@ -173,9 +173,9 @@ Dưới đây là nguyên văn 100% nội dung log thực tế chạy từ lện
 
 ```text
 ============================= test session starts =============================
-platform win32 -- Python 3.14.0, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\HPZBook\AppData\Local\Programs\Python\Python314\python.exe
+platform win32 -- Python 3.14.0, pytest-9.1.1, pluggy-1.6.0 -- python
 cachedir: .pytest_cache
-rootdir: C:\Users\HPZBook\Desktop\AI AGENT SGK
+rootdir: .
 plugins: anyio-4.14.2
 collecting ... collected 144 items
 
@@ -326,11 +326,11 @@ tests/test_socratic_guardrails.py::test_quiz_grading_and_pedagogical_remediation
 
 ============================== warnings summary ===============================
 ..\..\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\testclient.py:1
-  C:\Users\HPZBook\AppData\Local\Programs\Python\Python314\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
     from starlette.testclient import TestClient as TestClient  # noqa
 
 tests/test_adversarial_evals.py::test_adversarial_case_deterministic_guardrails[adv_001]
-  C:\Users\HPZBook\AppData\Local\Programs\Python\Python314\Lib\site-packages\google\genai\types.py:42: DeprecationWarning: '_UnionGenericAlias' is deprecated and slated for removal in Python 3.17
+  google\genai\types.py:42: DeprecationWarning: '_UnionGenericAlias' is deprecated and slated for removal in Python 3.17
     VersionedUnionType = Union[builtin_types.UnionType, _UnionGenericAlias]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

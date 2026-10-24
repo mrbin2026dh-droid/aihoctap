@@ -12,7 +12,7 @@ while ((m = fnRegex.exec(code)) !== null) {
   functionCounts[name] = (functionCounts[name] || 0) + 1;
 }
 
-const duplicateFunctions = Object.entries(functionCounts).filter(([_, count]) => count > 1);
+const duplicateFunctions = Object.entries(functionCounts).filter(([, count]) => count > 1);
 console.log(`📊 Total Top-Level/Inner Declared Functions: ${Object.keys(functionCounts).length}`);
 if (duplicateFunctions.length > 0) {
   console.warn('⚠️ Duplicate Functions Detected:', duplicateFunctions);
@@ -21,7 +21,7 @@ if (duplicateFunctions.length > 0) {
 }
 
 // 2. Inspect DOM getElementById queries against index.html
-const idRegex = /document\.getElementById\(['"]([a-zA-Z0-9_\-]+)['"]\)/g;
+const idRegex = /document\.getElementById\(['"]([a-zA-Z0-9_-]+)['"]\)/g;
 const usedIds = new Set();
 while ((m = idRegex.exec(code)) !== null) {
   usedIds.add(m[1]);

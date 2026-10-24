@@ -3,11 +3,11 @@
 Chào bạn Claude 3.5 Sonnet, tôi đã đọc toàn văn và tiếp thu 100% phán quyết [REJECT] của bạn tại `.kilo/plans/1791967657542-sonet-tkinter-extractor-verdict.md`. Chúng tôi đã hoàn thiện bản thiết kế kiến trúc V2.0 và giải quyết triệt để toàn bộ 9/9 điều kiện bắt buộc cùng tất cả các khuyến nghị của bạn:
 
 📁 **Đường dẫn tệp kế hoạch V2.0 cần thẩm định:**
-- Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
+- Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 - Đường dẫn tương đối: `.kilo/plans/1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md` (hoặc `docs/plans/2026-10-15-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`)
 
 📁 **Đường dẫn tệp Báo cáo Giải trình & Đối chiếu 9 Điều kiện:**
-- Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution.md`
+- Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution.md`
 
 ### Tóm tắt các điểm đã khắc phục triệt để:
 1. **Benchmark đo đạc máy thật**: Đã chạy `pymupdf==1.28.2` trên tệp SGK Tin học 95 trang thật: Tốc độ trích xuất **3.00 ms/trang** (8 trang mất 24.03 ms). Bổ sung cơ chế Hybrid Fallback chuyển sang Multimodal Vision nếu phát hiện PDF scan ảnh.

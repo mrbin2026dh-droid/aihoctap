@@ -262,7 +262,7 @@ class SGKStudioApp:
 
         ttk.Label(top_frame, text="Duong dan PDF:").grid(row=0, column=0, sticky=tk.W, padx=4)
         
-        default_pdf = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+        default_pdf = r"sgk-sample.pdf"
         self.pdf_path_var = tk.StringVar(value=default_pdf if os.path.exists(default_pdf) else "")
         self.entry_pdf = ttk.Entry(top_frame, textvariable=self.pdf_path_var, width=50)
         self.entry_pdf.grid(row=0, column=1, sticky=tk.EW, padx=4)

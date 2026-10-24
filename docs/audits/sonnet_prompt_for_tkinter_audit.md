@@ -7,7 +7,7 @@
 Chào bạn Sonnet, tôi gửi bạn tệp hồ sơ đặc tả kiến trúc cần thẩm định độc lập:
 
 ### 📁 ĐƯỜNG DẪN TỆP CẦN ĐỌC:
-- **Đường dẫn tuyệt đối**: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey.md`
+- **Đường dẫn tuyệt đối**: `.\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey.md`
 - **Đường dẫn tương đối**: `.kilo/plans/1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey.md` (hoặc `docs/plans/2026-10-15-sgk-tkinter-extractor-architecture-and-oss-survey.md`)
 
 ---

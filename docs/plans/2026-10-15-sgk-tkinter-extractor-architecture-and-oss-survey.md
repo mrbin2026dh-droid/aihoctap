@@ -22,7 +22,7 @@
 Sau khi cân nhắc giữa **tính gọn nhẹ, tốc độ và độ chính xác ngữ nghĩa**, kiến trúc tối ưu nhất gồm 2 tầng phối hợp:
 1. **Tầng 1 (Trích xuất thô tốc độ cao)**: Sử dụng **`PyMuPDF` (`fitz`)**. Vì file PDF của bạn là file số hóa chính gốc từ NXB Giáo Dục (không phải ảnh chụp điện thoại méo mó), `fitz` sẽ lấy được 100% văn bản số UTF-8 sạch sẽ chỉ trong vài phần nghìn giây mà không tốn 1MB GPU nào.
 2. **Tầng 2 (Tái cấu trúc sư phạm & Tóm tắt Khái niệm)**: Sử dụng **`Google Gemini API` (`gemini-3-flash-preview` / `gemini-flash-lite-latest`)** với System Prompt Pydantic ép khuôn cấu trúc. Gemini sẽ tự động sắp xếp lại thứ tự đọc 2 cột, lọc bỏ số trang rác, tóm tắt các mục thành bảng so sánh (`comparison_table`), thẻ bài (`grid_cards`) và sinh gợi ý tư duy Socrates cho câu trắc nghiệm.
-3. **Tầng 3 (Kiểm chứng nguồn)**: Sử dụng module nội bộ [`backend/grounding_verifier.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/grounding_verifier.py) để so khớp xác định ($\ge 80\%$).
+3. **Tầng 3 (Kiểm chứng nguồn)**: Sử dụng module nội bộ [`backend/grounding_verifier.py`](file:///~/Desktop/AI%20AGENT%20SGK/backend/grounding_verifier.py) để so khớp xác định ($\ge 80\%$).
 
 ---
 

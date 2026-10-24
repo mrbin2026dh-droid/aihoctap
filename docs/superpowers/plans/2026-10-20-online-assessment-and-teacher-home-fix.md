@@ -8,7 +8,7 @@
 
 **Tech Stack:** FastAPI, Python Pydantic v2, openpyxl, Vanilla JavaScript (ES6+), HTML5 Canvas/CSS3 Flex & Grid Responsive, Playwright for E2E testing, Git & Alibaba Open-Code-Review.
 
-**Spec:** [bao_cao_phan_tich_va_de_xuat_menu_kiem_tra.md](file:///C:/Users/HPZBook/.gemini/antigravity/brain/9c43807f-2e07-4689-8680-2d26e4b6e48d/bao_cao_phan_tich_va_de_xuat_menu_kiem_tra.md)
+**Spec:** [bao_cao_phan_tich_va_de_xuat_menu_kiem_tra.md](file:///~/.gemini/antigravity/brain/9c43807f-2e07-4689-8680-2d26e4b6e48d/bao_cao_phan_tich_va_de_xuat_menu_kiem_tra.md)
 
 ---
 

@@ -1,13 +1,13 @@
 # PROMPT GỬI CLAUDE 3.5 SONNET THẨM ĐỊNH LẦN 3 (PHÊ DUYỆT KIẾN TRÚC V2.1 & BẰNG CHỨNG TEST THỰC TẾ)
 
-Chào bạn Claude 3.5 Sonnet, chúng tôi đã tiếp thu toàn diện phán quyết của bạn tại `.kilo/plans/1791967657542-sonet-final-approval-verdict-tkinter.md`. Người dùng đã cung cấp tệp PDF SGK Tin học 6 thật tại `C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf`. Chúng tôi đã hoàn thành toàn bộ 8/8 điều kiện bắt buộc, viết mã kiểm thử và đạt 150/150 Pytest PASS:
+Chào bạn Claude 3.5 Sonnet, chúng tôi đã tiếp thu toàn diện phán quyết của bạn tại `.kilo/plans/1791967657542-sonet-final-approval-verdict-tkinter.md`. Người dùng đã cung cấp tệp PDF SGK Tin học 6 thật tại `sgk-sample.pdf`. Chúng tôi đã hoàn thành toàn bộ 8/8 điều kiện bắt buộc, viết mã kiểm thử và đạt 150/150 Pytest PASS:
 
 Đường dẫn tệp kế hoạch V2.1 cần thẩm định:
-- Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
+- Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 - Đường dẫn tương đối: `.kilo/plans/1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 
 Đường dẫn tệp Báo cáo Giải trình & Đối chiếu 8 Điều kiện:
-- Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v3.md`
+- Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v3.md`
 
 Các tệp mã nguồn và test đã tạo trên đĩa:
 - Script benchmark độc lập: `tools/benchmark_pymupdf.py`

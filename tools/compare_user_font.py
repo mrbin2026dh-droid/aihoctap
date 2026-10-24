@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 from PIL import Image
 import numpy as np
 
-user_img_path = r'C:/Users/HPZBook/.gemini/antigravity/brain/ee56ad5d-2891-40b4-8bc6-f63d704a189c/.user_uploaded/media_1792291549847_58489640.png'
+user_img_path = r'~/.gemini/antigravity/brain/ee56ad5d-2891-40b4-8bc6-f63d704a189c/.user_uploaded/media_1792291549847_58489640.png'
 user_img = Image.open(user_img_path).convert('RGB')
 user_arr = np.array(user_img)
 

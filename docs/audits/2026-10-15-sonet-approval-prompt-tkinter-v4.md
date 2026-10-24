@@ -3,11 +3,11 @@
 Chào bạn Claude 3.5 Sonnet, chúng tôi đã đọc toàn văn phán quyết của bạn tại `.kilo/plans/1791967657542-sonet-final-approval-verdict-tkinter.md` và giải quyết triệt để 100% các vấn đề P0 và P1 (8/8 điều kiện chuyển sang APPROVE), hoàn thành mã và đạt 151/151 tests PASS:
 
 Đường dẫn tệp kế hoạch V2.2 cần thẩm định:
-- Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
+- Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 - Đường dẫn tương đối: `.kilo/plans/1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 
 Đường dẫn tệp Báo cáo Giải trình & Đối chiếu 8 Điều kiện:
-- Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v4.md`
+- Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v4.md`
 
 Các tệp mã nguồn và test đã cập nhật trên đĩa:
 - Script benchmark 77 trang: `tools/benchmark_pymupdf.py`

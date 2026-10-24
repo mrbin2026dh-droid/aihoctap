@@ -1,6 +1,6 @@
 # Antigravity: bounded Notebook/REA review for a student PWA
 
-User authorizes analysis and detailed planning, not production changes. Workspace: C:/Users/HPZBook/Desktop/AI AGENT SGK.
+User authorizes analysis and detailed planning, not production changes. Workspace: ..
 
 Read local evidence: docs/audits/2026-10-24-rea-notebook-installation.md.
 Review proposed plan: docs/plans/2026-10-24-student-pwa-no-chatbot.md.

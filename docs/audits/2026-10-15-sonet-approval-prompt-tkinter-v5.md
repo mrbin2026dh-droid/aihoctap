@@ -6,9 +6,9 @@ Chúng tôi đã giải quyết triệt để 100% các điều kiện P0 và P1
 Các tệp trên đĩa cứng cần bạn đọc và đối chiếu trực tiếp:
 1. Báo cáo giải trình 8 điều kiện:
    - Đường dẫn tương đối: `.kilo/plans/1791967657542-sonet-tkinter-remediation-resolution-v5.md`
-   - Đường dẫn tuyệt đối: `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v5.md`
+   - Đường dẫn tuyệt đối: `.\.kilo\plans\1791967657542-sonet-tkinter-remediation-resolution-v5.md`
 2. Kế hoạch kiến trúc V2.2:
-   - `c:\Users\HPZBook\Desktop\AI AGENT SGK\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
+   - `.\.kilo\plans\1791967657542-sgk-tkinter-extractor-architecture-and-oss-survey-v2.md`
 3. Mã nguồn đã cập nhật:
    - Đường lưu duy nhất & validate Socratic: `backend/grounding.py` (L245-295)
    - Bộ lọc Socratic n-gram & bắt diễn đạt lại: `backend/socratic_validator.py`

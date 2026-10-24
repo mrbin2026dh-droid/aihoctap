@@ -443,7 +443,7 @@ def test_extract_and_structure_lesson_bounds_and_cancellation():
     assert "không tồn tại" in err
 
     # 2. Trang bắt đầu > kết thúc
-    real_pdf = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+    real_pdf = r"sgk-sample.pdf"
     ok, err, pkg = extract_and_structure_lesson(real_pdf, 6, 2, 12, 10)
     assert not ok
     assert "lớn hơn trang kết thúc" in err
@@ -497,7 +497,7 @@ def test_extract_and_structure_lesson_timeout_and_http_options_mocked(monkeypatc
     import google.genai as genai_module
     monkeypatch.setattr(genai_module, "Client", MockGenAIClient)
 
-    real_pdf = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+    real_pdf = r"sgk-sample.pdf"
     ok, err, pkg = extract_and_structure_lesson(
         pdf_path=real_pdf,
         grade=6,
@@ -523,7 +523,7 @@ def test_extract_and_structure_lesson_missing_api_key_returns_error(monkeypatch)
     monkeypatch.setenv("GEMINI_API_KEY", "")
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **kw: None)
 
-    real_pdf = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+    real_pdf = r"sgk-sample.pdf"
     ok, err, pkg = extract_and_structure_lesson(
         pdf_path=real_pdf,
         grade=6,
@@ -552,7 +552,7 @@ def test_extract_and_structure_lesson_missing_key_in_real_env_file(tmp_path, mon
     monkeypatch.setattr(ee_mod, "ROOT_DIR", tmp_path)
     monkeypatch.chdir(tmp_path)
 
-    real_pdf = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+    real_pdf = r"sgk-sample.pdf"
     ok, err, pkg = extract_and_structure_lesson(
         pdf_path=real_pdf,
         grade=6,

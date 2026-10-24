@@ -1,7 +1,7 @@
 # BẢN ĐẶC TẢ THIẾT KẾ & KẾ HOẠCH NÂNG CẤP GIAO DIỆN TỰ HỌC KHAN-FOCUS
 *(Mô hình Khan Academy + Khanmigo Chuẩn Giáo Dục Ánh Sáng cho Phòng Máy THCS)*
 
-**Đường dẫn tệp:** `c:\Users\HPZBook\Desktop\AI AGENT SGK\docs\plans\2026-10-14-khan-focus-redesign.md`  
+**Đường dẫn tệp:** `.\docs\plans\2026-10-14-khan-focus-redesign.md`  
 **Ngày lập:** 14/10/2026  
 **Mục tiêu:** Tái cấu trúc giao diện hệ thống Web Tự học Tin học 6-9 dựa trên **Mô hình Hình 2 (Khan Academy)**: Loại bỏ sự phân mảnh của 3 cột hẹp, chuyển dịch 100% sang **Bảng màu Giáo dục Ánh sáng (Educational Light Theme)**, tối ưu cho học sinh THCS trong phòng máy LAN.
 

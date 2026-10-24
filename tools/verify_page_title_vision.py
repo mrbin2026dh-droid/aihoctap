@@ -23,7 +23,7 @@ dotenv.load_dotenv("backend/.env")
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-PDF_PATH = r"C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf"
+PDF_PATH = r"sgk-sample.pdf"
 LOG_DIR = Path("tools/logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / "verify_page_title_vision.log"

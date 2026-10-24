@@ -1,0 +1,398 @@
+schema_version: content-draft-v2
+publication_status: Chưa duyệt, chưa phát hành
+answer_key_included: false
+note: Không có khóa, lời giải hoặc gợi ý chỉ lựa chọn đúng. Nếu bổ sung khóa, lưu ở kho riêng ngoài repository công
+  khai; không đưa vào tài nguyên học sinh.
+questions:
+- id: draft_tin6_b1_v2_01
+  grade: 6
+  lesson_id: 1
+  lesson_title: Thông tin và dữ liệu
+  chu_de: Thông tin và dữ liệu
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin6/bai1.json
+  status: draft_content_review_required
+  cau_hoi: Khi nghe loa trường đọc lịch sinh hoạt, điều nào mô tả phần thông tin người nghe rút ra?
+  lua_chon:
+    A: Âm thanh phát ra từ loa
+    B: Lịch và hoạt động cần tham gia
+    C: Vỏ nhựa của loa
+    D: Dây nối loa
+- id: draft_tin6_b1_v2_02
+  grade: 6
+  lesson_id: 1
+  lesson_title: Thông tin và dữ liệu
+  chu_de: Thông tin và dữ liệu
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin6/bai1.json
+  status: draft_content_review_required
+  cau_hoi: Trong tình huống đọc thông báo trên bảng lớp, vật nào đóng vai trò vật mang tin?
+  lua_chon:
+    A: Ý định đi học sớm
+    B: Sự hiểu biết về lịch học
+    C: Tấm bảng có thông báo
+    D: Quyết định mang sách
+- id: draft_tin6_b2_v2_01
+  grade: 6
+  lesson_id: 2
+  lesson_title: Xử lí thông tin
+  chu_de: Xử lí thông tin
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin6/bai2.json
+  status: draft_content_review_required
+  cau_hoi: Sau khi đọc dự báo thời tiết, Mai so sánh các ngày để lên lịch dã ngoại. Hoạt động so sánh thuộc bước
+    nào?
+  lua_chon:
+    A: Thu nhận
+    B: Lưu trữ
+    C: Truyền
+    D: Xử lí
+- id: draft_tin6_b2_v2_02
+  grade: 6
+  lesson_id: 2
+  lesson_title: Xử lí thông tin
+  chu_de: Xử lí thông tin
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin6/bai2.json
+  status: draft_content_review_required
+  cau_hoi: Hành động nào minh họa việc lưu trữ thông tin về một buổi họp?
+  lua_chon:
+    A: Ghi nội dung họp vào tệp
+    B: Đọc nội dung trước lớp
+    C: Nghe người chủ trì nói
+    D: So sánh hai đề xuất
+- id: draft_tin6_b3_v2_01
+  grade: 6
+  lesson_id: 3
+  lesson_title: Thông tin trong máy tính
+  chu_de: Thông tin trong máy tính
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin6/bai3.json
+  status: draft_content_review_required
+  cau_hoi: Một dãy chỉ gồm hai kí hiệu 0 và 1 thường được dùng để làm gì trong máy tính?
+  lua_chon:
+    A: Chỉ lưu âm thanh
+    B: Chỉ biểu diễn chữ viết
+    C: Biểu diễn dữ liệu dưới dạng bit
+    D: Thay cho mọi thiết bị nhớ
+- id: draft_tin6_b3_v2_02
+  grade: 6
+  lesson_id: 3
+  lesson_title: Thông tin trong máy tính
+  chu_de: Thông tin trong máy tính
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin6/bai3.json
+  status: draft_content_review_required
+  cau_hoi: Hai tệp có kích thước lần lượt 2 MB và 5 MB. Khi cùng được lưu, tệp nào chiếm nhiều dung lượng hơn?
+  lua_chon:
+    A: Tệp 5 MB
+    B: Hai tệp luôn bằng nhau
+    C: Tệp 2 MB
+    D: Không thể so sánh cùng đơn vị
+- id: draft_tin9_b1_v2_01
+  grade: 9
+  lesson_id: 1
+  lesson_title: Thế giới kĩ thuật số
+  chu_de: Chủ đề 1. Máy tính và cộng đồng
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai1.json
+  status: draft_content_review_required
+  cau_hoi: Ví dụ nào thể hiện thiết bị số hỗ trợ theo dõi môi trường?
+  lua_chon:
+    A: Vẽ nhiệt kế lên giấy
+    B: Xếp sách theo màu
+    C: Ghi ngày bằng phấn
+    D: Cảm biến gửi số đo nhiệt độ cho máy tính
+- id: draft_tin9_b1_v2_02
+  grade: 9
+  lesson_id: 1
+  lesson_title: Thế giới kĩ thuật số
+  chu_de: Chủ đề 1. Máy tính và cộng đồng
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai1.json
+  status: draft_content_review_required
+  cau_hoi: Khi ứng dụng chỉ đường đề xuất lộ trình, dữ liệu nào liên quan trực tiếp nhất?
+  lua_chon:
+    A: Màu ốp điện thoại
+    B: Tình trạng giao thông trên tuyến
+    C: Tên người sản xuất tai nghe
+    D: Số trang trong vở
+- id: draft_tin9_b2_v2_01
+  grade: 9
+  lesson_id: 2
+  lesson_title: Thông tin trong giải quyết vấn đề
+  chu_de: Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai2.json
+  status: draft_content_review_required
+  cau_hoi: Muốn chọn chuyến xe phù hợp để đến đúng giờ, thông tin nào cần được ưu tiên kiểm tra?
+  lua_chon:
+    A: Màu ghế chờ
+    B: Số người thích trang quảng cáo
+    C: Lịch chạy và thời gian di chuyển
+    D: Kiểu chữ trên vé
+- id: draft_tin9_b2_v2_02
+  grade: 9
+  lesson_id: 2
+  lesson_title: Thông tin trong giải quyết vấn đề
+  chu_de: Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai2.json
+  status: draft_content_review_required
+  cau_hoi: Một bài viết về lịch sự kiện đã đăng từ nhiều năm trước. Đặc điểm nào cần kiểm tra trước khi dùng cho
+    kế hoạch tuần tới?
+  lua_chon:
+    A: Tính cập nhật của thông tin
+    B: Độ dài tiêu đề
+    C: Số hình minh họa
+    D: Màu nền trang
+- id: draft_tin9_b3_v2_01
+  grade: 9
+  lesson_id: 3
+  lesson_title: 'Thực hành: Đánh giá chất lượng thông tin'
+  chu_de: Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai3.json
+  status: draft_content_review_required
+  cau_hoi: Hai trang đăng giờ mở cửa khác nhau của thư viện. Cách kiểm tra nào phù hợp nhất?
+  lua_chon:
+    A: Tin trang có chữ lớn hơn
+    B: Đoán theo giờ của quán gần đó
+    C: Chọn giờ thuận tiện cho mình
+    D: Đối chiếu thông báo mới của thư viện
+- id: draft_tin9_b3_v2_02
+  grade: 9
+  lesson_id: 3
+  lesson_title: 'Thực hành: Đánh giá chất lượng thông tin'
+  chu_de: Chủ đề 2. Tổ chức lưu trữ, tìm kiếm và trao đổi thông tin
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai3.json
+  status: draft_content_review_required
+  cau_hoi: Để đánh giá bài giới thiệu một sản phẩm, thao tác nào giúp kiểm tra nguồn tin?
+  lua_chon:
+    A: Chỉ đếm số biểu tượng thích
+    B: Tìm tác giả, ngày đăng và tài liệu dẫn
+    C: Chỉ xem kích thước ảnh
+    D: Chỉ đọc dòng quảng cáo đầu
+- id: draft_tin9_b4_v2_01
+  grade: 9
+  lesson_id: 4
+  lesson_title: Một số vấn đề pháp lí về sử dụng dịch vụ Internet
+  chu_de: Chủ đề 3. Đạo đức, pháp luật và văn hoá trong môi trường số
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai4.json
+  status: draft_content_review_required
+  cau_hoi: Trước khi dùng ảnh của người khác trong sản phẩm học tập chia sẻ công khai, em nên làm gì?
+  lua_chon:
+    A: Bỏ tên tác giả cho gọn
+    B: Cắt ảnh để khỏi cần kiểm tra
+    C: Kiểm tra điều kiện sử dụng và ghi nguồn phù hợp
+    D: Cho rằng mọi ảnh trên mạng đều tự do dùng
+- id: draft_tin9_b4_v2_02
+  grade: 9
+  lesson_id: 4
+  lesson_title: Một số vấn đề pháp lí về sử dụng dịch vụ Internet
+  chu_de: Chủ đề 3. Đạo đức, pháp luật và văn hoá trong môi trường số
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai4.json
+  status: draft_content_review_required
+  cau_hoi: Khi ứng dụng yêu cầu đăng ảnh có mặt bạn lên mạng, cách ứng xử nào tôn trọng quyền riêng tư?
+  lua_chon:
+    A: Hỏi ý kiến bạn trước khi đăng
+    B: Đăng trước rồi mới báo
+    C: Gắn tên bạn mà không hỏi
+    D: Chia sẻ ảnh cho mọi nhóm
+- id: draft_tin9_b5_v2_01
+  grade: 9
+  lesson_id: 5
+  lesson_title: Tìm hiểu phần mềm mô phỏng
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai5.json
+  status: draft_content_review_required
+  cau_hoi: Ưu điểm nào phù hợp với việc dùng phần mềm mô phỏng trước một thí nghiệm khó tổ chức?
+  lua_chon:
+    A: Bảo đảm mọi mô hình giống thực tế tuyệt đối
+    B: Thay thế hoàn toàn mọi quan sát thực
+    C: Loại bỏ nhu cầu đặt câu hỏi
+    D: Cho phép thử các điều kiện trong môi trường mô hình
+- id: draft_tin9_b5_v2_02
+  grade: 9
+  lesson_id: 5
+  lesson_title: Tìm hiểu phần mềm mô phỏng
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai5.json
+  status: draft_content_review_required
+  cau_hoi: Vì sao cần hiểu giới hạn của mô hình mô phỏng?
+  lua_chon:
+    A: Để bỏ qua số liệu đầu ra
+    B: Để tránh coi kết quả mô hình luôn đúng với mọi tình huống thực
+    C: Để không phải kiểm tra giả thiết
+    D: Để dùng mô hình mà không cần mục tiêu
+- id: draft_tin9_b6_v2_01
+  grade: 9
+  lesson_id: 6
+  lesson_title: 'Thực hành: Khai thác phần mềm mô phỏng'
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai6.json
+  status: draft_content_review_required
+  cau_hoi: Muốn tìm ảnh hưởng của một biến trong mô phỏng, cách thử nào giúp so sánh rõ nhất?
+  lua_chon:
+    A: Đổi mọi biến cùng lúc
+    B: Chỉ xem một ảnh màn hình
+    C: Giữ các điều kiện khác ổn định và thay biến cần khảo sát
+    D: Chọn ngẫu nhiên mỗi lần rồi không ghi lại
+- id: draft_tin9_b6_v2_02
+  grade: 9
+  lesson_id: 6
+  lesson_title: 'Thực hành: Khai thác phần mềm mô phỏng'
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai6.json
+  status: draft_content_review_required
+  cau_hoi: Khi lặp lại mô phỏng với nhiều giá trị đầu vào, việc ghi kết quả vào bảng giúp ích gì?
+  lua_chon:
+    A: Theo dõi và so sánh các lần thử
+    B: Làm mất dấu điều kiện thử
+    C: Bảo đảm mô hình không có giới hạn
+    D: Thay thế việc giải thích kết quả
+- id: draft_tin9_b7_v2_01
+  grade: 9
+  lesson_id: 7
+  lesson_title: Trình bày thông tin trong trao đổi và hợp tác
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai7.json
+  status: draft_content_review_required
+  cau_hoi: Khi trình bày kế hoạch chung cho nhóm, cách tổ chức nào giúp các thành viên theo dõi công việc?
+  lua_chon:
+    A: Gộp mọi ý thành một đoạn dài
+    B: Bỏ hết mốc thời gian
+    C: Chỉ thêm ảnh trang trí
+    D: Nhóm ý theo nhiệm vụ, người phụ trách và thời hạn
+- id: draft_tin9_b7_v2_02
+  grade: 9
+  lesson_id: 7
+  lesson_title: Trình bày thông tin trong trao đổi và hợp tác
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai7.json
+  status: draft_content_review_required
+  cau_hoi: Để chia sẻ một vấn đề có nhiều ý và mối liên hệ, dạng trình bày nào đáng cân nhắc?
+  lua_chon:
+    A: Một danh sách tên tệp không mô tả
+    B: Sơ đồ thể hiện ý chính và các nhánh liên quan
+    C: Một trang chỉ có số trang
+    D: Một đoạn lặp lại tiêu đề
+- id: draft_tin9_b8_v2_01
+  grade: 9
+  lesson_id: 8
+  lesson_title: 'Thực hành: Sử dụng công cụ trực quan trình bày thông tin'
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai8.json
+  status: draft_content_review_required
+  cau_hoi: Khi làm sơ đồ tư duy cho bài thuyết trình, thao tác nào giúp người xem hiểu cấu trúc?
+  lua_chon:
+    A: Đặt mọi ý ở cùng một mức không liên hệ
+    B: Dùng chữ rất nhỏ để chứa hết nội dung
+    C: Chia nhánh từ ý chính và ghi nhãn ngắn
+    D: Ẩn tiêu đề và liên kết
+- id: draft_tin9_b8_v2_02
+  grade: 9
+  lesson_id: 8
+  lesson_title: 'Thực hành: Sử dụng công cụ trực quan trình bày thông tin'
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai8.json
+  status: draft_content_review_required
+  cau_hoi: Trước khi chia sẻ sản phẩm trực quan cho nhóm, nên kiểm tra điều gì?
+  lua_chon:
+    A: Chữ dễ đọc và liên kết nội dung hoạt động
+    B: Chỉ số lượng màu nền
+    C: Chỉ số hiệu ứng chuyển động
+    D: Chỉ dung lượng tệp càng lớn càng tốt
+- id: draft_tin9_b9_v2_01
+  grade: 9
+  lesson_id: 9
+  lesson_title: Sử dụng công cụ xác thực dữ liệu và hàm điều kiện
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai9.json
+  status: draft_content_review_required
+  cau_hoi: Muốn ô điểm chỉ nhận số trong khoảng do giáo viên quy định, nên cân nhắc công cụ nào?
+  lua_chon:
+    A: Đổi màu trang tính
+    B: Gộp ô tiêu đề
+    C: Chèn ảnh nền
+    D: Thiết lập điều kiện nhập dữ liệu
+- id: draft_tin9_b9_v2_02
+  grade: 9
+  lesson_id: 9
+  lesson_title: Sử dụng công cụ xác thực dữ liệu và hàm điều kiện
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai9.json
+  status: draft_content_review_required
+  cau_hoi: Một công thức cần trả hai kết quả khác nhau tùy việc điều kiện có được thỏa mãn. Nhóm hàm nào phù hợp?
+  lua_chon:
+    A: Hàm lấy thời gian hiện tại
+    B: Hàm điều kiện
+    C: Hàm đếm kí tự thuần túy
+    D: Hàm đổi chữ hoa
+- id: draft_tin9_b10_v2_01
+  grade: 9
+  lesson_id: 10
+  lesson_title: 'Thực hành: Xử lý dữ liệu bảng tính nâng cao'
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai10.json
+  status: draft_content_review_required
+  cau_hoi: Sau khi đặt quy tắc nhập số trong một khoảng, cách thử nào kiểm tra được quy tắc?
+  lua_chon:
+    A: Chỉ đổi tên tệp
+    B: Chỉ nhập một giá trị hợp lệ
+    C: Thử giá trị trong khoảng, ngoài khoảng và ở ranh giới
+    D: Chỉ thay màu chữ
+- id: draft_tin9_b10_v2_02
+  grade: 9
+  lesson_id: 10
+  lesson_title: 'Thực hành: Xử lý dữ liệu bảng tính nâng cao'
+  chu_de: Chủ đề 4. Ứng dụng tin học
+  muc_sgk: null
+  sgk_alignment: Chưa đối chiếu SGK gốc; chưa xác nhận mục/trang, không dùng làm trích dẫn SGK.
+  lesson_metadata_source: frontend/data/curriculum_v2_simple/tin9/bai10.json
+  status: draft_content_review_required
+  cau_hoi: Để kiểm tra công thức điều kiện sau khi sao chép xuống nhiều dòng, nên làm gì?
+  lua_chon:
+    A: Đối chiếu vài dòng có dữ liệu khác nhau và kiểm tra tham chiếu
+    B: Chỉ nhìn chiều rộng cột
+    C: Chỉ kiểm tra tiêu đề trang
+    D: Xóa dữ liệu đầu vào trước khi xem kết quả

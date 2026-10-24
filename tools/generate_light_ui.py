@@ -6,7 +6,7 @@ và chụp ảnh màn hình lưu vào Artifacts.
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-ARTIFACT_DIR = Path(r"C:\Users\HPZBook\.gemini\antigravity\brain\1472d373-fb6d-4d4f-afc8-358ef1071f2f")
+ARTIFACT_DIR = Path(r"~\.gemini\antigravity\brain\1472d373-fb6d-4d4f-afc8-358ef1071f2f")
 
 HTML_EDUCATION_LIGHT = """<!DOCTYPE html>
 <html lang="vi">

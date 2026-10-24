@@ -11,7 +11,7 @@
 </head>
 <body>
   <a class="skip" href="#main">Đến nội dung</a>
-  <header class="topbar"><a class="wordmark" href="./">SGK<span>Góc giáo viên</span></a><button id="teacher-logout" hidden>Đăng xuất</button></header>
+  <header class="topbar"><a class="wordmark" href="./">SGK<span>Góc giáo viên</span></a><div class="actions"><a href="./" class="quiet" style="font-size:14px;text-decoration:none;padding:8px 12px;color:var(--blue);border:1px solid var(--line);border-radius:8px;">← Về Góc học tập</a><button id="teacher-logout" hidden>Đăng xuất</button></div></header>
   <div id="status" class="notice" role="status" aria-live="polite">Đăng nhập để quản lý bài học.</div>
   <main id="main" class="teacher-layout" tabindex="-1">
     <section id="auth-section" class="teacher-section">
@@ -33,6 +33,62 @@
         <div class="actions"><button class="primary" type="submit">Xuất bản bài học</button><button id="new-lesson" type="button">Soạn bài mới</button></div>
       </form>
       <section class="teacher-section"><h2>Bài học sinh đã nộp</h2><button id="refresh-results">Cập nhật kết quả</button><div id="teacher-results"></div></section>
+      <section class="teacher-section" id="materials-section">
+        <h2>Tài liệu bổ trợ Google Drive (D1 / A6)</h2>
+        <p>Hệ thống chỉ lưu mã file ID an toàn và chuyển tiếp tài liệu PDF trực tiếp cho học sinh.</p>
+        <form id="material-form">
+          <div class="teacher-grid">
+            <label>Mã tài liệu<input name="material_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="mat_tin6_b1"></label>
+            <label>Mã khóa học<input name="material_course_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin6"></label>
+            <label class="full">Tiêu đề tài liệu<input name="material_title" required maxlength="500" placeholder="Tài liệu tóm tắt Mục 1 SGK Tin học 6"></label>
+            <label class="full">Liên kết chia sẻ Google Drive<input name="material_drive_url" required type="url" placeholder="https://drive.google.com/file/d/.../view"></label>
+            <label class="full">Mô tả ngắn<input name="material_desc" maxlength="500" placeholder="Bản PDF tóm tắt bài học"></label>
+          </div>
+          <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Đăng tải tài liệu</button></div>
+        </form>
+      </section>
+      <section class="teacher-section" id="keys-section">
+        <h2>Bể khóa Gemini API cho Gia sư AI (C5)</h2>
+        <p>Khóa được mã hóa AES-GCM trong Durable Object. Hệ thống tự động cân bằng tải và chuyển khóa dự phòng khi gặp 429.</p>
+        <div id="pool-banner" class="notice" hidden></div>
+        <form id="add-key-form">
+          <div class="teacher-grid">
+            <label>Khóa API Gemini (AIzaSy...)<input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" placeholder="AIzaSy..."></label>
+            <label>Ghi chú<input name="gemini_key_note" maxlength="100" placeholder="Tài khoản cá nhân / dự phòng"></label>
+          </div>
+          <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Thêm khóa vào bể</button><button id="refresh-keys" type="button">Làm mới danh sách</button></div>
+        </form>
+        <div class="table-wrap" style="margin-top:16px;">
+          <table id="keys-table">
+            <thead><tr><th>Mã hiển thị</th><th>Ghi chú</th><th>Trạng thái</th><th>Lượt dùng hôm nay</th><th>Thao tác</th></tr></thead>
+            <tbody id="keys-tbody"><tr><td colspan="5">Chưa tải dữ liệu khóa.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="teacher-section" id="ai-usage-section">
+        <h2>Theo dõi và giới hạn Gia sư AI (A9 / B7)</h2>
+        <p>Quản lý hạn mức dùng, tạm tắt trong giờ thi và tải báo cáo đối soát.</p>
+        <form id="ai-settings-form">
+          <div class="teacher-grid">
+            <label>Hạn mức mặc định (câu/ngày)<input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit"></label>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:24px;">
+              <input name="exam_mode" type="checkbox" id="ai-exam-mode">
+              <span>Đang thi: tắt gia sư</span>
+            </label>
+          </div>
+          <div class="actions" style="margin-top:12px;">
+            <button class="primary" type="submit">Lưu cài đặt gia sư</button>
+            <button id="refresh-ai-stats" type="button">Làm mới danh sách</button>
+            <button id="download-ai-csv" type="button">Tải báo cáo CSV</button>
+          </div>
+        </form>
+        <div class="table-wrap" style="margin-top:16px;">
+          <table id="ai-usage-table">
+            <thead><tr><th>Mã học sinh</th><th>Đã dùng / Hạn mức</th><th>Cộng thêm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <tbody id="ai-usage-tbody"><tr><td colspan="5">Chưa tải dữ liệu học sinh.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
 </body>

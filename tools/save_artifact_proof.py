@@ -6,7 +6,7 @@ if sys.platform == "win32":
 
 from playwright.sync_api import sync_playwright
 
-artifact_dir = Path("C:/Users/HPZBook/.gemini/antigravity/brain/ee56ad5d-2891-40b4-8bc6-f63d704a189c")
+artifact_dir = Path("~/.gemini/antigravity/brain/ee56ad5d-2891-40b4-8bc6-f63d704a189c")
 artifact_dir.mkdir(parents=True, exist_ok=True)
 
 with sync_playwright() as p:

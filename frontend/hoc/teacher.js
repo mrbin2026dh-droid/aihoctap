@@ -1,5 +1,5 @@
 // @ts-check
-import {api, ApiError} from './api.js';
+import {api, ApiError, API_BASE} from './api.js';
 import {el, button, notify, renderMarkdown} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
 /** @typedef {import('./contracts').PrivateQuestion} PrivateQuestion */
@@ -99,9 +99,222 @@ node('teacher-login').addEventListener('submit', async event => {
   try {
     const response = await api('/teacher/auth', {method:'POST', body:{pin:String(new FormData(loginForm).get('pin'))}});
     token = response.token; generation++; sessionStorage.setItem('aisgk-pwa-teacher', token); loginForm.reset(); updateAuth();
-    await refresh(); await results(); notify('Đã đăng nhập. Sẵn sàng soạn bài.');
+    await refresh(); await results(); await loadGeminiKeys(); await loadAiUsage(); notify('Đã đăng nhập. Sẵn sàng soạn bài.');
   } catch (error) {fail(error instanceof Error ? error : new Error('Chưa đăng nhập được.'));} finally {submit.disabled = false;}
 });
+
+async function loadGeminiKeys() {
+  if (!token) return;
+  const captured = generation;
+  const tbody = node('keys-tbody');
+  const banner = node('pool-banner');
+  try {
+    const data = await api('/teacher/gemini-keys', { token });
+    if (captured !== generation || !token) return;
+    tbody.replaceChildren();
+
+    const usable = (data.keys || []).filter(k => k.status === 'active').length;
+    banner.hidden = usable > 0;
+    banner.textContent = usable > 0 ? '' : 'Gia sư AI đang tạm dừng: bể khóa trống hoặc đã hết hạn mức. Thêm khóa mới bên dưới để học sinh dùng tiếp.';
+
+    if (!data.keys || !data.keys.length) {
+      tbody.append(el('tr', '', '', [el('td', 'Chưa có khóa nào trong bể. Hãy thêm khóa mới bên trên.', '', [], { colSpan: '5' })]));
+      return;
+    }
+    for (const key of data.keys) {
+      const tr = el('tr');
+      const statusText = key.status === 'active' ? 'Hoạt động' : key.status === 'cooldown' ? 'Chờ hồi phục' : 'Hết hạn mức ngày';
+      const statusClass = key.status === 'active' ? 'status-ok' : key.status === 'cooldown' ? 'status-wait' : 'status-out';
+      tr.append(
+        el('td', `...${key.key_suffix}`),
+        el('td', key.note || '(Không ghi chú)'),
+        el('td', '', '', [el('span', statusText, statusClass)]),
+        el('td', `${key.daily_count || 0} / ${key.daily_limit || 1500}`),
+        el('td', '', '', [
+          button('Xóa', async () => {
+            if (confirm(`Xác nhận xóa khóa ...${key.key_suffix}?`)) {
+              await api(`/teacher/gemini-keys?id=${encodeURIComponent(key.id)}`, { method: 'DELETE', token });
+              await loadGeminiKeys();
+              notify('Đã xóa khóa khỏi bể.');
+            }
+          }, 'danger')
+        ])
+      );
+      tbody.append(tr);
+    }
+  } catch (err) {
+    if (captured === generation) fail(err instanceof Error ? err : new Error('Chưa tải được danh sách khóa.'));
+  }
+}
+
+node('add-key-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (node('add-key-form'));
+  const submit = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  submit.disabled = true;
+  const formData = new FormData(formEl);
+  try {
+    await api('/teacher/gemini-keys', {
+      method: 'POST',
+      token,
+      body: {
+        api_key: String(formData.get('gemini_api_key')).trim(),
+        note: String(formData.get('gemini_key_note')).trim()
+      }
+    });
+    formEl.reset();
+    await loadGeminiKeys();
+    notify('Đã thêm khóa Gemini API vào bể thành công.');
+  } catch (err) {
+    fail(err instanceof Error ? err : new Error('Chưa thêm được khóa.'));
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+node('material-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (node('material-form'));
+  const submit = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  submit.disabled = true;
+  const formData = new FormData(formEl);
+  try {
+    await api('/pwa/teacher/materials', {
+      method: 'POST',
+      token,
+      body: {
+        id: String(formData.get('material_id')).trim(),
+        course_id: String(formData.get('material_course_id')).trim(),
+        title: String(formData.get('material_title')).trim(),
+        drive_url: String(formData.get('material_drive_url')).trim(),
+        description: String(formData.get('material_desc')).trim()
+      }
+    });
+    formEl.reset();
+    notify('Đã đăng tải tài liệu Google Drive thành công.');
+  } catch (err) {
+    fail(err instanceof Error ? err : new Error('Chưa đăng tải được tài liệu.'));
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+on('refresh-keys', loadGeminiKeys);
+
+async function loadAiUsage() {
+  if (!token) return;
+  const captured = generation;
+  const tbody = /** @type {HTMLTableSectionElement} */ (node('ai-usage-tbody'));
+  try {
+    const [settingsRes, statsRes] = await Promise.all([
+      api('/teacher/ai-settings', { token }),
+      api('/teacher/ai-stats', { token })
+    ]);
+    if (captured !== generation || !token) return;
+
+    if (settingsRes && settingsRes.settings) {
+      const defInput = /** @type {HTMLInputElement|null} */ (document.getElementById('ai-default-limit'));
+      if (defInput && !defInput.matches(':focus')) {
+        defInput.value = String(settingsRes.settings.default_limit ?? 10);
+      }
+      const examCheck = /** @type {HTMLInputElement|null} */ (document.getElementById('ai-exam-mode'));
+      if (examCheck) {
+        examCheck.checked = Boolean(settingsRes.settings.exam_mode);
+      }
+    }
+
+    tbody.replaceChildren();
+    const stats = statsRes.stats || [];
+    if (!stats.length) {
+      tbody.append(el('tr', '', '', [el('td', 'Chưa có học sinh nào dùng gia sư hôm nay.', '', [], { colSpan: '5' })]));
+      return;
+    }
+
+    for (const item of stats) {
+      const tr = el('tr');
+      const isLocked = Boolean(item.locked);
+      const statusText = isLocked ? 'Đã khóa' : 'Hoạt động';
+      const statusClass = isLocked ? 'status-out' : 'status-ok';
+      tr.append(
+        el('td', item.student_id),
+        el('td', `${item.used} / ${item.limit}`),
+        el('td', item.grant ? `+${item.grant}` : '0'),
+        el('td', '', '', [el('span', statusText, statusClass)]),
+        el('td', '', '', [
+          button(isLocked ? 'Mở khóa' : 'Khóa', async () => {
+            await api('/teacher/ai-lock', {
+              method: 'POST',
+              token,
+              body: { student_id: item.student_id, locked: !isLocked }
+            });
+            await loadAiUsage();
+            notify(isLocked ? `Đã mở khóa gia sư cho ${item.student_id}.` : `Đã tạm khóa gia sư với ${item.student_id}.`);
+          }),
+          button('+5 lượt', async () => {
+            await api('/teacher/ai-grant', {
+              method: 'POST',
+              token,
+              body: { student_id: item.student_id, extra: 5 }
+            });
+            await loadAiUsage();
+            notify(`Đã cộng 5 lượt hỏi gia sư cho ${item.student_id}.`);
+          }, 'primary')
+        ])
+      );
+      tbody.append(tr);
+    }
+  } catch (err) {
+    if (captured === generation) fail(err instanceof Error ? err : new Error('Chưa tải được thống kê dùng AI.'));
+  }
+}
+
+node('ai-settings-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (node('ai-settings-form'));
+  const submit = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  submit.disabled = true;
+  const formData = new FormData(formEl);
+  try {
+    await api('/teacher/ai-settings', {
+      method: 'PUT',
+      token,
+      body: {
+        default_limit: Number(formData.get('default_limit')) || 10,
+        exam_mode: Boolean(formData.get('exam_mode'))
+      }
+    });
+    await loadAiUsage();
+    notify('Đã lưu cài đặt gia sư thành công.');
+  } catch (err) {
+    fail(err instanceof Error ? err : new Error('Chưa lưu được cài đặt gia sư.'));
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+on('refresh-ai-stats', loadAiUsage);
+
+on('download-ai-csv', async () => {
+  try {
+    const res = await fetch(`${API_BASE}/teacher/ai-stats?format=csv`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Không thể tải tệp CSV.');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai_usage_stats_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    notify('Đã tải báo cáo CSV thành công.');
+  } catch (err) {
+    fail(err instanceof Error ? err : new Error('Chưa tải được báo cáo CSV.'));
+  }
+});
+
 form.addEventListener('submit', async event => {
   event.preventDefault(); const submit = /** @type {HTMLButtonElement} */ (form.querySelector('button[type=submit]')); submit.disabled = true;
   const captured = generation;
@@ -123,4 +336,4 @@ on('add-question', () => addQuestion());
 on('new-lesson', () => {form.reset(); node('question-editors').replaceChildren(); node('preview').replaceChildren(); notify('Đang soạn bài mới.');});
 on('refresh-results', results);
 updateAuth();
-if (token) {const captured = generation; refresh().then(() => {if (captured === generation) return results();}).catch(error => {if (captured === generation) fail(error);});}
+if (token) {const captured = generation; refresh().then(() => {if (captured === generation) { results(); loadGeminiKeys(); loadAiUsage(); }}).catch(error => {if (captured === generation) fail(error);});}

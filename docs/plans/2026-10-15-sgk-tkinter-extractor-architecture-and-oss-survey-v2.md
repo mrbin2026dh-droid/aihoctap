@@ -2,7 +2,7 @@
 ## (GIẢI QUYẾT TRIỆT ĐỂ TOÀN BỘ P0 & P1 THEO ĐÚNG 8 ĐIỀU KIỆN TỪ CLAUDE 3.5 SONNET)
 
 > **Mã hồ sơ**: `ARCH-PLAN-SGK-TKINTER-STUDIO-2026-V2.2`  
-> **Tệp PDF đầu vào chính thức**: `C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf` (17.11 MB, 77 trang)  
+> **Tệp PDF đầu vào chính thức**: `sgk-sample.pdf` (17.11 MB, 77 trang)  
 > **Tài liệu phán quyết đối chiếu**: `.kilo/plans/1791967657542-sonet-final-approval-verdict-tkinter.md` (Vòng 3)  
 > **Tình trạng kiểm thử tự động**: **151/151 Pytest PASS (100%)** bao gồm 7 unit tests kiểm định riêng cho Validator Socratic trong đường lưu, Reset metadata duyệt vô điều kiện, Ghi nguyên tử và Quy ước Backup đồng bộ.
 
@@ -10,14 +10,14 @@
 
 ## 1. BẰNG CHỨNG THỰC NGHIỆM ĐO ĐẠC TOÀN BỘ 77 TRANG (GIẢI QUYẾT P1-1)
 
-Thực hiện đúng yêu cầu P1-1 của Sonnet, script [`tools/benchmark_pymupdf.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/tools/benchmark_pymupdf.py) đã quét qua toàn bộ 77 trang (từ trang 0 đến trang 76) của tệp SGK Tin học 6:
+Thực hiện đúng yêu cầu P1-1 của Sonnet, script [`tools/benchmark_pymupdf.py`](file:///~/Desktop/AI%20AGENT%20SGK/tools/benchmark_pymupdf.py) đã quét qua toàn bộ 77 trang (từ trang 0 đến trang 76) của tệp SGK Tin học 6:
 
 ### Log Thực thi Nguyên văn (Verbatim Execution Log):
 ```text
 === PYMUPDF FULL BENCHMARK REPORT (ALL 77 PAGES) ===
 Python version : 3.14.0
 PyMuPDF version: 1.28.2
-Target PDF     : C:\Users\HPZBook\Downloads\sgk-tin-hoc-6-kntt-voi-cuoc-song_37202613.pdf
+Target PDF     : sgk-sample.pdf
 File size      : 17.11 MB
 Open document  : 2.96 ms
 Total pages    : 77 pages
@@ -48,14 +48,14 @@ Conclusion: page_offset = 0 (pdf_index == book_page).
 ## 2. QUYẾT ĐỊNH THIẾT KẾ & ĐỐI CHIẾU 8 ĐIỀU KIỆN CHUYỂN SANG APPROVE
 
 ### Điều kiện 1 (P0-3): Ép cứng Metadata duyệt (Unconditional Reset)
-Trong [`backend/extraction_engine.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/extraction_engine.py), hàm `validate_and_sanitize_lesson_package` ghi đè vô điều kiện:
+Trong [`backend/extraction_engine.py`](file:///~/Desktop/AI%20AGENT%20SGK/backend/extraction_engine.py), hàm `validate_and_sanitize_lesson_package` ghi đè vô điều kiện:
 - Với mọi block: `b_dict["source"] = "generated"`, `b_dict["teacher_reviewed"] = False`, `b_dict["reviewed_by"] = None`, `b_dict["reviewed_at"] = None`.
 - Với mọi quiz item: `q_dict["source"] = "generated"`, `q_dict["grounding_verified"] = False`, `q_dict["verified_by"] = None`, `q_dict["verified_at"] = None`.
 - Khóa cứng `data["status"] = "draft"`.
-- Đã có test `test_validator_forces_draft_and_resets_verification_metadata` trong [`tests/test_extraction_engine.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/tests/test_extraction_engine.py) xác nhận client gửi `teacher_reviewed: True` hoặc `grounding_verified: True` đều bị reset về `False`/`None` an toàn.
+- Đã có test `test_validator_forces_draft_and_resets_verification_metadata` trong [`tests/test_extraction_engine.py`](file:///~/Desktop/AI%20AGENT%20SGK/tests/test_extraction_engine.py) xác nhận client gửi `teacher_reviewed: True` hoặc `grounding_verified: True` đều bị reset về `False`/`None` an toàn.
 
 ### Điều kiện 2 (P0-2): Gọi Validator Socratic trong Đường lưu
-Trong [`backend/extraction_engine.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/extraction_engine.py), hàm `validate_and_sanitize_lesson_package` duyệt qua toàn bộ `raw_data["quiz"]` và gọi trực tiếp `validate_socratic_hint`:
+Trong [`backend/extraction_engine.py`](file:///~/Desktop/AI%20AGENT%20SGK/backend/extraction_engine.py), hàm `validate_and_sanitize_lesson_package` duyệt qua toàn bộ `raw_data["quiz"]` và gọi trực tiếp `validate_socratic_hint`:
 - Nếu bất kỳ câu hỏi nào có `goi_y_khi_sai` chứa mẫu lộ đáp án, chứa text đáp án đúng hoặc từ khóa cấm $\to$ Hàm trả về `(False, error_msg, None)` và từ chối lưu bài.
 - Đã có test `test_save_pipeline_rejects_leaky_hint_in_quiz` kiểm tra từ chối lưu bài khi có gợi ý lộ và PASS 100%.
 
@@ -82,7 +82,7 @@ Trong [`backend/extraction_engine.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGE
 - Do đó: Công thức `pdf_index = book_page + page_offset` có `page_offset = 0` (`pdf_index == book_page`).
 
 ### Điều kiện 6 (P1-4): Thống nhất Quy ước Backup với `backend/grounding.py`
-Trong [`backend/extraction_engine.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/extraction_engine.py), hàm `atomic_save_lesson` tạo:
+Trong [`backend/extraction_engine.py`](file:///~/Desktop/AI%20AGENT%20SGK/backend/extraction_engine.py), hàm `atomic_save_lesson` tạo:
 1. `grade_dir / f"bai{lesson_id}.blocks.json.bak"`
 2. `grade_dir / f"bai{lesson_id}_{ts}.blocks.json.bak"` (timestamp microsecond `%Y%m%d_%H%M%S_%f`)
 3. Dọn dẹp tự động: Giữ tối đa 5 bản sao lưu đa thế hệ gần nhất của bài học đó (`old_baks[:-5]`). Khớp 100% với `grounding.py` (L279-293).
@@ -93,7 +93,7 @@ Trong [`backend/extraction_engine.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGE
 - Khi đóng cửa sổ (`WM_DELETE_WINDOW`): App gọi `cancel_event.set()` và `worker_thread.join(timeout=2.0)`. Nếu quá 2.0 giây, cửa sổ đóng an toàn và giải phóng tài nguyên, không treo luồng ngầm.
 
 ### Điều kiện 8 (P1-6): Danh sách Từ khóa Cấm theo Câu
-- Đã bổ sung trường `forbidden_keywords: List[str] = Field(default_factory=list)` vào `QuizItemContract` trong [`backend/contracts.py`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/backend/contracts.py).
+- Đã bổ sung trường `forbidden_keywords: List[str] = Field(default_factory=list)` vào `QuizItemContract` trong [`backend/contracts.py`](file:///~/Desktop/AI%20AGENT%20SGK/backend/contracts.py).
 - Hàm `validate_and_sanitize_lesson_package` truyền trực tiếp `forbidden_keywords` từ từng câu hỏi vào `validate_socratic_hint`.
 
 ---
