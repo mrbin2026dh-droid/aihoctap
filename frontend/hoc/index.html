@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#183e39">
+  <meta name="description" content="Góc học tập: đọc bài, luyện tập và học offline.">
+  <title>SGK — Góc học tập</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body class="student-app is-loading">
+  <a class="skip" href="#main">Đến nội dung</a>
+  <header class="topbar"><a class="wordmark" href="./" aria-label="SGK — Góc học tập">sgk<span>Góc học tập</span></a><div class="actions"><span id="connection" class="connection">Đang kiểm tra mạng</span><button id="install" class="quiet">Cài ứng dụng</button><button id="login" class="primary">Đăng nhập</button><button id="account" hidden>Tài khoản</button></div></header>
+  <nav class="bottom-nav" aria-label="Góc học tập"><span class="nav-label">KHÔNG GIAN CỦA EM</span><button data-tab="catalog" aria-current="page"><span class="nav-number" aria-hidden="true">01</span>Môn học</button><button data-tab="practice"><span class="nav-number" aria-hidden="true">02</span>Bài tập</button><button data-tab="downloads"><span class="nav-number" aria-hidden="true">03</span>Đã tải</button><button data-tab="progress"><span class="nav-number" aria-hidden="true">04</span>Tiến độ</button><p class="nav-note">Mỗi ngày một chút.<br>Hiểu bài theo cách của em.</p></nav>
+  <div class="workspace">
+    <div class="notice" id="status" role="status" aria-live="polite">Đang tải bài học…</div>
+    <div id="update-notice" class="notice" hidden><span>Ứng dụng có bản cập nhật.</span> <button id="update-app">Cập nhật khi sẵn sàng</button></div>
+    <main id="main" tabindex="-1">
+      <section id="catalog-view" aria-labelledby="catalog-title">
+        <div class="study-hero"><div><p class="eyebrow">TỰ HỌC MỖI NGÀY</p><h1 id="catalog-title">Hôm nay,<br>mình học điều gì?</h1><p>Đọc để hiểu. Thử sức để nhớ.</p></div><div class="hero-note"><span class="hero-book" aria-hidden="true">Aa</span><p id="catalog-summary">Đang tìm bài học…</p><small>Nội dung do giáo viên xuất bản.</small></div></div>
+        <div id="resume-card" class="resume-card" hidden><div><p class="eyebrow">ĐANG HỌC DỞ</p><h2 id="resume-title"></h2><p>Nháp của em vẫn được giữ.</p></div><button id="resume" class="primary">Tiếp tục bài đang học</button></div>
+        <div class="catalog-toolbar"><label class="grade-filter" for="grade">Khối lớp<select id="grade" aria-label="Khối lớp"><option value="9">Lớp 9</option><option value="8">Lớp 8</option><option value="7">Lớp 7</option><option value="6">Lớp 6</option></select></label><label class="search-field" for="search">Tìm bài học<input id="search" type="search" placeholder="Nhập tên bài hoặc môn học" autocomplete="off"></label></div>
+        <div id="courses" class="course-grid"></div><div id="lesson-list" class="lesson-stack"></div><aside class="study-tip"><strong>Học khi không có mạng?</strong><span>Mở bài và chọn “Tải bài” trước.</span></aside>
+      </section>
+      <section id="practice-view" aria-labelledby="practice-title" hidden><div class="page-heading"><p class="eyebrow">THỬ SỨC MỖI NGÀY</p><h1 id="practice-title">Bài tập của em</h1><p>Chọn một bài để bắt đầu luyện tập.</p></div><div id="practice-list" class="lesson-stack"></div></section>
+      <section id="lesson-view" aria-labelledby="lesson-title" hidden><button id="back" class="back-button">Về danh sách</button><div class="page-heading"><p class="eyebrow" id="lesson-subject"></p><h1 id="lesson-title"></h1><details class="lesson-meta"><summary>Thông tin bài học</summary><p id="lesson-version"></p></details></div><div class="lesson-tools"><div class="mode-switch"><button id="read-lesson" aria-pressed="true">Học bài</button><button id="practice-lesson" aria-pressed="false">Làm bài tập</button></div><div class="lesson-actions"><button id="download">Tải bài</button><button id="ask-tutor" class="tutor-btn" title="Hỏi Gia sư Socrates AI">💡 Gia sư AI</button></div></div><p id="practice-help" class="inline-note" hidden></p><article id="lesson-content" class="reading-paper"></article><form id="question-form" hidden><div class="exercise-header"><h2>Tự kiểm tra kiến thức</h2><p id="answer-count"></p></div><div id="questions"></div><div class="submit-bar"><button class="primary" type="submit">Nộp bài</button><p id="draft-status" role="status"></p></div></form><div id="result" role="status"></div></section>
+      <section id="downloads-view" aria-labelledby="downloads-title" hidden><div class="page-heading"><p class="eyebrow">MANG BÀI HỌC THEO EM</p><h1 id="downloads-title">Bài đã tải</h1><p>Mở bài đã lưu, kể cả khi mất mạng.</p></div><p id="storage-note" class="inline-note">Bản tải nằm trên thiết bị này. Xóa dữ liệu trình duyệt có thể làm mất bản tải và nháp chưa gửi.</p><div id="downloads" class="lesson-stack"></div></section>
+      <section id="progress-view" aria-labelledby="progress-title" hidden><div class="page-heading"><p class="eyebrow">NHÌN LẠI TỪNG BƯỚC</p><h1 id="progress-title">Tiến độ của em</h1><p>Bài chờ gửi và bài máy chủ đã nhận.</p></div><button id="sync">Đồng bộ bài nộp</button><div id="progress" class="lesson-stack"></div></section>
+      <noscript>Em cần bật JavaScript để học và lưu bài.</noscript>
+    </main><footer class="student-footer">SGK · Học theo nhịp của em.</footer>
+  </div>
+  <dialog id="login-dialog" aria-labelledby="login-title"><p class="eyebrow">GÓC HỌC TẬP CỦA EM</p><h2 id="login-title">Vào góc học tập</h2><div id="account-info" hidden></div><form id="login-form"><p id="login-help">Dùng mã học sinh do giáo viên cấp.</p><label>Mã học sinh<input name="code" autocomplete="username" inputmode="numeric" pattern="[0-9]{6}" required maxlength="6" aria-describedby="login-help"></label><button class="primary" type="submit">Vào học</button><p id="login-error" role="alert"></p></form><div class="actions dialog-actions"><button id="logout" hidden>Đăng xuất</button><button id="close-login" type="button">Đóng</button></div></dialog>
+  <dialog id="install-help-dialog" aria-labelledby="install-title"><p class="eyebrow">GÓC HỌC TẬP LUÔN BÊN EM</p><h2 id="install-title">Cài ứng dụng SGK</h2><p id="install-state"></p><ol><li><strong>Chrome hoặc Edge:</strong> mở menu trình duyệt, chọn cài ứng dụng nếu có.</li><li><strong>iPhone/iPad:</strong> mở bằng Safari, chọn Chia sẻ → Thêm vào Màn hình chính.</li></ol><p>Tải bài khi có mạng trước khi học offline.</p><p class="meta">Nếu đang xem trong ứng dụng khác, hãy mở địa chỉ trang bằng trình duyệt hỗ trợ. Cài đặt không tự tải mọi bài học.</p><button id="close-install">Đã hiểu</button></dialog>
+  <dialog id="tutor-dialog" class="tutor-dialog" aria-labelledby="tutor-title"><div class="tutor-header"><div><p class="eyebrow">PHƯƠNG PHÁP SOCRATES</p><h2 id="tutor-title">Gia sư Tin học AI</h2><p id="tutor-context-note" class="tutor-context-note">Đang hỗ trợ nội dung bài học</p></div><button id="close-tutor" class="close-btn" type="button" aria-label="Đóng">✕</button></div><div id="tutor-messages" class="tutor-messages" role="log" aria-live="polite"></div><div id="tutor-offline-banner" class="tutor-offline-banner" hidden>⚠️ Thiết bị đang offline. Kết nối mạng để trò chuyện cùng Gia sư AI.</div><form id="tutor-form" class="tutor-form"><input id="tutor-input" type="text" placeholder="Hỏi Thầy/Cô AI về bài học hoặc câu hỏi này…" maxlength="500" required autocomplete="off" aria-label="Nội dung câu hỏi cho Gia sư AI"><button id="tutor-submit" type="submit" class="primary">Gửi</button></form></dialog>
+</body>
+</html>

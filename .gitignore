@@ -24,6 +24,8 @@ scratch/
 .worktrees/
 
 # Du lieu van hanh & bao ve thong tin hoc sinh
+*.sqlite3
+*.sqlite
 data/students_registry.json
 data/exams/submissions/
 frontend/data/exams/submissions/

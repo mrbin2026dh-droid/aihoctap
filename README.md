@@ -1,5 +1,9 @@
 # AI SGK TIN HỌC THCS — NỀN TẢNG TỰ HỌC & GIA SƯ AI THÔNG MINH
 
+**Dành cho AI làm việc với dự án:** bắt buộc đọc [nhật ký aisgk.md](aisgk.md) và [quy tắc AGENTS.md](AGENTS.md) trước khi tiếp tục. Ghi mọi kế hoạch và thay đổi code vào nhật ký để AI khác tiếp nối.
+
+**PWA học sinh:** `/hoc/`; **xuất bản bài học:** `/hoc/teacher.html`. Xem [hướng dẫn chạy, offline và cấu hình lưu bền](docs/PWA.md).
+
 Ứng dụng hỗ trợ học sinh THCS (Lớp 6, Lớp 7, Lớp 8, Lớp 9) tự học môn Tin học theo chương trình **Kết nối tri thức với cuộc sống**, tích hợp **Gia sư Trí tuệ Nhân tạo Socrates (Google Gemini AI)**, **Đăng nhập Google Firebase** và **Bảng điều khiển Quản lý Học sinh & Phân tích Sư phạm** dành cho Thầy/Cô.
 
 ---

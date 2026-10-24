@@ -80,6 +80,9 @@ async def add_no_cache_headers(request: Request, call_next):
     """Vô hiệu hóa cache cho frontend để đảm bảo CSS và JS sửa đổi luôn có hiệu lực tức thì."""
     response = await call_next(request)
     path = request.url.path
+    if path.startswith('/api/pwa/') and path != '/api/pwa/catalog' and not path.startswith('/api/pwa/lessons/'):
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Pragma'] = 'no-cache'
     if path == "/" or path.endswith((".html", ".css", ".js", ".woff2", ".ttf")):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
@@ -1250,6 +1253,9 @@ def get_exam_results_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi lấy kết quả: {str(e)}")
 
+
+from backend.pwa_api import create_router as create_pwa_router
+app.include_router(create_pwa_router(verify_teacher_session, verify_student_session))
 
 # Phục vụ giao diện Frontend tĩnh
 if FRONTEND_DIR.exists():

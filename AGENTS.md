@@ -1,3 +1,16 @@
+# BẮT BUỘC ĐỌC NHẬT KÝ TRƯỚC KHI LÀM VIỆC
+
+Áp dụng cho mọi AI làm việc với dự án này, gồm Antigravity, Codex và các agent khác.
+
+1. Trước khi lập kế hoạch, sửa code hoặc tiếp tục công việc, bắt buộc đọc [aisgk.md](aisgk.md) ở thư mục gốc, nhất là phần trạng thái hiện tại và mục nhật ký mới nhất.
+2. Mọi kế hoạch mới hoặc thay đổi kế hoạch phải được ghi vào `aisgk.md` trước khi thực hiện; liên kết tới tệp kế hoạch chi tiết nếu có.
+3. Sau mỗi nhóm thay đổi code và trước khi bàn giao/dừng phiên, cập nhật `aisgk.md`: ngày giờ (Asia/Bangkok), AI thực hiện, mục tiêu, tệp đã sửa, kiểm thử thực tế, lỗi/vướng mắc và bước tiếp theo. Ghi cả công việc dở dang để AI khác tiếp nối.
+4. Giữ nguyên lịch sử, thêm mục mới; không xóa hoặc ghi đè nhật ký cũ. Phân biệt rõ dự kiến, đã làm, đã kiểm chứng và chưa kiểm chứng; không ghi PASS khi chưa chạy kiểm thử.
+5. Không ghi mật khẩu, token, nội dung `.env`, dữ liệu cá nhân hoặc dữ liệu học sinh vào nhật ký. Bảo toàn thay đổi sẵn có của người dùng/AI khác.
+6. Nếu thiếu công cụ/skill bắt buộc, ghi rõ công cụ thiếu và phần việc bị chặn; không tự nhận đã chạy hoặc đã được phê duyệt.
+
+---
+
 # HIẾN PHÁP ANTIGRAVITY (THE MASTER PIPELINE) - BẮT BUỘC DỰ ÁN
 **Mức độ ưu tiên**: Tuyệt đối cao nhất (Priority 1 - Workspace Root Law). CẤM SUY ĐOÁN (ZERO-GUESSWORK).
 **Phạm vi áp dụng**: MỌI thao tác trong dự án `AI AGENT SGK`.
