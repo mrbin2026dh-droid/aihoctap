@@ -1,0 +1,8 @@
+# Release repair plan - 2026-10-24
+User requests repair of all 20 remaining failures and merge/push main for student use. Prior autonomous approval persists; independent Codex reviewers replace unavailable Sonnet. Preserve existing unrelated documents and PIN behavior.
+
+Contracts: authentication stays server-issued; unknown/blocked students cannot enter. Teacher APIs reject forged/expired tokens. Exam identity, timing, complete submission and grading stay authoritative. Analytics must use the isolated/configured roster, represent not-started students, honor grade/class and contain no fabricated individual topic mastery. Browser tests must use independent local servers, real UI auth and disposable data, without paid AI or cloud writes. No skips/xfails or relaxed security to obtain green tests.
+
+Work: independent frontend and exam agents inspect/reproduce/fix their assigned failures; primary repairs analytics and shared test isolation. Modernize obsolete selectors and auth setup against current public behavior; retain meaningful business assertions. Add regressions before production fixes. Keep all prior tutor guarantees.
+
+Verification: reproduce named failures; run affected tests, whole pytest suite, Node/V8/Oxlint/Alibaba and independent review. Exercise anonymous/student/teacher and cross-context exam flows plus reloads, responsive/keyboard and local performance. Commit only reviewed task files, preserve operational data. After all required checks pass, fast-forward main without force; push and verify origin/main SHA. Verify live deployment only if a deployment target is actually available; do not equate Git push with confirmed hosting rollout.

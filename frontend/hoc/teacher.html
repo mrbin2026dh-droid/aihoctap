@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1e40af">
+  <title>SGK — Xuất bản bài học</title>
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./teacher.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Đến nội dung</a>
+  <header class="topbar"><a class="wordmark" href="./">SGK<span>Góc giáo viên</span></a><button id="teacher-logout" hidden>Đăng xuất</button></header>
+  <div id="status" class="notice" role="status" aria-live="polite">Đăng nhập để quản lý bài học.</div>
+  <main id="main" class="teacher-layout" tabindex="-1">
+    <section id="auth-section" class="teacher-section">
+      <h1>Xuất bản bài học</h1>
+      <form id="teacher-login"><label>Mã PIN giáo viên<input name="pin" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Đăng nhập giáo viên</button></form>
+    </section>
+    <div id="editor" hidden>
+      <section class="teacher-section"><h1>Bài học của lớp</h1><label>Bài đã xuất bản<select id="published"><option value="">Chọn bài để chỉnh sửa</option></select></label><button id="load-lesson">Mở bài đã chọn</button></section>
+      <form id="publish-form">
+        <section class="teacher-section"><h2>Nội dung bài học</h2><p>Sửa bài tạo phiên bản mới. Bài đang làm giữ nguyên.</p><div class="teacher-grid">
+          <label>Mã môn<input name="subject_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin-hoc"></label>
+          <label>Tên môn<input name="subject_name" required maxlength="500"></label>
+          <label>Khối lớp<select name="grade"><option value="9">Lớp 9</option><option value="8">Lớp 8</option><option value="7">Lớp 7</option><option value="6">Lớp 6</option></select></label>
+          <label>Mã bài<input name="lesson_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="bai-1"></label>
+          <label class="full">Tiêu đề<input name="title" required maxlength="500"></label>
+          <label class="full">Nội dung bài học<textarea name="content_markdown" required maxlength="200000" rows="12"></textarea></label>
+        </div><button id="preview-button" type="button">Xem trước nội dung</button><article id="preview"></article></section>
+        <section class="teacher-section"><h2>Câu hỏi và bài tập</h2><p>Đáp án được giữ riêng trên máy chủ.</p><div id="question-editors"></div><button id="add-question" type="button">Thêm câu hỏi</button></section>
+        <div class="actions"><button class="primary" type="submit">Xuất bản bài học</button><button id="new-lesson" type="button">Soạn bài mới</button></div>
+      </form>
+      <section class="teacher-section"><h2>Bài học sinh đã nộp</h2><button id="refresh-results">Cập nhật kết quả</button><div id="teacher-results"></div></section>
+    </div>
+  </main>
+</body>
+</html>
