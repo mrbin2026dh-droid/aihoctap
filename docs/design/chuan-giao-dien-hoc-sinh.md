@@ -51,3 +51,14 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 - Học sinh: sinh bằng `python3 tools/gen_dark_theme.py` (đổi màu ở `TOK_VARS`/`EXTRA`), rồi `package_student_pwa.py --stamp`.
 - Giáo viên: khối `TEACHER-DARK` cuối `teacher.css`; theo hệ thống hoặc `localStorage aisgk-theme` (dùng chung nút đổi giao diện của học sinh).
 - Kiểm thử: `test_teacher_ui_standard.cjs` chạy cả light và dark.
+
+## Menu học sinh = chức năng giáo viên (2026-10-25)
+| Giáo viên | Học sinh | Ghi chú |
+|---|---|---|
+| Soạn bài | Học | bài giảng + câu luyện tập |
+| (câu luyện tập trong bài) | Luyện tập | làm lại không giới hạn |
+| Kiểm tra (chưa làm) | chưa có tab | thêm tab "Kiểm tra" khi có backend đề thi, 1 lần làm |
+| Tài liệu | Tài liệu | Google Drive |
+| Tài khoản học sinh | Cài đặt > Tài khoản | đổi PIN |
+| (kết quả bài nộp) | Tiến độ | |
+"Đã tải" (ngoại tuyến) là tính năng kỹ thuật, nằm trong Cài đặt > Tải ngoại tuyến, không phải tab.

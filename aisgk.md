@@ -790,3 +790,8 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Sửa tiêu đề câu hỏi đè viền thẻ, nút Làm lại, trang Cài đặt lặp tiêu đề/2 mũi tên.
 - Việc mở: wrangler deploy (bắt buộc để bỏ giới hạn 2 lần).
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Menu học sinh khớp chức năng giáo viên; thanh nút bài học đều nhau
+- Tab "Kiểm tra" đổi thành "Luyện tập" (đúng nội dung); bỏ tab "Đã tải" (đã có trong Cài đặt). Thanh Học bài/Làm bài tập/Tải bài/Gia sư AI cùng cao 48px, cùng viền.
+- Việc mở: tab Kiểm tra thật chờ backend đề thi.
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

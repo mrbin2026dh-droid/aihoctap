@@ -639,6 +639,12 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app #close-settings{min-width:48px;min-height:48px;padding:0;justify-content:center}
 .student-app .question legend,.student-app fieldset.question legend{font-size:var(--fs-body);font-weight:700;line-height:1.5}
 @media(min-width:960px){.student-app .settings-detail .back-button{display:none}}
+.student-app .lesson-tools,.student-app .lesson-actions{gap:12px}
+.student-app .mode-switch{gap:0;padding:0;background:transparent;border:1px solid var(--control);border-radius:12px;overflow:hidden}
+.student-app .mode-switch button{min-height:46px;border-radius:0;padding:8px 18px}
+.student-app .lesson-actions button{min-height:48px;padding:8px 18px;border:1px solid var(--control);border-radius:12px}
+.student-app .lesson-actions button,.student-app .lesson-actions .tutor-btn{background:var(--surface);color:var(--ink)}
+.student-app .bottom-nav .nav-text{white-space:nowrap}
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}
