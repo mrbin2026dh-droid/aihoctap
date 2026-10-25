@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Claude ACCEPT bản vá kẹt 429 đăng nhập giáo viên (docs/audits/2026-10-25-teacher-auth-fix.md). Antigravity đẩy bản làm sạch tài liệu (xóa mã PIN khởi tạo); hướng dẫn Người dùng đổi PIN giáo viên ngay trên giao diện và đặt TEACHER_ADMIN_SECRET mới ngẫu nhiên qua wrangler.
+- Yêu cầu mới nhất: Antigravity hoàn thành triển khai Worker aihoctap-gate (bản mới 22f4c063-0104-4bfd-8823-d328b6d33063, ID cũ rollback dd0e821d-ec46-47af-b194-213e91135e68) và dọn duplicate rule trong database.rules.json; smoke test đạt chuẩn, bàn giao Claude thẩm định nghiệm thu.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -850,3 +850,8 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Việc mở: Antigravity chạy `wrangler deploy` + deploy `database.rules.json` (nếu chưa thì tab Thi báo lỗi 404); thi thử với một lớp thật (bước 5); chưa thử trên điện thoại thật/Safari.
 XONG bước 3,4 kiểm tra / TIẾP THEO → Antigravity
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
+
+## 2026-10-25 · Antigravity · Triển khai Worker và hoàn thành Smoke Test Kiểm tra & Điểm yếu
+- Làm: Chạy node --check (0 lỗi), oxlint (0 lỗi, 14 cảnh báo), quét bí mật sạch, lưu ID Worker cũ dd0e821d-ec46-47af-b194-213e91135e68. Dọn duplicate rule exams trong database.rules.json. Deploy Worker aihoctap-gate thành công (bản mới: 22f4c063-0104-4bfd-8823-d328b6d33063).
+- Kiểm thử thực tế: 21 test suite PASS 100% (gồm test_exam_backend.mjs, test_exam_student_ui.cjs, test_exam_teacher_monitor.cjs, test_exam_import_browser.cjs). Smoke test thật: /api/health 200, /api/pwa/catalog 200, /api/pwa/exams 401, /api/pwa/teacher/exams 401, /api/pwa/teacher/analytics 401 (triệt tiêu hoàn toàn lỗi 404 cũ); F12 console 0 lỗi.
+- Việc mở: Người dùng cập nhật database.rules.json lên Firebase Console (hoặc npx firebase-tools); Claude nghiệm thu độc lập theo AGENTS.md.

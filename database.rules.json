@@ -28,14 +28,6 @@
         }
       }
     },
-    "exams": {
-      ".read": true,
-      ".write": "auth != null && auth.token.admin === true",
-      ".indexOn": [
-        "grade",
-        "status"
-      ]
-    },
     "exam_answers": {
       ".read": "auth != null && auth.token.admin === true",
       ".write": "auth != null && auth.token.admin === true"
