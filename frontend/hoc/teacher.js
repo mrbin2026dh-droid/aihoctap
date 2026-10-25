@@ -27,10 +27,12 @@ let generation = 0;
 let lessonDirty = false;
 let quotaDirty = false;
 const DRAFT_KEY = 'aisgk-teacher-draft';
+/** Phiên hết hạn: Worker trả 401, hoặc 403 kèm thông báo token cho đường dẫn giáo viên. */
+function isAuthError(e) { return e instanceof ApiError && (e.status === 401 || (e.status === 403 && /Token xác thực/.test(e.message))); }
 /** @param {Error} error */
 function fail(error) {
-  if (error instanceof ApiError && error.status === 401) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); mustChangePin = false; generation++; updateAuth();}
-  if (error instanceof ApiError && error.status === 401) { notify('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.', true); return; }
+  if (isAuthError(error)) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); mustChangePin = false; generation++; updateAuth();}
+  if (isAuthError(error)) { notify('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.', true); return; }
   notify(error instanceof Error ? error.message : 'Thao tác chưa hoàn thành. Hãy thử lại.', true);
 }
 /** @param {string} id @param {()=>void|Promise<void>} action */
@@ -570,7 +572,7 @@ async function bulkAction(kind) {
         if (kind === 'delete') await api(`/teacher/students/${id}`, {method: 'DELETE', token});
         else await api(`/teacher/students/${id}/lock`, {method: 'POST', token, body: {locked: kind === 'lock'}});
         done++; selectedStudents.delete(id);
-      } catch (e) { failed++; if (e instanceof ApiError && e.status === 401) { fail(e); return; } }
+      } catch (e) { failed++; if (isAuthError(e)) { fail(e); return; } }
     }
   } finally {
     inFlight.delete(key);
