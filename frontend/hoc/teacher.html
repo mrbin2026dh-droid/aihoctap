@@ -204,31 +204,11 @@
 <div class="t-field"><label for="field-exam_answers">Hiện đáp án</label><select name="exam_answers" id="field-exam_answers"><option value="after-submit">Sau nộp</option><option value="after-close">Sau khi đóng</option><option value="never">Không</option></select>
 </div><label class="t-check" for="field-exam-shuffle"><input id="field-exam-shuffle" name="exam_shuffle" type="checkbox">Trộn câu hỏi</label>
 </div>
-<div class="t-actions"><button type="button" id="act-exams-template" class="t-button" data-action="exam-template" disabled aria-disabled="true" >Tải mẫu Excel đề</button><label class="t-file" for="field-exam-file">Tải lên Excel câu hỏi<input id="field-exam-file" type="file" accept=".xlsx,.xls" data-action="exam-import" disabled></label>
+<div class="t-actions"><button type="button" id="act-exams-template" class="t-button" data-action="exam-template">Tải mẫu Excel đề</button><label class="t-file" for="field-exam-file">Tải lên Excel câu hỏi<input id="field-exam-file" type="file" accept=".xlsx" data-action="exam-import"></label>
 </div>
-<section class="t-card">
-<h3>Xem trước câu hỏi</h3>
-<p>1 dòng hợp lệ · 1 dòng lỗi</p>
-<table class="t-table ">
-<caption>Xem trước nhập câu hỏi</caption>
-<thead>
-<tr>
-<th scope="col">Dòng</th>
-<th scope="col">Kết quả</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-label="Dòng">1</td>
-<td data-label="Kết quả">Hợp lệ</td>
-</tr>
-<tr>
-<td data-label="Dòng">2</td>
-<td data-label="Kết quả"><span class="t-badge t-badge-error">Thiếu đề bài</span>
-</td>
-</tr>
-</tbody>
-</table>
+<section class="t-card" id="exam-import-card" aria-live="polite">
+<h3>Câu hỏi từ file Excel</h3>
+<div id="exam-import-preview"><p class="t-muted">Chưa tải file. Bấm "Tải mẫu Excel đề", điền câu hỏi và điểm từng câu rồi tải lên.</p></div>
 </section>
 <div class="t-actions"><button type="submit" class="t-button t-primary" data-action="save-exam" disabled aria-disabled="true">Lưu đề</button>
 </div>

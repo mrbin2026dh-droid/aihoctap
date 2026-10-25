@@ -59,3 +59,6 @@ Chống gian lận mức hợp lý (không hứa hơn khả năng của trình d
 3. Màn hình thi học sinh (có test hành vi: đồng hồ, bảng câu, đánh dấu, nộp, hết giờ, mất mạng, khôi phục).
 4. Giáo viên: quản lý đề, nhập Excel, báo cáo kết quả.
 5. Thi thử với một lớp, đo và sửa trước khi dùng thật.
+
+## 7. File Excel nhập câu hỏi (đã làm, 2026-10-25)
+Cột theo thứ tự: STT, Loại (TN/TL), Câu hỏi, A, B, C, D, Đáp án đúng, Điểm, Chủ đề, Gợi ý. Điểm bắt buộc cho mọi câu (lớn hơn 0, tối đa 100, 2 chữ số thập phân, chấp nhận dấu phẩy). Trắc nghiệm: A và B bắt buộc, điền liền nhau, đúng một đáp án. Tự luận: để trống A-D và đáp án. Có kiểm tra tiêu đề cột, trùng câu, độ dài, tối đa 200 câu, file .xlsx dưới 2 MB. Tất cả hoặc không: còn một dòng lỗi thì chưa nhận câu nào. Tổng điểm khác 10 thì báo, điểm học sinh quy về thang 10. Mã: `frontend/hoc/exam-import.js` (hàm thuần, có test), thư viện Excel ở `frontend/hoc/vendor/` (MIT, nạp khi cần).

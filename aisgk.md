@@ -830,3 +830,9 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Việc mở: màn thi và Worker thi (theo kế hoạch bước 2-5); vẫn cần `wrangler deploy` + deploy `database.rules.json`.
 XONG menu Thi + kế hoạch / TIẾP THEO → Antigravity
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
+
+## 2026-10-25 - Claude - Nhập đề từ Excel + sửa lỗi báo cáo khi máy chủ cũ
+- Làm: nút "Tải mẫu Excel đề" tạo file thật (sheet Câu hỏi + Hướng dẫn), tải file lên được kiểm tra từng dòng (loại TN/TL, đáp án, điểm mỗi câu, trùng, độ dài), báo thành công hoặc lỗi theo dòng. Thẻ báo cáo điểm yếu không còn bật hộp thoại lỗi khi máy chủ chưa triển khai bản mới (báo nhẹ trong thẻ). Test: test_exam_import.mjs, test_exam_import_browser.cjs.
+- Việc mở: lưu đề lên máy chủ (kế hoạch bước 2); `wrangler deploy` + rules vẫn chờ Antigravity (lỗi 404 analytics là do máy chủ chưa cập nhật).
+XONG nhập Excel / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."

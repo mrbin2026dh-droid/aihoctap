@@ -2,6 +2,7 @@
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
 import * as ui from './teacher-ui.js';
+import {parseExamRows, templateRows} from './exam-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
 /** @typedef {import('./contracts').PrivateQuestion} PrivateQuestion */
@@ -169,6 +170,73 @@ async function results() {
   }
   if (!attempts.length) target.append(el('p', 'Chưa có bài nộp.'));
 }
+/** Thư viện Excel nạp khi cần (chỉ giáo viên dùng), lưu cục bộ trong thư mục vendor.
+ * @param {string} src @returns {Promise<void>} */
+const scriptLoads = new Map();
+function loadScript(src) {
+  if (!scriptLoads.has(src)) scriptLoads.set(src, new Promise((resolve, reject) => {
+    const tag = document.createElement('script'); tag.src = src; tag.onload = () => resolve(); tag.onerror = () => { scriptLoads.delete(src); reject(new Error('Không tải được bộ đọc Excel. Kiểm tra kết nối mạng rồi thử lại.')); }; document.head.append(tag);
+  }));
+  return /** @type {Promise<void>} */ (scriptLoads.get(src));
+}
+/** @type {{questions:import('./exam-import.js').ImportedQuestion[], total_points:number}} */
+let importedExam = {questions: [], total_points: 0};
+async function downloadExamTemplate() {
+  await loadScript('./vendor/write-excel-file.min.js');
+  const sample = templateRows();
+  /** @param {unknown} v @param {boolean} [bold] */
+  const cell = (v, bold = false) => typeof v === 'number' ? {value: v, type: Number, ...(bold ? {fontWeight: 'bold'} : {})} : {value: String(v ?? ''), ...(bold ? {fontWeight: 'bold'} : {})};
+  const questions = sample.questions.map((row, i) => row.map(v => cell(v, i === 0)));
+  const guide = sample.guide.map((row, i) => row.map(v => cell(v, i === 0)));
+  const widths = [6, 14, 52, 28, 28, 28, 28, 14, 8, 22, 34];
+  // @ts-ignore thư viện nạp bằng thẻ script
+  await globalThis.writeXlsxFile([
+    {data: questions, sheet: 'Câu hỏi', columns: widths.map(width => ({width})), stickyRowsCount: 1},
+    {data: guide, sheet: 'Hướng dẫn', columns: [{width: 110}]}
+  ]).toFile('mau-de-kiem-tra.xlsx');
+}
+/** @param {File} file */
+async function importExamFile(file) {
+  const target = node('exam-import-preview'); target.replaceChildren(el('p', 'Đang kiểm tra file…', 't-muted'));
+  importedExam = {questions: [], total_points: 0};
+  if (!/\.xlsx$/i.test(file.name)) { target.replaceChildren(el('p', 'Chỉ nhận file .xlsx. Hãy dùng file tải từ "Tải mẫu Excel đề".', 'notice error')); return; }
+  if (file.size > 2 * 1024 * 1024) { target.replaceChildren(el('p', 'File lớn hơn 2 MB. Hãy tách thành nhiều đề.', 'notice error')); return; }
+  /** @type {unknown[][]} */ let rows;
+  try {
+    await loadScript('./vendor/read-excel-file.min.js');
+    // @ts-ignore thư viện nạp bằng thẻ script
+    const result = await globalThis.readXlsxFile(file);
+    rows = Array.isArray(result) && result.length && result[0] && !Array.isArray(result[0]) && result[0].data ? result[0].data : result;
+  } catch (e) {
+    target.replaceChildren(el('p', e instanceof Error && /Không tải được/.test(e.message) ? e.message : 'Không đọc được file. Hãy dùng file .xlsx tải từ mẫu, không đổi định dạng.', 'notice error')); return;
+  }
+  const parsed = parseExamRows(rows);
+  target.replaceChildren();
+  if (parsed.fatal) { target.append(el('p', parsed.fatal, 'notice error')); if (!parsed.reports.length) return; }
+  const bad = parsed.reports.filter(r => !r.ok).length;
+  if (parsed.valid) {
+    importedExam = {questions: parsed.questions, total_points: parsed.total_points};
+    const kinds = {choice: parsed.questions.filter(q => q.kind === 'choice').length, text: parsed.questions.filter(q => q.kind === 'text').length};
+    target.append(el('p', `Tải lên thành công: ${parsed.questions.length} câu (${kinds.choice} trắc nghiệm, ${kinds.text} tự luận), tổng ${String(parsed.total_points).replace('.', ',')} điểm.`, 'notice success'));
+    if (parsed.total_points !== 10) target.append(el('p', `Tổng điểm là ${String(parsed.total_points).replace('.', ',')}, không phải 10. Điểm của học sinh sẽ quy về thang 10.`, 't-muted'));
+  } else if (bad) target.append(el('p', `Có ${bad} dòng chưa đúng. Sửa trong file rồi tải lại; chưa có câu nào được nhận.`, 'notice error'));
+  const table = el('table', '', 't-table'); table.append(el('caption', 'Kết quả kiểm tra từng dòng'));
+  const head = el('thead'); const hr = el('tr'); for (const name of ['Dòng', 'Câu hỏi', 'Loại', 'Điểm', 'Kết quả']) { const th = el('th', name); th.scope = 'col'; hr.append(th); } head.append(hr);
+  const body = el('tbody');
+  const byRow = new Map(parsed.questions.map(q => [q.row, q]));
+  for (const report of parsed.reports) {
+    const q = byRow.get(report.row); const tr = el('tr');
+    const line = /** @type {unknown[]} */ (rows[report.row - 1] || []);
+    const cells = [[String(report.row), 'Dòng'], [String(q?.prompt ?? line[2] ?? '').slice(0, 80), 'Câu hỏi'], [q ? (q.kind === 'choice' ? 'Trắc nghiệm' : 'Tự luận') : String(line[1] ?? ''), 'Loại'], [q ? String(q.points).replace('.', ',') : String(line[8] ?? ''), 'Điểm']];
+    for (const [value, label] of cells) { const td = el('td', value); td.dataset.label = label; tr.append(td); }
+    const result = el('td'); result.dataset.label = 'Kết quả';
+    result.append(report.ok ? el('span', 'Hợp lệ', 't-badge') : el('span', report.errors.join('; '), 't-badge t-badge-error')); tr.append(result); body.append(tr);
+  }
+  table.append(head, body); target.append(table);
+}
+const examFileInput = /** @type {HTMLInputElement|null} */ (document.getElementById('field-exam-file'));
+examFileInput?.addEventListener('change', () => { const file = examFileInput.files?.[0]; if (file) importExamFile(file).catch(e => notify(e instanceof Error ? e.message : 'Chưa đọc được file.', true)).finally(() => { examFileInput.value = ''; }); });
+document.getElementById('act-exams-template')?.addEventListener('click', () => { downloadExamTemplate().catch(e => notify(e instanceof Error ? e.message : 'Chưa tạo được file mẫu.', true)); });
 const LEVEL_TEXT = {weak: 'Yếu', fair: 'Cần củng cố', good: 'Tốt', none: 'Chưa có'};
 /** @param {number|null} percent @param {string} level */
 function levelBar(percent, level) {
@@ -181,7 +249,13 @@ function analyticsBlock(title, note) { const block = el('section', '', 'a-block'
 async function loadAnalytics() {
   const captured = generation;
   const target = node('teacher-analytics'); target.replaceChildren(el('p', 'Đang tải báo cáo…', 't-muted'));
-  const data = await api('/pwa/teacher/analytics', {token});
+  /** @type {any} */ let data;
+  try { data = await api('/pwa/teacher/analytics', {token}); }
+  catch (error) {
+    if (isAuthError(error)) throw error;
+    if (captured === generation) target.replaceChildren(el('p', error instanceof ApiError && error.status === 404 ? 'Máy chủ chưa cập nhật tính năng báo cáo. Hãy triển khai bản máy chủ mới rồi tải lại.' : 'Chưa tải được báo cáo. Bấm "Tải lại báo cáo" để thử lại.', 't-muted'));
+    return;
+  }
   if (captured !== generation || !token) return;
   target.replaceChildren();
   const hasDetail = (data.lessons || []).some(/** @param {any} l */ l => l.questions.length);
