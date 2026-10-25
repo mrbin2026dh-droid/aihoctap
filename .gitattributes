@@ -1,2 +1,6 @@
 * text=auto
+*.png binary
+*.woff2 binary
 frontend/hoc/** text eol=lf
+frontend/hoc/**/*.png binary
+frontend/hoc/**/*.woff2 binary
