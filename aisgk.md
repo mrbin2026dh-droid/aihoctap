@@ -805,3 +805,10 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Tab Tổng quan là trang đầu sau đăng nhập: gợi ý bài tiếp, vòng thành thạo, chuỗi ngày, điểm TB, tỉ lệ đúng, 7 ngày, lộ trình từng bài, hoạt động gần đây, mục Cách tính. Số liệu có test (test_dashboard_numbers.cjs).
 - Việc mở: wrangler deploy (submitted_at cho chuỗi ngày/biểu đồ); chưa có thời gian học vì chưa đo.
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Gia sư AI có căn cứ + nút AI mọi trang; 4 nút bài học đều; sửa bài bị từ chối
+- Lỗi nặng: app gửi hỏi AI không kèm token (401); Worker không có nội dung bài làm căn cứ. Đã sửa cả hai (test_tutor_grounding.mjs). Kế hoạch: docs/plans/ke-hoach-gia-su-ai.md (giai đoạn B tiếp theo: đầu ra có cấu trúc + kiểm tra trích dẫn).
+- Bài bị máy chủ từ chối (403) không còn kẹt hàng đợi; app tự bắt đầu lượt mới.
+- Giao diện: 4 nút bài học tách đều; bỏ tiêu đề Tổng quan; Đồng bộ cạnh lời chào; nút AI trên thanh đầu.
+- Việc mở: wrangler deploy (BẮT BUỘC: bỏ giới hạn 2 lần nộp, AI có căn cứ, 12h, submitted_at).
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

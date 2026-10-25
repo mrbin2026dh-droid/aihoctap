@@ -1292,6 +1292,26 @@ export async function requireTeacher(request, env, signingKeys, { allowMustChang
 /**
  * Socratic Pedagogy System Prompt for Worker AI Tutor (E2, F1, F3)
  */
+/**
+ * Tải nội dung bài học công khai từ máy chủ (Firebase RTDB hoặc kho thử) để làm căn cứ cho Gia sư AI.
+ * Không tin dữ liệu bài học do trình duyệt gửi lên.
+ * @returns {Promise<{content_markdown?:string,title?:string,questions?:any[]}|null>}
+ */
+async function loadPublicLesson(env, courseId, lessonId) {
+  if (!IdValidationContract.isValidId(courseId || '') || !IdValidationContract.isValidId(lessonId || '')) return null;
+  try {
+    if (env.FIREBASE_DATABASE_URL) {
+      const res = await fetch(`${env.FIREBASE_DATABASE_URL}/packages/${encodeURIComponent(`${courseId}:${lessonId}`)}.json`);
+      if (res.ok) return (await res.json()) || null;
+      return null;
+    }
+    if (SecurityConfigContract.isMockModeAllowed(env)) return env.TEST_LESSONS?.[`${courseId}:${lessonId}`] || null;
+  } catch (e) {
+    console.error('[TUTOR_LESSON_LOAD_ERROR]', e?.message || e);
+  }
+  return null;
+}
+
 export const WORKER_SOCRATIC_PROMPT = `Bạn là Thầy/Cô Trợ lý Sư phạm Tin học THCS, giảng dạy theo chuẩn Sách giáo khoa Tin học.
 
 BỘ NGUYÊN TẮC BẤT BIẾN (BẮT BUỘC TUÂN THỦ 100%):
@@ -3897,6 +3917,15 @@ export default {
         });
       }
 
+      // Căn cứ trả lời lấy từ máy chủ; ở môi trường thật, thiếu bài học thì không gọi AI và không tốn lượt.
+      const lessonForTutor = await loadPublicLesson(env, courseId, lessonId);
+      if (!lessonForTutor && !SecurityConfigContract.isMockModeAllowed(env)) {
+        return new Response(JSON.stringify({ detail: 'Hãy chọn một bài học để hỏi gia sư về bài đó.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // J1 / A9 / B7: Atomic quota reservation in Durable Object (locks slot immediately to prevent concurrency race)
       const studentClassId = authResult.payload.claims?.class_code || authResult.payload.claims?.grade || '';
       const reserveRes = await gateStub.fetch('http://do/reserve-gemini-limit', {
@@ -3992,11 +4021,18 @@ export default {
 
           // E2: Socratic System Prompt with curriculum grounding (Zero answer keys)
           let systemText = WORKER_SOCRATIC_PROMPT;
-          if (context?.curriculum_text) {
-            systemText += `\n\nTÀI LIỆU BÀI HỌC CHUẨN TRONG SGK:\n"""\n${String(context.curriculum_text).slice(0, 4000)}\n"""`;
-          }
-          if (context?.question_prompt) {
-            systemText += `\n\nCÂU HỎI HIỆN TẠI HỌC SINH ĐANG LÀM:\n"""\n${String(context.question_prompt).slice(0, 1000)}\n"""\n(Lưu ý: Không bao giờ tiết lộ đáp án của câu hỏi này!)`;
+          // Căn cứ: nội dung bài học lấy từ máy chủ. Gia sư chỉ được dựa vào đây, không bịa thêm.
+          if (lessonForTutor?.content_markdown) {
+            systemText += `\n\nTÀI LIỆU BÀI HỌC (nguồn duy nhất để trả lời):\n"""\n${String(lessonForTutor.content_markdown).slice(0, 8000)}\n"""`;
+            systemText += '\n\nQUY TẮC CĂN CỨ: Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC ở trên. Nếu câu hỏi nằm ngoài tài liệu hoặc ngoài môn Tin học, hãy nói: "Phần này chưa có trong bài học, em hỏi thầy cô nhé." Không bịa số liệu, tên riêng, ví dụ hay nguồn trích dẫn ngoài tài liệu. Nếu không chắc, hãy nói rõ là chưa chắc.';
+            const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId) : null;
+            if (publicQuestion?.prompt) {
+              systemText += `\n\nCÂU HỎI HỌC SINH ĐANG LÀM:\n"""\n${String(publicQuestion.prompt).slice(0, 1000)}\n"""\n(Không bao giờ tiết lộ đáp án; chỉ gợi ý từng bước dựa trên tài liệu.)`;
+            }
+          } else {
+            systemText += '\n\nKHÔNG CÓ TÀI LIỆU BÀI HỌC KÈM THEO: chỉ giải thích khái niệm Tin học nền tảng ở mức THCS, nói rõ khi không chắc, và không bịa.';
+            if (context?.curriculum_text) systemText += `\n\nTÀI LIỆU THAM KHẢO:\n"""\n${String(context.curriculum_text).slice(0, 4000)}\n"""`;
+            if (context?.question_prompt) systemText += `\n\nCÂU HỎI HIỆN TẠI:\n"""\n${String(context.question_prompt).slice(0, 1000)}\n"""\n(Không bao giờ tiết lộ đáp án.)`;
           }
 
           // Build multi-turn contents from history if available
@@ -4027,7 +4063,8 @@ export default {
                 contents,
                 systemInstruction: {
                   parts: [{ text: systemText }]
-                }
+                },
+                generationConfig: { temperature: 0.3, maxOutputTokens: 700 }
               })
             });
 

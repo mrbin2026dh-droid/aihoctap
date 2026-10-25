@@ -32,6 +32,8 @@ let gradeChosen = false;
 /** @type {string|null} */ let tutorQuestionId = null;
 /** @type {Array<{role:string, content:string}>} */ let tutorHistory = [];
 let tutorPending = false;
+/** Bài học mà Gia sư đang hỗ trợ (có thể khác bài đang mở khi hỏi từ nút AI trên thanh đầu). @type {{course_id:string,lesson_id:string,title:string}|null} */
+let tutorLesson = null;
 
 function updateTutorStatus() {
   const isOnline = navigator.onLine;
@@ -43,9 +45,9 @@ function updateTutorStatus() {
   const offlineBanner = document.getElementById('tutor-offline-banner');
   if (offlineBanner) offlineBanner.hidden = isOnline;
   const input = /** @type {HTMLInputElement|null} */ (document.getElementById('tutor-input'));
-  if (input) input.disabled = !isOnline || tutorPending;
+  if (input) input.disabled = !isOnline || tutorPending || !tutorLesson;
   const submit = /** @type {HTMLButtonElement|null} */ (document.getElementById('tutor-submit'));
-  if (submit) submit.disabled = !isOnline || tutorPending;
+  if (submit) submit.disabled = !isOnline || tutorPending || !tutorLesson;
 }
 
 async function refreshTutorQuota() {
@@ -65,7 +67,7 @@ async function refreshTutorQuota() {
       badge.textContent = 'Tạm khóa';
       badge.className = 'tutor-quota-badge is-locked';
     } else {
-      badge.textContent = `Còn ${quota.remaining} lượt`;
+      badge.textContent = Number.isFinite(quota.remaining) ? `Còn ${quota.remaining} lượt` : '';
       badge.className = 'tutor-quota-badge';
     }
   } catch {
@@ -73,29 +75,45 @@ async function refreshTutorQuota() {
   }
 }
 
-/** @param {string|null} [questionId] */
-function openTutor(questionId = null) {
-  if (!active) { notify('Hãy mở bài học trước.', true); return; }
-  tutorQuestionId = questionId;
-  const dialog = /** @type {HTMLDialogElement} */ (node('tutor-dialog'));
-  const note = node('tutor-context-note');
-  if (questionId) {
-    const q = active.questions.find(item => item.id === questionId);
-    note.textContent = q ? `Câu hỏi: ${q.prompt.slice(0, 40)}…` : 'Câu hỏi luyện tập';
-  } else {
-    note.textContent = active.title;
-  }
+/** @param {{course_id:string,lesson_id:string,title:string}} lesson */
+function setTutorLesson(lesson) {
+  if (tutorLesson && (tutorLesson.course_id !== lesson.course_id || tutorLesson.lesson_id !== lesson.lesson_id)) tutorHistory = [];
+  tutorLesson = lesson;
+  node('tutor-context-note').textContent = lesson.title;
   if (!tutorHistory.length) {
-    const msgs = node('tutor-messages');
-    msgs.replaceChildren();
+    const msgs = node('tutor-messages'); msgs.replaceChildren();
     const greeting = el('div', '', 'tutor-msg tutor-bot');
     greeting.append(el('p', 'Chào em! Em đang vướng ở phần nào của bài? Hãy chia sẻ, mình sẽ gợi ý từng bước để em tự tìm ra đáp án.'));
     msgs.append(greeting);
   }
   updateTutorStatus();
+}
+function chooseTutorLesson() {
+  tutorLesson = null; tutorHistory = [];
+  node('tutor-context-note').textContent = 'Chọn bài để hỏi';
+  const msgs = node('tutor-messages'); msgs.replaceChildren();
+  const intro = el('div', '', 'tutor-msg tutor-bot'); intro.append(el('p', 'Em muốn hỏi về bài nào? Gia sư chỉ trả lời dựa trên nội dung bài học.')); msgs.append(intro);
+  const grade = session?.identity.grade; const list = el('div', '', 'tutor-picks');
+  for (const course of (catalog?.courses || []).filter(item => item.grade === grade)) for (const lesson of course.lessons) {
+    list.append(button(lesson.title, () => setTutorLesson({course_id: course.id, lesson_id: lesson.id, title: lesson.title}), 'tutor-pick'));
+  }
+  if (!list.childElementCount) msgs.append(el('p', 'Chưa có bài học cho khối của em.', 'meta')); else msgs.append(list);
+  updateTutorStatus();
+}
+/** @param {string|null} [questionId] */
+function openTutor(questionId = null) {
+  if (!session) { notify('Hãy đăng nhập để hỏi gia sư.', true); /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal(); return; }
+  tutorQuestionId = questionId;
+  const dialog = /** @type {HTMLDialogElement} */ (node('tutor-dialog'));
+  if (active) {
+    setTutorLesson({course_id: active.course_id, lesson_id: active.lesson_id, title: active.title});
+    if (questionId) { const q = active.questions.find(item => item.id === questionId); node('tutor-context-note').textContent = q ? `Câu hỏi: ${q.prompt.slice(0, 40)}…` : active.title; }
+  } else if (tutorLesson) setTutorLesson(tutorLesson);
+  else chooseTutorLesson();
+  updateTutorStatus();
   refreshTutorQuota().catch(() => {});
   dialog.showModal();
-  /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
+  if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
 function closeTutor() {
@@ -312,7 +330,7 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
     pending = /** @type {Outbox|undefined} */ (await db.get('outbox', `${nextDraft.uid}/${nextDraft.attempt_id}`));
     if (generation !== viewGeneration || owner !== session) return;
     await db.put('meta', `active:${owner.identity.uid}`, {key, practice:exerciseOnly});
-    if (pending?.ack) {
+    if (pending?.ack || pending?.rejected) {
       // Bài trước đã nộp xong: bắt đầu lượt mới (luyện tập làm lại không giới hạn). Kết quả xem ở Tiến độ.
       await db.remove('drafts', key);
       nextDraft = {key, uid: owner.identity.uid, lesson, answers: {}, attempt_id: crypto.randomUUID(), updated_at: Date.now()};
@@ -458,7 +476,7 @@ async function sync() {
   syncing = true;
   try {
     const queue = /** @type {Outbox[]} */ (await db.all('outbox'));
-    for (const item of queue.filter(entry => entry.uid === captured.identity.uid && !entry.ack)) {
+    for (const item of queue.filter(entry => entry.uid === captured.identity.uid && !entry.ack && !entry.rejected)) {
       if (session !== captured) break;
       try {
         const ack = /** @type {Ack} */ (await api('/pwa/attempts', {method:'POST', token:captured.token, body:item.body}));
@@ -468,6 +486,13 @@ async function sync() {
         notify('Đã nộp bài. Máy chủ đã xác nhận.');
         if (draft?.attempt_id === ack.attempt_id) void showResult(ack);
       } catch (error) {
+        if (error instanceof ApiError && error.status === 403) {
+          // Máy chủ từ chối hẳn (ví dụ bài kiểm tra chỉ được nộp 1 lần): không thử lại, không chặn các bài khác.
+          await db.put('outbox', item.key, {...item, rejected: error.message, error: undefined});
+          if (draft?.attempt_id === item.body.attempt_id) { await db.remove('drafts', draft.key); locked = false; if (active) await openLesson(active, null, ++viewGeneration, captured, practice); }
+          if (session === captured) notify(error.message, true);
+          continue;
+        }
         await db.put('outbox', item.key, {...item, error: error instanceof Error ? error.message : 'Đồng bộ chưa xong.'});
         if (session === captured) {
           if (error instanceof ApiError && error.status === 401) { void expireSession(); }
@@ -512,7 +537,7 @@ function dateLabel(stamp) {
 /** @param {Ack} item */
 function percentOf(item) { return item.total ? Math.round(100 * item.correct / item.total) : 0; }
 async function progress() {
-  show('progress'); const target = node('progress'); target.replaceChildren();
+  show('progress'); const syncButton = node('sync'); node('progress-view').prepend(syncButton); const target = node('progress'); target.replaceChildren();
   const generation = viewGeneration;
   if (!session) {const card = empty(target, 'Tổng quan học tập', 'Đăng nhập để xem tiến độ và lộ trình của em.', 'chart'); card.append(button('Đăng nhập', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal(), 'primary')); return;}
   const captured = session;
@@ -524,7 +549,8 @@ async function progress() {
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
   if (session !== captured || generation !== viewGeneration) return;
-  const waiting = queue.filter(item => item.uid === captured.identity.uid && !item.ack);
+  const rejected = queue.filter(item => item.uid === captured.identity.uid && !item.ack && item.rejected);
+  const waiting = queue.filter(item => item.uid === captured.identity.uid && !item.ack && !item.rejected);
   const name = String(captured.identity.student_name || '').trim().split(/\s+/).pop() || 'em';
   // Gom theo bài: chỉ tính các lượt đã được máy chủ xác nhận.
   /** @type {Map<string,{count:number,best:number,last:Ack}>} */
@@ -554,7 +580,7 @@ async function progress() {
   const suggestion = resume ? {item: resume, label: 'Tiếp tục bài đang làm', practice: true} : nextNew ? {item: nextNew, label: done ? 'Bài tiếp theo' : 'Bắt đầu học', practice: false} : weakest ? {item: weakest, label: 'Nên ôn lại', practice: true} : null;
 
   const hero = el('section', '', 'dash-hero');
-  const greet = el('div', '', 'dash-greet'); greet.append(el('h2', `Xin chào, ${name}`), el('p', `Lớp ${captured.identity.class_code}${practiced.length ? ` · ${practiced.length} bài luyện tập` : ''}`, 'meta'));
+  const greet = el('div', '', 'dash-greet'); const greetTop = el('div', '', 'dash-greet-top'); greetTop.append(el('h2', `Xin chào, ${name}`), syncButton); greet.append(greetTop, el('p', `Lớp ${captured.identity.class_code}${practiced.length ? ` · ${practiced.length} bài luyện tập` : ''}`, 'meta'));
   hero.append(greet);
   if (suggestion) {
     const next = el('div', '', 'dash-next'); next.append(el('span', suggestion.label, 'dash-next-label'), el('strong', suggestion.item.summary.title));
@@ -565,6 +591,11 @@ async function progress() {
   if (waiting.length) {
     const note = el('div', '', 'notice pending-note');
     note.append(icon('clock'), el('span', `${waiting.length} bài đang chờ gửi lên máy chủ${waiting[0].error ? ` · ${waiting[0].error}` : ''}. Số liệu chưa gồm các bài này.`));
+    target.append(note);
+  }
+  if (rejected.length) {
+    const note = el('div', '', 'notice pending-note'); note.append(icon('x'), el('span', `${rejected.length} bài không được máy chủ nhận: ${rejected[0].rejected}`));
+    note.append(button('Xóa thông báo', async () => { for (const item of rejected) await db.remove('outbox', item.key); await progress(); }, 'quiet'));
     target.append(note);
   }
   if (!fresh && attempts.length) { const stale = el('div', '', 'notice pending-note'); stale.append(icon('wifioff'), el('span', 'Đang xem số liệu đã lưu trên máy. Kết nối mạng để cập nhật.')); target.append(stale); }
@@ -1057,11 +1088,12 @@ on('install', async () => {
 });
 on('close-install', () => /** @type {HTMLDialogElement} */ (node('install-help-dialog')).close());
 on('ask-tutor', () => openTutor(null));
+on('open-tutor', () => openTutor(null));
 on('close-tutor', closeTutor);
 form('tutor-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (!navigator.onLine) { notify('Cần kết nối mạng để gửi câu hỏi.', true); return; }
-  if (!active || tutorPending) return;
+  if (!tutorLesson || tutorPending) return;
   const input = /** @type {HTMLInputElement} */ (node('tutor-input'));
   const text = input.value.trim();
   if (!text) return;
@@ -1082,16 +1114,16 @@ form('tutor-form').addEventListener('submit', async event => {
 
   try {
     const payload = {
-      course_id: active.course_id,
-      lesson_id: active.lesson_id,
+      course_id: tutorLesson.course_id,
+      lesson_id: tutorLesson.lesson_id,
       message: text,
       history: tutorHistory,
-      question_id: tutorQuestionId || undefined,
-      selected_option: tutorQuestionId && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
+      question_id: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
+      selected_option: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
       attempt_count: 1
     };
     /** @type {import('./contracts').TutorResponse} */
-    const res = await api('/pwa/tutor', { method: 'POST', body: payload });
+    const res = await api('/pwa/tutor', { method: 'POST', body: payload, token: session?.token });
     loadingMsg.remove();
     const botMsg = el('div', '', 'tutor-msg tutor-bot');
     renderMarkdown(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.');
@@ -1103,6 +1135,7 @@ form('tutor-form').addEventListener('submit', async event => {
     loadingMsg.remove();
     const errMsg = el('div', '', 'tutor-msg tutor-bot');
     let messageText = 'Chưa kết nối được với Gia sư AI. Em hãy kiểm tra lại mạng hoặc thử lại sau nhé.';
+    if (err instanceof ApiError && err.status === 401) { closeTutor(); void expireSession(); }
     const errCode = (err && typeof err === 'object' && 'code' in err) ? /** @type {any} */ (err).code : null;
     if (errCode === 'AI_LIMIT_REACHED') {
       messageText = 'Em đã dùng hết lượt hỏi gia sư hôm nay. Hãy tự ôn tập và quay lại vào ngày mai nhé!';

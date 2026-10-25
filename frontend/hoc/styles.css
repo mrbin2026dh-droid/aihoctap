@@ -745,6 +745,23 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app #sync{margin:0 0 4px}
 @media(max-width:760px){.student-app .dash-overview{grid-template-columns:1fr}.student-app .dash-hero{padding:20px}.student-app .dash-next{width:100%}.student-app .dash-next button{width:100%;justify-content:center}.student-app .path-step{grid-template-columns:44px minmax(0,1fr)}.student-app .path-go{grid-column:2;justify-self:start}.student-app .dash-ring-card{flex-direction:row}}
 
+
+/* Bốn nút công cụ bài học: tách rời, đều nhau */
+.student-app .lesson-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch}
+.student-app .mode-switch,.student-app .lesson-actions{display:contents}
+.student-app .mode-switch button,.student-app .lesson-actions button{width:100%;min-height:52px;padding:8px 14px;border:1px solid var(--control);border-radius:14px;background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.student-app .mode-switch button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+@media(max-width:760px){.student-app .lesson-tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Tổng quan: biểu tượng đồng bộ cạnh lời chào, nút AI trên thanh đầu */
+.student-app .dash-greet-top{display:flex;align-items:center;gap:12px}
+.student-app .dash-greet-top h2{margin:0}
+.student-app .sync-btn{display:inline-grid;place-items:center;flex:none;width:48px;min-width:48px;height:48px;padding:0;border-radius:14px;margin:0}
+.student-app .ai-btn{color:var(--brand-text,var(--blue))}
+.student-app .tutor-picks{display:grid;gap:10px;margin-top:4px}
+.student-app .tutor-pick{justify-content:flex-start;text-align:left;min-height:52px;padding:10px 16px;border-radius:14px;font-weight:600}
+
+@media(max-width:400px){.student-app .bottom-nav .nav-text{font-size:15px;letter-spacing:0}.student-app .topbar{padding-inline:12px}.student-app .topbar .actions{gap:2px}.student-app .topbar .actions button{min-width:44px;width:44px;height:44px;min-height:44px;padding:0}}
+
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}
@@ -856,6 +873,7 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root:not([data-theme=light])) .student-app .tutor-dialog::backdrop{background:rgba(71,71,71,0.60)}
 :where(:root:not([data-theme=light])) .student-app .dash-next-label{color:var(--brand-text)}
 :where(:root:not([data-theme=light])) .student-app .path-step.is-learning .path-node{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .student-app .ai-btn{color:var(--brand-text)}
 :where(:root:not([data-theme=light])) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root:not([data-theme=light])) .student-app .lesson-open,:where(:root:not([data-theme=light])) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root:not([data-theme=light])) .student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}
@@ -975,6 +993,7 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root[data-theme=dark]) .student-app .tutor-dialog::backdrop{background:rgba(71,71,71,0.60)}
 :where(:root[data-theme=dark]) .student-app .dash-next-label{color:var(--brand-text)}
 :where(:root[data-theme=dark]) .student-app .path-step.is-learning .path-node{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .student-app .ai-btn{color:var(--brand-text)}
 :where(:root[data-theme=dark]) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root[data-theme=dark]) .student-app .lesson-open,:where(:root[data-theme=dark]) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root[data-theme=dark]) .student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}

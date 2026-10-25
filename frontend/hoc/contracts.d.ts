@@ -7,7 +7,7 @@ export interface Identity { uid:string; student_name:string; grade:number; class
 export interface AttemptBody { attempt_id:string; course_id:string; lesson_id:string; version:string; answers:Record<string,string>; }
 export interface Ack { attempt_id:string; course_id:string; lesson_id:string; version?:string; status:'submitted'; correct:number; total:number; score:number|null; needs_review:boolean; feedback?:{id:string; correct:boolean|null; hint:string}[]; submitted_at?:number; }
 export interface Draft { key:string; uid:string; lesson:Lesson; answers:Record<string,string>; attempt_id:string; updated_at:number; }
-export interface Outbox { key:string; uid:string; body:AttemptBody; created_at:number; ack?:Ack; error?:string; }
+export interface Outbox { key:string; uid:string; body:AttemptBody; created_at:number; ack?:Ack; error?:string; rejected?:string; }
 export interface PrivateQuestion extends Question { correct_answer:string; }
 export interface PublishLesson { subject_id:string; subject_name:string; grade:number; lesson_id:string; title:string; content_markdown:string; questions:PrivateQuestion[]; }
 export interface TutorResponse { reply:string; error:string|null; }
