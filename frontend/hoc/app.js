@@ -420,7 +420,7 @@ async function showResult(ack) {
       draft = null; await openLesson(lesson, null, generation, owner, true); await saveDraft();
     }, 'primary'), 'refresh'),
     withIcon(button('Xem bài', async () => { if (active) { practice = false; await openLesson(active, null, ++viewGeneration, session, false); } }), 'book'),
-    withIcon(button('Tiến độ', () => { progress().catch(report); }), 'chart'));
+    withIcon(button('Tổng quan', () => { progress().catch(report); }), 'chart'));
   target.append(head, hero, tiles, actions);
   window.scrollTo(0, 0);
   h1.focus({preventScroll: true});
@@ -498,47 +498,104 @@ async function downloads() {
   }
   if (!packages.length) {const card = empty(target, 'Chưa tải bài nào', 'Chọn bài và bấm Tải bài khi có mạng.'); card.append(button('Chọn bài để tải', () => show('catalog'), 'primary'));}
 }
+const MASTERED_PERCENT = 80;
+const REVIEW_PERCENT = 50;
+const DAY_MS = 86400000;
+/** @param {number} stamp */
+function dayStart(stamp) { const day = new Date(stamp); day.setHours(0, 0, 0, 0); return day.getTime(); }
+/** @param {number} stamp */
+function dateLabel(stamp) {
+  const diff = Math.round((dayStart(Date.now()) - dayStart(stamp)) / DAY_MS);
+  if (diff <= 0) return 'Hôm nay'; if (diff === 1) return 'Hôm qua';
+  const day = new Date(stamp); return `${String(day.getDate()).padStart(2, '0')}/${String(day.getMonth() + 1).padStart(2, '0')}`;
+}
+/** @param {Ack} item */
+function percentOf(item) { return item.total ? Math.round(100 * item.correct / item.total) : 0; }
 async function progress() {
   show('progress'); const target = node('progress'); target.replaceChildren();
   const generation = viewGeneration;
-  if (!session) {const card = empty(target, 'Tiến độ riêng của em', 'Đăng nhập để xem tiến độ của em.'); card.append(button('Đăng nhập để xem tiến độ', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal(), 'primary')); return; }
+  if (!session) {const card = empty(target, 'Tổng quan học tập', 'Đăng nhập để xem tiến độ và lộ trình của em.', 'chart'); card.append(button('Đăng nhập', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal(), 'primary')); return;}
   const captured = session;
   const queue = /** @type {Outbox[]} */ (await db.all('outbox'));
   let attempts = queue.filter(item => item.uid === captured.identity.uid && item.ack).map(item => /** @type {Ack} */ (item.ack));
+  let fresh = false;
   if (navigator.onLine) {
-    try { attempts = (await api('/pwa/progress', {token:captured.token})).attempts; }
+    try { attempts = (await api('/pwa/progress', {token:captured.token})).attempts; fresh = true; }
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
   if (session !== captured || generation !== viewGeneration) return;
   const waiting = queue.filter(item => item.uid === captured.identity.uid && !item.ack);
+  const name = String(captured.identity.student_name || '').trim().split(/\s+/).pop() || 'em';
+  // Gom theo bài: chỉ tính các lượt đã được máy chủ xác nhận.
+  /** @type {Map<string,{count:number,best:number,last:Ack}>} */
+  const stats = new Map(); let sumCorrect = 0; let sumTotal = 0;
+  for (const item of attempts) {
+    const key = `${item.course_id}/${item.lesson_id}`; const row = stats.get(key) || {count: 0, best: 0, last: item};
+    row.count += 1; row.best = Math.max(row.best, percentOf(item)); if ((Number(item.submitted_at) || 0) >= (Number(row.last.submitted_at) || 0)) row.last = item;
+    stats.set(key, row); sumCorrect += item.correct; sumTotal += item.total;
+  }
+  const courses = (catalog?.courses || []).filter(course => course.grade === captured.identity.grade);
+  /** @type {{course:import('./contracts').Course,summary:import('./contracts').LessonSummary,state:'none'|'learning'|'mastered',best:number,count:number}[]} */
+  const path = [];
+  for (const course of courses) for (const summary of course.lessons) {
+    const row = stats.get(`${course.id}/${summary.id}`);
+    path.push({course, summary, best: row?.best || 0, count: row?.count || 0, state: !row ? 'none' : row.best >= MASTERED_PERCENT ? 'mastered' : 'learning'});
+  }
+  const practiced = path.filter(item => item.summary.question_count > 0);
+  const mastered = practiced.filter(item => item.state === 'mastered').length;
+  const learning = practiced.filter(item => item.state === 'learning').length;
+  const notStarted = practiced.length - mastered - learning;
+  const done = mastered + learning;
+  const donePct = practiced.length ? Math.round(100 * mastered / practiced.length) : 0;
+  // Gợi ý bài tiếp theo: bài đang làm dở > bài chưa học đầu tiên > bài điểm thấp nhất cần ôn.
+  const resume = active && draft && !locked && session ? practiced.find(item => item.course.id === active?.course_id && item.summary.id === active?.lesson_id) : undefined;
+  const nextNew = practiced.find(item => item.state === 'none');
+  const weakest = practiced.filter(item => item.state === 'learning').sort((x, y) => x.best - y.best)[0];
+  const suggestion = resume ? {item: resume, label: 'Tiếp tục bài đang làm', practice: true} : nextNew ? {item: nextNew, label: done ? 'Bài tiếp theo' : 'Bắt đầu học', practice: false} : weakest ? {item: weakest, label: 'Nên ôn lại', practice: true} : null;
+
+  const hero = el('section', '', 'dash-hero');
+  const greet = el('div', '', 'dash-greet'); greet.append(el('h2', `Xin chào, ${name}`), el('p', `Lớp ${captured.identity.class_code}${practiced.length ? ` · ${practiced.length} bài luyện tập` : ''}`, 'meta'));
+  hero.append(greet);
+  if (suggestion) {
+    const next = el('div', '', 'dash-next'); next.append(el('span', suggestion.label, 'dash-next-label'), el('strong', suggestion.item.summary.title));
+    next.append(withIcon(button(suggestion.item === resume ? 'Tiếp tục' : 'Vào học', () => loadLesson(suggestion.item.course.id, suggestion.item.summary.id, suggestion.item.summary.version, suggestion.practice), 'primary'), 'play'));
+    hero.append(next);
+  } else if (practiced.length) hero.append(el('p', 'Em đã thành thạo toàn bộ lộ trình. Hãy ôn lại thường xuyên nhé.', 'dash-next-label'));
+  target.append(hero);
   if (waiting.length) {
     const note = el('div', '', 'notice pending-note');
-    note.append(icon('clock'), el('span', `${waiting.length} bài đang chờ gửi lên máy chủ${waiting[0].error ? ` · ${waiting[0].error}` : ''}`));
+    note.append(icon('clock'), el('span', `${waiting.length} bài đang chờ gửi lên máy chủ${waiting[0].error ? ` · ${waiting[0].error}` : ''}. Số liệu chưa gồm các bài này.`));
     target.append(note);
   }
-  if (!attempts.length) {
-    if (!waiting.length) { const card = empty(target, 'Chưa có bài nộp', 'Luyện tập một bài để bắt đầu ghi nhận tiến độ.', 'chart'); card.append(button('Chọn bài tập', () => {show('practice'); renderPractice();}, 'primary')); }
-    return;
-  }
-  /** @type {Map<string,{item:Ack,title:string,count:number,best:number,correct:number,total:number}>} */
-  const lessons = new Map(); let sumCorrect = 0; let sumTotal = 0;
-  for (const item of attempts) {
-    const key = `${item.course_id}/${item.lesson_id}`; const score = Number(item.score) || (item.total ? Math.round(100 * item.correct / item.total) / 10 : 0);
-    const row = lessons.get(key) || {item, title: lessonTitle(item), count: 0, best: 0, correct: 0, total: 0};
-    row.count += 1; row.best = Math.max(row.best, score); row.correct = item.correct; row.total = item.total; lessons.set(key, row);
-    sumCorrect += item.correct; sumTotal += item.total;
-  }
-  const average = [...lessons.values()].reduce((sum, row) => sum + row.best, 0) / lessons.size;
-  const tiles = el('div', '', 'stat-grid stat-grid-4');
-  tiles.append(statTile('Bài đã làm', String(lessons.size), 'book'), statTile('Lượt làm', String(attempts.length), 'repeat'), statTile('Điểm trung bình', (Math.round(average * 10) / 10).toString(), 'target'), statTile('Tỉ lệ đúng', `${sumTotal ? Math.round(100 * sumCorrect / sumTotal) : 0}%`, 'check'));
-  target.append(tiles);
+  if (!fresh && attempts.length) { const stale = el('div', '', 'notice pending-note'); stale.append(icon('wifioff'), el('span', 'Đang xem số liệu đã lưu trên máy. Kết nối mạng để cập nhật.')); target.append(stale); }
+
+  // Thời điểm nộp (chỉ có với bài nộp sau khi Worker mới được triển khai)
   const stamps = attempts.map(item => Number(item.submitted_at)).filter(value => value > 0);
+  const activeDays = new Set(stamps.map(dayStart));
+  let streak = 0; { let day = dayStart(Date.now()); if (!activeDays.has(day)) day -= DAY_MS; while (activeDays.has(day)) { streak += 1; day -= DAY_MS; } }
+  const average = stats.size ? [...stats.values()].reduce((sum, row) => sum + row.best, 0) / stats.size : 0;
+
+  const overview = el('div', '', 'dash-overview');
+  const ringCard = el('section', '', 'panel dash-ring-card');
+  const ring = el('div', '', 'score-ring'); ring.style.setProperty('--p', donePct + '%'); ring.setAttribute('role', 'img'); ring.setAttribute('aria-label', `Thành thạo ${mastered} trên ${practiced.length} bài`);
+  const ringText = el('strong', ''); ringText.append(document.createTextNode(`${mastered}/${practiced.length}`)); ring.append(ringText);
+  const legend = el('ul', '', 'dash-legend');
+  for (const [cls, label, value] of [['is-mastered', 'Thành thạo (từ 80% câu đúng)', mastered], ['is-learning', 'Đang học', learning], ['is-none', 'Chưa bắt đầu', notStarted]]) {
+    const li = el('li'); li.append(el('i', '', `dot ${cls}`), el('span', `${label}: ${value}`)); legend.append(li);
+  }
+  const ringBody = el('div'); ringBody.append(el('h2', 'Lộ trình của em', 'panel-title'), legend);
+  ringCard.append(ring, ringBody);
+  const tiles = el('div', '', 'stat-grid stat-grid-2');
+  const streakTile = statTile('Ngày học liên tiếp', stamps.length ? String(streak) : '–', 'spark');
+  tiles.append(streakTile, statTile('Lượt làm bài', String(attempts.length), 'repeat'), statTile('Điểm trung bình', stats.size ? (Math.round(average) / 10).toString() : '–', 'target'), statTile('Tỉ lệ câu đúng', sumTotal ? `${Math.round(100 * sumCorrect / sumTotal)}%` : '–', 'check'));
+  overview.append(ringCard, tiles); target.append(overview);
+
   if (stamps.length) {
-    const days = []; const today = new Date(); today.setHours(0, 0, 0, 0);
-    for (let offset = 6; offset >= 0; offset--) { const day = new Date(today); day.setDate(today.getDate() - offset); days.push({start: day.getTime(), label: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][day.getDay()], count: 0}); }
-    for (const stamp of stamps) { const slot = [...days].reverse().find(day => stamp >= day.start); if (slot && stamp < slot.start + 86400000) slot.count += 1; }
+    const days = []; const today = dayStart(Date.now());
+    for (let offset = 6; offset >= 0; offset--) { const start = today - offset * DAY_MS; days.push({start, label: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][new Date(start).getDay()], count: 0}); }
+    for (const stamp of stamps) { const slot = days.find(day => stamp >= day.start && stamp < day.start + DAY_MS); if (slot) slot.count += 1; }
     const peak = Math.max(1, ...days.map(day => day.count));
-    const card = el('section', '', 'panel week-panel'); card.append(el('h2', '7 ngày gần đây', 'panel-title'));
+    const card = el('section', '', 'panel week-panel'); card.append(el('h2', `7 ngày gần đây · ${days.reduce((sum, day) => sum + day.count, 0)} lượt`, 'panel-title'));
     const chart = el('div', '', 'week-chart');
     for (const day of days) {
       const col = el('div', '', 'week-col'); const bar = el('span', '', 'week-bar'); bar.style.height = Math.max(day.count ? 12 : 4, Math.round(100 * day.count / peak)) + '%';
@@ -546,15 +603,45 @@ async function progress() {
     }
     card.append(chart); target.append(card);
   }
-  const list = el('section', '', 'panel'); list.append(el('h2', 'Theo từng bài', 'panel-title'));
-  for (const row of lessons.values()) {
-    const entry = el('article', '', 'stat-row');
-    const top = el('div', '', 'stat-row-top'); top.append(el('h3', row.title), el('strong', `${row.best}/10`, 'stat-row-score'));
-    const bar = el('div', '', 'bar'); const fill = el('span'); fill.style.width = Math.min(100, row.best * 10) + '%'; bar.append(fill);
-    entry.append(top, bar, el('p', `${row.count} lượt làm · lần gần nhất ${row.correct}/${row.total} câu đúng`, 'meta'));
-    list.append(entry);
+
+  // Lộ trình: mỗi bài một chặng, nối nhau theo thứ tự giáo viên xếp.
+  for (const course of courses) {
+    const section = el('section', '', 'panel path-panel'); section.append(el('h2', course.title, 'panel-title'));
+    const list = el('ol', '', 'path');
+    let index = 0;
+    for (const item of path.filter(entry => entry.course === course)) {
+      index += 1;
+      const readOnly = item.summary.question_count === 0;
+      const li = el('li', '', `path-step is-${readOnly ? 'read' : item.state}${item.state === 'learning' && item.best < REVIEW_PERCENT ? ' is-review' : ''}`);
+      const node_ = el('span', '', 'path-node'); if (item.state === 'mastered') node_.append(icon('check')); else node_.append(document.createTextNode(String(index)));
+      const body = el('div', '', 'path-body'); const top = el('div', '', 'stat-row-top');
+      top.append(el('h3', item.summary.title), el('strong', readOnly ? 'Chỉ đọc' : item.state === 'none' ? 'Chưa làm' : `${item.best}%`, 'stat-row-score'));
+      body.append(top);
+      if (!readOnly) {
+        const bar = el('div', '', 'bar'); const fill = el('span'); fill.style.width = item.best + '%'; bar.append(fill); body.append(bar);
+        const status = item.state === 'none' ? `${item.summary.question_count} câu luyện tập` : `${item.count} lượt làm · tốt nhất ${item.best}% câu đúng${item.best < REVIEW_PERCENT ? ' · cần ôn' : ''}`;
+        body.append(el('p', status, 'meta'));
+      }
+      const go = withIcon(button(readOnly ? 'Đọc' : item.state === 'none' ? 'Bắt đầu' : item.state === 'mastered' ? 'Xem lại' : 'Ôn lại', () => loadLesson(item.course.id, item.summary.id, item.summary.version, !readOnly && item.state === 'learning'), 'path-go'), 'arrow', true);
+      li.append(node_, body, go); list.append(li);
+    }
+    section.append(list); target.append(section);
   }
-  target.append(list);
+  if (!path.length) { const card = empty(target, 'Chưa có bài cho khối của em', 'Bài học xuất hiện khi giáo viên xuất bản.', 'book'); void card; }
+
+  const recent = attempts.filter(item => Number(item.submitted_at) > 0).sort((x, y) => Number(y.submitted_at) - Number(x.submitted_at)).slice(0, 5);
+  if (recent.length) {
+    const section = el('section', '', 'panel'); section.append(el('h2', 'Hoạt động gần đây', 'panel-title'));
+    for (const item of recent) {
+      const row = el('article', '', 'stat-row'); const top = el('div', '', 'stat-row-top');
+      top.append(el('h3', lessonTitle(item)), el('strong', `${item.correct}/${item.total}`, 'stat-row-score'));
+      row.append(top, el('p', `${dateLabel(Number(item.submitted_at))} · ${percentOf(item)}% câu đúng`, 'meta')); section.append(row);
+    }
+    target.append(section);
+  }
+  const how = el('details', '', 'how-calc'); how.append(el('summary', 'Cách tính số liệu'),
+    el('p', `Số liệu lấy từ các bài máy chủ đã nhận. "Thành thạo" là bài có lượt làm đạt từ ${MASTERED_PERCENT}% câu đúng; "Đang học" là đã làm nhưng chưa đạt. Điểm trung bình là trung bình kết quả tốt nhất của mỗi bài. Tỉ lệ câu đúng tính trên mọi lượt làm. Ngày học liên tiếp đếm các ngày có nộp bài.`, 'meta'));
+  target.append(how);
 }
 /** @param {{course_id:string,lesson_id:string}} item */
 function lessonTitle(item) {return catalog?.courses.find(course => course.id === item.course_id)?.lessons.find(lesson => lesson.id === item.lesson_id)?.title || 'Bài học đã nộp';}
@@ -571,6 +658,7 @@ async function start() {
     const saved = await db.get('meta', `active:${session.identity.uid}`);
     const restored = saved ? /** @type {Draft|undefined} */ (await db.get('drafts', saved.key)) : null;
     if (restored?.uid === session.identity.uid) { practice = Boolean(saved.practice); await openLesson(restored.lesson, restored); }
+    else await progress();
   }
   await refreshCatalog(); await sync();
   if (!catalog && !navigator.onLine) {catalogUnavailable('Cần kết nối mạng để nhận danh mục lần đầu.'); notify('Thiết bị chưa có bài tải offline.', true);}
@@ -664,7 +752,7 @@ form('login-form').addEventListener('submit', async event => {
           await openLesson(active);
           if (guestLesson && guestAnswers) await adoptGuestAnswers(guestLesson, /** @type {Record<string,string>} */ (guestAnswers));
         }
-      }
+      } else { void progress().catch(report); }
       /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
       notify('Đã đăng nhập. Nháp được lưu riêng cho em.'); await sync();
     } catch (error) {

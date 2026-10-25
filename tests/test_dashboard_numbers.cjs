@@ -1,0 +1,23 @@
+// Tổng quan: số liệu hiển thị phải khớp phép tính từ danh sách bài nộp (3 lượt: 2/4, 3/4 bài 1; 1/4 bài 2).
+const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.resolve(__dirname,'../frontend/hoc');
+const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
+r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8184);
+const sortKeys=v=>Array.isArray(v)?v.map(sortKeys):(v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sortKeys(v[k])])):v);
+const LESSON={schema_version:1,course_id:'tin-hoc-9',lesson_id:'b1',title:'Thế giới kĩ thuật số',content_markdown:'# Thế giới kĩ thuật số\n\nDữ liệu là các giá trị được máy tính lưu trữ và xử lý.\n\n- Thông tin\n- Dữ liệu',questions:[{id:'q1',prompt:'Dữ liệu nào sau đây là dữ liệu số?',kind:'choice',options:{A:'Tiếng nói trực tiếp',B:'Tệp ảnh trên máy tính',C:'Mùi hương',D:'Cảm xúc'},hint:'Nghĩ về thứ máy tính lưu được.'}]};
+LESSON.version=require('crypto').createHash('sha256').update(JSON.stringify(sortKeys(LESSON))).digest('hex');
+const CAT={schema_version:1,revision:'r1',courses:[{id:'tin-hoc-9',subject_id:'tin-hoc',subject_name:'Tin học',title:'Tin học 9',grade:9,lessons:[{id:'b1',title:'Thế giới kĩ thuật số',version:LESSON.version,question_count:4},{id:'b2',title:'Thực hành: Xử lý dữ liệu bảng tính nâng cao',version:'99a19c1',question_count:4}]}]};
+(async()=>{const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));let posted=0;
+await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body=CAT;if(!u.endsWith('catalog')&&!u.endsWith('/login')&&!u.endsWith('/pwa/me'))body={attempts:[],results:[],items:[]};if(u.endsWith('/pwa/progress')){const n=Date.now(),d=86400000;body={attempts:[{attempt_id:'a',course_id:'tin-hoc-9',lesson_id:'b1',correct:2,total:4,score:5,submitted_at:n},{attempt_id:'b',course_id:'tin-hoc-9',lesson_id:'b1',correct:3,total:4,score:7.5,submitted_at:n-d},{attempt_id:'c',course_id:'tin-hoc-9',lesson_id:'b2',correct:1,total:4,score:2.5,submitted_at:n-3*d}]}}if(u.endsWith('/login'))body={token:'t',must_change_pin:false};if(u.endsWith('/pwa/me'))body={uid:'hs01',student_name:'Nguyễn Văn Nam',class_code:'9A',grade:9};if(u.includes('/pwa/lessons/'))body=LESSON;
+ if(u.endsWith('/pwa/attempts')&&r.request().method()==='POST'){posted++;const b=JSON.parse(r.request().postData());body={attempt_id:b.attempt_id,course_id:b.course_id,lesson_id:b.lesson_id,status:'submitted',score:10,total:1,correct:1}}
+ r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
+await pg.goto('http://localhost:8184/');await pg.waitForTimeout(500);
+await pg.click('#gate-student');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(1000);
+const tiles=await pg.$$eval('#progress .stat-tile',els=>els.map(e=>e.innerText.replace(/\s+/g,' ').trim()));
+assert.deepEqual(tiles,['2 Ngày học liên tiếp','3 Lượt làm bài','5 Điểm trung bình','50% Tỉ lệ câu đúng'],JSON.stringify(tiles));
+assert((await pg.innerText('#progress .score-ring')).trim()==='0/2','vòng thành thạo 0/2');
+const steps=await pg.$$eval('#progress .path-step',els=>els.map(e=>e.innerText.replace(/\s+/g,' ')));
+assert(steps[0].includes('75%')&&steps[1].includes('25%')&&steps[1].includes('cần ôn'),JSON.stringify(steps));
+assert((await pg.innerText('#progress')).includes('Hôm qua'),'có hoạt động gần đây');
+assert.strictEqual(errs.length,0,errs.join(';'));
+console.log('DASHBOARD NUMBERS OK');await b.close();srv.close()})().catch(e=>{console.error(e);process.exit(1)});

@@ -800,3 +800,8 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Worker trả thêm submitted_at (cho biểu đồ 7 ngày; không có thì ẩn biểu đồ).
 - Việc mở: wrangler deploy.
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Tổng quan học tập (dashboard) cho học sinh
+- Tab Tổng quan là trang đầu sau đăng nhập: gợi ý bài tiếp, vòng thành thạo, chuỗi ngày, điểm TB, tỉ lệ đúng, 7 ngày, lộ trình từng bài, hoạt động gần đây, mục Cách tính. Số liệu có test (test_dashboard_numbers.cjs).
+- Việc mở: wrangler deploy (submitted_at cho chuỗi ngày/biểu đồ); chưa có thời gian học vì chưa đo.
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

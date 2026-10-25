@@ -68,3 +68,13 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 - Mở lại bài đã nộp: tự bắt đầu lượt mới (luyện tập không giới hạn).
 - Tiến độ = bảng thống kê: bài đã làm, lượt làm, điểm trung bình, tỉ lệ đúng, biểu đồ 7 ngày (cần Worker trả `submitted_at`), danh sách từng bài với thanh điểm cao nhất.
 - Gia sư AI: tiêu đề ngắn "Gia sư AI", chip "Còn N lượt", nút đóng/gửi bằng biểu tượng, toàn màn hình trên điện thoại, nền phủ trung tính.
+
+## Tổng quan học tập (2026-10-25)
+Trang đầu sau đăng nhập (tab "Tổng quan"). Tham khảo: Duolingo (chuỗi ngày, lộ trình dạng chặng), Khan Academy (Thành thạo / Đang học, gợi ý bài tiếp), Coursera (thanh tiến độ theo khóa).
+Định nghĩa số liệu (chỉ lấy từ bài máy chủ đã nhận, không ước lượng):
+- Thành thạo: bài có lượt tốt nhất ≥ 80% câu đúng. Đang học: đã làm, chưa đạt. Chưa bắt đầu: chưa có lượt. Bài không có câu luyện tập chỉ đọc, không tính.
+- Vòng lộ trình = bài thành thạo / bài có luyện tập của khối học sinh.
+- Điểm trung bình = trung bình kết quả tốt nhất của mỗi bài (thang 10). Tỉ lệ đúng = tổng câu đúng / tổng câu trên mọi lượt.
+- Ngày học liên tiếp, 7 ngày, hoạt động gần đây: cần `submitted_at` từ Worker (bài nộp cũ không có thì không tính, mục tự ẩn).
+- Gợi ý bài tiếp: đang làm dở > chưa học đầu tiên > điểm thấp nhất cần ôn.
+Kiểm thử số liệu: tests/test_dashboard_numbers.cjs.

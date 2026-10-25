@@ -703,6 +703,48 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app .tutor-form input{border-radius:14px;min-height:48px}
 @media(max-width:640px){.student-app .result-actions button:first-child{flex:1 1 100%;justify-content:center}.student-app .result-actions button{flex:1 1 40%;justify-content:center}.student-app .tutor-dialog{width:100%;max-width:none;margin:0;height:100dvh;max-height:100dvh;border-radius:0;border:0}.student-app .tutor-header{flex-direction:row;padding:10px 12px 10px 16px}.student-app .tutor-header>div:last-child{justify-content:flex-start}.student-app .tutor-messages{padding:16px}.student-app .tutor-msg{max-width:92%}}
 
+
+/* Tổng quan học tập */
+.student-app .dash-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:8px 0 16px;padding:24px;border:1px solid var(--line);border-radius:var(--radius-card,16px);background:var(--surface)}
+.student-app .dash-greet h2{margin:0 0 4px;font:800 clamp(22px,3vw,30px)/1.2 system-ui,sans-serif}
+.student-app .dash-greet .meta{margin:0}
+.student-app .dash-next{display:grid;gap:4px;justify-items:start;min-width:0;max-width:100%}
+.student-app .dash-next-label{font-size:var(--fs-label);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--brand-text,var(--blue))}
+.student-app .dash-next strong{font:700 var(--fs-body)/1.35 system-ui,sans-serif;overflow-wrap:anywhere}
+.student-app .dash-next button{margin-top:8px;min-height:50px;padding:8px 22px;display:inline-flex;align-items:center;gap:8px}
+.student-app .dash-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px;margin:16px 0;align-items:stretch}
+.student-app .dash-overview .panel,.student-app .dash-overview .stat-grid{margin:0}
+.student-app .dash-ring-card{display:flex;align-items:center;gap:20px}
+.student-app .dash-ring-card .score-ring{width:116px;height:116px}
+.student-app .dash-ring-card .score-ring strong{width:88px;height:88px;font-size:22px}
+.student-app .dash-ring-card .panel-title{margin-bottom:10px}
+.student-app .dash-legend{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:var(--fs-small)}
+.student-app .dash-legend li{display:flex;align-items:center;gap:8px}
+.student-app .dot{display:inline-block;flex:none;width:12px;height:12px;border-radius:50%}
+.student-app .dot.is-mastered{background:var(--blue)}
+.student-app .dot.is-learning{background:var(--muted)}
+.student-app .dot.is-none{background:var(--line);border:1px solid var(--control)}
+.student-app .stat-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.student-app .path{list-style:none;margin:0;padding:0}
+.student-app .path-step{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:start;padding:0 0 22px}
+.student-app .path-step:last-child{padding-bottom:0}
+.student-app .path-step::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;background:var(--line)}
+.student-app .path-step:last-child::before{display:none}
+.student-app .path-node{z-index:1;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:2px solid var(--control);background:var(--surface);font:800 var(--fs-small)/1 system-ui,sans-serif;color:var(--muted)}
+.student-app .path-step.is-learning .path-node{border-color:var(--blue);color:var(--brand-text,var(--blue))}
+.student-app .path-step.is-review .path-node{border-style:dashed}
+.student-app .path-step.is-mastered .path-node{background:var(--blue);border-color:var(--blue);color:#fff}
+.student-app .path-step.is-mastered::before{background:var(--blue)}
+.student-app .path-node .ic{width:22px;height:22px}
+.student-app .path-body{min-width:0;padding-top:2px}
+.student-app .path-body .bar{margin:8px 0 6px}
+.student-app .path-body .meta{margin:0}
+.student-app .path-go{min-height:48px;padding:6px 16px;display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.student-app .how-calc{margin:16px 0 8px}
+.student-app .how-calc summary{min-height:44px;display:flex;align-items:center;color:var(--muted);cursor:pointer}
+.student-app #sync{margin:0 0 4px}
+@media(max-width:760px){.student-app .dash-overview{grid-template-columns:1fr}.student-app .dash-hero{padding:20px}.student-app .dash-next{width:100%}.student-app .dash-next button{width:100%;justify-content:center}.student-app .path-step{grid-template-columns:44px minmax(0,1fr)}.student-app .path-go{grid-column:2;justify-self:start}.student-app .dash-ring-card{flex-direction:row}}
+
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}
@@ -812,6 +854,8 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root:not([data-theme=light])) .student-app .stat-row-score{color:var(--brand-text)}
 :where(:root:not([data-theme=light])) .student-app .tutor-dialog{box-shadow:0 24px 60px rgba(0,0,0,.55)}
 :where(:root:not([data-theme=light])) .student-app .tutor-dialog::backdrop{background:rgba(71,71,71,0.60)}
+:where(:root:not([data-theme=light])) .student-app .dash-next-label{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .student-app .path-step.is-learning .path-node{color:var(--brand-text)}
 :where(:root:not([data-theme=light])) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root:not([data-theme=light])) .student-app .lesson-open,:where(:root:not([data-theme=light])) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root:not([data-theme=light])) .student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}
@@ -929,6 +973,8 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root[data-theme=dark]) .student-app .stat-row-score{color:var(--brand-text)}
 :where(:root[data-theme=dark]) .student-app .tutor-dialog{box-shadow:0 24px 60px rgba(0,0,0,.55)}
 :where(:root[data-theme=dark]) .student-app .tutor-dialog::backdrop{background:rgba(71,71,71,0.60)}
+:where(:root[data-theme=dark]) .student-app .dash-next-label{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .student-app .path-step.is-learning .path-node{color:var(--brand-text)}
 :where(:root[data-theme=dark]) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root[data-theme=dark]) .student-app .lesson-open,:where(:root[data-theme=dark]) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root[data-theme=dark]) .student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}

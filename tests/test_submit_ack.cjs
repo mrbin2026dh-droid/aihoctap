@@ -13,8 +13,8 @@ await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let b
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
 await pg.goto('http://localhost:8173/');await pg.waitForTimeout(500);
 await pg.click('#gate-student');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(1000);
-await pg.locator('.lesson-open').first().click();await pg.waitForTimeout(500);await pg.getByRole('button',{name:'Làm bài tập'}).first().click();await pg.waitForTimeout(300);
+await pg.click('[data-tab=catalog]');await pg.waitForTimeout(300);await pg.locator('.lesson-open').first().click();await pg.waitForTimeout(500);await pg.getByRole('button',{name:'Làm bài tập'}).first().click();await pg.waitForTimeout(300);
 await pg.locator('input[type=radio]').first().check({force:true});await pg.click('#question-form button[type=submit]');await pg.waitForTimeout(1200);
 assert.strictEqual(posted,1,'đã gửi bài');const text=await pg.evaluate(()=>document.body.innerText);
-assert(!text.includes('chưa xác nhận đúng'),'không báo lỗi xác nhận');assert(await pg.isVisible('#result-view')&&(await pg.locator('#result-view').innerText()).includes('Kết quả')&&await pg.isVisible('.score-ring'),'hiện trang Kết quả riêng');
+assert(!text.includes('chưa xác nhận đúng'),'không báo lỗi xác nhận');assert(await pg.isVisible('#result-view')&&(await pg.locator('#result-view').innerText()).includes('Kết quả')&&await pg.isVisible('#result-view .score-ring'),'hiện trang Kết quả riêng');
 assert.strictEqual(errs.length,0,errs.join(';'));console.log('SUBMIT ACK OK');await b.close();srv.close()})().catch(e=>{console.error(e);process.exit(1)});
