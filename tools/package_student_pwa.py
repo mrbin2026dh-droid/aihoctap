@@ -18,7 +18,10 @@ CACHE_PATTERN = r"const CACHE = 'aisgk-student-shell-[^']+';"
 def cache_declaration(source: Path) -> str:
     checksum = hashlib.sha256()
     for name in SHELL_FILES:
-        checksum.update(name.encode('utf-8') + b'\0' + (source / name).read_bytes() + b'\0')
+        raw = (source / name).read_bytes()
+        if not name.endswith('.png'):
+            raw = raw.replace(b'\r\n', b'\n')
+        checksum.update(name.encode('utf-8') + b'\0' + raw + b'\0')
     return f"const CACHE = 'aisgk-student-shell-{checksum.hexdigest()[:24]}';"
 
 
