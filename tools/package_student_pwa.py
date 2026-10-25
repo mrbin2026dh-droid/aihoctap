@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent / 'frontend' / 'hoc'
 SHELL_FILES = (
     'index.html', 'styles.css', 'app.js', 'api.js', 'db.js', 'dom.js',
-    'manifest.webmanifest', 'fonts/source-serif-4-latin-wght-normal.woff2', 'fonts/source-serif-4-vietnamese-wght-normal.woff2', 'icons/icon-192.png', 'icons/icon-512.png',
+    'manifest.webmanifest', 'fonts/source-serif-4-latin-wght-normal.woff2', 'fonts/source-serif-4-vietnamese-wght-normal.woff2', 'fonts/nunito-latin-wght-normal.woff2', 'fonts/nunito-vietnamese-wght-normal.woff2', 'icons/icon-192.png', 'icons/icon-512.png',
     'icons/maskable-512.png',
 )
 RELEASE_FILES = SHELL_FILES + ('sw.js', 'teacher.html', 'teacher.js', 'teacher-ui.js', 'teacher.css')

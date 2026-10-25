@@ -208,7 +208,7 @@ function updateResume() {node('resume-card').hidden = !active || !session || !dr
 /** @param {import('./contracts').Course} course @param {import('./contracts').LessonSummary} summary @param {boolean} [exerciseOnly] */
 function lessonRow(course, summary, exerciseOnly = false) {
   const row = el('article', '', 'lesson-card'); const description = el('div', '', 'lesson-description');
-  const tile = el('span', '', 'tile'); tile.append(icon(exerciseOnly ? 'pencil' : 'book'));
+  const tile = el('span', '', exerciseOnly ? 'tile tone-amber' : 'tile tone-blue'); tile.append(icon(exerciseOnly ? 'pencil' : 'book'));
   const chip = el('span', '', 'chip'); chip.append(icon('list', 'ic ic-sm'), el('span', `${summary.question_count} câu luyện tập`));
   description.append(el('p', `${course.subject_name} · Lớp ${course.grade}`, 'meta'), el('h3', summary.title), chip);
   const entry = withIcon(button(exerciseOnly ? 'Luyện tập' : 'Mở bài', () => loadLesson(course.id, summary.id, summary.version, exerciseOnly), 'lesson-open'), 'arrow', true);
@@ -237,7 +237,7 @@ function renderCatalog() {
   node('catalog-summary').textContent = `${filtered.length} môn học · ${count} bài học`;
   if (!filtered.some(course => course.id === selectedCourse)) selectedCourse = '';
   for (const course of filtered) {
-    const card = el('article', '', 'course-card'); const ctile = el('span', '', 'tile'); ctile.append(icon('folder')); card.append(ctile, el('p', `${course.lessons.length} bài học`, 'meta'), el('h2', course.subject_name));
+    const card = el('article', '', 'course-card'); const ctile = el('span', '', 'tile tone-blue'); ctile.append(icon('folder')); card.append(ctile, el('p', `${course.lessons.length} bài học`, 'meta'), el('h2', course.subject_name));
     const open = button(`Học ${course.subject_name}`, async () => {
       viewGeneration++;
       await saveDraft();
@@ -401,9 +401,9 @@ function updateAnswerCount() {
   node('answer-count').textContent = `${answered}/${active?.questions.length || 0} câu đã trả lời`;
   node('answer-count').parentElement?.style.setProperty('--p', String(active?.questions.length ? Math.round(100 * answered / active.questions.length) : 0) + '%');
 }
-/** @param {string} label @param {string} value @param {string} iconName */
-function statTile(label, value, iconName) {
-  const tile = el('div', '', 'stat-tile');
+/** @param {string} label @param {string} value @param {string} iconName @param {string} [tone] */
+function statTile(label, value, iconName, tone = 'teal') {
+  const tile = el('div', '', `stat-tile tone-${tone}`);
   const head = el('span', '', 'stat-ic'); head.append(icon(iconName));
   tile.append(head, el('strong', value, 'stat-value'), el('span', label, 'stat-label'));
   return tile;
@@ -427,7 +427,7 @@ async function showResult(ack) {
   if (ack.needs_review) text.append(el('p', 'Có câu tự luận đang chờ giáo viên xem.', 'meta'));
   hero.append(ring, text);
   const tiles = el('div', '', 'stat-grid');
-  tiles.append(statTile('Điểm', ack.score == null ? '–' : `${ack.score}/10`, 'target'), statTile('Lần làm', String(tries), 'repeat'), statTile('Cao nhất', `${best}/10`, 'trophy'));
+  tiles.append(statTile('Điểm', ack.score == null ? '–' : `${ack.score}/10`, 'target', 'teal'), statTile('Lần làm', String(tries), 'repeat', 'blue'), statTile('Cao nhất', `${best}/10`, 'trophy', 'amber'));
   const actions = el('div', '', 'result-actions');
   actions.append(
     withIcon(button('Làm lại', async () => {
@@ -617,8 +617,8 @@ async function progress() {
   const ringBody = el('div'); ringBody.append(el('h2', 'Lộ trình của em', 'panel-title'), legend);
   ringCard.append(ring, ringBody);
   const tiles = el('div', '', 'stat-grid stat-grid-2');
-  const streakTile = statTile('Ngày học liên tiếp', stamps.length ? String(streak) : '–', 'spark');
-  tiles.append(streakTile, statTile('Lượt làm bài', String(attempts.length), 'repeat'), statTile('Điểm trung bình', stats.size ? (Math.round(average) / 10).toString() : '–', 'target'), statTile('Tỉ lệ câu đúng', sumTotal ? `${Math.round(100 * sumCorrect / sumTotal)}%` : '–', 'check'));
+  const streakTile = statTile('Ngày học liên tiếp', stamps.length ? String(streak) : '–', 'spark', 'amber');
+  tiles.append(streakTile, statTile('Lượt làm bài', String(attempts.length), 'repeat', 'blue'), statTile('Điểm trung bình', stats.size ? (Math.round(average) / 10).toString() : '–', 'target', 'teal'), statTile('Tỉ lệ câu đúng', sumTotal ? `${Math.round(100 * sumCorrect / sumTotal)}%` : '–', 'check', 'green'));
   overview.append(ringCard, tiles); target.append(overview);
 
   if (stamps.length) {

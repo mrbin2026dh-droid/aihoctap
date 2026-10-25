@@ -812,3 +812,9 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Giao diện: 4 nút bài học tách đều; bỏ tiêu đề Tổng quan; Đồng bộ cạnh lời chào; nút AI trên thanh đầu.
 - Việc mở: wrangler deploy (BẮT BUỘC: bỏ giới hạn 2 lần nộp, AI có căn cứ, 12h, submitted_at).
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 - Claude - Thiết kế lại giao diện học sinh (xanh ngọc, Nunito)
+- Làm: phông Nunito, token màu theo khu vực, nút chính xanh ngọc, thẻ thống kê có màu, minh họa SVG, chế độ tối tương ứng. Kiểm định giao diện: 0 vi phạm (4 khổ màn hình, sáng + tối).
+- Việc mở: `wrangler deploy` (Antigravity); chưa thử trên điện thoại thật/Safari; giao diện giáo viên chưa đổi.
+XONG giao diện học sinh / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."

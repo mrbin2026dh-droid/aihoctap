@@ -5,13 +5,12 @@ Quy tắc: nền sáng -> nền tối nâng nhẹ; chữ tối -> chữ sáng; m
 import re, colorsys, pathlib
 P = pathlib.Path(__file__).resolve().parents[1] / 'frontend/hoc/styles.css'
 BEGIN, END = '/* DARK-THEME:BEGIN */', '/* DARK-THEME:END */'
-TOK_VARS = '--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark'
-EXTRA = ('.student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}'
+TOK_VARS = '--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;--teal-bg:#1f3a37;--teal-fg:#5eead4;--blue-bg:#1e2f4a;--blue-fg:#93c5fd;--amber-bg:#3b3220;--amber-fg:#fcd34d;--violet-bg:#2f2a4a;--violet-fg:#c4b5fd;--green-bg:#1f3a2a;--green-fg:#86efac;color-scheme:dark'
+EXTRA = ('.student-app .topbar{background:rgba(38,38,36,.88)}.student-app button.primary,.student-app .auth-btn:not(.auth-btn-alt){background:#2d7a6c;color:#fff;border-color:#2d7a6c;box-shadow:none}.student-app button.primary:hover,.student-app .auth-btn:not(.auth-btn-alt):hover{background:#36907f;color:#fff;border-color:#36907f}.student-app .dash-hero{background-color:#2a3331;border-color:#3a4744}.student-app .bottom-nav{background:#2b2b29}'
+         '.student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}'
          '.student-app .lesson-open,.student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}'
-         '.student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}'
          '.student-app .lesson-open:hover{background:#faf9f5;color:#1f1e1d;border-color:#faf9f5}'
          '.student-app .result-title .ic{color:#4ade80}'
-         '.student-app .auth-btn:hover,.student-app .btn-login:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}'
          '.student-app .auth-btn-alt:hover{background:#3a3936;color:var(--ink);border-color:var(--ink)}'
          '.student-app .connection{color:#4ade80}.student-app .connection.is-offline{color:#fbbf24}')
 COLOR = re.compile(r'#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\([^)]*\)')

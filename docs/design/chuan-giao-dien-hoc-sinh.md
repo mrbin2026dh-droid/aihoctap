@@ -78,3 +78,10 @@ Trang đầu sau đăng nhập (tab "Tổng quan"). Tham khảo: Duolingo (chu�
 - Ngày học liên tiếp, 7 ngày, hoạt động gần đây: cần `submitted_at` từ Worker (bài nộp cũ không có thì không tính, mục tự ẩn).
 - Gợi ý bài tiếp: đang làm dở > chưa học đầu tiên > điểm thấp nhất cần ôn.
 Kiểm thử số liệu: tests/test_dashboard_numbers.cjs.
+
+## Giao diện xanh ngọc (2026-10-25)
+- Phông Nunito (tiếng Việt + latin, tự lưu trong `fonts/`), SGK Serif chỉ còn cho logo.
+- Nền kem `#fffdf7`, chủ đạo xanh ngọc `#0f766e`, nút chính màu xanh ngọc (không còn đen).
+- Màu theo khu vực (token `--teal/blue/amber/violet/green-bg|fg`, có bản tối): Tổng quan = xanh ngọc, Học = xanh dương, Luyện tập = vàng cam, Tài liệu = tím, kết quả tốt = xanh lá.
+- Thẻ thống kê có icon màu; thanh tiến độ chuyển sắc; tranh minh họa SVG tự vẽ ở đầu Tổng quan (ẩn trên điện thoại).
+- Khối CSS nằm giữa `UI-TEAL:BEGIN/END` trong `styles.css`; chạy lại `tools/gen_dark_theme.py` sau khi sửa.
