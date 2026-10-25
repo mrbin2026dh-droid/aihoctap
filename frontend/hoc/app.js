@@ -192,7 +192,7 @@ function show(name) {
     studentSettingsActive = false;
     renderStudentSettings(false);
   }
-  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
+  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'exams', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
   const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name === 'result' ? 'practice' : name;
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
@@ -887,6 +887,11 @@ on('download', async () => {
   notify('Đã tải đủ bài. Em có thể mở lại khi mất mạng.');
   if (navigator.storage?.persist) await navigator.storage.persist();
 });
+/** Tab Thi: bài kiểm tra thật chưa mở trên máy chủ nên chỉ báo trạng thái, không hứa hẹn. */
+function exams() {
+  show('exams'); const target = node('exams'); target.replaceChildren();
+  empty(target, 'Chưa có bài kiểm tra', session ? 'Khi giáo viên mở bài kiểm tra cho lớp của em, bài sẽ hiện ở đây. Bài luyện tập vẫn nằm ở mục Luyện tập.' : 'Đăng nhập để xem bài kiểm tra của lớp.', 'exam');
+}
 async function materials() {
   show('materials');
   const generation = viewGeneration;
@@ -999,6 +1004,7 @@ for (const tab of document.querySelectorAll('button[data-tab]')) tab.addEventLis
     if (name === 'downloads') await downloads();
     else if (name === 'progress') await progress();
     else if (name === 'practice') {show('practice'); renderPractice();}
+    else if (name === 'exams') exams();
     else if (name === 'materials') await materials();
     else {show('catalog'); renderCatalog();}
   } catch (error) {report(error instanceof Error ? error : new Error('Chưa chuyển được trang.'));}
@@ -1281,7 +1287,7 @@ function openStudentSettings() {
   const wide = window.matchMedia('(min-width: 960px)').matches;
   if (!wide) studentActiveView = '';
   history.pushState({ studentSettings: 1 }, '');
-  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'materials-view', 'result-view'];
+  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'exams-view', 'materials-view', 'result-view'];
   tabs.forEach(id => { const elem = document.getElementById(id); if (elem) elem.hidden = true; });
   renderStudentSettings();
   window.scrollTo(0, 0);

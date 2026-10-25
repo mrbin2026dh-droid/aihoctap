@@ -790,12 +790,13 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app .bottom-nav button[aria-current=page]{background:var(--teal-bg);color:var(--teal-fg);font-weight:800}
 .student-app .bottom-nav button[data-tab=catalog][aria-current=page]{background:var(--blue-bg);color:var(--blue-fg)}
 .student-app .bottom-nav button[data-tab=practice][aria-current=page]{background:var(--amber-bg);color:var(--amber-fg)}
+.student-app .bottom-nav button[data-tab=exams][aria-current=page]{background:var(--green-bg);color:var(--green-fg)}
 .student-app .bottom-nav button[data-tab=materials][aria-current=page]{background:var(--violet-bg);color:var(--violet-fg)}
 .student-app .bar{height:12px}
 .student-app .bar>*,.student-app .bar span{background:linear-gradient(90deg,#14b8a6,#0f766e)}
 .student-app .mode-switch button[aria-pressed=true]{background:var(--blue);color:#fff}
 .student-app .dash-hero{background:linear-gradient(135deg,#e6f6f3 0%,#fffdf7 60%);border-color:#cfe9e4;padding-right:min(250px,30%);background-image:var(--hero-art),linear-gradient(135deg,#e6f6f3 0%,#fffdf7 60%);background-repeat:no-repeat;background-position:right 24px center,0 0;background-size:190px auto,auto}
-@media(max-width:760px){.student-app .dash-hero{padding-right:20px;background-image:linear-gradient(135deg,#e6f6f3 0%,#fffdf7 60%)}}
+@media(max-width:760px){.student-app .dash-hero{padding-right:20px;background-image:linear-gradient(135deg,#e6f6f3 0%,#fffdf7 60%);background-size:auto;background-position:0 0}}
 .student-app .gate-card,.student-app .auth-card{background-image:var(--hero-art);background-repeat:no-repeat;background-position:right -20px bottom -14px;background-size:150px auto}
 @media(max-width:560px){.student-app .gate-card,.student-app .auth-card{background-image:none}}
 :root:has(.student-app){--paper:#fffdf7}

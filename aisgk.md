@@ -824,3 +824,9 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Việc mở (Antigravity): `wrangler deploy` VÀ deploy `database.rules.json` (nhánh attempt_details mới). Bài nộp cũ không có dữ liệu từng câu; báo cáo chỉ có từ bài nộp mới. Gemini thật chưa thử.
 XONG điểm yếu học sinh / TIẾP THEO → Antigravity
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
+
+## 2026-10-25 - Claude - Menu Thi, hình thức Thử/Thật, sửa bố cục
+- Làm: mục "Thi" trên menu học sinh (hiện "Chưa có bài kiểm tra"), ô "Hình thức: Thử/Thật" trên form đề của giáo viên, kế hoạch `docs/plans/ke-hoach-bai-kiem-tra.md`, sửa lệch khung đăng nhập giáo viên trên điện thoại, sửa khối nền xanh thừa ở Tổng quan trên màn hẹp, căn lại hàng "Trộn câu hỏi" và tải Excel.
+- Việc mở: màn thi và Worker thi (theo kế hoạch bước 2-5); vẫn cần `wrangler deploy` + deploy `database.rules.json`.
+XONG menu Thi + kế hoạch / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."

@@ -552,6 +552,15 @@ on('act-lessons-draft', () => {
 });
 on('refresh-results', results);
 on('refresh-analytics', loadAnalytics);
+{
+  const mode = document.getElementById('field-exam_mode'); const attempts = /** @type {HTMLInputElement|null} */ (document.getElementById('field-exam_attempts')); const hint = document.getElementById('exam-mode-hint');
+  const apply = () => {
+    const real = /** @type {HTMLSelectElement} */ (mode).value === 'real';
+    if (hint) hint.textContent = real ? 'Thật: học sinh vào màn hình thi riêng, có giờ mở/đóng, đồng hồ và nộp một lần theo số lần cho phép.' : 'Thử: học sinh làm như bài luyện tập, làm được nhiều lần, không giới hạn giờ.';
+    if (attempts) { attempts.disabled = !real; if (!real) attempts.value = '1'; }
+  };
+  if (mode) { mode.addEventListener('change', apply); apply(); }
+}
 /** @type {Array<any>} */
 let allStudents = [];
 
