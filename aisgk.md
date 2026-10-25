@@ -771,3 +771,9 @@ Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho work
 - Đổi bảng màu dark (nền #262624, thẻ #30302e) theo ảnh mẫu; thêm dark cho giao diện giáo viên (trước đó lệch màu); test giáo viên chạy light+dark.
 - Việc mở: wrangler deploy worker (phiên 12h); dọn tệp thừa chờ đồng ý.
 XONG dark mode. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Sửa lỗi "Máy chủ chưa xác nhận đúng bài nộp"
+- Nguyên nhân: app.js đòi ack.version khớp nhưng Worker /api/pwa/attempts không trả version. Bài vẫn được lưu nhưng báo lỗi.
+- Sửa: app.js chỉ so version nếu máy chủ trả; Worker trả lại version; thêm tests/test_submit_ack.cjs.
+- Việc mở: wrangler deploy (Worker trả version, phiên 12h). Client đã sửa nên không cần deploy để hết lỗi.
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

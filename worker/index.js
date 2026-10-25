@@ -3688,7 +3688,7 @@ export default {
       }
 
       const uid = authResult.payload.uid;
-      const { attempt_id, course_id, lesson_id, answers } = await request.json().catch(() => ({}));
+      const { attempt_id, course_id, lesson_id, answers, version } = await request.json().catch(() => ({}));
 
       // H1: Strict validation of IDs against path traversal before any external calls
       if (!attempt_id || !IdValidationContract.isValidId(attempt_id) ||
@@ -3784,6 +3784,7 @@ export default {
         course_id,
         lesson_id,
         status: 'submitted',
+        version: typeof version === 'string' ? version.slice(0, 64) : undefined,
         score,
         total,
         correct: correctCount,

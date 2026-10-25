@@ -433,7 +433,7 @@ async function sync() {
       if (session !== captured) break;
       try {
         const ack = /** @type {Ack} */ (await api('/pwa/attempts', {method:'POST', token:captured.token, body:item.body}));
-        if (ack.status !== 'submitted' || ack.attempt_id !== item.body.attempt_id || ack.version !== item.body.version) throw new Error('Máy chủ chưa xác nhận đúng bài nộp.');
+        if (ack.status !== 'submitted' || ack.attempt_id !== item.body.attempt_id || (ack.version != null && ack.version !== item.body.version)) throw new Error('Máy chủ chưa xác nhận đúng bài nộp.');
         await db.put('outbox', item.key, {...item, ack, error: undefined});
         if (session !== captured) continue;
         notify('Đã nộp bài. Máy chủ đã xác nhận.');
