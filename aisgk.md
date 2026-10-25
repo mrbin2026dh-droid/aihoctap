@@ -705,3 +705,8 @@ rontend/hoc/api.js, scratch/aihoctap-clean/*, isgk.md.
 - Phân tích 4 phân hệ (Soạn bài, Kiểm tra, Tài liệu, Tài khoản học sinh) và thẩm định cấu trúc hiện tại KHÔNG ĐẠT (một trang 3000+ px, trộn chức năng, thiếu đề kiểm tra). Người dùng chốt: tài liệu ở Google Drive, Excel đọc trên trình duyệt, môn học giáo viên tự thêm, một giáo viên hiện tại.
 - Đã sửa trong ngày: phông woff2 hỏng do đổi ký tự xuống dòng (đã khai báo binary), lỗi tải dữ liệu giáo viên (`data.attempts`), tiêu đề h1 trùng.
 - Bàn giao: `docs/handoff/claude-chatgpt-teacher-ui-v3.md` (lời nhắc đầy đủ `docs/prompts/chatgpt-teacher-ui-v3.md`). TIẾP THEO → ChatGPT; sau đó Claude ghép và đẩy Git.
+
+### 2026-10-25 · Claude · Ghép giao diện giáo viên v3 (đợt A)
+- Ghép `docs/design/teacher-ui-v3` vào `frontend/hoc` (teacher.html, teacher.css, teacher-ui.js mới, teacher.js nối lại). Menu 4 phân hệ; Hồ sơ mở đổi PIN, gia sư AI, khóa API; học sinh có tìm kiếm, chọn nhiều, khóa/mở khóa/xóa hàng loạt có xác nhận.
+- Sửa lỗi gốc: pattern id không hợp lệ với cờ v, `inFlight` khai báo sai phạm vi, nhãn 'Ấn'. Test mới `tests/test_teacher_shell.cjs`; `test_settings_menu.mjs` cập nhật cho khung mới (menu cài đặt thích nghi của giáo viên được thay bằng popover Hồ sơ).
+- Kiểm tra/Tài liệu(liệt kê)/Excel/ghi chú học sinh: chưa có máy chủ → xem `docs/audits/2026-10-25-teacher-ui-v3-accept.md` và `docs/bugs-mo.md`. TIẾP THEO → Người dùng kiểm tay giao diện giáo viên trên link thật.

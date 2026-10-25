@@ -8,3 +8,10 @@
 - Chưa làm: đề kiểm tra giáo viên giao (A4/A5), thống kê/quản lý (B5/B6), C2/C4; tải PDF qua Drive (hoãn, Antigravity hướng dẫn sau).
 - `test_frontend_outbox_regression.mjs` đã sửa đường dẫn URL tương đối an toàn và fallback khi thiếu `frontend/app.js` (S5 đã giải quyết).
 - Ghi nhận lỗi mới khi thử thực tế vào `docs/handoff/nguoidung-release-3-loi.md`.
+
+## Sau đợt A giao diện giáo viên v3 (25/10/2026)
+- Kiểm tra: dựng máy chủ (đề, nộp bài một lần, giờ máy chủ, chấm, theo dõi, thống kê, xếp hạng) rồi bật các nút đang vô hiệu.
+- Tài liệu: thêm API liệt kê/sửa/ẩn/xóa cho giáo viên.
+- Học sinh: thêm trường ghi chú và mã tự nhập ở Worker; nhập/xuất Excel (đọc trên trình duyệt, thư viện tự lưu trữ, xem trước lỗi từng dòng).
+- Bài học: trạng thái Nháp và gỡ xuất bản trên máy chủ; nhập câu hỏi từ Excel.
+- Trang giáo viên: chuỗi phiên bản cho tệp để nhận bản mới ngay (hiện bị giữ tối đa 10 phút).

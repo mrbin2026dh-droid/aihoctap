@@ -1,268 +1,587 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#1e40af">
-  <title>SGK — Xuất bản bài học</title>
-  <link rel="icon" href="./icons/icon-192.png">
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./teacher.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#183e39"><title>SGK — Góc giáo viên</title>
+<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./teacher.css">
 </head>
-<body>
-  <a class="skip" href="#main">Đến nội dung</a>
-  <header class="topbar"><a class="wordmark" href="./">SGK<span>Góc giáo viên</span></a><div class="actions"><a href="./" class="quiet" style="font-size:14px;text-decoration:none;padding:8px 12px;color:var(--blue);border:1px solid var(--line);border-radius:8px;">← Về Góc học tập</a><button id="open-settings" class="quiet" aria-controls="settings" aria-expanded="false" hidden>Cài đặt</button><button id="teacher-logout" hidden>Đăng xuất</button></div></header>
-  <div id="status" class="notice" role="status" aria-live="polite">Đăng nhập để quản lý bài học.</div>
-  <main id="main" class="teacher-layout" tabindex="-1">
-    <section id="auth-section" class="teacher-section auth-card">
-      <div class="intro form-intro">
-        <h1 id="teacher-login-title">Vào trang quản lý</h1>
-      </div>
-      <form id="teacher-login">
-        <div class="field">
-          <label for="teacher-pin">Mã PIN giáo viên</label>
-          <div class="pin-wrap">
-            <input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required>
-            <button class="reveal" type="button" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-          </div>
-        </div>
-        <p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p>
-        <button class="primary btn-full" type="submit">Đăng nhập giáo viên</button>
-      </form>
-    </section>
-    <section id="teacher-must-change-section" class="teacher-section auth-card" hidden aria-labelledby="first-pin-title">
-      <div class="intro form-intro">
-        <h1 id="first-pin-title">Đặt mã PIN riêng</h1>
-        <p id="first-pin-help" class="form-help">Đây là lần đăng nhập đầu. Hãy đặt mã PIN riêng của thầy/cô.</p>
-      </div>
-      <form id="teacher-must-change-form">
-        <div class="field">
-          <label for="first-old">Mã PIN hiện tại</label>
-          <div class="pin-wrap">
-            <input id="first-old" name="old_pin" type="password" autocomplete="current-password" required placeholder="Nhập mã PIN hiện tại">
-            <button class="reveal" type="button" data-reveal="first-old" aria-controls="first-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="first-new">Mã PIN mới</label>
-          <div class="pin-wrap">
-            <input id="first-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="first-length" placeholder="Mã PIN mới (tối thiểu 8 ký tự)">
-            <button class="reveal" type="button" data-reveal="first-new" aria-controls="first-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-          </div>
-          <p id="first-length" class="hint">Ít nhất 8 ký tự.</p>
-        </div>
-        <div class="field">
-          <label for="first-confirm">Nhập lại mã PIN mới</label>
-          <div class="pin-wrap">
-            <input id="first-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8" placeholder="Nhập lại mã PIN mới">
-            <button class="reveal" type="button" data-reveal="first-confirm" aria-controls="first-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-          </div>
-        </div>
-        <p id="teacher-must-change-error" class="notice error status" role="alert" aria-live="polite" hidden></p>
-        <div class="actions" style="margin-top:16px;">
-          <button class="primary btn-full" type="submit">Đổi mã PIN và tiếp tục</button>
-        </div>
-      </form>
-    </section>
-    <div id="editor" hidden>
-      <section id="workspace" aria-labelledby="workspace-title">
-        <div class="page-head">
-          <div>
-            <h1 id="workspace-title" tabindex="-1">Quản lý lớp và bài học</h1>
-            <p>Soạn bài, xem kết quả và quản lý học sinh.</p>
-          </div>
-        </div>
-        <section class="teacher-section"><h2>Bài học của lớp</h2><label>Bài đã xuất bản<select id="published"><option value="">Chọn bài để chỉnh sửa</option></select></label><button id="load-lesson">Mở bài đã chọn</button></section>
-        <form id="publish-form">
-          <section class="teacher-section"><h2>Nội dung bài học</h2><p>Sửa bài tạo phiên bản mới. Bài đang làm giữ nguyên.</p><div class="teacher-grid">
-            <label>Mã môn<input name="subject_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin-hoc"></label>
-            <label>Tên môn<input name="subject_name" required maxlength="500"></label>
-            <label>Khối lớp<select name="grade"><option value="9">Lớp 9</option><option value="8">Lớp 8</option><option value="7">Lớp 7</option><option value="6">Lớp 6</option></select></label>
-            <label>Mã bài<input name="lesson_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="bai-1"></label>
-            <label class="full">Tiêu đề<input name="title" required maxlength="500"></label>
-            <label class="full">Nội dung bài học<textarea name="content_markdown" required maxlength="200000" rows="12"></textarea></label>
-          </div><button id="preview-button" type="button">Xem trước nội dung</button><article id="preview"></article></section>
-          <section class="teacher-section"><h2>Câu hỏi và bài tập</h2><p>Đáp án được giữ riêng trên máy chủ.</p><div id="question-editors"></div><button id="add-question" type="button">Thêm câu hỏi</button></section>
-          <div class="actions"><button class="primary" type="submit">Xuất bản bài học</button><button id="new-lesson" type="button">Soạn bài mới</button></div>
-        </form>
-        <section class="teacher-section"><h2>Bài học sinh đã nộp</h2><button id="refresh-results">Cập nhật kết quả</button><div id="teacher-results"></div></section>
-        <section class="teacher-section" id="materials-section">
-          <h2>Tài liệu bổ trợ Google Drive (D1 / A6)</h2>
-          <p>Hệ thống chỉ lưu mã file ID an toàn và chuyển tiếp tài liệu PDF trực tiếp cho học sinh.</p>
-          <form id="material-form">
-            <div class="teacher-grid">
-              <label>Mã tài liệu<input name="material_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="mat_tin6_b1"></label>
-              <label>Mã khóa học<input name="material_course_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin6"></label>
-              <label class="full">Tiêu đề tài liệu<input name="material_title" required maxlength="500" placeholder="Tài liệu tóm tắt Mục 1 SGK Tin học 6"></label>
-              <label class="full">Liên kết chia sẻ Google Drive<input name="material_drive_url" required type="url" placeholder="https://drive.google.com/file/d/.../view"></label>
-              <label class="full">Mô tả ngắn<input name="material_desc" maxlength="500" placeholder="Bản PDF tóm tắt bài học"></label>
-            </div>
-            <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Đăng tải tài liệu</button></div>
-          </form>
-        </section>
-        <section class="teacher-section" id="students-section">
-          <h2>Quản lý học sinh</h2>
-          <p>Thêm học sinh, cấp mã PIN, khóa/mở tài khoản và đặt lại mã PIN khi học sinh quên.</p>
-          <div id="student-pin-banner" class="notice" style="margin-bottom:16px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;" hidden></div>
-          <form id="add-student-form">
-            <div class="teacher-grid">
-              <label>Họ và tên<input name="name" required maxlength="60" placeholder="Nguyễn Văn An"></label>
-              <label>Khối lớp<select name="grade"><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option><option value="10">Lớp 10</option><option value="11">Lớp 11</option><option value="12">Lớp 12</option></select></label>
-              <label>Mã lớp<input name="class_code" required maxlength="10" placeholder="6A"></label>
-              <label>Mã PIN (tùy chọn)<input name="pin" type="password" minlength="6" maxlength="16" placeholder="Để trống để tự sinh"></label>
-            </div>
-            <div class="actions" style="margin-top:12px;">
-              <button class="primary" type="submit">Thêm học sinh</button>
-              <button id="refresh-students" type="button">Làm mới danh sách</button>
-            </div>
-          </form>
-          <div style="margin-top:16px;display:flex;align-items:center;gap:12px;">
-            <label style="margin:0;font-size:14px;display:flex;align-items:center;gap:6px;">Lọc theo lớp:
-              <select id="students-class-filter" style="width:auto;padding:4px 8px;"><option value="">Tất cả các lớp</option></select>
-            </label>
-          </div>
-          <div class="table-wrap" style="margin-top:12px;">
-            <table id="students-table">
-              <thead><tr><th>Mã học sinh</th><th>Họ và tên</th><th>Khối</th><th>Lớp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-              <tbody id="students-tbody"><tr><td colspan="6">Đang tải danh sách học sinh...</td></tr></tbody>
-            </table>
-          </div>
-        </section>
-      </section>
+<body class="teacher-app"><a class="t-skip" href="#main">Đến nội dung</a>
+<header class="t-topbar"><a class="t-wordmark" href="./" aria-label="SGK — Góc giáo viên">sgk<span>GÓC GIÁO VIÊN</span></a><button type="button" id="open-settings" class="t-button" popovertarget="nav-profile" aria-controls="nav-profile" hidden>Hồ sơ</button>
+<nav id="nav-profile" class="t-profile-menu" popover="auto" aria-label="Hồ sơ giáo viên"><button type="button" id="act-profile-pin" class="t-button" data-action="profile-pin" >Đổi mã PIN</button><button type="button" id="act-profile-ai" class="t-button" data-action="profile-ai" >Gia sư AI và hạn mức</button><button type="button" id="act-profile-keys" class="t-button" data-action="profile-keys" >Khóa API</button><a class="t-button" href="./">Về Góc học tập</a><button type="button" class="t-button t-danger" id="teacher-logout" hidden>Đăng xuất</button>
+</nav>
+</header>
 
-      <section id="settings" hidden aria-labelledby="settings-title">
-        <div class="page-head">
-          <div>
-            <h1 id="settings-title" tabindex="-1">Cài đặt</h1>
-            <p>Giáo viên</p>
-          </div>
-          <button id="close-settings" class="quiet">Về quản lý lớp</button>
-        </div>
-        <div id="settings-layout" class="settings-layout">
-          <nav class="settings-menu" aria-label="Nhóm cài đặt">
-            <p class="group-label">Cá nhân</p>
-            <ul class="group-list">
-              <li><button class="group-link" data-view="account" aria-current="page"><strong>Tài khoản</strong><span>Thông tin và đổi mã PIN</span></button></li>
-            </ul>
-            <p class="group-label">Cài đặt AI</p>
-            <ul class="group-list">
-              <li><button class="group-link" data-view="quota"><strong>Hạn mức sử dụng</strong><span>Giới hạn gia sư AI theo lớp</span></button></li>
-              <li><button class="group-link" data-view="keys"><strong>Khóa API</strong><span>Bể khóa Gemini API</span></button></li>
-            </ul>
-          </nav>
-          <div class="settings-detail">
-            <section id="panel-account" class="settings-panel" aria-labelledby="heading-account">
-              <div class="detail-top"><button class="back-button quiet" data-back>Quay lại Cài đặt</button><h2 id="heading-account" tabindex="-1">Tài khoản</h2></div>
-              <div class="card">
-                <dl class="account-data">
-                  <div><dt>Vai trò</dt><dd>Giáo viên</dd></div>
-                </dl>
-                <section class="teacher-section" id="change-pin-section" aria-labelledby="regular-pin-title">
-                  <div class="intro form-intro">
-                    <h2 id="regular-pin-title">Đổi mã PIN</h2>
-                    <p class="form-help">Chủ động đổi mã PIN giáo viên định kỳ để tăng cường bảo mật.</p>
-                  </div>
-                  <form id="teacher-regular-change-pin-form">
-                    <div class="teacher-grid">
-                      <div class="field">
-                        <label for="regular-old">Mã PIN hiện tại</label>
-                        <div class="pin-wrap">
-                          <input id="regular-old" name="old_pin" type="password" autocomplete="current-password" required placeholder="Mã PIN hiện tại">
-                          <button class="reveal" type="button" data-reveal="regular-old" aria-controls="regular-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-                        </div>
-                      </div>
-                      <div class="field">
-                        <label for="regular-new">Mã PIN mới</label>
-                        <div class="pin-wrap">
-                          <input id="regular-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="regular-length" placeholder="Mã PIN mới">
-                          <button class="reveal" type="button" data-reveal="regular-new" aria-controls="regular-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-                        </div>
-                        <p id="regular-length" class="hint">Ít nhất 8 ký tự.</p>
-                      </div>
-                      <div class="field full">
-                        <label for="regular-confirm">Nhập lại mã PIN mới</label>
-                        <div class="pin-wrap">
-                          <input id="regular-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8" placeholder="Nhập lại mã PIN mới">
-                          <button class="reveal" type="button" data-reveal="regular-confirm" aria-controls="regular-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="actions" style="margin-top:16px;">
-                      <button class="primary" type="submit">Lưu mã PIN mới</button>
-                    </div>
-                    <p id="teacher-change-pin-status" class="notice status" role="alert" aria-live="polite"></p>
-                  </form>
-                </section>
-              </div>
-            </section>
-
-            <section id="panel-quota" class="settings-panel" hidden aria-labelledby="heading-quota">
-              <div class="detail-top"><button class="back-button quiet" data-back>Quay lại Cài đặt</button><h2 id="heading-quota" tabindex="-1">Hạn mức sử dụng</h2></div>
-              <div class="card">
-                <section class="teacher-section" id="ai-usage-section">
-                  <h2>Theo dõi và giới hạn Gia sư AI (A9 / B7)</h2>
-                  <p>Quản lý hạn mức dùng, tạm tắt trong giờ thi và tải báo cáo đối soát.</p>
-                  <form id="ai-settings-form">
-                    <div class="teacher-grid">
-                      <label>Hạn mức mặc định (câu/ngày)<input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit"></label>
-                      <label style="display:flex;align-items:center;gap:8px;margin-top:24px;">
-                        <input name="exam_mode" type="checkbox" id="ai-exam-mode">
-                        <span>Đang thi: tắt gia sư</span>
-                      </label>
-                    </div>
-                    <div class="actions" style="margin-top:12px;">
-                      <button class="primary" type="submit">Lưu cài đặt gia sư</button>
-                      <button id="refresh-ai-stats" type="button">Làm mới danh sách</button>
-                      <button id="download-ai-csv" type="button">Tải báo cáo CSV</button>
-                    </div>
-                  </form>
-                  <div class="table-wrap" style="margin-top:16px;">
-                    <table id="ai-usage-table">
-                      <thead><tr><th>Mã học sinh</th><th>Đã dùng / Hạn mức</th><th>Cộng thêm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-                      <tbody id="ai-usage-tbody"><tr><td colspan="5">Chưa tải dữ liệu học sinh.</td></tr></tbody>
-                    </table>
-                  </div>
-                </section>
-              </div>
-            </section>
-
-            <section id="panel-keys" class="settings-panel" hidden aria-labelledby="heading-keys">
-              <div class="detail-top"><button class="back-button quiet" data-back>Quay lại Cài đặt</button><h2 id="heading-keys" tabindex="-1">Khóa API</h2></div>
-              <div class="card">
-                <section class="teacher-section" id="keys-section">
-                  <h2>Bể khóa Gemini API cho Gia sư AI (C5)</h2>
-                  <p>Khóa được mã hóa AES-GCM trong Durable Object. Hệ thống tự động cân bằng tải và chuyển khóa dự phòng khi gặp 429.</p>
-                  <div id="pool-banner" class="notice" hidden></div>
-                  <form id="add-key-form">
-                    <div class="teacher-grid">
-                      <label>Khóa API Gemini (AIzaSy...)<input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" placeholder="AIzaSy..."></label>
-                      <label>Ghi chú<input name="gemini_key_note" maxlength="100" placeholder="Tài khoản cá nhân / dự phòng"></label>
-                    </div>
-                    <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Thêm khóa vào bể</button><button id="refresh-keys" type="button">Làm mới danh sách</button></div>
-                  </form>
-                  <div class="table-wrap" style="margin-top:16px;">
-                    <table id="keys-table">
-                      <thead><tr><th>Mã hiển thị</th><th>Ghi chú</th><th>Trạng thái</th><th>Lượt dùng hôm nay</th><th>Thao tác</th></tr></thead>
-                      <tbody id="keys-tbody"><tr><td colspan="5">Chưa tải dữ liệu khóa.</td></tr></tbody>
-                    </table>
-                  </div>
-                </section>
-              </div>
-            </section>
-          </div>
-        </div>
-        <p id="screen-announcement" class="empty-region" role="status" aria-live="polite"></p>
-      </section>
-    </div>
-  </main>
-  <dialog id="msg-dialog" class="msg-dialog" aria-labelledby="msg-title" aria-describedby="msg-body">
-    <form method="dialog" id="msg-form">
-      <h2 id="msg-title"></h2><p id="msg-body"></p>
-      <div id="msg-fields"></div>
-      <label id="msg-field" hidden><span id="msg-field-label"></span><input id="msg-input" type="text" autocomplete="off"></label>
-      <p id="msg-error" class="field-error" role="alert" hidden></p>
-      <div class="msg-actions"><button id="msg-cancel" type="button">Hủy</button><button id="msg-ok" class="primary" type="submit">Đồng ý</button></div>
-    </form>
-  </dialog>
+<main id="main" class="t-main" tabindex="-1">
+<p id="status" class="notice t-global-status" role="status" aria-live="polite">Đăng nhập để tiếp tục.</p>
+<section id="auth-section" class="t-auth" aria-labelledby="teacher-login-title">
+<h2 id="teacher-login-title">Đăng nhập giáo viên</h2>
+<form id="teacher-login" class="t-form">
+<div class="t-field"><label for="teacher-pin">Mã PIN giáo viên</label>
+<div class="t-pin"><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin giáo viên">Hiện</button>
+</div>
+</div>
+<p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite">
+</p><button type="submit" class="t-button t-primary">Đăng nhập</button>
+</form>
+</section>
+<section id="teacher-must-change-section" class="t-auth" hidden aria-labelledby="first-pin-title">
+<h2 id="first-pin-title">Đặt mã PIN riêng</h2>
+<p id="first-pin-help">Đây là lần đăng nhập đầu. Hãy đổi mã PIN trước khi tiếp tục.</p>
+<form id="teacher-must-change-form" class="t-form">
+<div class="t-field"><label for="first-old">Mã PIN hiện tại</label>
+<div class="t-pin"><input id="first-old" name="old_pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="first-old" aria-controls="first-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin hiện tại">Hiện</button>
+</div>
+</div>
+<div class="t-field"><label for="first-new">Mã PIN mới</label>
+<div class="t-pin"><input id="first-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="first-length"><button type="button" class="t-reveal" data-reveal="first-new" aria-controls="first-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin mới">Hiện</button>
+</div>
+</div>
+<div class="t-field"><label for="first-confirm">Nhập lại mã PIN mới</label>
+<div class="t-pin"><input id="first-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="t-reveal" data-reveal="first-confirm" aria-controls="first-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn nhập lại mã pin mới">Hiện</button>
+</div>
+</div>
+<p id="first-length" class="t-muted">Ít nhất 8 ký tự.</p>
+<p id="teacher-must-change-error" class="notice error status" role="alert">
+</p><button type="submit" class="t-button t-primary">Đổi mã PIN và tiếp tục</button>
+</form>
+</section>
+<div id="editor" class="t-editor" hidden>
+<nav class="t-nav" aria-label="Phân hệ giáo viên"><button type="button" id="nav-lessons" class="t-nav-item" data-view="lessons" aria-controls="view-lessons" aria-current="page">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v16H4z M13 4h7v16h-7z"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Soạn bài</span><span class="t-nav-mobile">Soạn bài</span></span></button><button type="button" id="nav-exams" class="t-nav-item" data-view="exams" aria-controls="view-exams">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6z M9 8h6 M9 12h6 M9 16h4"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Kiểm tra</span><span class="t-nav-mobile">Kiểm tra</span></span></button><button type="button" id="nav-materials" class="t-nav-item" data-view="materials" aria-controls="view-materials">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4z M4 7V3h7l3 4"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài liệu</span><span class="t-nav-mobile">Tài liệu</span></span></button><button type="button" id="nav-accounts" class="t-nav-item" data-view="accounts" aria-controls="view-accounts">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21v-3a8 8 0 0 1 16 0v3"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản học sinh</span><span class="t-nav-mobile">Học sinh</span></span></button>
+</nav>
+<section id="workspace" class="t-workspace" aria-labelledby="workspace-title">
+<header class="t-workspace-head">
+<h1 id="workspace-title" tabindex="-1">Soạn bài</h1>
+</header>
+<section id="view-lessons" aria-label="Soạn bài">
+<section id="list-lessons" class="t-list">
+<div class="t-heading">
+<div>
+<h2>Bài học</h2>
+</div><button type="button" id="new-lesson" class="t-button t-primary" data-action="new-lessons" >Soạn bài mới</button>
+</div>
+<div class="t-toolbar">
+<div class="t-field"><label for="field-lesson_search">Tìm bài học</label><input id="field-lesson_search" name="lesson_search" type="search" >
+</div>
+<div class="t-field"><label for="field-lesson_grade">Lớp</label><select name="lesson_grade" id="field-lesson_grade"><option value="">Tất cả</option><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option></select>
+</div>
+<div class="t-field"><label for="field-lesson_subject">Môn</label><select name="lesson_subject" id="field-lesson_subject"><option value="">Tất cả</option><option value="tin-hoc">Tin học</option></select>
+</div>
+</div>
+<details class="t-legacy">
+<summary>Mở từ danh mục đã xuất bản</summary>
+<div class="t-toolbar">
+<div class="t-field"><label for="published">Bài đã xuất bản</label><select id="published"><option value="">Chọn bài</option></select>
+</div><button type="button" id="load-lesson" class="t-button" data-action="open-selected-lesson" >Mở bài đã chọn</button>
+</div>
+</details><div id="lesson-list" class="t-list-items" aria-live="polite"><p class="t-muted">Đang tải danh sách bài học…</p></div>
+</section>
+<section id="detail-lessons" hidden class="t-detail"><button type="button" id="act-lessons-back" class="t-button" data-action="back-lessons" data-target="list-lessons">Quay lại danh sách</button>
+<h2 class="t-detail-title">Soạn nội dung bài học</h2>
+<form id="publish-form" class="t-form t-card">
+<div class="t-tabs" role="tablist" aria-label="Các bước soạn bài"><button type="button" id="tab-lesson-info" role="tab" aria-selected="true" aria-controls="tabpanel-lesson-info" tabindex="0" data-action="lesson-step" data-step="info">Thông tin</button><button type="button" id="tab-lesson-theory" role="tab" aria-selected="false" aria-controls="tabpanel-lesson-theory" tabindex="-1" data-action="lesson-step" data-step="theory">Lý thuyết</button><button type="button" id="tab-lesson-practice" role="tab" aria-selected="false" aria-controls="tabpanel-lesson-practice" tabindex="-1" data-action="lesson-step" data-step="practice">Luyện tập</button>
+</div>
+<div role="tabpanel" id="tabpanel-lesson-info" aria-labelledby="tab-lesson-info" class="t-step">
+<h3>Thông tin bài học</h3>
+<div class="teacher-grid t-form-grid">
+<div class="t-field"><label for="field-publish-form-grade">Khối lớp</label><select name="grade" id="field-publish-form-grade"><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option></select>
+</div>
+<div class="t-field"><label for="field-publish-form-subject_id">Mã môn</label><input name="subject_id" required pattern="[a-z0-9][a-z0-9_\-]{0,63}" maxlength="64" id="field-publish-form-subject_id">
+</div>
+<div class="t-field"><label for="field-publish-form-subject_name">Tên môn</label><input name="subject_name" required maxlength="500" id="field-publish-form-subject_name">
+</div>
+<div class="t-field"><label for="field-publish-form-lesson_id">Mã bài</label><input name="lesson_id" required pattern="[a-z0-9][a-z0-9_\-]{0,63}" maxlength="64" id="field-publish-form-lesson_id">
+</div>
+<div class="t-field"><label for="field-publish-form-title">Tiêu đề</label><input name="title" required maxlength="500" id="field-publish-form-title">
+</div>
+</div>
+</div>
+<div role="tabpanel" id="tabpanel-lesson-theory" aria-labelledby="tab-lesson-theory" hidden class="t-step">
+<h3>Lý thuyết</h3>
+<div class="t-mini-tabs" role="tablist" aria-label="Soạn và xem trước"><button type="button" id="tab-theory-write" role="tab" aria-selected="true" aria-controls="tabpanel-theory-write" tabindex="0" data-action="theory-write">Soạn</button><button type="button" id="tab-theory-preview" role="tab" aria-selected="false" aria-controls="tabpanel-theory-preview" tabindex="-1" data-action="theory-preview">Xem trước</button>
+</div>
+<div class="t-markdown">
+<div id="tabpanel-theory-write" role="tabpanel" aria-labelledby="tab-theory-write">
+<div class="t-field"><label for="field-publish-form-content_markdown">Nội dung Markdown</label><textarea name="content_markdown" required maxlength="200000" rows="12" id="field-publish-form-content_markdown"></textarea>
+</div>
+</div>
+<section id="tabpanel-theory-preview" role="tabpanel" aria-labelledby="tab-theory-preview" hidden>
+<h3>Bản xem trước</h3>
+<div id="preview" class="t-preview">
+<p class="t-muted">Bản xem trước sẽ xuất hiện tại đây.</p>
+</div>
+</section>
+</div>
+</div>
+<div role="tabpanel" id="tabpanel-lesson-practice" aria-labelledby="tab-lesson-practice" hidden class="t-step">
+<h3>Luyện tập</h3>
+<div class="t-actions"><button type="button" id="add-question" class="t-button" data-action="add-question" >Thêm câu hỏi</button>
+</div>
+<div id="question-editors"></div>
+</div>
+<div class="t-savebar"><button type="button" id="preview-button" class="t-button" data-action="preview-lesson" >Xem trước</button><button type="button" id="act-lessons-draft" class="t-button" data-action="save-draft" >Lưu nháp trên máy</button><button type="submit" class="t-button t-primary" data-action="publish-lesson">Xuất bản</button>
+</div>
+</form>
+<details class="t-card">
+<summary>Bài học sinh đã nộp (mọi bài)</summary>
+<div class="t-actions"><button type="button" id="refresh-results" class="t-button" data-action="refresh-results" >Tải lại kết quả</button>
+</div>
+<div id="teacher-results"><p class="t-muted">Chưa tải kết quả.</p></div>
+</details>
+</section>
+</section>
+<section id="view-exams" hidden aria-label="Kiểm tra">
+<p class="notice t-warning" role="note" id="exams-preview-note">Phân hệ Kiểm tra đang được xây dựng. Đây là bản xem thử giao diện với dữ liệu [THỬ]; chưa lưu hoặc giao đề thật được.</p>
+<section id="list-exams" class="t-list">
+<div class="t-heading">
+<div>
+<h2>Đề kiểm tra</h2>
+</div><button type="button" id="act-exams-new" class="t-button t-primary" data-action="new-exams" >Thêm đề kiểm tra</button>
+</div>
+<table class="t-table ">
+<caption>Danh sách đề kiểm tra</caption>
+<thead>
+<tr>
+<th scope="col">Tên đề</th>
+<th scope="col">Lớp / Môn</th>
+<th scope="col">Loại / Thời lượng</th>
+<th scope="col">Mở – Đóng</th>
+<th scope="col">Trạng thái</th>
+<th scope="col" class="t-number">Bài nộp</th>
+<th scope="col">Thao tác</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Tên đề">Kiểm tra giữa kỳ I — Tin học 9 [THỬ]</td>
+<td data-label="Lớp / Môn">9A · Tin học</td>
+<td data-label="Loại / Thời lượng">Giữa kỳ · 45 phút</td>
+<td data-label="Mở – Đóng">08:00 – 09:00<br>25/10/2026</td>
+<td data-label="Trạng thái"><span class="t-badge">Nháp</span>
+</td>
+<td class="t-number" data-label="Bài nộp">0</td>
+<td data-label="Thao tác">
+<details class="t-row-actions row-actions">
+<summary>Thao tác</summary>
+<div class="t-action-list action-list"><button type="button" id="act-exams-edit-exam" class="t-button" data-action="edit-exam" data-id="sample-01">Sửa</button><button type="button" id="act-exams-lock-exam" class="t-button" data-action="lock-exam" disabled aria-disabled="true" data-id="sample-01">Khóa</button><button type="button" id="act-exams-monitor-exam" class="t-button" data-action="monitor-exam" data-id="sample-01">Theo dõi</button><button type="button" id="act-exams-stats-exam" class="t-button" data-action="stats-exam" data-id="sample-01">Thống kê</button><button type="button" id="act-exams-delete-exam" class="t-button" data-action="delete-exam" disabled aria-disabled="true" data-id="sample-01">Xóa</button>
+</div>
+</details>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="detail-exams" hidden class="t-detail"><button type="button" id="act-exams-edit-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
+<h2 class="t-detail-title">Soạn đề kiểm tra</h2>
+<form id="form-exams" class="t-form t-card" novalidate>
+<h3>Thông tin đề kiểm tra</h3>
+<div class="t-form-grid">
+<div class="t-field"><label for="field-exam_title">Tiêu đề</label><input id="field-exam_title" name="exam_title" type="text" required maxlength="500">
+</div>
+<div class="t-field"><label for="field-exam_grade">Lớp</label><select name="exam_grade" id="field-exam_grade"><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option></select>
+</div>
+<div class="t-field"><label for="field-exam_subject">Môn</label><select name="exam_subject" id="field-exam_subject"><option value="tin-hoc">Tin học</option></select>
+</div>
+<div class="t-field"><label for="field-exam_kind">Loại</label><select name="exam_kind" id="field-exam_kind"><option value="15m">15 phút</option><option value="period">1 tiết</option><option value="midterm">Giữa kỳ</option><option value="final">Cuối kỳ</option></select>
+</div>
+<div class="t-field"><label for="field-exam_minutes">Thời gian làm bài (phút)</label><input id="field-exam_minutes" name="exam_minutes" type="number" min="1" required>
+</div>
+<div class="t-field"><label for="field-exam_open">Giờ mở</label><input id="field-exam_open" name="exam_open" type="datetime-local" required>
+</div>
+<div class="t-field"><label for="field-exam_close">Giờ đóng</label><input id="field-exam_close" name="exam_close" type="datetime-local" required>
+</div>
+<div class="t-field"><label for="field-exam_attempts">Số lần làm</label><input id="field-exam_attempts" name="exam_attempts" type="number" min="1" value="1" required>
+</div>
+<div class="t-field"><label for="field-exam_answers">Hiện đáp án</label><select name="exam_answers" id="field-exam_answers"><option value="after-submit">Sau nộp</option><option value="after-close">Sau khi đóng</option><option value="never">Không</option></select>
+</div><label class="t-check" for="field-exam-shuffle"><input id="field-exam-shuffle" name="exam_shuffle" type="checkbox">Trộn câu hỏi</label>
+</div>
+<div class="t-actions"><button type="button" id="act-exams-template" class="t-button" data-action="exam-template" disabled aria-disabled="true" >Tải mẫu Excel đề</button><label class="t-file" for="field-exam-file">Tải lên Excel câu hỏi<input id="field-exam-file" type="file" accept=".xlsx,.xls" data-action="exam-import" disabled></label>
+</div>
+<section class="t-card">
+<h3>Xem trước câu hỏi</h3>
+<p>1 dòng hợp lệ · 1 dòng lỗi</p>
+<table class="t-table ">
+<caption>Xem trước nhập câu hỏi</caption>
+<thead>
+<tr>
+<th scope="col">Dòng</th>
+<th scope="col">Kết quả</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Dòng">1</td>
+<td data-label="Kết quả">Hợp lệ</td>
+</tr>
+<tr>
+<td data-label="Dòng">2</td>
+<td data-label="Kết quả"><span class="t-badge t-badge-error">Thiếu đề bài</span>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<div class="t-actions"><button type="submit" class="t-button t-primary" data-action="save-exam" disabled aria-disabled="true">Lưu đề</button>
+</div>
+</form>
+</section>
+<section id="detail-exams-monitor" hidden class="t-detail"><button type="button" id="act-exams-monitor-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
+<div class="t-heading">
+<div>
+<h2>Theo dõi bài làm</h2>
+</div>
+</div>
+<table class="t-table ">
+<caption>Tiến độ làm bài</caption>
+<thead>
+<tr>
+<th scope="col">Học sinh</th>
+<th scope="col">Lớp</th>
+<th scope="col">Trạng thái</th>
+<th scope="col" class="t-number">Còn lại</th>
+<th scope="col">Thao tác</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Học sinh">Học sinh Thử 01 [THỬ]</td>
+<td data-label="Lớp">9A</td>
+<td data-label="Trạng thái">Chưa vào</td>
+<td class="t-number" data-label="Còn lại">—</td>
+<td data-label="Thao tác">
+<details class="t-row-actions row-actions">
+<summary>Thao tác</summary>
+<div class="t-action-list action-list"><button type="button" id="act-exams-extend-exam" class="t-button" data-action="extend-exam" disabled aria-disabled="true" data-id="sample-01">Gia hạn</button><button type="button" id="act-exams-retry-exam" class="t-button" data-action="retry-exam" disabled aria-disabled="true" data-id="sample-01">Cho làm lại</button>
+</div>
+</details>
+</td>
+</tr>
+<tr>
+<td data-label="Học sinh">Học sinh Thử 02 [THỬ]</td>
+<td data-label="Lớp">9A</td>
+<td data-label="Trạng thái">Đang làm</td>
+<td class="t-number" data-label="Còn lại">12 phút</td>
+<td data-label="Thao tác">—</td>
+</tr>
+<tr>
+<td data-label="Học sinh">Học sinh Thử 03 [THỬ]</td>
+<td data-label="Lớp">9A</td>
+<td data-label="Trạng thái">Đã nộp</td>
+<td class="t-number" data-label="Còn lại">—</td>
+<td data-label="Thao tác">—</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="detail-exams-stats" hidden class="t-detail"><button type="button" id="act-exams-stats-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
+<div class="t-heading">
+<div>
+<h2>Thống kê và xếp hạng</h2>
+<p class="t-muted">Dữ liệu minh họa [THỬ]</p>
+</div><button type="button" id="act-exams-export" class="t-button" data-action="export-exam" disabled aria-disabled="true" >Xuất Excel</button>
+</div>
+<dl class="t-metrics">
+<div>
+<dt>Điểm trung bình</dt>
+<dd>6,5</dd>
+</div>
+<div>
+<dt>Cao nhất</dt>
+<dd>9</dd>
+</div>
+<div>
+<dt>Thấp nhất</dt>
+<dd>4</dd>
+</div>
+<div>
+<dt>Đã nộp / Tổng</dt>
+<dd>4 / 4</dd>
+</div>
+</dl>
+<figure class="t-chart"><figcaption>Phân bố điểm [THỬ]</figcaption>
+<svg viewBox="0 0 400 160" role="img" aria-labelledby="chart-title chart-desc"><title id="chart-title">Phân bố điểm mẫu</title><desc id="chart-desc">Dưới 5 điểm: 1; từ 5 đến dưới 8: 2; từ 8 đến 10: 1.</desc><path class="t-chart-axis" d="M20 140H380"/><rect class="t-chart-bar" x="50" y="90" width="60" height="50"/><rect class="t-chart-bar" x="170" y="40" width="60" height="100"/><rect class="t-chart-bar" x="290" y="90" width="60" height="50"/>
+</svg>
+</figure>
+<table class="t-table ">
+<caption>Số liệu biểu đồ</caption>
+<thead>
+<tr>
+<th scope="col">Khoảng điểm</th>
+<th scope="col" class="t-number">Số học sinh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Khoảng điểm">Dưới 5</td>
+<td class="t-number" data-label="Số học sinh">1</td>
+</tr>
+<tr>
+<td data-label="Khoảng điểm">5 đến dưới 8</td>
+<td class="t-number" data-label="Số học sinh">2</td>
+</tr>
+<tr>
+<td data-label="Khoảng điểm">8 đến 10</td>
+<td class="t-number" data-label="Số học sinh">1</td>
+</tr>
+</tbody>
+</table>
+<div class="t-heading">
+<div>
+<h2>Tỉ lệ đúng từng câu</h2>
+</div>
+</div>
+<table class="t-table ">
+<caption>Tỉ lệ đúng</caption>
+<thead>
+<tr>
+<th scope="col">Câu</th>
+<th scope="col" class="t-number">Tỉ lệ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Câu">Câu 1</td>
+<td class="t-number" data-label="Tỉ lệ">75%</td>
+</tr>
+<tr>
+<td data-label="Câu">Câu 2</td>
+<td class="t-number" data-label="Tỉ lệ">50%</td>
+</tr>
+</tbody>
+</table>
+<div class="t-heading">
+<div>
+<h2>Bảng xếp hạng</h2>
+</div>
+</div>
+<table class="t-table ">
+<caption>Bảng xếp hạng mẫu</caption>
+<thead>
+<tr>
+<th scope="col" class="t-number">Hạng</th>
+<th scope="col">Học sinh</th>
+<th scope="col">Lớp</th>
+<th scope="col" class="t-number">Điểm</th>
+<th scope="col" class="t-number">Thời gian</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="t-number" data-label="Hạng">1</td>
+<td data-label="Học sinh">Học sinh Thử 01 [THỬ]</td>
+<td data-label="Lớp">9A</td>
+<td class="t-number" data-label="Điểm">9</td>
+<td class="t-number" data-label="Thời gian">30 phút</td>
+</tr>
+<tr>
+<td class="t-number" data-label="Hạng">2</td>
+<td data-label="Học sinh">Học sinh Thử 02 [THỬ]</td>
+<td data-label="Lớp">9A</td>
+<td class="t-number" data-label="Điểm">7</td>
+<td class="t-number" data-label="Thời gian">35 phút</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="view-materials" hidden aria-label="Tài liệu">
+<section id="list-materials" class="t-list">
+<div class="t-heading">
+<div>
+<h2>Tài liệu Google Drive</h2>
+</div><button type="button" id="act-materials-new" class="t-button t-primary" data-action="new-materials" >Thêm tài liệu</button>
+</div>
+<div id="material-list" class="t-list-items" aria-live="polite"><p class="t-muted">Danh sách tài liệu đã đăng sẽ hiện tại đây khi máy chủ hỗ trợ. Bạn vẫn thêm được tài liệu mới.</p></div>
+</section>
+<section id="detail-materials" hidden class="t-detail"><button type="button" id="act-materials-back" class="t-button" data-action="back-materials" data-target="list-materials">Quay lại danh sách</button>
+<h2 class="t-detail-title">Thêm tài liệu</h2>
+<form id="material-form" class="t-card t-form">
+<h3>Thông tin tài liệu</h3>
+<div class="t-field"><label for="field-material-form-material_title">Tên tài liệu</label><input name="material_title" required maxlength="500" id="field-material-form-material_title">
+</div>
+<div class="t-field"><label for="field-material-form-material_drive_url">Liên kết chia sẻ Google Drive</label><input name="material_drive_url" required type="url" id="field-material-form-material_drive_url">
+</div>
+<div class="t-field"><label for="field-material-form-material_desc">Mô tả ngắn</label><input name="material_desc" maxlength="500" id="field-material-form-material_desc">
+</div>
+<div class="t-field"><label for="field-material-form-material_course_id">Khóa học hiển thị tài liệu</label><select name="material_course_id" required id="field-material-form-material_course_id"><option value="">Chọn khóa học</option></select></div>
+<details>
+<summary>Thông tin định danh</summary>
+<div class="t-form-grid">
+<div class="t-field"><label for="field-material-form-material_id">Mã tài liệu</label><input name="material_id" required pattern="[a-z0-9][a-z0-9_\-]{0,63}" maxlength="64" id="field-material-form-material_id">
+</div>
+</div>
+</details><button type="submit" class="t-button t-primary" data-action="save-material">Lưu tài liệu</button>
+</form>
+</section>
+</section>
+<section id="view-accounts" hidden aria-label="Tài khoản học sinh">
+<section id="students-section">
+<section id="list-accounts" class="t-list">
+<div class="t-heading">
+<div>
+<h2>Danh sách học sinh</h2>
+</div><button type="button" id="act-accounts-new" class="t-button t-primary" data-action="new-accounts" >Thêm học sinh</button>
+</div>
+<div class="t-toolbar">
+<div class="t-field"><label for="field-student_search">Tìm theo tên hoặc mã</label><input id="field-student_search" name="student_search" type="search" >
+</div>
+<div class="t-field"><label for="students-class-filter">Lớp</label><select id="students-class-filter"><option value="">Tất cả các lớp</option></select>
+</div>
+</div>
+<div class="t-actions"><button type="button" id="refresh-students" class="t-button" data-action="refresh-students" >Tải lại</button>
+</div>
+<div id="student-pin-banner" class="notice" hidden role="status">
+</div>
+<div class="t-bulk" data-bulk hidden>
+<p>Đã chọn <span data-selection-count>0</span> học sinh</p><button type="button" id="act-accounts-bulk-lock" class="t-button" data-action="bulk-lock" >Khóa</button><button type="button" id="act-accounts-bulk-unlock" class="t-button" data-action="bulk-unlock" >Mở khóa</button><button type="button" id="act-accounts-bulk-delete" class="t-button t-danger" data-action="bulk-delete">Xóa</button>
+</div>
+<table class="t-table t-students" id="students-table">
+<caption>Danh sách tài khoản học sinh</caption>
+<thead>
+<tr>
+<th scope="col"><span class="visually-hidden">Chọn</span></th>
+<th scope="col">Mã học sinh</th>
+<th scope="col">Họ và tên</th>
+<th scope="col">Lớp</th>
+<th scope="col">Trạng thái</th>
+<th scope="col">Thao tác</th>
+</tr>
+</thead>
+<tbody id="students-tbody"><tr><td colspan="6">Đang tải danh sách học sinh…</td></tr></tbody>
+</table>
+</section>
+<section id="detail-accounts" hidden class="t-detail"><button type="button" id="act-accounts-back" class="t-button" data-action="back-accounts" data-target="list-accounts">Quay lại danh sách</button>
+<h2 class="t-detail-title">Thêm học sinh</h2>
+<form id="add-student-form" class="t-form t-card">
+<h3>Thông tin học sinh</h3>
+<div class="t-form-grid">
+<div class="t-field"><label for="field-add-student-form-name">Họ và tên</label><input name="name" required maxlength="60" id="field-add-student-form-name">
+</div>
+<div class="t-field"><label for="field-add-student-form-grade">Khối</label><select name="grade" id="field-add-student-form-grade"><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option><option value="10">Lớp 10</option><option value="11">Lớp 11</option><option value="12">Lớp 12</option></select>
+</div>
+<div class="t-field"><label for="field-add-student-form-class_code">Mã lớp</label><input name="class_code" required maxlength="10" id="field-add-student-form-class_code">
+</div>
+<div class="t-field"><label for="field-add-student-form-pin">Mã PIN (để trống để tự sinh)</label>
+<div class="t-pin"><input name="pin" type="password" minlength="6" maxlength="16" id="field-add-student-form-pin" autocomplete="off" inputmode="numeric"><button type="button" class="t-reveal" data-reveal="field-add-student-form-pin" aria-controls="field-add-student-form-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin (để trống để tự sinh)">Hiện</button>
+</div>
+</div>
+</div><button type="submit" class="t-button t-primary" data-action="save-student">Thêm học sinh</button>
+</form>
+</section>
+</section>
+</section>
+</section>
+<section id="settings" class="t-settings" hidden aria-labelledby="settings-title">
+<div class="t-heading">
+<h2 id="settings-title" tabindex="-1">Hồ sơ và cài đặt</h2><button type="button" id="close-settings" class="t-button" data-action="close-settings" >Quay lại công việc</button>
+</div>
+<div id="settings-layout" class="t-settings-layout">
+<section id="change-pin-section" class="t-card t-form" data-profile-panel="pin">
+<h3 id="regular-pin-title">Đổi mã PIN</h3>
+<form id="teacher-regular-change-pin-form" class="t-form">
+<div class="t-field"><label for="regular-old">Mã PIN hiện tại</label>
+<div class="t-pin"><input id="regular-old" name="old_pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="regular-old" aria-controls="regular-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin hiện tại">Hiện</button>
+</div>
+</div>
+<div class="t-field"><label for="regular-new">Mã PIN mới</label>
+<div class="t-pin"><input id="regular-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="regular-length"><button type="button" class="t-reveal" data-reveal="regular-new" aria-controls="regular-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin mới">Hiện</button>
+</div>
+</div>
+<div class="t-field"><label for="regular-confirm">Nhập lại mã PIN mới</label>
+<div class="t-pin"><input id="regular-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="t-reveal" data-reveal="regular-confirm" aria-controls="regular-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn nhập lại mã pin mới">Hiện</button>
+</div>
+</div>
+<p id="regular-length" class="t-muted">Ít nhất 8 ký tự.</p>
+<p id="teacher-change-pin-status" class="notice status" role="alert">
+</p><button type="submit" class="t-button t-primary">Lưu mã PIN mới</button>
+</form>
+</section>
+<section class="t-card t-form" data-profile-panel="ai" hidden>
+<h3>Gia sư AI và hạn mức</h3>
+<form id="ai-settings-form" class="t-form">
+<div class="t-field"><label for="ai-default-limit">Hạn mức mặc định (câu/ngày)</label><input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit">
+</div><label class="t-check" for="ai-exam-mode"><input name="exam_mode" type="checkbox" id="ai-exam-mode"><span>Khóa AI trong khi kiểm tra</span></label><button type="submit" class="t-button t-primary">Lưu hạn mức</button>
+</form>
+<div class="t-actions"><button type="button" id="refresh-ai-stats" class="t-button" data-action="refresh-ai" >Tải lại thống kê</button><button type="button" id="download-ai-csv" class="t-button" data-action="export-ai" >Xuất CSV</button>
+</div>
+<table class="t-table ">
+<caption>Thống kê sử dụng AI</caption>
+<thead>
+<tr>
+<th scope="col">Mã học sinh</th>
+<th scope="col" class="t-number">Đã dùng / Hạn mức</th>
+<th scope="col" class="t-number">Cộng thêm</th>
+<th scope="col">Trạng thái</th>
+<th scope="col">Thao tác</th>
+</tr>
+</thead>
+<tbody id="ai-usage-tbody">
+<tr>
+<td data-label="Mã học sinh">—</td>
+<td class="t-number" data-label="Đã dùng / Hạn mức">—</td>
+<td class="t-number" data-label="Cộng thêm">—</td>
+<td data-label="Trạng thái">Chưa tải</td>
+<td data-label="Thao tác">—</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="t-card t-form" data-profile-panel="keys" hidden>
+<h3>Khóa API</h3>
+<p id="pool-banner" class="notice" role="status">Chưa tải dữ liệu khóa.</p>
+<form id="add-key-form" class="t-form">
+<div class="t-field"><label for="field-gemini-key">Khóa API Gemini</label>
+<div class="t-pin"><input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" id="field-gemini-key"><button type="button" class="t-reveal" data-reveal="field-gemini-key" aria-controls="field-gemini-key" aria-pressed="false" aria-label="Hiện hoặc ẩn khóa api gemini">Hiện</button>
+</div>
+</div>
+<div class="t-field"><label for="field-add-key-form-gemini_key_note">Ghi chú</label><input name="gemini_key_note" maxlength="100" id="field-add-key-form-gemini_key_note">
+</div><button type="submit" class="t-button t-primary">Thêm khóa</button>
+</form><button type="button" id="refresh-keys" class="t-button" data-action="refresh-keys" >Tải lại danh sách</button>
+<table class="t-table ">
+<caption>Danh sách khóa API</caption>
+<thead>
+<tr>
+<th scope="col">Mã hiển thị</th>
+<th scope="col">Ghi chú</th>
+<th scope="col">Trạng thái</th>
+<th scope="col" class="t-number">Lượt dùng hôm nay</th>
+<th scope="col">Thao tác</th>
+</tr>
+</thead>
+<tbody id="keys-tbody">
+<tr>
+<td data-label="Mã hiển thị">—</td>
+<td data-label="Ghi chú">—</td>
+<td data-label="Trạng thái">Chưa tải</td>
+<td class="t-number" data-label="Lượt dùng hôm nay">—</td>
+<td data-label="Thao tác">—</td>
+</tr>
+</tbody>
+</table>
+</section>
+</div>
+</section>
+</div>
+</main><dialog id="msg-dialog" class="t-dialog" aria-labelledby="msg-title" aria-describedby="msg-body">
+<form method="dialog" id="msg-form" class="t-form">
+<h2 id="msg-title">Xác nhận thao tác</h2>
+<p id="msg-body">Kiểm tra đúng đối tượng và hậu quả trước khi tiếp tục.</p>
+<div id="msg-fields">
+</div><label id="msg-field" class="t-field" hidden><span id="msg-field-label">Thông tin</span><input id="msg-input" type="text" autocomplete="off"></label>
+<p id="msg-error" class="field-error" role="alert" hidden>
+</p>
+<div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
+</div>
+</form></dialog>
+<script type="module" src="./teacher.js"></script>
 </body>
 </html>

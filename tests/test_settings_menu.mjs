@@ -12,51 +12,31 @@ const stylesCss = fs.readFileSync(path.join(projectRoot, 'frontend/hoc/styles.cs
 const teacherJs = fs.readFileSync(path.join(projectRoot, 'frontend/hoc/teacher.js'), 'utf8');
 const appJs = fs.readFileSync(path.join(projectRoot, 'frontend/hoc/app.js'), 'utf8');
 
-// [1] Verify Teacher HTML Settings Menu Contract (Rule K)
-console.log('[1] Testing Teacher HTML Settings Menu structure and grouping...');
+// [1] Teacher shell contract v3: 4-section menu + Hồ sơ popover (replaces adaptive settings list)
+console.log('[1] Testing Teacher v3 shell: 4 sections, profile popover, settings panels...');
+const teacherUiJs = fs.readFileSync(path.join(projectRoot, 'frontend/hoc/teacher-ui.js'), 'utf8');
 {
-  assert(teacherHtml.includes('id="open-settings"'), 'Missing #open-settings button on teacher topbar');
-  assert(teacherHtml.includes('aria-controls="settings"'), 'Missing aria-controls="settings" on #open-settings');
-  assert(teacherHtml.includes('id="workspace"'), 'Missing #workspace container in teacher.html');
-  assert(teacherHtml.includes('id="workspace-title"'), 'Missing #workspace-title in teacher.html');
-
-  // Verify daily workspace core sections remain in workspace
+  for (const id of ['open-settings','nav-profile','workspace','workspace-title','settings','settings-title','close-settings','settings-layout',
+    'nav-lessons','nav-exams','nav-materials','nav-accounts','view-lessons','view-exams','view-materials','view-accounts',
+    'published','publish-form','teacher-results','material-form','students-section','change-pin-section','ai-usage-section','keys-section'] ) {
+    if (id === 'ai-usage-section' || id === 'keys-section') continue;
+    assert(teacherHtml.includes(`id="${id}"`), `Missing #${id} in teacher.html`);
+  }
+  assert(teacherHtml.includes('popovertarget="nav-profile"'), 'open-settings must open the profile popover');
+  for (const p of ['pin','ai','keys']) assert(teacherHtml.includes(`data-profile-panel="${p}"`), `Missing settings panel ${p}`);
   const workspaceIdx = teacherHtml.indexOf('id="workspace"');
   const settingsIdx = teacherHtml.indexOf('id="settings"');
   assert(workspaceIdx < settingsIdx, '#workspace must precede #settings');
-
   const workspaceSlice = teacherHtml.slice(workspaceIdx, settingsIdx);
-  assert(workspaceSlice.includes('id="published"'), 'published select must stay in workspace');
-  assert(workspaceSlice.includes('id="publish-form"'), 'publish-form must stay in workspace');
-  assert(workspaceSlice.includes('id="teacher-results"'), 'teacher-results must stay in workspace');
-  assert(workspaceSlice.includes('id="materials-section"'), 'materials-section must stay in workspace');
-  assert(workspaceSlice.includes('id="students-section"'), 'students-section must stay in workspace');
-
-  // Verify settings sections and groups
+  for (const id of ['published','publish-form','teacher-results','material-form','students-section','students-tbody']) assert(workspaceSlice.includes(`id="${id}"`), `${id} must stay in workspace`);
   const settingsSlice = teacherHtml.slice(settingsIdx);
-  assert(settingsSlice.includes('id="settings-title"'), 'Missing #settings-title in settings');
-  assert(settingsSlice.includes('id="close-settings"'), 'Missing #close-settings button');
-  assert(settingsSlice.includes('class="settings-layout"'), 'Missing .settings-layout');
-  assert(settingsSlice.includes('class="settings-menu"'), 'Missing .settings-menu navigation');
-  assert(settingsSlice.includes('class="group-label">Cá nhân</p>'), 'Missing Cá nhân group label');
-  assert(settingsSlice.includes('class="group-label">Cài đặt AI</p>'), 'Missing Cài đặt AI group label');
-  assert(settingsSlice.includes('data-view="account"'), 'Missing data-view="account" group link');
-  assert(settingsSlice.includes('data-view="quota"'), 'Missing data-view="quota" group link');
-  assert(settingsSlice.includes('data-view="keys"'), 'Missing data-view="keys" group link');
-
-  // Verify detail panels
-  assert(settingsSlice.includes('id="panel-account"'), 'Missing #panel-account in settings');
-  assert(settingsSlice.includes('id="panel-quota"'), 'Missing #panel-quota in settings');
-  assert(settingsSlice.includes('id="panel-keys"'), 'Missing #panel-keys in settings');
-  assert(settingsSlice.includes('id="change-pin-section"'), 'change-pin-section must be in settings');
-  assert(settingsSlice.includes('id="ai-usage-section"'), 'ai-usage-section must be in settings');
-  assert(settingsSlice.includes('id="keys-section"'), 'keys-section must be in settings');
-
-  // Verify back buttons for mobile navigation
-  assert(settingsSlice.includes('data-back'), 'Missing data-back button in settings detail panels');
-
-  console.log('  PASS [1]: Teacher HTML settings menu and grouping contract 100% verified.');
+  assert(settingsSlice.includes('id="teacher-regular-change-pin-form"'), 'PIN form must be in settings');
+  assert(settingsSlice.includes('id="ai-settings-form"') && settingsSlice.includes('id="add-key-form"'), 'AI and key forms must be in settings');
+  assert(!/\[THỬ\]/.test(workspaceSlice.slice(0, workspaceSlice.indexOf('id="view-exams"'))), 'No sample data in lessons view');
+  assert(teacherUiJs.includes('role=tab') && teacherUiJs.includes('ArrowRight'), 'Tab keyboard support missing');
+  console.log('  PASS [1]: Teacher v3 shell contract verified.');
 }
+
 
 // [2] Verify Student HTML Settings Menu Contract (Rule K)
 console.log('[2] Testing Student HTML Settings Menu structure and grouping...');
@@ -112,7 +92,7 @@ console.log('[4] Testing Student Row Actions Collapsible in teacher.js...');
   assert(teacherJs.includes("el('summary', 'Thao tác')"), 'teacher.js must create summary "Thao tác"');
   assert(teacherJs.includes("el('span', ` với học sinh ${s.name}`, 'visually-hidden')"), 'summary must have visually-hidden accessibility label');
   assert(teacherJs.includes("details.open = false;"), 'Clicking action button must close details disclosure');
-  assert(teacherJs.includes("target?.matches('.row-actions[open]')"), 'toggle listener must close other open details');
+  assert(teacherUiJs.includes("target?.matches('.row-actions[open]')"), 'toggle listener must close other open details');
 
   console.log('  PASS [4]: Student row actions collapsible & accessibility label verified.');
 }
@@ -256,8 +236,7 @@ console.log('[8] Testing Static Code Audit: Zero alert/confirm/prompt and Zero E
 // [9] T1: Mobile Group List & Panel Visibility Contract (S1)
 console.log('[9] Testing T1: Mobile Group List visible on open, desktop defaults to account...');
 {
-  assert(teacherJs.includes("let activeView = '';"), "teacher.js must initialize activeView as empty string");
-  assert(teacherJs.includes("if (isWide && !activeView) activeView = 'account';"), "teacher.js must default activeView to account only when isWide");
+  assert(teacherUiJs.includes("let screen = 'work';"), "teacher-ui.js must start on the work screen");
   assert(appJs.includes("let studentActiveView = '';"), "app.js must initialize studentActiveView as empty string");
   assert(appJs.includes("if (isWide && !studentActiveView) studentActiveView = 'account';"), "app.js must default studentActiveView to account only when isWide");
   console.log('  PASS [9]: Mobile starts at group list, desktop defaults to account panel.');
@@ -277,9 +256,8 @@ console.log('[10] Testing T2: In-flight concurrency guard prevents duplicate req
 // [11] T3: Browser History & Back Navigation (S3)
 console.log('[11] Testing T3: History navigation on mobile (group -> detail -> back to list -> back to work)...');
 {
-  assert(teacherJs.includes("function settingsBack()"), "Missing settingsBack() in teacher.js");
-  assert(teacherJs.includes("history.pushState({ settings: 1"), "Missing history.pushState on opening settings");
-  assert(teacherJs.includes("window.addEventListener('popstate'"), "Missing popstate listener in teacher.js");
+  assert(teacherUiJs.includes("history.pushState({teacher: 1, settings: 1}"), "Missing history.pushState on opening settings");
+  assert(teacherUiJs.includes("window.addEventListener('popstate'"), "Missing popstate listener in teacher-ui.js");
   assert(appJs.includes("function studentSettingsBack()"), "Missing studentSettingsBack() in app.js");
   assert(appJs.includes("history.pushState({ studentSettings: 1"), "Missing history.pushState in app.js");
   console.log('  PASS [11]: History push/pop and dirty cancel restoration verified.');

@@ -1,0 +1,161 @@
+/* 1. Biến thiết kế: styles.css provides the local SGK Serif font. */
+:root{--ink:#18302d;--muted:#536762;--paper:#f5f4ef;--surface:#fffefa;--sidebar:#eeeee6;--line:#d8dfd8;--brand:#183e39;--brand-hover:#28574f;--brand-soft:#e5eedf;--ok:#245b41;--ok-bg:#e5eedf;--warn:#78350f;--warn-bg:#fff3dd;--danger:#8b2d26;--danger-bg:#fdecea;--info:#183e39;--info-bg:#e5eedf;--control:#74847d;--white:#ffffff;--backdrop:#18302d80;--shadow:0 4px 16px #18302d14;--t-nav-width:224px;--t-nav-height:72px;--t-header-height:64px;--t-radius:8px;--t-card-radius:12px;--t-text:16px;--t-small:14px;--t-tiny:12px;--t-medium:18px;--t-h3:22px;--t-h2:28px;--t-h1:36px}
+/* 2. Nền tảng — every non-token selector is scoped to teacher-app. */
+.teacher-app{margin:0;background:var(--paper);color:var(--ink);font:var(--t-text)/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--blue:var(--brand)}
+.teacher-app *,.teacher-app *::before,.teacher-app *::after{box-sizing:border-box}
+.teacher-app [hidden]{display:none!important}
+.teacher-app h1,.teacher-app h2,.teacher-app h3,.teacher-app p{margin:0;overflow-wrap:anywhere}
+.teacher-app h1{font:600 var(--t-h1)/1.25 "SGK Serif","Times New Roman",serif;letter-spacing:0}
+.teacher-app h2{font-size:var(--t-h2);line-height:1.25;letter-spacing:0}
+.teacher-app h3{font-size:var(--t-medium);line-height:1.5}
+.teacher-app button,.teacher-app input,.teacher-app select,.teacher-app textarea{font-family:inherit}
+.teacher-app a{color:var(--brand);text-underline-offset:4px}
+.teacher-app button,.teacher-app .t-button,.teacher-app summary{min-height:48px;min-width:48px;padding:12px 16px;border:1px solid var(--control);border-radius:var(--t-radius);background:var(--surface);color:var(--ink);font-size:var(--t-text);font-weight:600;line-height:1.5;cursor:pointer;overflow-wrap:anywhere;touch-action:manipulation}
+.teacher-app a.t-button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.teacher-app button:hover,.teacher-app .t-button:hover,.teacher-app summary:hover{background:var(--brand-soft);border-color:var(--brand)}
+.teacher-app button:active,.teacher-app .t-button:active{background:var(--sidebar)}
+.teacher-app button:disabled,.teacher-app button[aria-busy=true]{cursor:wait;opacity:1;background:var(--muted);border-color:var(--muted);color:var(--surface)}
+.teacher-app button.primary,.teacher-app .t-primary,.teacher-app button.t-primary{background:var(--brand);border-color:var(--brand);color:var(--white)}
+.teacher-app .t-primary:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+.teacher-app .t-danger{color:var(--danger)}
+.teacher-app .t-primary.t-danger{color:var(--white);background:var(--danger);border-color:var(--danger)}
+.teacher-app :focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.teacher-app .t-muted{color:var(--muted);font-size:var(--t-small)}
+.teacher-app .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.teacher-app .t-skip{position:fixed;top:8px;left:16px;z-index:100;min-height:48px;padding:12px 16px;background:var(--surface);color:var(--ink);transform:translateY(-160%)}
+.teacher-app .t-skip:focus{transform:none}
+.teacher-app :focus{scroll-margin-top:88px;scroll-margin-bottom:168px}
+/* 3. Khung */
+.teacher-app .t-topbar{height:var(--t-header-height);position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.teacher-app .t-wordmark{display:flex;align-items:center;gap:16px;text-decoration:none;font:600 var(--t-h2)/1 "SGK Serif","Times New Roman",serif;color:var(--brand);min-height:48px;min-width:48px}
+.teacher-app .t-wordmark span{font:600 var(--t-tiny)/1.5 system-ui,sans-serif;letter-spacing:.04em}
+.teacher-app .t-main{max-width:none;min-height:calc(100dvh - var(--t-header-height));margin:0;padding:0}
+.teacher-app .t-editor{display:grid;grid-template-columns:var(--t-nav-width) minmax(0,1fr);min-height:calc(100dvh - var(--t-header-height))}
+.teacher-app .t-workspace,.teacher-app .t-settings{width:100%;max-width:1100px;min-width:0;padding:32px;margin:0 auto;grid-column:2}
+.teacher-app .t-workspace-head{margin-bottom:24px}
+.teacher-app .t-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.teacher-app .t-heading p{margin-top:8px}
+.teacher-app .t-auth{max-width:440px;margin:48px auto;padding:24px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface)}
+.teacher-app .t-auth>h2{margin-bottom:24px}
+.teacher-app .t-auth>p{margin-bottom:24px}
+.teacher-app .t-detail>button{margin-bottom:24px}
+.teacher-app .t-detail-title{margin-bottom:24px}
+.teacher-app .t-detail>section,.teacher-app .t-detail>details{margin-top:24px}
+.teacher-app .t-list,.teacher-app .t-detail,.teacher-app .t-settings-layout{min-width:0}
+.teacher-app .has-detail{min-width:0}
+/* 4. Menu */
+.teacher-app .t-nav{align-content:start;position:sticky;top:var(--t-header-height);align-self:start;display:grid;gap:8px;padding:24px 16px;background:var(--sidebar);min-height:calc(100dvh - var(--t-header-height))}
+.teacher-app .t-nav-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border-color:transparent;background:transparent;font-size:var(--t-text)}
+.teacher-app .t-nav-item svg{width:22px;height:22px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.teacher-app .t-nav-item[aria-current=page]{background:var(--brand);border-color:var(--brand);color:var(--white)}
+.teacher-app .t-nav-mobile{display:none}
+.teacher-app .t-profile-menu{position:fixed;inset:72px 16px auto auto;width:min(336px,calc(100vw - 32px));max-height:calc(100dvh - 88px);margin:0;padding:8px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);overflow:auto}
+.teacher-app .t-profile-menu:popover-open{display:grid;gap:8px}
+.teacher-app .t-profile-menu>button,.teacher-app .t-profile-menu>a{width:100%;justify-content:flex-start;text-align:left}
+/* 5. Danh sách / bảng, including existing JS-generated elements. */
+.teacher-app .t-card,.teacher-app .question-edit,.teacher-app .progress-card{min-width:0;margin:0 0 24px;padding:24px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface);overflow-wrap:anywhere}
+.teacher-app .t-card:last-child{margin-bottom:0}
+.teacher-app .t-list-item{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+.teacher-app .t-list-item>div{min-width:0}
+.teacher-app .t-list-item p{margin:8px 0}
+.teacher-app .t-badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:var(--t-radius);background:var(--brand-soft);color:var(--brand);font-size:var(--t-small);font-weight:600}
+.teacher-app .t-badge-error{color:var(--danger);background:var(--danger-bg)}
+.teacher-app .t-table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;margin:16px 0 24px;background:var(--surface);font-size:var(--t-text)}
+.teacher-app .t-table caption{padding:12px 0;text-align:left;font-weight:600;color:var(--muted)}
+.teacher-app .t-table th,.teacher-app .t-table td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.teacher-app .t-table th{font-size:var(--t-small);background:var(--sidebar);font-weight:650}
+.teacher-app .t-table .t-number{font-variant-numeric:tabular-nums;text-align:right}
+.teacher-app .row-actions,.teacher-app .t-row-actions{min-width:0}
+.teacher-app .row-actions summary{display:inline-flex;align-items:center;list-style:none;max-width:100%;font-size:var(--t-small)}
+.teacher-app summary::-webkit-details-marker{display:none}
+.teacher-app .action-list,.teacher-app .t-action-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.teacher-app .t-table .action-list{display:grid}
+.teacher-app .action-list button{min-width:0;max-width:100%}
+.teacher-app .t-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0 0 24px}
+.teacher-app .t-metrics>div{padding:16px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface);min-width:0}
+.teacher-app .t-metrics dt{font-size:var(--t-small);color:var(--muted)}
+.teacher-app .t-metrics dd{margin:8px 0 0;font-size:var(--t-h2);font-weight:650;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.teacher-app .t-chart{margin:24px 0;padding:24px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface)}
+.teacher-app .t-chart svg{display:block;width:100%;height:auto;max-height:200px}
+.teacher-app .t-chart-axis{stroke:var(--control);fill:none}
+.teacher-app .t-chart-bar{fill:var(--brand)}
+.teacher-app .question-edit{display:grid;gap:16px}
+.teacher-app .t-legacy{margin:0 0 24px}
+.teacher-app .t-legacy>.t-toolbar{margin:16px 0}
+/* 6. Biểu mẫu */
+.teacher-app .t-form{display:grid;gap:24px;min-width:0}
+.teacher-app .t-form-grid,.teacher-app .teacher-grid,.teacher-app .t-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
+.teacher-app .t-toolbar{grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr));align-items:end;margin-bottom:24px}
+.teacher-app .t-toolbar>button{align-self:end}
+.teacher-app .t-field{display:grid;gap:8px;min-width:0}
+.teacher-app label{font-size:var(--t-text);font-weight:600;margin:0;line-height:1.5;overflow-wrap:anywhere}
+.teacher-app input,.teacher-app select,.teacher-app textarea{min-width:0;max-width:100%;width:100%;min-height:48px;border:1px solid var(--control);border-radius:var(--t-radius);padding:12px;background:var(--surface);color:var(--ink);font-size:16px;line-height:1.5}
+.teacher-app textarea{min-height:160px;resize:vertical}
+.teacher-app input[aria-invalid=true],.teacher-app select[aria-invalid=true],.teacher-app textarea[aria-invalid=true]{border-color:var(--danger)}
+.teacher-app .t-pin{display:flex;align-items:stretch;border:1px solid var(--control);border-radius:var(--t-radius);min-width:0}
+.teacher-app .t-pin input{border:0;border-radius:var(--t-radius);flex:1;width:0}
+.teacher-app .t-pin .t-reveal{border:0;border-left:1px solid var(--line);border-radius:0 8px 8px 0;min-width:64px;padding:8px;font-size:var(--t-small)}
+.teacher-app .t-pin:focus-within{outline:3px solid var(--brand);outline-offset:3px}
+.teacher-app .t-check{display:flex;align-items:center;gap:12px;min-height:48px;min-width:48px;font-weight:500}
+.teacher-app .t-check input{width:24px;min-width:24px;height:24px;min-height:24px;padding:0;margin:0;accent-color:var(--brand);flex-shrink:0}
+.teacher-app .t-check-group{display:flex;flex-wrap:wrap;gap:8px 24px;border:1px solid var(--line);padding:16px;border-radius:var(--t-radius);min-width:0}
+.teacher-app .t-check-group legend,.teacher-app .question-edit legend{font-size:var(--t-medium);font-weight:650;padding:0 8px}
+.teacher-app .t-actions,.teacher-app .t-bulk{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:16px 0 24px}
+.teacher-app .t-bulk{padding:16px;background:var(--warn-bg);border:1px solid var(--warn);border-radius:var(--t-radius)}
+.teacher-app .t-bulk p{margin-right:auto}
+.teacher-app .t-file{display:grid;gap:8px;min-height:48px;min-width:0}
+.teacher-app input[type=file]{padding:8px;overflow:hidden}
+.teacher-app input[type=file]::file-selector-button{font:inherit;min-height:48px;padding:8px 12px;margin-right:8px;border:1px solid var(--control);border-radius:var(--t-radius);color:var(--ink);background:var(--surface)}
+.teacher-app .t-savebar{position:sticky;bottom:0;z-index:5;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:16px 0;background:var(--surface);border-top:1px solid var(--line)}
+.teacher-app .t-pin input:focus-visible{outline:none}
+/* 7. Tab */
+.teacher-app .t-tabs,.teacher-app .t-mini-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.teacher-app .t-tabs [role=tab],.teacher-app .t-mini-tabs [role=tab]{flex:1;min-width:0}
+.teacher-app [role=tab][aria-selected=true]{background:var(--brand);border-color:var(--brand);color:var(--white)}
+.teacher-app .t-step{min-width:0}
+.teacher-app .t-step>h3{margin-bottom:16px}
+.teacher-app .t-markdown{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;min-width:0}
+.teacher-app .t-preview{min-height:200px;padding:24px;background:var(--paper);border:1px solid var(--line);border-radius:var(--t-radius);overflow-wrap:anywhere}
+.teacher-app .t-import-steps{display:flex;flex-wrap:wrap;gap:24px;padding-left:24px;margin:0 0 24px}
+/* 8. Hộp thoại */
+.teacher-app .t-dialog{width:min(480px,calc(100% - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:24px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);overflow:auto}
+.teacher-app .t-dialog::backdrop{background:var(--backdrop)}
+.teacher-app .t-dialog h2{font-size:var(--t-h3)}
+.teacher-app .t-dialog-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.teacher-app .t-dialog-actions button{min-width:96px}
+/* 9. Trạng thái */
+.teacher-app .notice{max-width:none;margin:16px 0;padding:16px;border:1px solid var(--brand);border-left-width:4px;border-radius:var(--t-radius);background:var(--info-bg);color:var(--info);font-size:var(--t-text);overflow-wrap:anywhere}
+.teacher-app .notice.error{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.teacher-app .notice.success{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.teacher-app .notice.t-warning{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.teacher-app .t-global-status{margin:16px 24px}
+.teacher-app .status:empty,.teacher-app .field-error:empty{position:absolute;width:1px;height:1px;padding:0;border:0;margin:0;overflow:hidden;clip-path:inset(50%)}
+.teacher-app .field-error{font-size:var(--t-small);color:var(--danger);margin-top:8px}
+.teacher-app .t-state{padding:24px;border:1px solid var(--line);border-radius:var(--t-card-radius);background:var(--surface)}
+.teacher-app .t-state p{margin:8px 0 16px}
+.teacher-app .t-skeleton{height:16px;width:72%;margin-bottom:16px;background:var(--line);border-radius:var(--t-radius)}
+/* 10. Đáp ứng */
+@media(min-width:1051px){.teacher-app .t-markdown{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-app .t-markdown>[hidden]{display:block!important}.teacher-app .t-mini-tabs{display:none}}
+@media(min-width:761px) and (max-width:1050px){.teacher-app{--t-nav-width:184px}.teacher-app .t-nav{padding:16px 8px}.teacher-app .t-workspace,.teacher-app .t-settings{padding:24px 16px}}
+@media(max-width:1050px){.teacher-app .t-table,.teacher-app .t-table tbody{display:block}.teacher-app .t-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.teacher-app .t-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;padding:16px;border:1px solid var(--line);border-radius:var(--t-card-radius);margin-bottom:16px}.teacher-app .t-table td{display:block;padding:0;border:0;min-width:0}.teacher-app .t-table td::before{content:attr(data-label);display:block;font-size:var(--t-small);color:var(--muted);font-weight:600;margin-bottom:4px}.teacher-app .t-table td:last-child{grid-column:1/-1}.teacher-app .t-table .action-list{display:flex}.teacher-app .t-table caption{display:block}}
+@media(max-width:760px){.teacher-app{--t-nav-width:0px}.teacher-app .t-topbar{padding-inline:16px}.teacher-app .t-wordmark{gap:8px}.teacher-app .t-wordmark span{font-size:var(--t-tiny)}.teacher-app .t-editor{display:block}.teacher-app .t-workspace,.teacher-app .t-settings{padding:24px 16px calc(104px + env(safe-area-inset-bottom))}.teacher-app .t-nav{position:fixed;inset:auto 0 0;z-index:15;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}.teacher-app .t-nav-item{display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:56px;padding:4px 0;text-align:center;font-size:var(--t-tiny);line-height:1.5}.teacher-app .t-nav-item svg{width:20px;height:20px}.teacher-app .t-nav-mobile{display:inline;white-space:normal;overflow-wrap:normal;word-break:normal}.teacher-app .t-nav-desktop{display:none}.teacher-app .t-nav-label{min-width:0}.teacher-app .t-heading h2{font-size:var(--t-h3)}.teacher-app .t-form-grid,.teacher-app .teacher-grid,.teacher-app .t-toolbar{grid-template-columns:minmax(0,1fr)}.teacher-app .t-card,.teacher-app .question-edit,.teacher-app .progress-card{padding:16px}.teacher-app .t-list-item{display:grid;gap:16px}.teacher-app .t-savebar{bottom:calc(var(--t-nav-height) + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:8px 0}.teacher-app .t-savebar>button{font-size:var(--t-small);padding:8px 4px}.teacher-app .t-auth{margin:24px 16px;padding:24px}.teacher-app .t-global-status{margin-inline:16px}.teacher-app .t-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:359px){.teacher-app .t-wordmark span{max-width:88px;letter-spacing:0}.teacher-app .t-table tr{grid-template-columns:minmax(0,1fr)}.teacher-app .t-dialog{padding:16px}.teacher-app .t-dialog-actions{display:grid;grid-template-columns:1fr 1fr}.teacher-app .t-dialog-actions button{min-width:0}}
+@media(max-width:760px){.teacher-app .t-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-app .t-toolbar>.t-field:first-child{grid-column:1/-1}}
+/* Mobile viewport shell: intrinsic nav row reserves its real height, including two-line labels. */
+@media(max-width:760px){
+ .teacher-app{height:100dvh;display:grid;grid-template-rows:var(--t-header-height) minmax(0,1fr);overflow:hidden}
+ .teacher-app .t-main{display:flex;flex-direction:column;min-height:0;overflow:auto}
+ .teacher-app:has(.t-editor:not([hidden])) .t-main{overflow:hidden}
+ .teacher-app .t-global-status{flex:0 0 auto}
+ .teacher-app .t-editor{display:grid;flex:1;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;min-height:0}
+ .teacher-app .t-nav{position:static;grid-column:1;grid-row:2;align-self:stretch;min-height:0;width:100%;inset:auto}
+ .teacher-app .t-nav-item{overflow-wrap:normal;word-break:normal}
+ .teacher-app .t-workspace,.teacher-app .t-settings{grid-row:1;grid-column:1;min-height:0;overflow-y:auto;scroll-padding-block:24px 104px;padding:24px 16px}
+ .teacher-app .t-savebar{bottom:0}
+}
+
+/* 11. In / giảm chuyển động / forced-colors */
+@media print{.teacher-app .t-nav,.teacher-app .t-topbar,.teacher-app .t-actions,.teacher-app .t-savebar{display:none}.teacher-app .t-editor{display:block}.teacher-app .t-workspace{padding:0;max-width:none}.teacher-app{background:var(--white);color:var(--ink)}}
+@media(prefers-reduced-motion:reduce){.teacher-app *,.teacher-app *::before,.teacher-app *::after{animation:none;transition:none;scroll-behavior:auto}}
+@media(forced-colors:active){.teacher-app button,.teacher-app input,.teacher-app select,.teacher-app textarea,.teacher-app .t-card,.teacher-app .t-dialog{border-color:CanvasText}.teacher-app :focus-visible{outline-color:Highlight}.teacher-app .t-nav-item[aria-current=page]{border:2px solid Highlight}.teacher-app .t-chart-bar{fill:CanvasText}}
+
