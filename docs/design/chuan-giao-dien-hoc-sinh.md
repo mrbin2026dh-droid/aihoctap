@@ -45,3 +45,9 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 - Bỏ khẩu hiệu và chữ trang trí: "SGK · Học theo nhịp của em", "Mỗi ngày một chút", nhãn in hoa phía trên tiêu đề, câu mở đầu trang chủ. Thông báo trạng thái bình thường chỉ dành cho trình đọc màn hình; chỉ lỗi mới hiện chữ.
 - Token đăng nhập (học sinh và giáo viên) hết hạn sau 1 giờ. Khi gặp 401, ứng dụng hiện một hộp thoại duy nhất, giữ nháp và bài chờ nộp, rồi mở đăng nhập với mã học sinh đã điền (PIN luôn để trống).
 - Giao diện giáo viên khai báo `only light` để Chrome không tự ép tối; chữ giáo viên cũng theo thang trên (tests/test_teacher_ui_standard.cjs).
+
+## Dark mode: bảng màu xám than ấm (2026-10-25)
+Áp dụng cho học sinh và giáo viên. Nền `#262624`, thẻ `#30302e`, thanh bên `#1f1e1d`, viền `#403f3b`, chữ `#faf9f5`, chữ phụ `#b8b5aa`, nhấn xanh ngọc `#2f7a6b` (chữ nhấn `#93d4c3`), nút chính `#ece9df` trên chữ `#1f1e1d`.
+- Học sinh: sinh bằng `python3 tools/gen_dark_theme.py` (đổi màu ở `TOK_VARS`/`EXTRA`), rồi `package_student_pwa.py --stamp`.
+- Giáo viên: khối `TEACHER-DARK` cuối `teacher.css`; theo hệ thống hoặc `localStorage aisgk-theme` (dùng chung nút đổi giao diện của học sinh).
+- Kiểm thử: `test_teacher_ui_standard.cjs` chạy cả light và dark.

@@ -12,11 +12,11 @@ function scan(min){const vis=el=>{const r=el.getBoundingClientRect();if(r.width<
  for(const el of document.querySelectorAll('button,a[href],input:not([type=hidden]):not([type=checkbox]),select,textarea')){if(!vis(el)||el.closest('.visually-hidden'))continue;const r=el.getBoundingClientRect();if(r.height<44||r.width<44)o.targets.push(name(el)+' '+Math.round(r.width)+'x'+Math.round(r.height))}
  return o}
 (async()=>{const b=await chromium.launch();let bad=0;const out=[];
-for(const vp of [{w:360,h:740},{w:390,h:844},{w:768,h:1024},{w:1280,h:800}]){
- const ctx=await b.newContext({viewport:{width:vp.w,height:vp.h},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+for(const cs of ['light','dark'])for(const vp of [{w:360,h:740},{w:390,h:844},{w:768,h:1024},{w:1280,h:800}]){
+ const ctx=await b.newContext({viewport:{width:vp.w,height:vp.h},serviceWorkers:'block',colorScheme:cs});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body={};if(u.endsWith('/teacher/auth'))body={token:'tt',must_change:false};else if(u.endsWith('/pwa/catalog'))body={schema_version:1,revision:'r',courses:[]};else if(u.endsWith('/teacher/students'))body=STUDENTS;else if(u.includes('/pwa/teacher/results'))body=[];else if(u.endsWith('/ai-settings'))body={settings:{default_limit:10,exam_mode:false}};else if(u.endsWith('/ai-stats'))body={stats:[]};else if(u.endsWith('/gemini-keys'))body={keys:[]};
   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
- const min=vp.w<=760?15:14;const T='teacher '+vp.w;const res={};const grab=async n=>{await pg.waitForTimeout(250);res[n]=await pg.evaluate(scan,min);if(SHOTS)await pg.screenshot({path:`${SHOTS}/t-${vp.w}-${n}.png`})};
+ const min=vp.w<=760?15:14;const T='teacher '+cs+' '+vp.w;const res={};const grab=async n=>{await pg.waitForTimeout(250);res[n]=await pg.evaluate(scan,min);if(SHOTS)await pg.screenshot({path:`${SHOTS}/t-${cs}-${vp.w}-${n}.png`})};
  await pg.goto('http://localhost:8171/teacher.html');await pg.waitForTimeout(500);await grab('login');
  await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(1200);await grab('lessons');
  for(const [n,sel] of [['exams','#nav-exams'],['materials','#nav-materials'],['accounts','#nav-accounts']]){const l=pg.locator(vp.w<=760?`.t-nav ${sel}`:sel).first();if(await l.isVisible()){await l.click();await grab(n)}}

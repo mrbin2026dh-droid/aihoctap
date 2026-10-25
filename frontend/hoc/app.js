@@ -1161,7 +1161,7 @@ function syncThemeButton() {
   btn.setAttribute('aria-label', label); btn.title = label;
   let meta = document.querySelector('meta[name="theme-color"][data-dynamic]');
   if (!meta) { meta = document.createElement('meta'); meta.setAttribute('name', 'theme-color'); meta.setAttribute('data-dynamic', ''); document.head.prepend(meta); }
-  meta.setAttribute('content', dark ? '#111113' : '#ffffff');
+  meta.setAttribute('content', dark ? '#262624' : '#ffffff');
 }
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
   const next = effectiveTheme() === 'dark' ? 'light' : 'dark';

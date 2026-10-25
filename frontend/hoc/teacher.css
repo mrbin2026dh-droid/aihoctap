@@ -202,3 +202,34 @@
 
 @media(max-width:760px){:root{--t-text:clamp(18px,4.6vw,22px);--t-small:clamp(16px,4.1vw,20px);--t-tiny:clamp(15px,3.8vw,18px)}}
 .teacher-app h1,.teacher-app .t-workspace-head h1{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:800;letter-spacing:-.02em}
+
+/* TEACHER-DARK:BEGIN */
+@media (prefers-color-scheme:dark){
+:root:not([data-theme=light]){--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--surface:#30302e;--sidebar:#1f1e1d;--line:#403f3b;--brand:#2f7a6b;--brand-hover:#3a8d7c;--brand-soft:#2b3a36;--brand-text:#93d4c3;--ok:#8fd4a8;--ok-bg:#26382f;--warn:#f0c27a;--warn-bg:#3d3220;--danger:#ff9f95;--danger-bg:#43272a;--info:#93d4c3;--info-bg:#2b3a36;--control:#8a877d;--white:#fff;--backdrop:#000000a6;--shadow:0 4px 16px #00000066;color-scheme:dark}
+:root:not([data-theme=light]) .teacher-app{background:var(--paper);color:var(--ink)}
+:root:not([data-theme=light]) .teacher-app .t-wordmark{color:var(--brand-text)}
+:root:not([data-theme=light]) .teacher-app .t-nav-item{color:var(--ink)}
+:root:not([data-theme=light]) .teacher-app .t-nav-item:hover:not([aria-current=page]){background:#30302e}
+:root:not([data-theme=light]) .teacher-app .t-auth-logo{background:#ece9df;color:#1f1e1d}
+:root:not([data-theme=light]) .teacher-app .t-button.t-auth-btn{background:#ece9df;border-color:#ece9df;color:#1f1e1d}
+:root:not([data-theme=light]) .teacher-app .t-button.t-auth-btn:hover{background:#faf9f5;border-color:#faf9f5}
+:root:not([data-theme=light]) .teacher-app .t-auth{box-shadow:0 1px 2px #0006,0 12px 32px #0006}
+:root:not([data-theme=light]) .teacher-app .t-input-icon{border-color:var(--control)}
+:root:not([data-theme=light]) .teacher-app .t-input-icon:focus-within{outline-color:#93d4c366;border-color:#93d4c3}
+:root:not([data-theme=light]) .teacher-app .t-badge:not(.t-badge-error),.teacher-app .t-icon-btn{color:var(--brand-text)}
+:root:not([data-theme=light]) .teacher-app .t-icon-btn.is-danger,.teacher-app .t-icon-btn[data-danger]{color:var(--danger)}
+}
+:root[data-theme=dark]{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--surface:#30302e;--sidebar:#1f1e1d;--line:#403f3b;--brand:#2f7a6b;--brand-hover:#3a8d7c;--brand-soft:#2b3a36;--brand-text:#93d4c3;--ok:#8fd4a8;--ok-bg:#26382f;--warn:#f0c27a;--warn-bg:#3d3220;--danger:#ff9f95;--danger-bg:#43272a;--info:#93d4c3;--info-bg:#2b3a36;--control:#8a877d;--white:#fff;--backdrop:#000000a6;--shadow:0 4px 16px #00000066;color-scheme:dark}
+:root[data-theme=dark] .teacher-app{background:var(--paper);color:var(--ink)}
+:root[data-theme=dark] .teacher-app .t-wordmark{color:var(--brand-text)}
+:root[data-theme=dark] .teacher-app .t-nav-item{color:var(--ink)}
+:root[data-theme=dark] .teacher-app .t-nav-item:hover:not([aria-current=page]){background:#30302e}
+:root[data-theme=dark] .teacher-app .t-auth-logo{background:#ece9df;color:#1f1e1d}
+:root[data-theme=dark] .teacher-app .t-button.t-auth-btn{background:#ece9df;border-color:#ece9df;color:#1f1e1d}
+:root[data-theme=dark] .teacher-app .t-button.t-auth-btn:hover{background:#faf9f5;border-color:#faf9f5}
+:root[data-theme=dark] .teacher-app .t-auth{box-shadow:0 1px 2px #0006,0 12px 32px #0006}
+:root[data-theme=dark] .teacher-app .t-input-icon{border-color:var(--control)}
+:root[data-theme=dark] .teacher-app .t-input-icon:focus-within{outline-color:#93d4c366;border-color:#93d4c3}
+:root[data-theme=dark] .teacher-app .t-badge:not(.t-badge-error),.teacher-app .t-icon-btn{color:var(--brand-text)}
+:root[data-theme=dark] .teacher-app .t-icon-btn.is-danger,.teacher-app .t-icon-btn[data-danger]{color:var(--danger)}
+/* TEACHER-DARK:END */

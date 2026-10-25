@@ -631,7 +631,7 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
-:root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;--soft:#1c1c1f;color-scheme:dark}
+:root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}
 :where(:root:not([data-theme=light])) button:hover{background:#252a2f}
 :where(:root:not([data-theme=light])) a{color:var(--brand-text)}
 :where(:root:not([data-theme=light])) :focus-visible{outline:3px solid #364471}
@@ -736,15 +736,15 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root:not([data-theme=light])) .student-app .badge-dot{background:#661e1e}
 :where(:root:not([data-theme=light])) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root:not([data-theme=light])) .student-app .lesson-open,:where(:root:not([data-theme=light])) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
-:where(:root:not([data-theme=light])) .student-app button.primary:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
-:where(:root:not([data-theme=light])) .student-app .lesson-open:hover{background:#fafafa;color:#09090b;border-color:#fafafa}
+:where(:root:not([data-theme=light])) .student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}
+:where(:root:not([data-theme=light])) .student-app .lesson-open:hover{background:#faf9f5;color:#1f1e1d;border-color:#faf9f5}
 :where(:root:not([data-theme=light])) .student-app .result-title .ic{color:#4ade80}
-:where(:root:not([data-theme=light])) .student-app .auth-btn:hover,:where(:root:not([data-theme=light])) .student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
-:where(:root:not([data-theme=light])) .student-app .auth-btn-alt:hover{background:#1c1c1f;color:var(--ink);border-color:var(--ink)}
+:where(:root:not([data-theme=light])) .student-app .auth-btn:hover,:where(:root:not([data-theme=light])) .student-app .btn-login:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}
+:where(:root:not([data-theme=light])) .student-app .auth-btn-alt:hover{background:#3a3936;color:var(--ink);border-color:var(--ink)}
 :where(:root:not([data-theme=light])) .student-app .connection{color:#4ade80}
 :where(:root:not([data-theme=light])) .student-app .connection.is-offline{color:#fbbf24}
 }
-:root[data-theme=dark],:root[data-theme=dark] .student-app{--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;--soft:#1c1c1f;color-scheme:dark}
+:root[data-theme=dark],:root[data-theme=dark] .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}
 :where(:root[data-theme=dark]) button:hover{background:#252a2f}
 :where(:root[data-theme=dark]) a{color:var(--brand-text)}
 :where(:root[data-theme=dark]) :focus-visible{outline:3px solid #364471}
@@ -849,11 +849,11 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root[data-theme=dark]) .student-app .badge-dot{background:#661e1e}
 :where(:root[data-theme=dark]) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root[data-theme=dark]) .student-app .lesson-open,:where(:root[data-theme=dark]) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
-:where(:root[data-theme=dark]) .student-app button.primary:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
-:where(:root[data-theme=dark]) .student-app .lesson-open:hover{background:#fafafa;color:#09090b;border-color:#fafafa}
+:where(:root[data-theme=dark]) .student-app button.primary:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}
+:where(:root[data-theme=dark]) .student-app .lesson-open:hover{background:#faf9f5;color:#1f1e1d;border-color:#faf9f5}
 :where(:root[data-theme=dark]) .student-app .result-title .ic{color:#4ade80}
-:where(:root[data-theme=dark]) .student-app .auth-btn:hover,:where(:root[data-theme=dark]) .student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
-:where(:root[data-theme=dark]) .student-app .auth-btn-alt:hover{background:#1c1c1f;color:var(--ink);border-color:var(--ink)}
+:where(:root[data-theme=dark]) .student-app .auth-btn:hover,:where(:root[data-theme=dark]) .student-app .btn-login:hover{background:#f5f3ea;color:#1f1e1d;border-color:#f5f3ea}
+:where(:root[data-theme=dark]) .student-app .auth-btn-alt:hover{background:#3a3936;color:var(--ink);border-color:var(--ink)}
 :where(:root[data-theme=dark]) .student-app .connection{color:#4ade80}
 :where(:root[data-theme=dark]) .student-app .connection.is-offline{color:#fbbf24}
 /* DARK-THEME:END */
