@@ -3789,6 +3789,7 @@ export default {
         total,
         correct: correctCount,
         needs_review: false,
+        submitted_at: Date.now(),
         message: 'Nộp bài thành công.'
       };
 

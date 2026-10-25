@@ -795,3 +795,8 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Tab "Kiểm tra" đổi thành "Luyện tập" (đúng nội dung); bỏ tab "Đã tải" (đã có trong Cài đặt). Thanh Học bài/Làm bài tập/Tải bài/Gia sư AI cùng cao 48px, cùng viền.
 - Việc mở: tab Kiểm tra thật chờ backend đề thi.
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Trang Kết quả, thống kê Tiến độ, hộp thoại Gia sư AI mới, tách nút chế độ
+- Worker trả thêm submitted_at (cho biểu đồ 7 ngày; không có thì ẩn biểu đồ).
+- Việc mở: wrangler deploy.
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

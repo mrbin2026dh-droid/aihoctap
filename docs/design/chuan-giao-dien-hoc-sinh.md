@@ -62,3 +62,9 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 | Tài khoản học sinh | Cài đặt > Tài khoản | đổi PIN |
 | (kết quả bài nộp) | Tiến độ | |
 "Đã tải" (ngoại tuyến) là tính năng kỹ thuật, nằm trong Cài đặt > Tải ngoại tuyến, không phải tab.
+
+## Kết quả, thống kê, Gia sư AI (2026-10-25)
+- Nộp xong chuyển sang trang Kết quả riêng: vòng phần trăm, số câu đúng, điểm, lần làm, cao nhất; nút Làm lại / Xem bài / Tiến độ. Không hiện đúng/sai từng câu (chống dò đáp án).
+- Mở lại bài đã nộp: tự bắt đầu lượt mới (luyện tập không giới hạn).
+- Tiến độ = bảng thống kê: bài đã làm, lượt làm, điểm trung bình, tỉ lệ đúng, biểu đồ 7 ngày (cần Worker trả `submitted_at`), danh sách từng bài với thanh điểm cao nhất.
+- Gia sư AI: tiêu đề ngắn "Gia sư AI", chip "Còn N lượt", nút đóng/gửi bằng biểu tượng, toàn màn hình trên điện thoại, nền phủ trung tính.

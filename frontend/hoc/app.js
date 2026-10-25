@@ -59,13 +59,13 @@ async function refreshTutorQuota() {
     /** @type {{ used: number, limit: number, remaining: number, locked: boolean, exam_mode: boolean }} */
     const quota = await api('/pwa/ai-quota', { token: session.token });
     if (quota.exam_mode) {
-      badge.textContent = 'Đang trong giờ thi: tắt gia sư';
+      badge.textContent = 'Giờ thi';
       badge.className = 'tutor-quota-badge is-locked';
     } else if (quota.locked) {
-      badge.textContent = 'Gia sư đang tạm khóa';
+      badge.textContent = 'Tạm khóa';
       badge.className = 'tutor-quota-badge is-locked';
     } else {
-      badge.textContent = `Còn ${quota.remaining} lượt hôm nay`;
+      badge.textContent = `Còn ${quota.remaining} lượt`;
       badge.className = 'tutor-quota-badge';
     }
   } catch {
@@ -81,15 +81,15 @@ function openTutor(questionId = null) {
   const note = node('tutor-context-note');
   if (questionId) {
     const q = active.questions.find(item => item.id === questionId);
-    note.textContent = q ? `Đang hướng dẫn câu: ${q.prompt.slice(0, 45)}…` : 'Đang hướng dẫn câu hỏi luyện tập';
+    note.textContent = q ? `Câu hỏi: ${q.prompt.slice(0, 40)}…` : 'Câu hỏi luyện tập';
   } else {
-    note.textContent = `Đang hỗ trợ bài: ${active.title}`;
+    note.textContent = active.title;
   }
   if (!tutorHistory.length) {
     const msgs = node('tutor-messages');
     msgs.replaceChildren();
     const greeting = el('div', '', 'tutor-msg tutor-bot');
-    greeting.append(el('p', 'Chào em! Thầy/Cô là Gia sư Sư phạm Tin học. Em đang băn khoăn ở phần nào trong bài, hãy chia sẻ để Thầy/Cô gợi ý từng bước nhé!'));
+    greeting.append(el('p', 'Chào em! Em đang vướng ở phần nào của bài? Hãy chia sẻ, mình sẽ gợi ý từng bước để em tự tìm ra đáp án.'));
     msgs.append(greeting);
   }
   updateTutorStatus();
@@ -174,8 +174,8 @@ function show(name) {
     studentSettingsActive = false;
     renderStudentSettings(false);
   }
-  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'materials']) node(`${view}-view`).hidden = view !== name;
-  const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name;
+  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
+  const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name === 'result' ? 'practice' : name;
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
     else tab.removeAttribute('aria-current');
@@ -312,6 +312,12 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
     pending = /** @type {Outbox|undefined} */ (await db.get('outbox', `${nextDraft.uid}/${nextDraft.attempt_id}`));
     if (generation !== viewGeneration || owner !== session) return;
     await db.put('meta', `active:${owner.identity.uid}`, {key, practice:exerciseOnly});
+    if (pending?.ack) {
+      // Bài trước đã nộp xong: bắt đầu lượt mới (luyện tập làm lại không giới hạn). Kết quả xem ở Tiến độ.
+      await db.remove('drafts', key);
+      nextDraft = {key, uid: owner.identity.uid, lesson, answers: {}, attempt_id: crypto.randomUUID(), updated_at: Date.now()};
+      pending = undefined;
+    }
     nextLocked = Boolean(pending);
   }
   if (generation !== viewGeneration || owner !== session) return;
@@ -327,8 +333,7 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
   node('lesson-version').textContent = `Phiên bản ${lesson.version.slice(0, 8)}`;
   renderMarkdown(node('lesson-content'), lesson.content_markdown);
   node('result').replaceChildren(); renderQuestions(); setPractice(practice);
-  if (pending?.ack) renderResult(pending.ack);
-  else if (pending) node('result').append(el('p', 'Chờ máy chủ xác nhận. Bài nộp được giữ trên máy.', 'inline-note'));
+  if (pending) node('result').append(el('p', 'Chờ máy chủ xác nhận. Bài nộp được giữ trên máy.', 'inline-note'));
   updateResume();
   notify(navigator.onLine ? 'Bài học đã sẵn sàng.' : 'Đang học từ bài đã lưu trên máy.');
 }
@@ -378,23 +383,47 @@ function updateAnswerCount() {
   node('answer-count').textContent = `${answered}/${active?.questions.length || 0} câu đã trả lời`;
   node('answer-count').parentElement?.style.setProperty('--p', String(active?.questions.length ? Math.round(100 * answered / active.questions.length) : 0) + '%');
 }
+/** @param {string} label @param {string} value @param {string} iconName */
+function statTile(label, value, iconName) {
+  const tile = el('div', '', 'stat-tile');
+  const head = el('span', '', 'stat-ic'); head.append(icon(iconName));
+  tile.append(head, el('strong', value, 'stat-value'), el('span', label, 'stat-label'));
+  return tile;
+}
 /** @param {Ack} ack */
-function renderResult(ack) {
-  const target = node('result'); target.replaceChildren();
-  const rh = el('h2', '', 'result-title'); rh.append(icon('check'), el('span', 'Kết quả bài làm')); target.append(rh, el('p', `${ack.correct}/${ack.total} câu đúng${ack.needs_review ? ' · Tự luận chờ giáo viên xem.' : '.'}`, 'success'));
-  for (const feedback of (Array.isArray(ack.feedback) ? ack.feedback : [])) {
-    const question = active?.questions.find(item => item.id === feedback.id);
-    const row = el('div', '', 'feedback-row'); row.append(el('strong', question?.prompt || feedback.id), el('p', feedback.correct === null ? 'Chờ giáo viên xem câu tự luận.' : (feedback.correct ? 'Em đã trả lời đúng.' : 'Chưa đúng. Em hãy xem lại bài.')));
-    if (feedback.correct === false && feedback.hint) row.append(el('p', feedback.hint, 'hint'));
-    target.append(row);
-  }
-  target.append(withIcon(button('Làm lại', async () => {
-    if (!draft || !active) return;
-    const owner = session; const lesson = active; const generation = ++viewGeneration;
-    await db.remove('drafts', draft.key);
-    if (owner !== session || generation !== viewGeneration) return;
-    draft = null; await openLesson(lesson, null, generation, owner, true); await saveDraft();
-  }, 'primary'), 'refresh'));
+async function showResult(ack) {
+  show('result');
+  const target = node('result-view'); target.replaceChildren();
+  const pct = ack.total ? Math.round(100 * ack.correct / ack.total) : 0;
+  const level = pct >= 90 ? ['Xuất sắc', 'Em nắm rất vững bài này.'] : pct >= 70 ? ['Khá tốt', 'Em đã hiểu phần lớn bài học.'] : pct >= 50 ? ['Cần ôn thêm', 'Hãy đọc lại bài rồi làm lại.'] : ['Cố lên', 'Hãy đọc lại bài học, sau đó làm lại nhé.'];
+  const queue = /** @type {Outbox[]} */ (await db.all('outbox'));
+  const same = queue.filter(item => item.uid === session?.identity.uid && item.ack && item.ack.course_id === ack.course_id && item.ack.lesson_id === ack.lesson_id).map(item => /** @type {Ack} */ (item.ack));
+  const tries = Math.max(same.length, 1);
+  const best = Math.max(Number(ack.score) || 0, ...same.map(item => Number(item.score) || 0));
+  const head = el('div', '', 'page-heading'); const h1 = el('h1', 'Kết quả'); h1.id = 'result-title'; h1.tabIndex = -1;
+  head.append(h1, el('p', lessonTitle(ack)));
+  const hero = el('section', '', 'result-hero');
+  const ring = el('div', '', 'score-ring'); ring.style.setProperty('--p', pct + '%'); ring.setAttribute('role', 'img'); ring.setAttribute('aria-label', `${pct} phần trăm`);
+  ring.append(el('strong', pct + '%'));
+  const text = el('div', '', 'result-text'); text.append(el('h2', level[0]), el('p', `${ack.correct}/${ack.total} câu đúng`, 'result-count'), el('p', level[1], 'meta'));
+  if (ack.needs_review) text.append(el('p', 'Có câu tự luận đang chờ giáo viên xem.', 'meta'));
+  hero.append(ring, text);
+  const tiles = el('div', '', 'stat-grid');
+  tiles.append(statTile('Điểm', ack.score == null ? '–' : `${ack.score}/10`, 'target'), statTile('Lần làm', String(tries), 'repeat'), statTile('Cao nhất', `${best}/10`, 'trophy'));
+  const actions = el('div', '', 'result-actions');
+  actions.append(
+    withIcon(button('Làm lại', async () => {
+      if (!draft || !active) return;
+      const owner = session; const lesson = active; const generation = ++viewGeneration;
+      await db.remove('drafts', draft.key);
+      if (owner !== session || generation !== viewGeneration) return;
+      draft = null; await openLesson(lesson, null, generation, owner, true); await saveDraft();
+    }, 'primary'), 'refresh'),
+    withIcon(button('Xem bài', async () => { if (active) { practice = false; await openLesson(active, null, ++viewGeneration, session, false); } }), 'book'),
+    withIcon(button('Tiến độ', () => { progress().catch(report); }), 'chart'));
+  target.append(head, hero, tiles, actions);
+  window.scrollTo(0, 0);
+  h1.focus({preventScroll: true});
 }
 function saveDraft() {
   if (!session || !active || !draft || locked) return saveChain;
@@ -437,7 +466,7 @@ async function sync() {
         await db.put('outbox', item.key, {...item, ack, error: undefined});
         if (session !== captured) continue;
         notify('Đã nộp bài. Máy chủ đã xác nhận.');
-        if (draft?.attempt_id === ack.attempt_id) renderResult(ack);
+        if (draft?.attempt_id === ack.attempt_id) void showResult(ack);
       } catch (error) {
         await db.put('outbox', item.key, {...item, error: error instanceof Error ? error.message : 'Đồng bộ chưa xong.'});
         if (session === captured) {
@@ -481,14 +510,51 @@ async function progress() {
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
   if (session !== captured || generation !== viewGeneration) return;
-  for (const item of queue.filter(item => item.uid === captured.identity.uid && !item.ack)) {
-    const row = el('article', '', 'progress-card'); row.append(el('h2', lessonTitle(item.body)), el('p', `Chờ đồng bộ${item.error ? ` · ${item.error}` : ''}`, 'hint')); target.append(row);
+  const waiting = queue.filter(item => item.uid === captured.identity.uid && !item.ack);
+  if (waiting.length) {
+    const note = el('div', '', 'notice pending-note');
+    note.append(icon('clock'), el('span', `${waiting.length} bài đang chờ gửi lên máy chủ${waiting[0].error ? ` · ${waiting[0].error}` : ''}`));
+    target.append(note);
   }
+  if (!attempts.length) {
+    if (!waiting.length) { const card = empty(target, 'Chưa có bài nộp', 'Luyện tập một bài để bắt đầu ghi nhận tiến độ.', 'chart'); card.append(button('Chọn bài tập', () => {show('practice'); renderPractice();}, 'primary')); }
+    return;
+  }
+  /** @type {Map<string,{item:Ack,title:string,count:number,best:number,correct:number,total:number}>} */
+  const lessons = new Map(); let sumCorrect = 0; let sumTotal = 0;
   for (const item of attempts) {
-    const row = el('article', '', 'progress-card'); row.append(el('h2', lessonTitle(item)), el('p', `${item.correct}/${item.total} câu đúng`, 'score-text'), el('p', item.needs_review ? 'Máy chủ đã nhận · Chờ xem tự luận' : 'Máy chủ đã nhận', 'meta'));
-    target.append(row);
+    const key = `${item.course_id}/${item.lesson_id}`; const score = Number(item.score) || (item.total ? Math.round(100 * item.correct / item.total) / 10 : 0);
+    const row = lessons.get(key) || {item, title: lessonTitle(item), count: 0, best: 0, correct: 0, total: 0};
+    row.count += 1; row.best = Math.max(row.best, score); row.correct = item.correct; row.total = item.total; lessons.set(key, row);
+    sumCorrect += item.correct; sumTotal += item.total;
   }
-  if (!target.childElementCount) {const card = empty(target, 'Chưa có bài nộp', 'Luyện tập một bài để bắt đầu ghi nhận tiến độ.'); card.append(button('Chọn bài tập', () => {show('practice'); renderPractice();}, 'primary'));}
+  const average = [...lessons.values()].reduce((sum, row) => sum + row.best, 0) / lessons.size;
+  const tiles = el('div', '', 'stat-grid stat-grid-4');
+  tiles.append(statTile('Bài đã làm', String(lessons.size), 'book'), statTile('Lượt làm', String(attempts.length), 'repeat'), statTile('Điểm trung bình', (Math.round(average * 10) / 10).toString(), 'target'), statTile('Tỉ lệ đúng', `${sumTotal ? Math.round(100 * sumCorrect / sumTotal) : 0}%`, 'check'));
+  target.append(tiles);
+  const stamps = attempts.map(item => Number(item.submitted_at)).filter(value => value > 0);
+  if (stamps.length) {
+    const days = []; const today = new Date(); today.setHours(0, 0, 0, 0);
+    for (let offset = 6; offset >= 0; offset--) { const day = new Date(today); day.setDate(today.getDate() - offset); days.push({start: day.getTime(), label: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][day.getDay()], count: 0}); }
+    for (const stamp of stamps) { const slot = [...days].reverse().find(day => stamp >= day.start); if (slot && stamp < slot.start + 86400000) slot.count += 1; }
+    const peak = Math.max(1, ...days.map(day => day.count));
+    const card = el('section', '', 'panel week-panel'); card.append(el('h2', '7 ngày gần đây', 'panel-title'));
+    const chart = el('div', '', 'week-chart');
+    for (const day of days) {
+      const col = el('div', '', 'week-col'); const bar = el('span', '', 'week-bar'); bar.style.height = Math.max(day.count ? 12 : 4, Math.round(100 * day.count / peak)) + '%';
+      bar.title = `${day.count} lượt`; col.append(el('em', String(day.count), 'week-num'), bar, el('span', day.label, 'week-day')); chart.append(col);
+    }
+    card.append(chart); target.append(card);
+  }
+  const list = el('section', '', 'panel'); list.append(el('h2', 'Theo từng bài', 'panel-title'));
+  for (const row of lessons.values()) {
+    const entry = el('article', '', 'stat-row');
+    const top = el('div', '', 'stat-row-top'); top.append(el('h3', row.title), el('strong', `${row.best}/10`, 'stat-row-score'));
+    const bar = el('div', '', 'bar'); const fill = el('span'); fill.style.width = Math.min(100, row.best * 10) + '%'; bar.append(fill);
+    entry.append(top, bar, el('p', `${row.count} lượt làm · lần gần nhất ${row.correct}/${row.total} câu đúng`, 'meta'));
+    list.append(entry);
+  }
+  target.append(list);
 }
 /** @param {{course_id:string,lesson_id:string}} item */
 function lessonTitle(item) {return catalog?.courses.find(course => course.id === item.course_id)?.lessons.find(lesson => lesson.id === item.lesson_id)?.title || 'Bài học đã nộp';}
@@ -1076,7 +1142,7 @@ function openStudentSettings() {
   const wide = window.matchMedia('(min-width: 960px)').matches;
   if (!wide) studentActiveView = '';
   history.pushState({ studentSettings: 1 }, '');
-  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'materials-view'];
+  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'materials-view', 'result-view'];
   tabs.forEach(id => { const elem = document.getElementById(id); if (elem) elem.hidden = true; });
   renderStudentSettings();
   window.scrollTo(0, 0);
