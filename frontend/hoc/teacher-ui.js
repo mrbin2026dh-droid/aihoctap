@@ -133,6 +133,7 @@ export function init(options = {}) {
   if (ready) return;
   ready = true;
   if (options.guard) guard = options.guard;
+  decorateIcons();
   render();
 
   document.addEventListener('click', event => {
@@ -199,50 +200,50 @@ export function init(options = {}) {
     }
   });
 
-  // "Thao tác" của mỗi dòng mở hộp thoại thay cho menu thả xuống trong bảng.
-  document.addEventListener('click', event => {
-    const summary = /** @type {HTMLElement|null} */ (event.target instanceof Element ? event.target.closest('details.row-actions > summary') : null);
-    if (!summary) return;
-    event.preventDefault();
-    if (summary.getAttribute('aria-disabled') === 'true') return;
-    const details = /** @type {HTMLDetailsElement} */ (summary.parentElement);
-    openActionDialog(details, summary);
-  });
-
-  document.addEventListener('toggle', e => {
-    const target = /** @type {HTMLDetailsElement|null} */ (e.target instanceof HTMLDetailsElement ? e.target : null);
-    if (target?.matches('.row-actions[open]')) {
-      for (const d of document.querySelectorAll('.row-actions[open]')) if (d !== target) /** @type {HTMLDetailsElement} */ (d).open = false;
-    }
-  }, true);
 }
 
-/** @param {HTMLDetailsElement} details @param {HTMLElement} summary */
-function openActionDialog(details, summary) {
-  const sources = /** @type {HTMLButtonElement[]} */ ([...details.querySelectorAll('.action-list button')]);
-  if (!sources.length) return;
-  const dialog = document.createElement('dialog');
-  dialog.className = 't-dialog t-action-dialog';
-  const label = (summary.textContent || 'Thao tác').replace(/\s+/g, ' ').trim();
-  const title = document.createElement('h2'); title.id = 'action-dialog-title'; title.textContent = label;
-  dialog.setAttribute('aria-labelledby', title.id);
-  const list = document.createElement('div'); list.className = 't-action-menu';
-  const close = () => { dialog.close(); dialog.remove(); summary.focus?.(); };
-  for (const source of sources) {
-    const choice = document.createElement('button');
-    choice.type = 'button'; choice.className = 't-button' + (source.classList.contains('danger') ? ' t-danger' : '');
-    choice.textContent = source.textContent;
-    choice.disabled = source.disabled;
-    choice.addEventListener('click', () => { close(); source.click(); });
-    list.append(choice);
+const ICONS = {
+  view: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z',
+  edit: 'M4 20h4L19 9l-4-4L4 16v4z M14 6l4 4',
+  key: 'M8 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M11.5 11H21 M18 11v3 M15 11v2',
+  lock: 'M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3',
+  unlock: 'M6 11h12v9H6z M8 11V8a4 4 0 0 1 7.5-1.5',
+  trash: 'M5 7h14 M9 7V4h6v3 M7 7l1 13h8l1-13 M10 11v6 M14 11v6',
+  monitor: 'M3 12h4l3-8 4 16 3-8h4',
+  stats: 'M5 20V10 M12 20V4 M19 20v-7',
+  clock: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M12 8v4l3 2',
+  retry: 'M4 12a8 8 0 1 1 3 6.3 M4 19v-5h5'
+};
+/** Vẽ biểu tượng (SVG đường nét) vào nút có data-icon; chữ thay thế nằm ở aria-label và title.
+ * @param {ParentNode} [root] */
+export function decorateIcons(root = document) {
+  for (const node of root.querySelectorAll('button[data-icon]')) {
+    const btn = /** @type {HTMLElement} */ (node);
+    if (btn.querySelector('svg')) continue;
+    const path = ICONS[/** @type {keyof typeof ICONS} */ (btn.dataset.icon || '')];
+    if (!path) continue;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+    const d = document.createElementNS('http://www.w3.org/2000/svg', 'path'); d.setAttribute('d', path);
+    svg.append(d); btn.textContent = ''; btn.append(svg);
   }
-  const cancel = document.createElement('button');
-  cancel.type = 'button'; cancel.className = 't-button'; cancel.textContent = 'Đóng';
-  cancel.addEventListener('click', close);
-  const actions = document.createElement('div'); actions.className = 't-dialog-actions'; actions.append(cancel);
-  dialog.append(title, list, actions);
-  dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
-  document.body.append(dialog);
-  dialog.showModal();
-  /** @type {HTMLElement} */ (list.querySelector('button:not(:disabled)') || cancel).focus();
+}
+/** Nút biểu tượng 48×48 có tên truy cập và gợi ý.
+ * @param {{icon: keyof typeof ICONS, label: string, danger?: boolean, onClick: () => void}} o */
+export function iconButton({icon, label, danger = false, onClick}) {
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 't-icon-btn' + (danger ? ' t-danger' : '');
+  btn.dataset.icon = icon; btn.setAttribute('aria-label', label); btn.title = label;
+  btn.addEventListener('click', onClick);
+  decorateIcons(/** @type {any} */ ({querySelectorAll: () => [btn]}));
+  return btn;
+}
+
+/** Chuyển nút chữ có sẵn thành nút biểu tượng (giữ nguyên trình xử lý).
+ * @param {HTMLButtonElement} btn @param {keyof typeof ICONS} icon @param {string} label @param {boolean} [danger] */
+export function toIcon(btn, icon, label, danger = false) {
+  btn.className = 't-icon-btn' + (danger ? ' t-danger' : '');
+  btn.dataset.icon = icon; btn.setAttribute('aria-label', label); btn.title = label;
+  decorateIcons(/** @type {any} */ ({querySelectorAll: () => [btn]}));
+  return btn;
 }

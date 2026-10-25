@@ -71,12 +71,11 @@ assert(await pg.isVisible('#list-materials'),T+'về danh sách sau khi lưu');
 await pg.click('#nav-accounts');await pg.waitForTimeout(500);
 assert.strictEqual(await pg.locator('#students-tbody tr').count(),3);
 await pg.fill('#field-student_search','thử 02');assert.strictEqual(await pg.locator('#students-tbody tr').count(),1,T+'tìm học sinh');await pg.fill('#field-student_search','');
-await pg.click('#students-tbody tr:nth-child(1) summary');await pg.waitForTimeout(200);
-assert(await pg.isVisible('.t-action-dialog'),T+'Thao tác mở hộp thoại');assert.strictEqual(await pg.locator('.t-action-dialog .t-action-menu button').count(),4);
-assert(!(await pg.locator('#students-tbody tr:nth-child(1) details').evaluate(d=>d.open)),T+'không mở menu thả trong bảng');
-let n1=reqs.length;await pg.click('.t-action-dialog .t-action-menu button:has-text("Khóa")');await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'),T+'chọn Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);
-assert.strictEqual(reqs.slice(n1).filter(r=>r.m==='POST').length,0,T+'Hủy = 0 yêu cầu');assert.strictEqual(await pg.locator('.t-action-dialog').count(),0);
-await pg.click('#students-tbody tr:nth-child(1) summary');await pg.keyboard.press('Escape');await pg.waitForTimeout(200);assert.strictEqual(await pg.locator('.t-action-dialog').count(),0,T+'Esc đóng hộp thoại thao tác');
+const R='#students-tbody tr:nth-child(1) .t-icon-btn';assert.strictEqual(await pg.locator(R).count(),5,T+'mỗi dòng 5 nút biểu tượng');assert.strictEqual(await pg.locator('#students-tbody details').count(),0,T+'không còn thanh thả xuống');
+for(const b of await pg.locator(R).all()){assert(await b.getAttribute('aria-label'),T+'nút có tên truy cập');const bb=await b.boundingBox();assert(bb.width>=47&&bb.height>=47,T+'vùng chạm 48px')}
+await pg.locator(R).nth(0).click();await pg.waitForTimeout(200);assert(await pg.isVisible('#msg-dialog'),T+'Xem chi tiết mở hộp thoại');await pg.click('#msg-ok');await pg.waitForTimeout(200);
+let n1=reqs.length;await pg.locator(R).nth(3).click();await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'),T+'biểu tượng Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);
+assert.strictEqual(reqs.slice(n1).filter(r=>r.m==='POST').length,0,T+'Hủy = 0 yêu cầu');
 await pg.check('#students-tbody tr:nth-child(1) input[type=checkbox]');await pg.check('#students-tbody tr:nth-child(2) input[type=checkbox]');
 assert(await pg.isVisible('[data-bulk]'));assert.strictEqual(await pg.textContent('[data-selection-count]'),'2');
 let n0=reqs.length;await pg.click('#act-accounts-bulk-lock');await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'));

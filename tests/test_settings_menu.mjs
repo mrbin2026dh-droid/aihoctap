@@ -88,11 +88,10 @@ console.log('[3] Testing CSS Responsive Rules for adaptive settings menu...');
 // [4] Verify Student Row Actions Collapsible (<details class="row-actions">)
 console.log('[4] Testing Student Row Actions Collapsible in teacher.js...');
 {
-  assert(teacherJs.includes("el('details', '', 'row-actions')"), 'teacher.js must create details.row-actions');
-  assert(teacherJs.includes("el('summary', 'Thao tác')"), 'teacher.js must create summary "Thao tác"');
-  assert(teacherJs.includes("el('span', ` với học sinh ${s.name}`, 'visually-hidden')"), 'summary must have visually-hidden accessibility label');
-  assert(teacherJs.includes("details.open = false;"), 'Clicking action button must close details disclosure');
-  assert(teacherUiJs.includes("target?.matches('.row-actions[open]')"), 'toggle listener must close other open details');
+  assert(!teacherJs.includes("el('details', '', 'row-actions')"), 'row actions must not use a details dropdown');
+  assert(teacherJs.includes("'t-icon-actions'"), 'teacher.js must render icon action group');
+  for (const k of ["'view'", "'edit'", "'key'", "'trash'"]) assert(teacherJs.includes('ui.toIcon') && teacherJs.includes(k), 'missing icon ' + k);
+  assert(!teacherUiJs.includes('openActionDialog'), 'action dialog must be removed from teacher-ui.js');
 
   console.log('  PASS [4]: Student row actions collapsible & accessibility label verified.');
 }

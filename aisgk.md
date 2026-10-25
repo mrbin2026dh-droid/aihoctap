@@ -710,3 +710,10 @@ rontend/hoc/api.js, scratch/aihoctap-clean/*, isgk.md.
 - Ghép `docs/design/teacher-ui-v3` vào `frontend/hoc` (teacher.html, teacher.css, teacher-ui.js mới, teacher.js nối lại). Menu 4 phân hệ; Hồ sơ mở đổi PIN, gia sư AI, khóa API; học sinh có tìm kiếm, chọn nhiều, khóa/mở khóa/xóa hàng loạt có xác nhận.
 - Sửa lỗi gốc: pattern id không hợp lệ với cờ v, `inFlight` khai báo sai phạm vi, nhãn 'Ấn'. Test mới `tests/test_teacher_shell.cjs`; `test_settings_menu.mjs` cập nhật cho khung mới (menu cài đặt thích nghi của giáo viên được thay bằng popover Hồ sơ).
 - Kiểm tra/Tài liệu(liệt kê)/Excel/ghi chú học sinh: chưa có máy chủ → xem `docs/audits/2026-10-25-teacher-ui-v3-accept.md` và `docs/bugs-mo.md`. TIẾP THEO → Người dùng kiểm tay giao diện giáo viên trên link thật.
+
+## 2026-10-25 — Claude: thay "Thao tác" bằng 5 nút biểu tượng
+- Bỏ thanh thả xuống và hộp thoại "Thao tác". Mỗi dòng học sinh có 5 nút biểu tượng 48px (Xem chi tiết, Sửa, Đặt lại mã PIN, Khóa/Mở khóa, Xóa); danh sách kiểm tra có Sửa, Khóa, Theo dõi, Thống kê, Xóa; theo dõi có Gia hạn, Cho làm lại. Có aria-label và title; Hủy hộp thoại = 0 yêu cầu.
+- Kiểm thử: toàn bộ tests/test_* đạt.
+- Việc mở: xem docs/bugs-mo.md.
+XONG giao diện biểu tượng / TIẾP THEO → Claude (kiểm tra bản chạy thật)
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/claude-chatgpt-teacher-ui-v3.md rồi làm theo."

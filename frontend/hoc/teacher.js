@@ -520,15 +520,11 @@ async function guarded(key, fn) {
   const sid = key.split(':')[1];
   const row = document.querySelector(`[data-sid="${CSS.escape(sid)}"]`);
   row?.setAttribute('aria-busy', 'true');
-  const details = /** @type {HTMLDetailsElement|null} */ (row?.querySelector('.row-actions'));
-  const summary = details?.querySelector('summary');
-  summary?.setAttribute('aria-disabled', 'true');
-  const actionBtns = row?.querySelectorAll('.action-list button');
+  const actionBtns = row?.querySelectorAll('.t-icon-btn');
   actionBtns?.forEach(b => { /** @type {HTMLButtonElement} */ (b).disabled = true; });
   try { return await fn(); } finally {
     inFlight.delete(key);
     row?.removeAttribute('aria-busy');
-    summary?.removeAttribute('aria-disabled');
     actionBtns?.forEach(b => { /** @type {HTMLButtonElement} */ (b).disabled = false; });
   }
 }
@@ -635,14 +631,8 @@ function renderStudentsTable() {
     );
 
     const tdActions = el('td'); tdActions.dataset.label = 'Thao tác';
-    const details = /** @type {HTMLDetailsElement} */ (el('details', '', 'row-actions'));
-    const summary = el('summary', 'Thao tác');
-    const hiddenLabel = el('span', ` với học sinh ${s.name}`, 'visually-hidden');
-    summary.append(hiddenLabel);
-
     const editBtn = button('Sửa', async () => {
       if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
-      details.open = false;
       const res = await dialogBox({
         kind: 'prompt',
         title: 'Sửa học sinh',
@@ -674,7 +664,6 @@ function renderStudentsTable() {
 
     const resetPinBtn = button('Đặt lại PIN', async () => {
       if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
-      details.open = false;
       if (!await confirmBox({
         title: 'Đặt lại mã PIN?',
         body: `Học sinh: ${s.name} (${s.id}). Mã PIN cũ sẽ không còn sử dụng được.`,
@@ -698,7 +687,6 @@ function renderStudentsTable() {
 
     const lockBtn = button(s.disabled ? 'Mở khóa' : 'Khóa', async () => {
       if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
-      details.open = false;
       const actionName = s.disabled ? 'mở khóa' : 'khóa';
       if (!await confirmBox({
         title: s.disabled ? 'Mở khóa tài khoản?' : 'Khóa tài khoản?',
@@ -723,7 +711,6 @@ function renderStudentsTable() {
 
     const delBtn = button('Xóa', async () => {
       if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
-      details.open = false;
       if (!await confirmBox({
         title: 'Xóa học sinh?',
         body: `Học sinh: ${s.name} (${s.id}). Thao tác xóa không thể hoàn tác.`,
@@ -744,10 +731,23 @@ function renderStudentsTable() {
       });
     }, 'danger');
 
-    const actionList = el('div', '', 'action-list');
-    actionList.append(editBtn, resetPinBtn, lockBtn, delBtn);
-    details.append(summary, actionList);
-    tdActions.append(details);
+    const viewBtn = button('Xem', () => {
+      void noticeBox({
+        title: 'Thông tin học sinh',
+        body: `Mã học sinh: ${s.id}\nHọ và tên: ${s.name}\nLớp: ${s.class_code} (khối ${s.grade})\nTrạng thái: ${s.disabled ? 'Bị khóa' : 'Hoạt động'}`
+      });
+    });
+    const who = ` ${s.name}`;
+    const group = el('div', '', 't-icon-actions');
+    group.setAttribute('role', 'group'); group.setAttribute('aria-label', `Thao tác với học sinh ${s.name}`);
+    group.append(
+      ui.toIcon(/** @type {HTMLButtonElement} */ (viewBtn), 'view', 'Xem chi tiết' + who),
+      ui.toIcon(/** @type {HTMLButtonElement} */ (editBtn), 'edit', 'Sửa' + who),
+      ui.toIcon(/** @type {HTMLButtonElement} */ (resetPinBtn), 'key', 'Đặt lại mã PIN' + who),
+      ui.toIcon(/** @type {HTMLButtonElement} */ (lockBtn), s.disabled ? 'unlock' : 'lock', (s.disabled ? 'Mở khóa' : 'Khóa') + who),
+      ui.toIcon(/** @type {HTMLButtonElement} */ (delBtn), 'trash', 'Xóa' + who, true)
+    );
+    tdActions.append(group);
     tr.append(tdActions);
     tbody.append(tr);
   }
