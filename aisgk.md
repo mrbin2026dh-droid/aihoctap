@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity hoàn thành triển khai Worker aihoctap-gate (bản mới 22f4c063-0104-4bfd-8823-d328b6d33063, ID cũ rollback dd0e821d-ec46-47af-b194-213e91135e68) và dọn duplicate rule trong database.rules.json; smoke test đạt chuẩn, bàn giao Claude thẩm định nghiệm thu.
+- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit 77833ca (bản mới bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332, bản cũ 22f4c063-0104-4bfd-8823-d328b6d33063); smoke test 3 endpoint 200/401 OK; kiểm định tải mẫu Excel và lưu đề đạt chuẩn; bàn giao Người dùng/Claude kiểm tay tạo đề.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -861,3 +861,8 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Việc mở: Antigravity chạy lại `npx wrangler deploy`; (tuỳ chọn) deploy rules. Đề đã lưu trước đó phải tạo lại.
 XONG sửa lỗi lưu đề / TIẾP THEO → Antigravity
 Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate), ghi ID bản cũ/mới, smoke test 401 như lần trước, rồi lưu thử 1 đề [THỬ] từ trang giáo viên."
+
+## 2026-10-25 · Antigravity · Deploy Worker từ commit 77833ca (exam_defs / exam_secrets)
+- Làm: Kéo commit 77833ca, kiểm tra cú pháp node --check 0 lỗi. Chạy wrangler deploy thành công (bản mới: bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332, bản cũ: 22f4c063-0104-4bfd-8823-d328b6d33063).
+- Kiểm thử thực tế: Smoke test thật live worker /api/health (200 OK), /api/pwa/exams (401), /api/pwa/teacher/exams (401). Test backend test_exam_backend.mjs và browser test_exam_import_browser.cjs PASS 100%. GitHub Pages đã đồng bộ bản sửa lỗi 400.
+- Việc mở: Người dùng đăng nhập giao diện giáo viên, tải file mẫu Excel, lưu thử 1 đề [THỬ] và xác nhận kết quả.
