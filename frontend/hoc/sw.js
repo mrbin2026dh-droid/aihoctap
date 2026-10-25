@@ -1,5 +1,5 @@
 // Student shell only: never intercept API requests, identity or teacher pages.
-const CACHE = 'aisgk-student-shell-bf2a34e5c4d74f141241c247';
+const CACHE = 'aisgk-student-shell-9ae50b994b734446e798427f';
 const FILES = ['./', './index.html', './styles.css', './app.js', './api.js', './db.js', './dom.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'];
 const ALLOWED = new Set(FILES.map(path => new URL(path, self.registration.scope).href));
 self.addEventListener('install', event => {

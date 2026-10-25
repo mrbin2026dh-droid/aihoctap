@@ -260,7 +260,14 @@ export function mapErrorMessage(error) {
   if (typeof navigator !== 'undefined' && navigator && navigator.onLine === false) {
     return 'Không có kết nối mạng.';
   }
-  const msg = error instanceof Error ? error.message : String(error || '');
+  const msg = error instanceof Error
+    ? error.message
+    : (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+        ? error.message
+        : String(error || ''));
+  if ((error && typeof error === 'object' && 'status' in error && error.status === 429) || msg.includes('tạm khóa') || msg.includes('quá nhiều lần')) {
+    return msg && msg !== '[object Object]' ? msg : 'Tài khoản đang bị tạm khóa. Vui lòng thử lại sau.';
+  }
   if (msg.includes('INVALID_CREDENTIALS') || msg.includes('Mã học sinh hoặc PIN không chính xác') || msg.includes('sai')) {
     return 'Mã học sinh hoặc mã PIN chưa đúng.';
   }

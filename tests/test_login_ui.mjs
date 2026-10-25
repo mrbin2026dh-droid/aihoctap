@@ -372,6 +372,8 @@ assert.strictEqual(mapErrorMessage(new Error('ACCOUNT_DISABLED')), 'Tài khoản
 assert.strictEqual(mapErrorMessage(new Error('TEACHER_PIN_CHANGE_REQUIRED')), 'Cần đổi mã PIN trước khi tiếp tục.');
 assert.strictEqual(mapErrorMessage(new Error('Failed to fetch')), 'Không có kết nối mạng.');
 assert.strictEqual(mapErrorMessage(new Error('Random unexpected error')), 'Chưa thực hiện được. Thử lại sau.');
+assert.strictEqual(mapErrorMessage({ status: 429, message: 'Tài khoản giáo viên bị tạm khóa 280s do nhập sai quá nhiều lần.' }), 'Tài khoản giáo viên bị tạm khóa 280s do nhập sai quá nhiều lần.');
+assert.strictEqual(mapErrorMessage(new Error('Nhập sai 5 lần. Tài khoản giáo viên bị tạm khóa 300s.')), 'Nhập sai 5 lần. Tài khoản giáo viên bị tạm khóa 300s.');
 console.log('  PASS [12]: Error message mapping to user-friendly Vietnamese text verified.');
 
 // [13] CSS Scoping & Classes

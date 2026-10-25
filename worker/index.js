@@ -2052,34 +2052,7 @@ export default {
       const teacherPairKey = `lock:teacher_admin:${clientIp}`;
       const teacherIpKey = `ipflood:${clientIp}`;
 
-      // Check lockout on pair and IP flood
-      const checkTeacherReq = new Request(`http://do/get-lockout?key=${encodeURIComponent(teacherPairKey)}`);
-      const teacherRes = await gateStub.fetch(checkTeacherReq);
-      const teacherLock = await teacherRes.json();
-      if (teacherLock.locked) {
-        return new Response(JSON.stringify({
-          detail: `Tài khoản giáo viên bị tạm khóa ${teacherLock.retryAfter}s do nhập sai quá nhiều lần.`,
-          retryAfter: teacherLock.retryAfter
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Retry-After': String(teacherLock.retryAfter), 'Content-Type': 'application/json' },
-        });
-      }
-
-      const checkIpReq = new Request(`http://do/get-lockout?key=${encodeURIComponent(teacherIpKey)}`);
-      const ipRes = await gateStub.fetch(checkIpReq);
-      const ipLock = await ipRes.json();
-      if (ipLock.locked) {
-        return new Response(JSON.stringify({
-          detail: `Địa chỉ mạng bị tạm khóa do nghi vấn tấn công. Vui lòng thử lại sau ${ipLock.retryAfter}s.`,
-          retryAfter: ipLock.retryAfter
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Retry-After': String(ipLock.retryAfter), 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Check RTDB teacher_auth/main
+      // Check RTDB teacher_auth/main first
       const rtdbTeacherRes = await rtdb(env, signingKeys, 'GET', 'teacher_auth/main');
       if (!rtdbTeacherRes.ok && rtdbTeacherRes.status !== 404) {
         return new Response(JSON.stringify({
@@ -2090,23 +2063,57 @@ export default {
         });
       }
 
+      let teacherRecord = null;
+      if (rtdbTeacherRes.ok && rtdbTeacherRes.status !== 404) {
+        teacherRecord = await rtdbTeacherRes.json().catch(() => null);
+      }
+      // Firebase RTDB returns 200 with JSON null when key does not exist; mock mode returns 404
+      const isUninitialized = (rtdbTeacherRes.status === 404 || teacherRecord === null);
+
+      // Check lockout on pair and IP flood
+      const checkTeacherReq = new Request(`http://do/get-lockout?key=${encodeURIComponent(teacherPairKey)}`);
+      const teacherRes = await gateStub.fetch(checkTeacherReq);
+      const teacherLock = await teacherRes.json();
+
+      const checkIpReq = new Request(`http://do/get-lockout?key=${encodeURIComponent(teacherIpKey)}`);
+      const ipRes = await gateStub.fetch(checkIpReq);
+      const ipLock = await ipRes.json();
+
+      if (teacherLock.locked || ipLock.locked) {
+        // If initial admin secret is verified on an uninitialized system, allow instant unlock/recovery!
+        if ((isUninitialized || SecurityConfigContract.isMockModeAllowed(env)) &&
+            TeacherAuthContract.isValidSecret(pin, env.TEACHER_ADMIN_SECRET)) {
+          const resetReq = new Request('http://do/reset-lockout', {
+            method: 'POST',
+            body: JSON.stringify({ pairKey: teacherPairKey, ipKey: teacherIpKey })
+          });
+          await gateStub.fetch(resetReq);
+        } else {
+          const retryAfter = Math.max(teacherLock.retryAfter || 0, ipLock.retryAfter || 0);
+          const detail = ipLock.locked
+            ? `Địa chỉ mạng bị tạm khóa do nghi vấn tấn công. Vui lòng thử lại sau ${retryAfter}s.`
+            : `Tài khoản giáo viên bị tạm khóa ${retryAfter}s do nhập sai quá nhiều lần.`;
+          return new Response(JSON.stringify({ detail, retryAfter }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Retry-After': String(retryAfter), 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
       let isPinValid = false;
       let mustChange = false;
 
       if (env.FIREBASE_DATABASE_URL) {
-        if (rtdbTeacherRes.status === 404) {
+        if (isUninitialized) {
           if (TeacherAuthContract.isValidSecret(pin, env.TEACHER_ADMIN_SECRET)) {
             isPinValid = true;
             mustChange = true;
           }
-        } else {
-          const rec = await rtdbTeacherRes.json();
-          if (rec && rec.salt && rec.pin_hash) {
-            const hashedInput = await hashPinPbkdf2(pin, rec.salt);
-            if (hashedInput === rec.pin_hash) {
-              isPinValid = true;
-              mustChange = Boolean(rec.must_change);
-            }
+        } else if (teacherRecord && teacherRecord.salt && teacherRecord.pin_hash) {
+          const hashedInput = await hashPinPbkdf2(pin, teacherRecord.salt);
+          if (hashedInput === teacherRecord.pin_hash) {
+            isPinValid = true;
+            mustChange = Boolean(teacherRecord.must_change);
           }
         }
       } else if (SecurityConfigContract.isMockModeAllowed(env)) {
@@ -2230,15 +2237,19 @@ export default {
         });
       }
 
+      let teacherRecord = null;
+      if (rtdbTeacherRes.ok && rtdbTeacherRes.status !== 404) {
+        teacherRecord = await rtdbTeacherRes.json().catch(() => null);
+      }
+      const isUninitialized = (rtdbTeacherRes.status === 404 || teacherRecord === null);
+
       let isOldPinValid = false;
-      if (rtdbTeacherRes.status === 404) {
+      if (isUninitialized || SecurityConfigContract.isMockModeAllowed(env)) {
         isOldPinValid = TeacherAuthContract.isValidSecret(old_pin, env.TEACHER_ADMIN_SECRET);
-      } else {
-        const rec = await rtdbTeacherRes.json();
-        if (rec && rec.salt && rec.pin_hash) {
-          const hashedInput = await hashPinPbkdf2(old_pin, rec.salt);
-          isOldPinValid = (hashedInput === rec.pin_hash);
-        }
+      }
+      if (!isOldPinValid && teacherRecord && teacherRecord.salt && teacherRecord.pin_hash) {
+        const hashedInput = await hashPinPbkdf2(old_pin, teacherRecord.salt);
+        isOldPinValid = (hashedInput === teacherRecord.pin_hash);
       }
 
       if (!isOldPinValid) {
