@@ -799,6 +799,8 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app .gate-card,.student-app .auth-card{background-image:var(--hero-art);background-repeat:no-repeat;background-position:right -20px bottom -14px;background-size:150px auto}
 @media(max-width:560px){.student-app .gate-card,.student-app .auth-card{background-image:none}}
 :root:has(.student-app){--paper:#fffdf7}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill{-webkit-text-fill-color:var(--ink);caret-color:var(--ink);box-shadow:0 0 0 1000px var(--surface) inset;transition:background-color 9999s}
 /* UI-TEAL:END */
 
 /* DARK-THEME:BEGIN */

@@ -233,3 +233,6 @@
 :root[data-theme=dark] .teacher-app .t-badge:not(.t-badge-error),.teacher-app .t-icon-btn{color:var(--brand-text)}
 :root[data-theme=dark] .teacher-app .t-icon-btn.is-danger,.teacher-app .t-icon-btn[data-danger]{color:var(--danger)}
 /* TEACHER-DARK:END */
+/* AUTOFILL */
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill{-webkit-text-fill-color:var(--ink);caret-color:var(--ink);box-shadow:0 0 0 1000px var(--surface) inset;transition:background-color 9999s}
