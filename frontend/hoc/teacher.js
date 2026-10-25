@@ -139,7 +139,10 @@ node('teacher-login').addEventListener('submit', async event => {
       loginForm.reset();
       updateAuth();
       if (!mustChangePin) {
-        await refresh(); await results(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents(); notify('Đã đăng nhập. Sẵn sàng soạn bài.');
+        const parts = [['danh sách bài', refresh], ['bài học sinh đã nộp', results], ['khóa Gemini', loadGeminiKeys], ['hạn mức AI', loadAiUsage], ['danh sách học sinh', loadStudents]];
+        const settled = await Promise.allSettled(parts.map(([, fn]) => fn()));
+        const failed = parts.filter((_, i) => settled[i].status === 'rejected').map(([name]) => name);
+        notify(failed.length ? `Đã đăng nhập. Chưa tải được: ${failed.join(', ')}. Tải lại trang để thử lại.` : 'Đã đăng nhập. Sẵn sàng soạn bài.', failed.length > 0);
       } else {
         notify('Vui lòng đổi mã PIN khởi tạo để tiếp tục.');
       }
