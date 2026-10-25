@@ -95,13 +95,16 @@ async function results() {
   const data = await api('/pwa/teacher/results', {token});
   if (captured !== generation || !token) return;
   const target = node('teacher-results'); target.replaceChildren();
-  for (const attempt of data.attempts) {
+  const attempts = Array.isArray(data) ? data : (Array.isArray(data?.attempts) ? data.attempts : []);
+  for (const attempt of attempts) {
     const card = el('article', '', 'progress-card');
-    card.append(el('h3', `${attempt.student_name} · ${attempt.class_code}`), el('p', `${attempt.course_id} / ${attempt.lesson_id}: ${attempt.correct}/${attempt.total} câu đúng${attempt.needs_review ? ' · Cần xem tự luận' : ''}`));
-    for (const [id, answer] of Object.entries(attempt.answers)) card.append(el('p', `${id}: ${answer}`));
+    const who = [attempt.student_name || attempt.uid, attempt.class_code].filter(Boolean).join(' · ');
+    const score = Number.isFinite(attempt.correct) && Number.isFinite(attempt.total) ? `${attempt.correct}/${attempt.total} câu đúng` : 'Chưa có điểm';
+    card.append(el('h3', who || 'Học sinh'), el('p', `${attempt.course_id || ''} / ${attempt.lesson_id || ''}: ${score}${attempt.needs_review ? ' · Cần xem tự luận' : ''}`));
+    if (attempt.answers && typeof attempt.answers === 'object') for (const [id, answer] of Object.entries(attempt.answers)) card.append(el('p', `${id}: ${answer}`));
     target.append(card);
   }
-  if (!data.attempts.length) target.append(el('p', 'Chưa có bài nộp.'));
+  if (!attempts.length) target.append(el('p', 'Chưa có bài nộp.'));
 }
 /** @param {PublishLesson} document */
 function fill(document) {
