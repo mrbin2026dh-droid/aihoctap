@@ -630,6 +630,15 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app #msg-title,.student-app .auth-dialog h2{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:800;letter-spacing:-.02em}
 
 .student-app .lesson-tools{justify-content:flex-start;gap:10px 12px}
+.student-app fieldset.question legend{float:left;width:100%;padding:0;margin:0 0 16px}
+.student-app fieldset.question legend+*{clear:both}
+.student-app #result button{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.student-app .detail-top h2{margin-top:0}
+.student-app #settings .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 16px}
+.student-app #settings .page-head h1{margin:0}
+.student-app #close-settings{min-width:48px;min-height:48px;padding:0;justify-content:center}
+.student-app .question legend,.student-app fieldset.question legend{font-size:var(--fs-body);font-weight:700;line-height:1.5}
+@media(min-width:960px){.student-app .settings-detail .back-button{display:none}}
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}

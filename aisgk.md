@@ -784,3 +784,9 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Bỏ chữ "Giữ nguyên khi làm bài"; thanh công cụ bài học căn trái.
 - Việc mở: wrangler deploy.
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Luyện tập làm lại không giới hạn; sửa hiển thị câu hỏi/cài đặt
+- Worker chỉ cho nộp 2 lần/bài và lần 3 bị app hiểu nhầm là hết phiên (403). Nay luyện tập tối đa 100 lần, exam_ 1 lần; app chỉ coi 401 là hết phiên.
+- Sửa tiêu đề câu hỏi đè viền thẻ, nút Làm lại, trang Cài đặt lặp tiêu đề/2 mũi tên.
+- Việc mở: wrangler deploy (bắt buộc để bỏ giới hạn 2 lần).
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

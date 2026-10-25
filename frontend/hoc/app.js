@@ -441,7 +441,7 @@ async function sync() {
       } catch (error) {
         await db.put('outbox', item.key, {...item, error: error instanceof Error ? error.message : 'Đồng bộ chưa xong.'});
         if (session === captured) {
-          if (error instanceof ApiError && (error.status === 401 || error.status === 403)) { void expireSession(); }
+          if (error instanceof ApiError && error.status === 401) { void expireSession(); }
           else report(error instanceof Error ? error : new Error('Chưa đồng bộ được bài.'));
         }
         break;

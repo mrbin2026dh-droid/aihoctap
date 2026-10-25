@@ -364,7 +364,7 @@ const reqSubmit2 = new Request('http://localhost/api/submit', {
 const resSubmit2 = await worker.fetch(reqSubmit2, envInstanceB);
 assert.equal(resSubmit2.status, 200, 'Second attempt must be allowed');
 
-// Third attempt with new attempt_id via Instance C (Blocked: limit is 2)
+// Third attempt with new attempt_id via Instance C (Luyện tập: làm lại thoải mái, không chặn ở lần 3)
 const reqSubmit3 = new Request('http://localhost/api/submit', {
   method: 'POST',
   headers: {
@@ -379,10 +379,8 @@ const reqSubmit3 = new Request('http://localhost/api/submit', {
   })
 });
 const resSubmit3 = await worker.fetch(reqSubmit3, envInstanceC);
-assert.equal(resSubmit3.status, 403, 'Exceeding maximum attempt count must return 403 Forbidden');
-const res3Data = await resSubmit3.json();
-assert.match(res3Data.detail, /quá số lần/i);
-console.log('  PASS: Attempt limits (403) strictly enforced via Durable Object.');
+assert.equal(resSubmit3.status, 200, 'Luyện tập phải cho làm lại nhiều lần (chỉ bài exam_ mới giới hạn 1 lần)');
+console.log('  PASS: Practice can be redone freely; limit only applies to exam_ lessons.');
 
 // -------------------------------------------------------------
 // [5/6] TEST F4: HTTP /api/tutor (JWT AUTH, CEILING & PROXYING)

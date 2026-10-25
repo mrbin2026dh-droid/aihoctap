@@ -550,7 +550,7 @@ export class GateDurableObject {
       }
 
       const currentCount = (await this.storage.get(`count:${countKey}`)) || 0;
-      if (currentCount >= (maxAttempts || 2)) {
+      if (currentCount >= (maxAttempts || 100)) {
         return new Response(JSON.stringify({
           status: 403,
           body: { detail: 'Đã vượt quá số lần nộp bài cho phép.' },
@@ -3794,7 +3794,8 @@ export default {
 
       const idempotencyKey = `${uid}:${attempt_id}`;
       const countKey = `${uid}:${course_id}:${lesson_id}`;
-      const maxAttempts = lesson_id.startsWith('exam_') ? 1 : 2;
+      // Luyện tập: làm lại thoải mái (trần 100 để không đầy kho lưu trữ). Bài kiểm tra: 1 lần.
+      const maxAttempts = lesson_id.startsWith('exam_') ? 1 : 100;
 
       const subRes = await gateStub.fetch('http://do/save-submission', {
         method: 'POST',
