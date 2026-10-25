@@ -627,6 +627,7 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app label.option,.student-app fieldset legend,.student-app .hint{font-size:var(--fs-body)}
 .student-app label.option{min-height:52px;line-height:1.4}
 .student-app .update-wrap,.student-app #update-notice{background:transparent;border:0;padding:0;margin:0;min-height:0;max-width:none}
+.student-app #msg-title,.student-app .auth-dialog h2{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:800;letter-spacing:-.02em}
 
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){

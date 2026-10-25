@@ -753,3 +753,9 @@ Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md r�
 - Việc mở: cân nhắc làm mới token tự động (cần endpoint refresh trên Worker); kiểm tra trên máy thật.
 XONG sửa 401 + chuẩn chữ / TIẾP THEO → Claude
 Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
+
+## 2026-10-25 — Claude: bỏ hộp thoại phụ khi hết phiên
+- Hết phiên học sinh mở thẳng khung đăng nhập có dòng giải thích, mã đã điền, PIN trống; bỏ hộp thoại xác nhận trung gian. Tiêu đề hộp thoại dùng chữ không chân.
+- Việc mở: làm mới token tự động (refresh token trên Worker) để học sinh không phải đăng nhập lại mỗi giờ.
+XONG / TIẾP THEO → Claude
+Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."

@@ -117,11 +117,12 @@ async function expireSession() {
     session = null; active = null; draft = null; locked = false;
     await db.remove('meta', 'session');
     identityUI(); renderCatalog(); show('catalog');
-    const again = await confirmBox({title: 'Phiên đăng nhập đã hết hạn', body: 'Bài làm và bài chờ nộp vẫn được giữ trên máy. Hãy đăng nhập lại để tiếp tục.', okText: 'Đăng nhập'});
-    if (again) {
-      const code = /** @type {HTMLInputElement|null} */ (document.getElementById('student-code')); if (code) code.value = uid; const pin = /** @type {HTMLInputElement|null} */ (document.getElementById('student-pin')); if (pin) pin.value = '';
-      /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal();
-    }
+    const help = document.getElementById('login-help'); const normal = help?.textContent || '';
+    if (help) { help.textContent = 'Phiên đăng nhập đã hết hạn. Bài làm vẫn được giữ. Nhập mã PIN để tiếp tục.'; const dlg = /** @type {HTMLDialogElement} */ (node('login-dialog')); dlg.addEventListener('close', () => { help.textContent = normal; }, {once: true}); }
+    const code = /** @type {HTMLInputElement|null} */ (document.getElementById('student-code')); if (code) code.value = uid;
+    const pin = /** @type {HTMLInputElement|null} */ (document.getElementById('student-pin')); if (pin) pin.value = '';
+    /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal();
+    pin?.focus();
   } finally { expiring = false; }
 }
 window.addEventListener('aisgk:unauthorized', () => { void expireSession(); });

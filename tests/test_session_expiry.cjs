@@ -1,4 +1,4 @@
-// Token học sinh hết hạn (401): chỉ một hộp thoại, giữ nháp, mở lại đăng nhập với mã đã điền. Chạy: NODE_PATH=$(npm root -g) node tests/test_session_expiry.cjs
+// Token học sinh hết hạn (401): mở thẳng đăng nhập với mã đã điền, giữ nháp. Chạy: NODE_PATH=$(npm root -g) node tests/test_session_expiry.cjs
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
@@ -14,9 +14,6 @@ await pg.goto('http://localhost:8172/');await pg.waitForTimeout(500);
 await pg.click('#gate-student');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(900);
 assert(await pg.isVisible('#account'),'đã đăng nhập');
 expired=true;await pg.click('[data-tab="progress"]');await pg.waitForTimeout(600);
-assert(await pg.isVisible('#msg-dialog'),'hộp thoại hết hạn');assert((await pg.textContent('#msg-title')).includes('hết hạn'));
-assert.strictEqual(await pg.locator('#msg-dialog[open]').count(),1,'một hộp thoại');
-await pg.click('#msg-ok');await pg.waitForTimeout(400);
-assert(await pg.isVisible('#login-dialog'),'mở đăng nhập lại');assert.strictEqual(await pg.inputValue('#student-code'),'hs01','mã đã điền');assert.strictEqual(await pg.inputValue('#student-pin'),'','PIN không được điền');
+assert(await pg.isVisible('#login-dialog'),'mở thẳng đăng nhập, không hộp thoại phụ');assert(!(await pg.isVisible('#msg-dialog')),'không có hộp thoại thứ hai');assert((await pg.textContent('#login-help')).includes('hết hạn'));assert.strictEqual(await pg.inputValue('#student-code'),'hs01','mã đã điền');assert.strictEqual(await pg.inputValue('#student-pin'),'','PIN không được điền');
 assert(!(await pg.isVisible('#account')),'đã thoát phiên');assert.strictEqual(errs.length,0,errs.join(';'));
 console.log('SESSION EXPIRY OK');await b.close();srv.close()})().catch(e=>{console.error(e);process.exit(1)});
