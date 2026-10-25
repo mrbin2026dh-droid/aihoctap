@@ -383,7 +383,7 @@ def verify_student_session(
     )
 
 
-FIREBASE_RTDB_URL = "https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app"
+FIREBASE_RTDB_URL = os.getenv("FIREBASE_DATABASE_URL", "https://your-project-id-default-rtdb.asia-southeast1.firebasedatabase.app")
 _cached_firebase_pin = {"pin": None, "ts": 0}
 
 def get_firebase_teacher_pin() -> Optional[str]:

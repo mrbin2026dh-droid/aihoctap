@@ -19,10 +19,11 @@
         "C": "Đóng phần mềm lại và đọc lý thuyết trong sách giáo khoa",
         "D": "Chụp ảnh màn hình máy tính gửi cho bạn bè"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Bước đầu tiên bao giờ cũng là xác định mục tiêu học tập rõ ràng để biết mình cần khảo sát hiện tượng gì và cần quan sát biến số nào.",
       "goi_y_khi_sai": "Trước khi bắt đầu bất kỳ thí nghiệm thực tế hay mô phỏng nào, em cần định hình rõ mục đích mình làm việc đó để làm gì. Xem lại Quy trình 4 bước ở Mục 1 nhé!",
-      "forbidden_keywords": ["mục tiêu thí nghiệm", "đáp án B"]
+      "forbidden_keywords": [
+        "mục tiêu thí nghiệm",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b6_q2",
@@ -36,10 +37,12 @@
         "C": "Phần mềm sẽ báo lỗi và tắt ứng dụng",
         "D": "Mạch điện hoàn toàn không có bất kỳ thay đổi nào"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Rất chuẩn! Theo định luật Ohm I = U / R, khi R không đổi, nếu tăng hiệu điện thế U thì cường độ dòng điện I sẽ tăng tỉ lệ thuận.",
       "goi_y_khi_sai": "Hãy nhớ lại công thức I = U / R: Tử số U tăng lên trong khi mẫu số R giữ nguyên thì phân số sẽ tăng hay giảm? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["tăng lên", "I tăng", "đáp án A"]
+      "forbidden_keywords": [
+        "tăng lên",
+        "I tăng",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b6_q3",
@@ -53,10 +56,11 @@
         "C": "Màn hình tự động chuyển bài mà không cần bấm chuột",
         "D": "Phần mềm yêu cầu phải in kết quả ra giấy mới xem được"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Tương tác hai chiều nghĩa là người dùng tác động làm thay đổi tham số đầu vào và phần mềm phản hồi kết quả hiển thị lại ngay lập tức.",
       "goi_y_khi_sai": "Tương tác hai chiều nghĩa là có sự qua lại giữa người và máy: người nhập/chỉnh dữ liệu thì máy sẽ làm gì? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["thay đổi thông số", "đáp án B"]
+      "forbidden_keywords": [
+        "thay đổi thông số",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b6_q4",
@@ -70,10 +74,12 @@
         "C": "Thay đổi vị trí của các ngôi sao ngoài vũ trụ thật",
         "D": "Tắt màn hình máy tính để tiết kiệm điện"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Các hiện tượng thiên văn ngoài đời thực diễn ra rất chậm (Trái Đất quay quanh Mặt Trời mất 365 ngày). Tua nhanh thời gian giúp học sinh quan sát trọn vẹn chu kỳ chỉ trong tích tắc.",
       "goi_y_khi_sai": "Hiện tượng thiên văn thực tế diễn ra trong bao lâu? Việc tua nhanh thời gian trên máy tính giúp ích gì cho mắt thường? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["quan sát chu kỳ", "vài giây", "đáp án B"]
+      "forbidden_keywords": [
+        "quan sát chu kỳ",
+        "vài giây",
+        "đáp án B"
+      ]
     }
   ]
 }

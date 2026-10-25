@@ -51,6 +51,7 @@ def build_archive(source: Path, destination: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--stamp', action='store_true', help='Update SW cache to current shell bytes')
+    parser.add_argument('--check', action='store_true', help='Check SW cache matches shell bytes without modifying')
     parser.add_argument('--output', type=Path, help='Write an allowlisted ZIP after integrity checks')
     args = parser.parse_args()
     if args.stamp:

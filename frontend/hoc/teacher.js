@@ -1,16 +1,17 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
-import {el, button, notify, renderMarkdown} from './dom.js';
+import {el, button, notify, renderMarkdown, dialogBox, confirmBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
 /** @typedef {import('./contracts').PrivateQuestion} PrivateQuestion */
 /** @param {string} id */
 function node(id) {const result = document.getElementById(id); if (!result) throw new Error(`Thiếu ${id}`); return result;}
 const form = /** @type {HTMLFormElement} */ (node('publish-form'));
 let token = sessionStorage.getItem('aisgk-pwa-teacher') || '';
+let mustChangePin = sessionStorage.getItem('aisgk-pwa-teacher-must-change') === 'true';
 let generation = 0;
 /** @param {Error} error */
 function fail(error) {
-  if (error instanceof ApiError && error.status === 401) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); generation++; updateAuth();}
+  if (error instanceof ApiError && error.status === 401) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); mustChangePin = false; generation++; updateAuth();}
   notify(error instanceof Error ? error.message : 'Thao tác chưa hoàn thành. Hãy thử lại.', true);
 }
 /** @param {string} id @param {()=>void|Promise<void>} action */
@@ -18,7 +19,15 @@ function on(id, action) {node(id).addEventListener('click', () => {
   const captured = generation;
   Promise.resolve(action()).catch(error => {if (captured === generation) fail(error);});
 });}
-function updateAuth() {node('auth-section').hidden = Boolean(token); node('editor').hidden = !token; node('teacher-logout').hidden = !token;}
+function updateAuth() {
+  node('auth-section').hidden = Boolean(token);
+  const mustChangeSec = node('teacher-must-change-section');
+  if (mustChangeSec) mustChangeSec.hidden = !token || !mustChangePin;
+  node('editor').hidden = !token || mustChangePin;
+  node('teacher-logout').hidden = !token;
+  const openSettingsBtn = document.getElementById('open-settings');
+  if (openSettingsBtn) openSettingsBtn.hidden = !token || mustChangePin;
+}
 /** @param {string} name @returns {HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement} */
 function field(name) {return /** @type {HTMLInputElement} */ (form.elements.namedItem(name));}
 /** @param {string} text @param {string} name @param {string} [value] @param {boolean} [multiline] */
@@ -94,13 +103,59 @@ function fill(document) {
   node('question-editors').replaceChildren(); for (const question of document.questions) addQuestion(question); node('preview').replaceChildren();
 }
 node('teacher-login').addEventListener('submit', async event => {
-  event.preventDefault(); const loginForm = /** @type {HTMLFormElement} */ (node('teacher-login'));
-  const submit = /** @type {HTMLButtonElement} */ (loginForm.querySelector('button')); submit.disabled = true;
-  try {
-    const response = await api('/teacher/auth', {method:'POST', body:{pin:String(new FormData(loginForm).get('pin'))}});
-    token = response.token; generation++; sessionStorage.setItem('aisgk-pwa-teacher', token); loginForm.reset(); updateAuth();
-    await refresh(); await results(); await loadGeminiKeys(); await loadAiUsage(); notify('Đã đăng nhập. Sẵn sàng soạn bài.');
-  } catch (error) {fail(error instanceof Error ? error : new Error('Chưa đăng nhập được.'));} finally {submit.disabled = false;}
+  event.preventDefault();
+  const loginForm = /** @type {HTMLFormElement} */ (node('teacher-login'));
+  const submit = /** @type {HTMLButtonElement} */ (loginForm.querySelector('button[type=submit]'));
+  const pinInput = /** @type {HTMLInputElement} */ (loginForm.querySelector('[name=pin]'));
+  const loginErr = document.getElementById('teacher-login-error');
+  if (loginErr) { loginErr.textContent = ''; loginErr.className = 'notice error status'; }
+
+  pinInput.addEventListener('input', () => setFieldError(pinInput, ''));
+  const pin = pinInput.value.trim();
+
+  if (pin.length < 8) {
+    setFieldError(pinInput, 'Mã PIN tối thiểu 8 ký tự.');
+    pinInput.focus();
+    return;
+  }
+
+  await withBusy(submit, 'Đang đăng nhập…', async () => {
+    try {
+      const response = await api('/teacher/auth', {method:'POST', body:{pin}});
+      token = response.token;
+      mustChangePin = Boolean(response.must_change);
+      sessionStorage.setItem('aisgk-pwa-teacher-must-change', String(mustChangePin));
+      generation++;
+      sessionStorage.setItem('aisgk-pwa-teacher', token);
+      loginForm.reset();
+      updateAuth();
+      if (!mustChangePin) {
+        await refresh(); await results(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents(); notify('Đã đăng nhập. Sẵn sàng soạn bài.');
+      } else {
+        notify('Vui lòng đổi mã PIN khởi tạo để tiếp tục.');
+      }
+    } catch (error) {
+      const msg = mapErrorMessage(error);
+      if (loginErr) {
+        loginErr.textContent = msg;
+      }
+      fail(new Error(msg));
+    }
+  });
+});
+
+document.addEventListener('click', e => {
+  const target = /** @type {HTMLElement|null} */ (e.target);
+  const b = target?.closest('[data-reveal]');
+  if (!b) return;
+  const targetId = b.getAttribute('data-reveal');
+  if (!targetId) return;
+  const input = /** @type {HTMLInputElement|null} */ (document.getElementById(targetId));
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  b.textContent = show ? 'Ấn' : 'Hiện';
+  b.setAttribute('aria-pressed', String(show));
 });
 
 async function loadGeminiKeys() {
@@ -132,10 +187,18 @@ async function loadGeminiKeys() {
         el('td', `${key.daily_count || 0} / ${key.daily_limit || 1500}`),
         el('td', '', '', [
           button('Xóa', async () => {
-            if (confirm(`Xác nhận xóa khóa ...${key.key_suffix}?`)) {
+            if (!await confirmBox({
+              title: 'Xóa khóa API?',
+              body: `Xóa khóa …${key.key_suffix}? Khóa này sẽ không còn dùng cho kết nối AI. Không thể hoàn tác.`,
+              okText: 'Xóa khóa',
+              danger: true
+            })) return;
+            try {
               await api(`/teacher/gemini-keys?id=${encodeURIComponent(key.id)}`, { method: 'DELETE', token });
               await loadGeminiKeys();
               notify('Đã xóa khóa khỏi bể.');
+            } catch (err) {
+              fail(err instanceof Error ? err : new Error('Chưa xóa được khóa.'));
             }
           }, 'danger')
         ])
@@ -322,7 +385,7 @@ form.addEventListener('submit', async event => {
   catch (error) {if (captured === generation) fail(error instanceof Error ? error : new Error('Chưa xuất bản được.'));} finally {submit.disabled = false;}
 });
 on('teacher-logout', async () => {
-  const oldToken = token; token = ''; generation++; sessionStorage.removeItem('aisgk-pwa-teacher'); updateAuth();
+  const oldToken = token; token = ''; mustChangePin = false; generation++; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); updateAuth();
   form.reset(); node('question-editors').replaceChildren(); node('preview').replaceChildren(); node('teacher-results').replaceChildren(); node('published').replaceChildren();
   try {await api('/teacher/logout', {method:'POST',token:oldToken}); notify('Đã đăng xuất.');} catch {notify('Đã đăng xuất trên máy. Phiên máy chủ chưa xác nhận thu hồi.', true);}
 });
@@ -335,5 +398,567 @@ on('preview-button', () => renderMarkdown(node('preview'), field('content_markdo
 on('add-question', () => addQuestion());
 on('new-lesson', () => {form.reset(); node('question-editors').replaceChildren(); node('preview').replaceChildren(); notify('Đang soạn bài mới.');});
 on('refresh-results', results);
+/** @type {Array<any>} */
+let allStudents = [];
+
+function showStudentPinBanner(id, pin, name) {
+  const banner = node('student-pin-banner');
+  banner.hidden = false;
+  banner.replaceChildren();
+  const text = el('span', `Thông tin tài khoản: ${name ? name + ' — ' : ''}Mã HS: ${id} | Mã PIN: ${pin} (chỉ hiện một lần)`);
+  text.style.fontWeight = 'bold';
+  const copyBtn = button('Sao chép', () => {
+    navigator.clipboard.writeText(`Mã HS: ${id}\nMã PIN: ${pin}`);
+    notify('Đã sao chép thông tin tài khoản vào bộ nhớ đệm.');
+  });
+  copyBtn.style.marginLeft = '12px';
+  banner.append(text, copyBtn);
+}
+
+function renderStudentsTable() {
+  node('students-table')?.removeAttribute('aria-busy');
+  const tbody = /** @type {HTMLTableSectionElement} */ (node('students-tbody'));
+  tbody.replaceChildren();
+  const filterVal = /** @type {HTMLSelectElement} */ (node('students-class-filter')).value;
+  const filtered = filterVal ? allStudents.filter(s => s.class_code === filterVal) : allStudents;
+
+  if (filtered.length === 0) {
+    const tr = el('tr');
+    const td = el('td', 'Chưa có học sinh nào.');
+    td.colSpan = 6;
+    tr.append(td);
+    tbody.append(tr);
+    return;
+  }
+
+const inFlight = new Set();
+/**
+ * @template T
+ * @param {string} key
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T|undefined>}
+ */
+async function guarded(key, fn) {
+  if (inFlight.has(key)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
+  inFlight.add(key);
+  const sid = key.split(':')[1];
+  const row = document.querySelector(`[data-sid="${CSS.escape(sid)}"]`);
+  row?.setAttribute('aria-busy', 'true');
+  const details = /** @type {HTMLDetailsElement|null} */ (row?.querySelector('.row-actions'));
+  const summary = details?.querySelector('summary');
+  summary?.setAttribute('aria-disabled', 'true');
+  const actionBtns = row?.querySelectorAll('.action-list button');
+  actionBtns?.forEach(b => { /** @type {HTMLButtonElement} */ (b).disabled = true; });
+  try { return await fn(); } finally {
+    inFlight.delete(key);
+    row?.removeAttribute('aria-busy');
+    summary?.removeAttribute('aria-disabled');
+    actionBtns?.forEach(b => { /** @type {HTMLButtonElement} */ (b).disabled = false; });
+  }
+}
+
+  for (const s of filtered) {
+    const tr = el('tr');
+    tr.dataset.sid = s.id;
+    tr.append(
+      el('td', s.id),
+      el('td', s.name),
+      el('td', `Khối ${s.grade}`),
+      el('td', s.class_code),
+      el('td', s.disabled ? 'Bị khóa' : 'Hoạt động')
+    );
+
+    const tdActions = el('td');
+    const details = /** @type {HTMLDetailsElement} */ (el('details', '', 'row-actions'));
+    const summary = el('summary', 'Thao tác');
+    const hiddenLabel = el('span', ` với học sinh ${s.name}`, 'visually-hidden');
+    summary.append(hiddenLabel);
+
+    const editBtn = button('Sửa', async () => {
+      if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
+      details.open = false;
+      const res = await dialogBox({
+        kind: 'prompt',
+        title: 'Sửa học sinh',
+        body: 'Cập nhật họ tên và lớp.',
+        okText: 'Lưu',
+        fields: [
+          { name: 'name', label: 'Họ và tên', value: s.name, validate: v => v.length < 2 ? 'Họ và tên tối thiểu 2 ký tự.' : '' },
+          { name: 'class_code', label: 'Mã lớp', value: s.class_code, validate: v => /^[A-Za-z0-9._-]{1,16}$/.test(v) ? '' : 'Mã lớp gồm chữ, số, tối đa 16 ký tự.' }
+        ]
+      });
+      if (!res || typeof res !== 'object') return;
+      const newName = res.name.trim();
+      const newClass = res.class_code.trim().toUpperCase();
+      if (newName === s.name && newClass === s.class_code) return;
+      await guarded('s:' + s.id, async () => {
+        try {
+          await api(`/teacher/students/${s.id}`, {
+            method: 'PATCH',
+            token,
+            body: { name: newName, class_code: newClass }
+          });
+          notify('Đã cập nhật thông tin học sinh.');
+          await loadStudents();
+        } catch (e) {
+          fail(e instanceof Error ? e : new Error('Chưa cập nhật được học sinh.'));
+        }
+      });
+    });
+
+    const resetPinBtn = button('Đặt lại PIN', async () => {
+      if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
+      details.open = false;
+      if (!await confirmBox({
+        title: 'Đặt lại mã PIN?',
+        body: `Học sinh: ${s.name} (${s.id}). Mã PIN cũ sẽ không còn sử dụng được.`,
+        okText: 'Đặt lại mã PIN',
+        danger: true
+      })) return;
+      await guarded('s:' + s.id, async () => {
+        try {
+          const res = await api(`/teacher/students/${s.id}/reset-pin`, {
+            method: 'POST',
+            token,
+            body: {}
+          });
+          showStudentPinBanner(s.id, res.pin, s.name);
+          notify('Đã đặt lại mã PIN thành công.');
+          await loadStudents();
+        } catch (e) {
+          fail(e instanceof Error ? e : new Error('Chưa đặt lại được mã PIN.'));
+        }
+      });
+    });
+
+    const lockBtn = button(s.disabled ? 'Mở khóa' : 'Khóa', async () => {
+      if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
+      details.open = false;
+      const actionName = s.disabled ? 'mở khóa' : 'khóa';
+      if (!await confirmBox({
+        title: s.disabled ? 'Mở khóa tài khoản?' : 'Khóa tài khoản?',
+        body: `Học sinh: ${s.name} (${s.id}). ${s.disabled ? 'Học sinh sẽ có thể đăng nhập lại.' : 'Học sinh sẽ không thể đăng nhập.'}`,
+        okText: s.disabled ? 'Mở khóa tài khoản' : 'Khóa tài khoản',
+        danger: !s.disabled
+      })) return;
+      await guarded('s:' + s.id, async () => {
+        try {
+          await api(`/teacher/students/${s.id}/lock`, {
+            method: 'POST',
+            token,
+            body: { locked: !s.disabled }
+          });
+          notify(`Đã ${actionName} tài khoản học sinh.`);
+          await loadStudents();
+        } catch (e) {
+          fail(e instanceof Error ? e : new Error(`Chưa ${actionName} được tài khoản.`));
+        }
+      });
+    });
+
+    const delBtn = button('Xóa', async () => {
+      if (inFlight.has('s:' + s.id)) { notify('Đang xử lý học sinh này. Chờ hoàn tất.', true); return; }
+      details.open = false;
+      if (!await confirmBox({
+        title: 'Xóa học sinh?',
+        body: `Học sinh: ${s.name} (${s.id}). Thao tác xóa không thể hoàn tác.`,
+        okText: 'Xóa học sinh',
+        danger: true
+      })) return;
+      await guarded('s:' + s.id, async () => {
+        try {
+          await api(`/teacher/students/${s.id}`, {
+            method: 'DELETE',
+            token
+          });
+          notify('Đã xóa học sinh thành công.');
+          await loadStudents();
+        } catch (e) {
+          fail(e instanceof Error ? e : new Error('Chưa xóa được học sinh.'));
+        }
+      });
+    }, 'danger');
+
+    const actionList = el('div', '', 'action-list');
+    actionList.append(editBtn, resetPinBtn, lockBtn, delBtn);
+    details.append(summary, actionList);
+    tdActions.append(details);
+    tr.append(tdActions);
+    tbody.append(tr);
+  }
+}
+
+async function loadStudents() {
+  if (!token || mustChangePin) return;
+  const tbody = /** @type {HTMLTableSectionElement} */ (node('students-tbody'));
+  const filterSelect = /** @type {HTMLSelectElement} */ (node('students-class-filter'));
+  const table = node('students-table');
+  table.setAttribute('aria-busy', 'true');
+  try {
+    const students = await api('/teacher/students', { token });
+    allStudents = Array.isArray(students) ? students : [];
+
+    const classes = [...new Set(allStudents.map(s => s.class_code).filter(Boolean))].sort();
+    const currentVal = filterSelect.value;
+    filterSelect.replaceChildren();
+    const allOpt = el('option', 'Tất cả các lớp');
+    allOpt.value = '';
+    filterSelect.append(allOpt);
+    for (const c of classes) {
+      const opt = el('option', `Lớp ${c}`);
+      opt.value = c;
+      filterSelect.append(opt);
+    }
+    filterSelect.value = currentVal;
+
+    renderStudentsTable();
+  } catch {
+    table.removeAttribute('aria-busy');
+    tbody.replaceChildren();
+    const tr = el('tr');
+    const td = el('td', 'Chưa tải được danh sách học sinh.');
+    td.colSpan = 6;
+    tr.append(td);
+    tbody.append(tr);
+  }
+}
+
+node('add-student-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (node('add-student-form'));
+  const submit = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  submit.disabled = true;
+  const data = new FormData(formEl);
+  const name = String(data.get('name') || '').trim();
+  const grade = Number(data.get('grade')) || 6;
+  const classCode = String(data.get('class_code') || '').trim();
+  const pin = String(data.get('pin') || '').trim();
+
+  await withBusy(submit, 'Đang tạo học sinh…', async () => {
+    try {
+      const res = await api('/teacher/students', {
+        method: 'POST',
+        token,
+        body: { name, grade, class_code: classCode, pin: pin || undefined }
+      });
+      formEl.reset();
+      showStudentPinBanner(res.id, res.pin, res.name);
+      notify('Đã thêm học sinh thành công.');
+      await loadStudents();
+    } catch (e) {
+      fail(e instanceof Error ? e : new Error('Chưa thêm được học sinh.'));
+    }
+  });
+});
+
+node('students-class-filter')?.addEventListener('change', renderStudentsTable);
+on('refresh-students', loadStudents);
+
+node('teacher-must-change-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (node('teacher-must-change-form'));
+  const errNode = node('teacher-must-change-error');
+  errNode.hidden = true;
+
+  const oldPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=old_pin]'));
+  const newPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=new_pin]'));
+  const confirmPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=confirm_pin]'));
+
+  oldPinInput.addEventListener('input', () => setFieldError(oldPinInput, ''));
+  newPinInput.addEventListener('input', () => setFieldError(newPinInput, ''));
+  confirmPinInput.addEventListener('input', () => setFieldError(confirmPinInput, ''));
+
+  const oldPin = oldPinInput.value.trim();
+  const newPin = newPinInput.value.trim();
+  const confirmPin = confirmPinInput.value.trim();
+
+  if (!oldPin) {
+    setFieldError(oldPinInput, 'Vui lòng nhập mã PIN hiện tại.');
+    oldPinInput.focus();
+    return;
+  }
+  if (newPin.length < 8) {
+    setFieldError(newPinInput, 'Mã PIN tối thiểu 8 ký tự.');
+    newPinInput.focus();
+    return;
+  }
+  if (newPin !== confirmPin) {
+    setFieldError(confirmPinInput, 'Mã PIN xác nhận không khớp.');
+    confirmPinInput.focus();
+    return;
+  }
+  if (newPin === oldPin) {
+    setFieldError(newPinInput, 'Mã PIN mới phải khác mã cũ.');
+    newPinInput.focus();
+    return;
+  }
+
+  const submit = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  await withBusy(submit, 'Đang đổi mã PIN…', async () => {
+    try {
+      const res = await api('/teacher/change-pin', {
+        method: 'POST',
+        token,
+        body: { old_pin: oldPin, new_pin: newPin }
+      });
+      token = res.token;
+      sessionStorage.setItem('aisgk-pwa-teacher', token);
+      mustChangePin = false;
+      sessionStorage.removeItem('aisgk-pwa-teacher-must-change');
+      formEl.reset();
+      updateAuth();
+      await refresh(); await results(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents();
+      notify('Đổi mã PIN giáo viên thành công. Đã mở khóa quyền quản trị.');
+    } catch (e) {
+      errNode.textContent = mapErrorMessage(e);
+      errNode.hidden = false;
+    }
+  });
+});
+
+node('teacher-regular-change-pin-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (node('teacher-regular-change-pin-form'));
+  const statusNode = node('teacher-change-pin-status');
+  statusNode.textContent = '';
+  statusNode.className = 'notice status';
+
+  const oldPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=old_pin]'));
+  const newPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=new_pin]'));
+  const confirmPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=confirm_pin]'));
+
+  oldPinInput.addEventListener('input', () => setFieldError(oldPinInput, ''));
+  newPinInput.addEventListener('input', () => setFieldError(newPinInput, ''));
+  confirmPinInput.addEventListener('input', () => setFieldError(confirmPinInput, ''));
+
+  const oldPin = oldPinInput.value.trim();
+  const newPin = newPinInput.value.trim();
+  const confirmPin = confirmPinInput.value.trim();
+
+  if (!oldPin) {
+    setFieldError(oldPinInput, 'Vui lòng nhập mã PIN hiện tại.');
+    oldPinInput.focus();
+    return;
+  }
+  if (newPin.length < 8) {
+    setFieldError(newPinInput, 'Mã PIN tối thiểu 8 ký tự.');
+    newPinInput.focus();
+    return;
+  }
+  if (newPin !== confirmPin) {
+    setFieldError(confirmPinInput, 'Mã PIN xác nhận không khớp.');
+    confirmPinInput.focus();
+    return;
+  }
+  if (newPin === oldPin) {
+    setFieldError(newPinInput, 'Mã PIN mới phải khác mã cũ.');
+    newPinInput.focus();
+    return;
+  }
+
+  const submit = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  await withBusy(submit, 'Đang đổi mã PIN…', async () => {
+    try {
+      const res = await api('/teacher/change-pin', {
+        method: 'POST',
+        token,
+        body: { old_pin: oldPin, new_pin: newPin }
+      });
+      token = res.token;
+      sessionStorage.setItem('aisgk-pwa-teacher', token);
+      statusNode.textContent = 'Đã đổi mã PIN.';
+      statusNode.className = 'notice success status';
+      formEl.reset();
+      notify('Đổi mã PIN giáo viên thành công.');
+    } catch (e) {
+      statusNode.textContent = mapErrorMessage(e);
+      statusNode.className = 'notice error status';
+    }
+  });
+});
+
 updateAuth();
-if (token) {const captured = generation; refresh().then(() => {if (captured === generation) { results(); loadGeminiKeys(); loadAiUsage(); }}).catch(error => {if (captured === generation) fail(error);});}
+if (token && !mustChangePin) {
+  const captured = generation;
+  refresh().then(() => {
+    if (captured === generation) {
+      results();
+      loadGeminiKeys();
+      loadAiUsage();
+      loadStudents();
+    }
+  }).catch(error => {
+    if (captured === generation) fail(error);
+  });
+}
+
+
+// ==========================================
+// ADAPTIVE SETTINGS MENU & CONFIRMATIONS (AGENTS.md J & K)
+// ==========================================
+let screen = 'work'; // 'work' | 'settings'
+let activeView = ''; // 'account' | 'quota' | 'keys'
+let workScroll = 0;
+let quotaDirty = false;
+
+function renderSettings(focus = true) {
+  const isSettings = screen === 'settings';
+  const workspaceEl = document.getElementById('workspace');
+  const settingsEl = document.getElementById('settings');
+  const openSettingsBtn = document.getElementById('open-settings');
+  const settingsLayout = document.getElementById('settings-layout');
+
+  if (workspaceEl) workspaceEl.hidden = isSettings;
+  if (settingsEl) settingsEl.hidden = !isSettings;
+  if (openSettingsBtn) openSettingsBtn.setAttribute('aria-expanded', String(isSettings));
+
+  if (!isSettings) {
+    if (focus) {
+      const target = document.getElementById('workspace-title') || openSettingsBtn;
+      target?.focus();
+    }
+    return;
+  }
+
+  const isWide = window.matchMedia('(min-width: 960px)').matches;
+  if (isWide && !activeView) activeView = 'account';   // màn rộng luôn có trang chi tiết
+  if (settingsLayout) {
+    if (isWide) {
+      settingsLayout.classList.add('has-detail');
+    } else {
+      settingsLayout.classList.toggle('has-detail', Boolean(activeView));
+    }
+  }
+
+  const panels = ['account', 'quota', 'keys'];
+  for (const p of panels) {
+    const elP = document.getElementById('panel-' + p);
+    if (elP) elP.hidden = p !== activeView;
+  }
+
+  document.querySelectorAll('.settings-menu .group-link').forEach(btn => {
+    const b = /** @type {HTMLButtonElement} */ (btn);
+    if (b.dataset.view === activeView) {
+      b.setAttribute('aria-current', 'page');
+    } else {
+      b.removeAttribute('aria-current');
+    }
+  });
+
+  if (focus) {
+    const heading = document.getElementById('heading-' + activeView) || document.getElementById('settings-title');
+    heading?.focus();
+  }
+}
+
+function settingsBack() {            // trả true nếu vẫn ở trong Cài đặt
+  const wide = window.matchMedia('(min-width: 960px)').matches;
+  if (!wide && activeView) { activeView = ''; renderSettings(false); return true; }
+  return false;                       // rời Cài đặt
+}
+
+/** @param {() => void} fn @param {(() => void)|null} [onCancel] */
+async function checkDirtyAndProceed(fn, onCancel = null) {
+  if (!quotaDirty) {
+    fn();
+    return;
+  }
+  const confirmed = await confirmBox({
+    title: 'Bỏ thay đổi chưa lưu?',
+    body: 'Cài đặt gia sư đang chỉnh sửa chưa được lưu.',
+    okText: 'Bỏ thay đổi',
+    danger: true
+  });
+  if (confirmed) {
+    quotaDirty = false;
+    const quotaForm = /** @type {HTMLFormElement|null} */ (document.getElementById('ai-settings-form'));
+    quotaForm?.reset();
+    fn();
+  } else {
+    onCancel?.();
+  }
+}
+
+function leaveSettings() {
+  checkDirtyAndProceed(() => {
+    if (history.state?.settings) {
+      history.back();
+    } else {
+      screen = 'work';
+      renderSettings(false);
+      window.scrollTo(0, workScroll);
+      document.getElementById('open-settings')?.focus();
+    }
+  });
+}
+
+document.getElementById('open-settings')?.addEventListener('click', () => {
+  workScroll = window.scrollY;
+  screen = 'settings';
+  const wide = window.matchMedia('(min-width: 960px)').matches;
+  if (!wide) activeView = '';
+  history.pushState({ settings: 1 }, '');
+  renderSettings();
+  window.scrollTo(0, 0);
+});
+
+window.addEventListener('popstate', () => {
+  if (screen !== 'settings') return;
+  checkDirtyAndProceed(() => {
+    if (settingsBack()) history.pushState({ settings: 1 }, '');
+    else { screen = 'work'; renderSettings(false); window.scrollTo(0, workScroll); }
+  }, () => history.pushState({ settings: 1 }, ''));
+});
+document.getElementById('close-settings')?.addEventListener('click', leaveSettings);
+
+document.querySelectorAll('.settings-menu .group-link').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = /** @type {HTMLElement} */ (btn).dataset.view;
+    if (!v) return;
+    checkDirtyAndProceed(() => {
+      const wide = window.matchMedia('(min-width: 960px)').matches;
+      if (!wide && !activeView) {
+        history.pushState({ settings: 1, view: v }, '');
+      }
+      activeView = v;
+      renderSettings();
+      window.scrollTo(0, 0);
+    });
+  });
+});
+
+document.querySelectorAll('.settings-detail [data-back]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    checkDirtyAndProceed(() => {
+      const old = activeView;
+      const isWide = window.matchMedia('(min-width: 960px)').matches;
+      if (!isWide) {
+        activeView = '';
+        renderSettings(false);
+        const item = /** @type {HTMLElement|null} */ (document.querySelector(`.settings-menu [data-view="${old}"]`));
+        if (item) item.focus();
+        else document.getElementById('settings-title')?.focus();
+      } else {
+        leaveSettings();
+      }
+    });
+  });
+});
+
+window.matchMedia('(min-width: 960px)').addEventListener('change', () => {
+  if (screen === 'settings' && !activeView) activeView = 'account';
+  renderSettings(false);
+});
+
+document.addEventListener('toggle', e => {
+  const target = /** @type {HTMLDetailsElement|null} */ (e.target);
+  if (target?.matches('.row-actions[open]')) {
+    document.querySelectorAll('.row-actions[open]').forEach(d => {
+      if (d !== target) /** @type {HTMLDetailsElement} */ (d).open = false;
+    });
+  }
+}, true);
+
+node('ai-settings-form')?.addEventListener('input', () => {
+  quotaDirty = true;
+});

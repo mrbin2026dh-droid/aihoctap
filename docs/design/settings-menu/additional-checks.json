@@ -1,0 +1,45 @@
+{
+  "modalLayouts": [
+    {
+      "width": 320,
+      "height": 568,
+      "scale": 1,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "height": 320,
+      "scale": 1,
+      "noOverflow": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "scale": 1,
+      "noOverflow": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "scale": 1,
+      "noOverflow": true
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "scale": 2,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "scale": 2,
+      "noOverflow": true
+    }
+  ],
+  "checks": [
+    "Desktop dirty sidebar navigation: cancel retains draft, confirm discards without commit",
+    "API-key list error/retry mock state",
+    "Student mock DOM excludes teacher configuration"
+  ]
+}

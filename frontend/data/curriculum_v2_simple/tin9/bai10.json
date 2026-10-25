@@ -19,10 +19,11 @@
         "C": "=IF(F2:F40=\"Tốt\")",
         "D": "=AVERAGE(F2:F40)"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Hàm COUNTIF nhận vùng dữ liệu F2:F40 và đếm số lượng ô có chứa giá trị chuỗi \"Tốt\".",
       "goi_y_khi_sai": "Hàm nào trong tiếng Anh có nghĩa là ĐẾM (COUNT) kết hợp với NẾU (IF)? Xem lại cú pháp ở Mục 1 nhé!",
-      "forbidden_keywords": ["COUNTIF", "đáp án B"]
+      "forbidden_keywords": [
+        "COUNTIF",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b10_q2",
@@ -36,10 +37,12 @@
         "C": "Hàm SUM là để đếm, còn SUMIF là để tính trung bình cộng",
         "D": "Hai hàm này hoàn toàn giống nhau, không có gì khác biệt"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! SUM là tính tổng toàn bộ các số trong vùng, còn SUMIF bổ sung thêm tiêu chí lọc điều kiện trước khi tính tổng.",
       "goi_y_khi_sai": "Chữ 'IF' ở cuối tên hàm SUMIF có nghĩa là gì? Điều đó đem lại tính năng gì khác biệt so với hàm SUM thông thường? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["thỏa mãn một điều kiện", "tất cả các ô", "đáp án B"]
+      "forbidden_keywords": [
+        "thỏa mãn một điều kiện",
+        "tất cả các ô",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b10_q3",
@@ -53,10 +56,12 @@
         "C": "Tên của trang tính",
         "D": "Tiêu đề của cột cần xóa"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Cú pháp SUMIF là (vùng_kiểm_tra, điều_kiện, vùng_tính_tổng). Cột C2:C15 ở vị trí thứ ba chính là vùng chứa các số thực tế để máy cộng tổng lại.",
       "goi_y_khi_sai": "C2:C15 nằm ở vị trí thứ 3 trong hàm SUMIF. Vị trí này chứa dữ liệu gì để máy cộng lại? Xem lại cú pháp ở Mục 1 nhé!",
-      "forbidden_keywords": ["cần tính tổng", "sum_range", "đáp án B"]
+      "forbidden_keywords": [
+        "cần tính tổng",
+        "sum_range",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b10_q4",
@@ -70,10 +75,12 @@
         "C": "Vẽ hình tròn che lại các dòng khác",
         "D": "Tắt máy tính đi bật lại"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Công cụ AutoFilter tạm thời ẩn đi những dòng không thỏa mãn điều kiện và chỉ hiển thị đúng các dòng học sinh Xuất sắc, toàn bộ dữ liệu gốc vẫn được bảo toàn nguyên vẹn 100%.",
       "goi_y_khi_sai": "Công cụ có biểu tượng hình chiếc phễu chuyên dùng để lọc dữ liệu theo tiêu chí mà không làm mất hàng là gì? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["AutoFilter", "Lọc dữ liệu", "đáp án B"]
+      "forbidden_keywords": [
+        "AutoFilter",
+        "Lọc dữ liệu",
+        "đáp án B"
+      ]
     }
   ]
 }

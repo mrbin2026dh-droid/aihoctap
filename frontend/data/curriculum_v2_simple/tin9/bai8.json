@@ -19,10 +19,12 @@
         "C": "Những ô trống không có đường nối",
         "D": "Một tệp âm thanh thu sẵn"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Các nhánh rẽ (branches) và đường liên kết chính là huyết mạch nối các ý tưởng thành cây logic xoay quanh chủ đề chính.",
       "goi_y_khi_sai": "Để biểu diễn mối quan hệ giữa ý tưởng con với ý tưởng cha trong sơ đồ, người ta dùng đường nét gì? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Các nhánh", "đường liên kết", "đáp án A"]
+      "forbidden_keywords": [
+        "Các nhánh",
+        "đường liên kết",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b8_q2",
@@ -36,10 +38,12 @@
         "C": "Lời cảm ơn và tạm biệt người nghe",
         "D": "Một đoạn phim dài 30 phút"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Trang bìa luôn phải giới thiệu rõ ràng tên đề tài báo cáo và người/nhóm chịu trách nhiệm thực hiện nội dung.",
       "goi_y_khi_sai": "Khi bắt đầu thuyết trình, khán giả cần biết đề tài nói về cái gì và do ai thực hiện ở trang nào? Xem lại Quy tắc bố cục ở Mục 2 nhé!",
-      "forbidden_keywords": ["Tên chủ đề", "danh sách thành viên", "đáp án B"]
+      "forbidden_keywords": [
+        "Tên chủ đề",
+        "danh sách thành viên",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b8_q3",
@@ -53,10 +57,12 @@
         "C": "Viewer (Người xem)",
         "D": "Administrator (Quản trị viên hệ thống)"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Chính xác! Thiết lập quyền Viewer (Người xem) cho phép người nhận đọc nội dung nhưng bị khóa hoàn toàn quyền chỉnh sửa và xóa.",
       "goi_y_khi_sai": "Chỉ muốn người khác xem nội dung mà không được sửa thì chọn quyền nào có nghĩa là Xem? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["Viewer", "Người xem", "đáp án C"]
+      "forbidden_keywords": [
+        "Viewer",
+        "Người xem",
+        "đáp án C"
+      ]
     },
     {
       "id": "tin9_b8_q4",
@@ -70,10 +76,11 @@
         "C": "Định dạng tệp nén ZIP",
         "D": "Định dạng tệp thực thi EXE"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Tệp PDF (Portable Document Format) giữ nguyên vẹn 100% định dạng, phông chữ và hình ảnh trên mọi thiết bị và hệ điều hành.",
       "goi_y_khi_sai": "Định dạng tệp văn bản nổi tiếng thế giới nào chuyên dùng để khóa cố định bố cục khi in ấn và đọc trên máy khác? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["PDF", "đáp án B"]
+      "forbidden_keywords": [
+        "PDF",
+        "đáp án B"
+      ]
     }
   ]
 }

@@ -11,85 +11,258 @@
 </head>
 <body>
   <a class="skip" href="#main">Đến nội dung</a>
-  <header class="topbar"><a class="wordmark" href="./">SGK<span>Góc giáo viên</span></a><div class="actions"><a href="./" class="quiet" style="font-size:14px;text-decoration:none;padding:8px 12px;color:var(--blue);border:1px solid var(--line);border-radius:8px;">← Về Góc học tập</a><button id="teacher-logout" hidden>Đăng xuất</button></div></header>
+  <header class="topbar"><a class="wordmark" href="./">SGK<span>Góc giáo viên</span></a><div class="actions"><a href="./" class="quiet" style="font-size:14px;text-decoration:none;padding:8px 12px;color:var(--blue);border:1px solid var(--line);border-radius:8px;">← Về Góc học tập</a><button id="open-settings" class="quiet" aria-controls="settings" aria-expanded="false" hidden>Cài đặt</button><button id="teacher-logout" hidden>Đăng xuất</button></div></header>
   <div id="status" class="notice" role="status" aria-live="polite">Đăng nhập để quản lý bài học.</div>
   <main id="main" class="teacher-layout" tabindex="-1">
-    <section id="auth-section" class="teacher-section">
-      <h1>Xuất bản bài học</h1>
-      <form id="teacher-login"><label>Mã PIN giáo viên<input name="pin" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Đăng nhập giáo viên</button></form>
+    <section id="auth-section" class="teacher-section auth-card">
+      <div class="intro form-intro">
+        <h1 id="teacher-login-title">Vào trang quản lý</h1>
+      </div>
+      <form id="teacher-login">
+        <div class="field">
+          <label for="teacher-pin">Mã PIN giáo viên</label>
+          <div class="pin-wrap">
+            <input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required>
+            <button class="reveal" type="button" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+          </div>
+        </div>
+        <p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p>
+        <button class="primary btn-full" type="submit">Đăng nhập giáo viên</button>
+      </form>
+    </section>
+    <section id="teacher-must-change-section" class="teacher-section auth-card" hidden aria-labelledby="first-pin-title">
+      <div class="intro form-intro">
+        <h1 id="first-pin-title">Đặt mã PIN riêng</h1>
+        <p id="first-pin-help" class="form-help">Đây là lần đăng nhập đầu. Hãy đặt mã PIN riêng của thầy/cô.</p>
+      </div>
+      <form id="teacher-must-change-form">
+        <div class="field">
+          <label for="first-old">Mã PIN hiện tại</label>
+          <div class="pin-wrap">
+            <input id="first-old" name="old_pin" type="password" autocomplete="current-password" required placeholder="Nhập mã PIN hiện tại">
+            <button class="reveal" type="button" data-reveal="first-old" aria-controls="first-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="first-new">Mã PIN mới</label>
+          <div class="pin-wrap">
+            <input id="first-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="first-length" placeholder="Mã PIN mới (tối thiểu 8 ký tự)">
+            <button class="reveal" type="button" data-reveal="first-new" aria-controls="first-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+          </div>
+          <p id="first-length" class="hint">Ít nhất 8 ký tự.</p>
+        </div>
+        <div class="field">
+          <label for="first-confirm">Nhập lại mã PIN mới</label>
+          <div class="pin-wrap">
+            <input id="first-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8" placeholder="Nhập lại mã PIN mới">
+            <button class="reveal" type="button" data-reveal="first-confirm" aria-controls="first-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+          </div>
+        </div>
+        <p id="teacher-must-change-error" class="notice error status" role="alert" aria-live="polite" hidden></p>
+        <div class="actions" style="margin-top:16px;">
+          <button class="primary btn-full" type="submit">Đổi mã PIN và tiếp tục</button>
+        </div>
+      </form>
     </section>
     <div id="editor" hidden>
-      <section class="teacher-section"><h1>Bài học của lớp</h1><label>Bài đã xuất bản<select id="published"><option value="">Chọn bài để chỉnh sửa</option></select></label><button id="load-lesson">Mở bài đã chọn</button></section>
-      <form id="publish-form">
-        <section class="teacher-section"><h2>Nội dung bài học</h2><p>Sửa bài tạo phiên bản mới. Bài đang làm giữ nguyên.</p><div class="teacher-grid">
-          <label>Mã môn<input name="subject_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin-hoc"></label>
-          <label>Tên môn<input name="subject_name" required maxlength="500"></label>
-          <label>Khối lớp<select name="grade"><option value="9">Lớp 9</option><option value="8">Lớp 8</option><option value="7">Lớp 7</option><option value="6">Lớp 6</option></select></label>
-          <label>Mã bài<input name="lesson_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="bai-1"></label>
-          <label class="full">Tiêu đề<input name="title" required maxlength="500"></label>
-          <label class="full">Nội dung bài học<textarea name="content_markdown" required maxlength="200000" rows="12"></textarea></label>
-        </div><button id="preview-button" type="button">Xem trước nội dung</button><article id="preview"></article></section>
-        <section class="teacher-section"><h2>Câu hỏi và bài tập</h2><p>Đáp án được giữ riêng trên máy chủ.</p><div id="question-editors"></div><button id="add-question" type="button">Thêm câu hỏi</button></section>
-        <div class="actions"><button class="primary" type="submit">Xuất bản bài học</button><button id="new-lesson" type="button">Soạn bài mới</button></div>
-      </form>
-      <section class="teacher-section"><h2>Bài học sinh đã nộp</h2><button id="refresh-results">Cập nhật kết quả</button><div id="teacher-results"></div></section>
-      <section class="teacher-section" id="materials-section">
-        <h2>Tài liệu bổ trợ Google Drive (D1 / A6)</h2>
-        <p>Hệ thống chỉ lưu mã file ID an toàn và chuyển tiếp tài liệu PDF trực tiếp cho học sinh.</p>
-        <form id="material-form">
-          <div class="teacher-grid">
-            <label>Mã tài liệu<input name="material_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="mat_tin6_b1"></label>
-            <label>Mã khóa học<input name="material_course_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin6"></label>
-            <label class="full">Tiêu đề tài liệu<input name="material_title" required maxlength="500" placeholder="Tài liệu tóm tắt Mục 1 SGK Tin học 6"></label>
-            <label class="full">Liên kết chia sẻ Google Drive<input name="material_drive_url" required type="url" placeholder="https://drive.google.com/file/d/.../view"></label>
-            <label class="full">Mô tả ngắn<input name="material_desc" maxlength="500" placeholder="Bản PDF tóm tắt bài học"></label>
+      <section id="workspace" aria-labelledby="workspace-title">
+        <div class="page-head">
+          <div>
+            <h1 id="workspace-title" tabindex="-1">Quản lý lớp và bài học</h1>
+            <p>Soạn bài, xem kết quả và quản lý học sinh.</p>
           </div>
-          <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Đăng tải tài liệu</button></div>
-        </form>
-      </section>
-      <section class="teacher-section" id="keys-section">
-        <h2>Bể khóa Gemini API cho Gia sư AI (C5)</h2>
-        <p>Khóa được mã hóa AES-GCM trong Durable Object. Hệ thống tự động cân bằng tải và chuyển khóa dự phòng khi gặp 429.</p>
-        <div id="pool-banner" class="notice" hidden></div>
-        <form id="add-key-form">
-          <div class="teacher-grid">
-            <label>Khóa API Gemini (AIzaSy...)<input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" placeholder="AIzaSy..."></label>
-            <label>Ghi chú<input name="gemini_key_note" maxlength="100" placeholder="Tài khoản cá nhân / dự phòng"></label>
-          </div>
-          <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Thêm khóa vào bể</button><button id="refresh-keys" type="button">Làm mới danh sách</button></div>
-        </form>
-        <div class="table-wrap" style="margin-top:16px;">
-          <table id="keys-table">
-            <thead><tr><th>Mã hiển thị</th><th>Ghi chú</th><th>Trạng thái</th><th>Lượt dùng hôm nay</th><th>Thao tác</th></tr></thead>
-            <tbody id="keys-tbody"><tr><td colspan="5">Chưa tải dữ liệu khóa.</td></tr></tbody>
-          </table>
         </div>
-      </section>
-      <section class="teacher-section" id="ai-usage-section">
-        <h2>Theo dõi và giới hạn Gia sư AI (A9 / B7)</h2>
-        <p>Quản lý hạn mức dùng, tạm tắt trong giờ thi và tải báo cáo đối soát.</p>
-        <form id="ai-settings-form">
-          <div class="teacher-grid">
-            <label>Hạn mức mặc định (câu/ngày)<input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit"></label>
-            <label style="display:flex;align-items:center;gap:8px;margin-top:24px;">
-              <input name="exam_mode" type="checkbox" id="ai-exam-mode">
-              <span>Đang thi: tắt gia sư</span>
+        <section class="teacher-section"><h1>Bài học của lớp</h1><label>Bài đã xuất bản<select id="published"><option value="">Chọn bài để chỉnh sửa</option></select></label><button id="load-lesson">Mở bài đã chọn</button></section>
+        <form id="publish-form">
+          <section class="teacher-section"><h2>Nội dung bài học</h2><p>Sửa bài tạo phiên bản mới. Bài đang làm giữ nguyên.</p><div class="teacher-grid">
+            <label>Mã môn<input name="subject_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin-hoc"></label>
+            <label>Tên môn<input name="subject_name" required maxlength="500"></label>
+            <label>Khối lớp<select name="grade"><option value="9">Lớp 9</option><option value="8">Lớp 8</option><option value="7">Lớp 7</option><option value="6">Lớp 6</option></select></label>
+            <label>Mã bài<input name="lesson_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="bai-1"></label>
+            <label class="full">Tiêu đề<input name="title" required maxlength="500"></label>
+            <label class="full">Nội dung bài học<textarea name="content_markdown" required maxlength="200000" rows="12"></textarea></label>
+          </div><button id="preview-button" type="button">Xem trước nội dung</button><article id="preview"></article></section>
+          <section class="teacher-section"><h2>Câu hỏi và bài tập</h2><p>Đáp án được giữ riêng trên máy chủ.</p><div id="question-editors"></div><button id="add-question" type="button">Thêm câu hỏi</button></section>
+          <div class="actions"><button class="primary" type="submit">Xuất bản bài học</button><button id="new-lesson" type="button">Soạn bài mới</button></div>
+        </form>
+        <section class="teacher-section"><h2>Bài học sinh đã nộp</h2><button id="refresh-results">Cập nhật kết quả</button><div id="teacher-results"></div></section>
+        <section class="teacher-section" id="materials-section">
+          <h2>Tài liệu bổ trợ Google Drive (D1 / A6)</h2>
+          <p>Hệ thống chỉ lưu mã file ID an toàn và chuyển tiếp tài liệu PDF trực tiếp cho học sinh.</p>
+          <form id="material-form">
+            <div class="teacher-grid">
+              <label>Mã tài liệu<input name="material_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="mat_tin6_b1"></label>
+              <label>Mã khóa học<input name="material_course_id" required pattern="[a-z0-9][a-z0-9_-]{0,63}" maxlength="64" placeholder="tin6"></label>
+              <label class="full">Tiêu đề tài liệu<input name="material_title" required maxlength="500" placeholder="Tài liệu tóm tắt Mục 1 SGK Tin học 6"></label>
+              <label class="full">Liên kết chia sẻ Google Drive<input name="material_drive_url" required type="url" placeholder="https://drive.google.com/file/d/.../view"></label>
+              <label class="full">Mô tả ngắn<input name="material_desc" maxlength="500" placeholder="Bản PDF tóm tắt bài học"></label>
+            </div>
+            <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Đăng tải tài liệu</button></div>
+          </form>
+        </section>
+        <section class="teacher-section" id="students-section">
+          <h2>Quản lý học sinh</h2>
+          <p>Thêm học sinh, cấp mã PIN, khóa/mở tài khoản và đặt lại mã PIN khi học sinh quên.</p>
+          <div id="student-pin-banner" class="notice" style="margin-bottom:16px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;" hidden></div>
+          <form id="add-student-form">
+            <div class="teacher-grid">
+              <label>Họ và tên<input name="name" required maxlength="60" placeholder="Nguyễn Văn An"></label>
+              <label>Khối lớp<select name="grade"><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option><option value="10">Lớp 10</option><option value="11">Lớp 11</option><option value="12">Lớp 12</option></select></label>
+              <label>Mã lớp<input name="class_code" required maxlength="10" placeholder="6A"></label>
+              <label>Mã PIN (tùy chọn)<input name="pin" type="password" minlength="6" maxlength="16" placeholder="Để trống để tự sinh"></label>
+            </div>
+            <div class="actions" style="margin-top:12px;">
+              <button class="primary" type="submit">Thêm học sinh</button>
+              <button id="refresh-students" type="button">Làm mới danh sách</button>
+            </div>
+          </form>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:12px;">
+            <label style="margin:0;font-size:14px;display:flex;align-items:center;gap:6px;">Lọc theo lớp:
+              <select id="students-class-filter" style="width:auto;padding:4px 8px;"><option value="">Tất cả các lớp</option></select>
             </label>
           </div>
-          <div class="actions" style="margin-top:12px;">
-            <button class="primary" type="submit">Lưu cài đặt gia sư</button>
-            <button id="refresh-ai-stats" type="button">Làm mới danh sách</button>
-            <button id="download-ai-csv" type="button">Tải báo cáo CSV</button>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table id="students-table">
+              <thead><tr><th>Mã học sinh</th><th>Họ và tên</th><th>Khối</th><th>Lớp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+              <tbody id="students-tbody"><tr><td colspan="6">Đang tải danh sách học sinh...</td></tr></tbody>
+            </table>
           </div>
-        </form>
-        <div class="table-wrap" style="margin-top:16px;">
-          <table id="ai-usage-table">
-            <thead><tr><th>Mã học sinh</th><th>Đã dùng / Hạn mức</th><th>Cộng thêm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-            <tbody id="ai-usage-tbody"><tr><td colspan="5">Chưa tải dữ liệu học sinh.</td></tr></tbody>
-          </table>
+        </section>
+      </section>
+
+      <section id="settings" hidden aria-labelledby="settings-title">
+        <div class="page-head">
+          <div>
+            <h1 id="settings-title" tabindex="-1">Cài đặt</h1>
+            <p>Giáo viên</p>
+          </div>
+          <button id="close-settings" class="quiet">Về quản lý lớp</button>
         </div>
+        <div id="settings-layout" class="settings-layout">
+          <nav class="settings-menu" aria-label="Nhóm cài đặt">
+            <p class="group-label">Cá nhân</p>
+            <ul class="group-list">
+              <li><button class="group-link" data-view="account" aria-current="page"><strong>Tài khoản</strong><span>Thông tin và đổi mã PIN</span></button></li>
+            </ul>
+            <p class="group-label">Cài đặt AI</p>
+            <ul class="group-list">
+              <li><button class="group-link" data-view="quota"><strong>Hạn mức sử dụng</strong><span>Giới hạn gia sư AI theo lớp</span></button></li>
+              <li><button class="group-link" data-view="keys"><strong>Khóa API</strong><span>Bể khóa Gemini API</span></button></li>
+            </ul>
+          </nav>
+          <div class="settings-detail">
+            <section id="panel-account" class="settings-panel" aria-labelledby="heading-account">
+              <div class="detail-top"><button class="back-button quiet" data-back>Quay lại Cài đặt</button><h2 id="heading-account" tabindex="-1">Tài khoản</h2></div>
+              <div class="card">
+                <dl class="account-data">
+                  <div><dt>Vai trò</dt><dd>Giáo viên</dd></div>
+                </dl>
+                <section class="teacher-section" id="change-pin-section" aria-labelledby="regular-pin-title">
+                  <div class="intro form-intro">
+                    <h2 id="regular-pin-title">Đổi mã PIN</h2>
+                    <p class="form-help">Chủ động đổi mã PIN giáo viên định kỳ để tăng cường bảo mật.</p>
+                  </div>
+                  <form id="teacher-regular-change-pin-form">
+                    <div class="teacher-grid">
+                      <div class="field">
+                        <label for="regular-old">Mã PIN hiện tại</label>
+                        <div class="pin-wrap">
+                          <input id="regular-old" name="old_pin" type="password" autocomplete="current-password" required placeholder="Mã PIN hiện tại">
+                          <button class="reveal" type="button" data-reveal="regular-old" aria-controls="regular-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label for="regular-new">Mã PIN mới</label>
+                        <div class="pin-wrap">
+                          <input id="regular-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="regular-length" placeholder="Mã PIN mới">
+                          <button class="reveal" type="button" data-reveal="regular-new" aria-controls="regular-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+                        </div>
+                        <p id="regular-length" class="hint">Ít nhất 8 ký tự.</p>
+                      </div>
+                      <div class="field full">
+                        <label for="regular-confirm">Nhập lại mã PIN mới</label>
+                        <div class="pin-wrap">
+                          <input id="regular-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8" placeholder="Nhập lại mã PIN mới">
+                          <button class="reveal" type="button" data-reveal="regular-confirm" aria-controls="regular-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn mã PIN">Hiện</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="actions" style="margin-top:16px;">
+                      <button class="primary" type="submit">Lưu mã PIN mới</button>
+                    </div>
+                    <p id="teacher-change-pin-status" class="notice status" role="alert" aria-live="polite"></p>
+                  </form>
+                </section>
+              </div>
+            </section>
+
+            <section id="panel-quota" class="settings-panel" hidden aria-labelledby="heading-quota">
+              <div class="detail-top"><button class="back-button quiet" data-back>Quay lại Cài đặt</button><h2 id="heading-quota" tabindex="-1">Hạn mức sử dụng</h2></div>
+              <div class="card">
+                <section class="teacher-section" id="ai-usage-section">
+                  <h2>Theo dõi và giới hạn Gia sư AI (A9 / B7)</h2>
+                  <p>Quản lý hạn mức dùng, tạm tắt trong giờ thi và tải báo cáo đối soát.</p>
+                  <form id="ai-settings-form">
+                    <div class="teacher-grid">
+                      <label>Hạn mức mặc định (câu/ngày)<input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit"></label>
+                      <label style="display:flex;align-items:center;gap:8px;margin-top:24px;">
+                        <input name="exam_mode" type="checkbox" id="ai-exam-mode">
+                        <span>Đang thi: tắt gia sư</span>
+                      </label>
+                    </div>
+                    <div class="actions" style="margin-top:12px;">
+                      <button class="primary" type="submit">Lưu cài đặt gia sư</button>
+                      <button id="refresh-ai-stats" type="button">Làm mới danh sách</button>
+                      <button id="download-ai-csv" type="button">Tải báo cáo CSV</button>
+                    </div>
+                  </form>
+                  <div class="table-wrap" style="margin-top:16px;">
+                    <table id="ai-usage-table">
+                      <thead><tr><th>Mã học sinh</th><th>Đã dùng / Hạn mức</th><th>Cộng thêm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                      <tbody id="ai-usage-tbody"><tr><td colspan="5">Chưa tải dữ liệu học sinh.</td></tr></tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            </section>
+
+            <section id="panel-keys" class="settings-panel" hidden aria-labelledby="heading-keys">
+              <div class="detail-top"><button class="back-button quiet" data-back>Quay lại Cài đặt</button><h2 id="heading-keys" tabindex="-1">Khóa API</h2></div>
+              <div class="card">
+                <section class="teacher-section" id="keys-section">
+                  <h2>Bể khóa Gemini API cho Gia sư AI (C5)</h2>
+                  <p>Khóa được mã hóa AES-GCM trong Durable Object. Hệ thống tự động cân bằng tải và chuyển khóa dự phòng khi gặp 429.</p>
+                  <div id="pool-banner" class="notice" hidden></div>
+                  <form id="add-key-form">
+                    <div class="teacher-grid">
+                      <label>Khóa API Gemini (AIzaSy...)<input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" placeholder="AIzaSy..."></label>
+                      <label>Ghi chú<input name="gemini_key_note" maxlength="100" placeholder="Tài khoản cá nhân / dự phòng"></label>
+                    </div>
+                    <div class="actions" style="margin-top:12px;"><button class="primary" type="submit">Thêm khóa vào bể</button><button id="refresh-keys" type="button">Làm mới danh sách</button></div>
+                  </form>
+                  <div class="table-wrap" style="margin-top:16px;">
+                    <table id="keys-table">
+                      <thead><tr><th>Mã hiển thị</th><th>Ghi chú</th><th>Trạng thái</th><th>Lượt dùng hôm nay</th><th>Thao tác</th></tr></thead>
+                      <tbody id="keys-tbody"><tr><td colspan="5">Chưa tải dữ liệu khóa.</td></tr></tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            </section>
+          </div>
+        </div>
+        <p id="screen-announcement" class="empty-region" role="status" aria-live="polite"></p>
       </section>
     </div>
   </main>
+  <dialog id="msg-dialog" class="msg-dialog" aria-labelledby="msg-title" aria-describedby="msg-body">
+    <form method="dialog" id="msg-form">
+      <h2 id="msg-title"></h2><p id="msg-body"></p>
+      <div id="msg-fields"></div>
+      <label id="msg-field" hidden><span id="msg-field-label"></span><input id="msg-input" type="text" autocomplete="off"></label>
+      <p id="msg-error" class="field-error" role="alert" hidden></p>
+      <div class="msg-actions"><button id="msg-cancel" type="button">Hủy</button><button id="msg-ok" class="primary" type="submit">Đồng ý</button></div>
+    </form>
+  </dialog>
 </body>
 </html>

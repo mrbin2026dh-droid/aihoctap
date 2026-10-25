@@ -20,8 +20,6 @@
         "C": "Không ghi nguồn gốc và không có ngày tháng xuất bản",
         "D": "Tiêu đề viết hoa toàn bộ kèm lời kêu gọi chia sẻ khẩn cấp"
       },
-      "dap_an_dung": "B",
-      "giai_thich": "Các tên miền .gov.vn, .edu.vn thuộc các cơ quan nhà nước, trường học có quy trình kiểm duyệt nội dung chặt chẽ và tác giả rõ ràng.",
       "muc_sgk": "Mục 2: Quy trình thực hành"
     },
     {
@@ -33,8 +31,6 @@
         "C": "Chỉ nhấp vào kết quả đầu tiên xuất hiện mà không cần so sánh",
         "D": "Sử dụng các từ cảm thán dài dòng"
       },
-      "dap_an_dung": "A",
-      "giai_thich": "Đặt cụm từ chính xác trong dấu ngoặc kép giúp công cụ tìm kiếm lọc đúng chuỗi từ cần tìm, giảm thiểu kết quả rác.",
       "muc_sgk": "Mục 2: Quy trình thực hành"
     },
     {
@@ -46,8 +42,6 @@
         "C": "Thêm bình luận chỉ trích gay gắt",
         "D": "Bỏ qua không cần quan tâm đến tính đúng sai"
       },
-      "dap_an_dung": "B",
-      "giai_thich": "Kiểm chứng chéo với các nguồn tin chính thống là kỹ năng số bắt buộc để phòng ngừa tin giả và thông tin sai lệch.",
       "muc_sgk": "Mục 2: Quy trình thực hành"
     },
     {
@@ -59,8 +53,6 @@
         "C": "Tính thẩm mỹ",
         "D": "Tính bảo mật"
       },
-      "dap_an_dung": "A",
-      "giai_thich": "Thông tin thiếu các khía cạnh cần thiết để đưa ra quyết định toàn diện là thông tin vi phạm tiêu chí Tính đầy đủ.",
       "muc_sgk": "Mục 1: Mục tiêu thực hành"
     }
   ]

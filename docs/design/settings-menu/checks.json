@@ -1,0 +1,1242 @@
+{
+  "date": "2026-10-25",
+  "browser": "155.0.8059.85",
+  "layouts": [
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    }
+  ],
+  "largeText": [
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "teacher",
+      "query": "?view=menu",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=account",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=quota",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "teacher",
+      "query": "?view=keys",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 0
+    },
+    {
+      "role": "student",
+      "query": "?view=menu",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=account",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=offline",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 320,
+      "scrollWidth": 320,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 768,
+      "scrollWidth": 768,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    },
+    {
+      "role": "student",
+      "query": "?view=help",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "small": [],
+      "clip": [],
+      "panels": 1
+    }
+  ],
+  "behavior": [
+    "Mobile groups/detail/back and class/focus preservation",
+    "Unsaved draft: stay/discard, no accidental commit",
+    "Field validation, confirmed save, busy state and duplicate suppression",
+    "lock: before/cancel/Esc zero, confirm one correct target, focus return",
+    "reset: before/cancel/Esc zero, confirm one correct target, focus return",
+    "delete: before/cancel/Esc zero, confirm one correct target, focus return",
+    "Unlock requires separate confirmation",
+    "delete-key: canceled/confirmed and focus",
+    "lock-ai: canceled/confirmed and focus",
+    "remove-download: canceled/confirmed and focus",
+    "Simulated operation failure does not mutate/remove object",
+    "Keyboard action does not auto-confirm; modal focus trap/Tab/Shift+Tab/Esc",
+    "teacher: labels/ARIA, wide-to-narrow and high contrast",
+    "student: labels/ARIA, wide-to-narrow and high contrast"
+  ],
+  "states": [
+    {
+      "role": "teacher",
+      "state": "loading"
+    },
+    {
+      "role": "teacher",
+      "state": "empty"
+    },
+    {
+      "role": "teacher",
+      "state": "error"
+    },
+    {
+      "role": "student",
+      "state": "loading"
+    },
+    {
+      "role": "student",
+      "state": "empty"
+    },
+    {
+      "role": "student",
+      "state": "error"
+    }
+  ],
+  "screenshots": [
+    "teacher-workspace-360.png",
+    "teacher-workspace-1280.png",
+    "teacher-view-menu-360.png",
+    "teacher-view-menu-1280.png",
+    "teacher-view-quota-360.png",
+    "teacher-view-quota-1280.png",
+    "student-workspace-360.png",
+    "student-workspace-1280.png",
+    "student-view-menu-360.png",
+    "student-view-menu-1280.png",
+    "student-view-offline-360.png",
+    "student-view-offline-1280.png",
+    "teacher-confirm-delete-360.png"
+  ],
+  "networkRequests": 0,
+  "limits": [
+    "Mockup only; no backend/API/authentication",
+    "No physical devices or virtual keyboards",
+    "No Safari/Firefox/Edge or screen reader",
+    "No full WCAG/Lighthouse audit or Claude ACCEPT"
+  ]
+}

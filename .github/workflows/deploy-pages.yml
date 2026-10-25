@@ -28,6 +28,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Stamp and verify service worker
+        run: |
+          python tools/package_student_pwa.py --stamp
+          python tools/package_student_pwa.py
+
       - name: Upload Student PWA Artifact (frontend/hoc only)
         uses: actions/upload-pages-artifact@v3
         with:

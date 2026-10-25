@@ -18,10 +18,11 @@
         "C": "Các chữ số từ 0 đến 9",
         "D": "Các nốt nhạc Đồ, Rê, Mi"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Máy tính hoạt động dựa trên các tín hiệu điện tử bật/tắt, nên mọi thông tin đều được mã hóa bằng hai kí hiệu nhị phân 0 và 1.",
       "goi_y_khi_sai": "Em hãy nhớ lại Mục 1: Máy tính sử dụng hệ nhị phân chỉ gồm đúng 2 con số cơ bản nào để biểu diễn bit?",
-      "forbidden_keywords": ["0 và 1", "đáp án B"]
+      "forbidden_keywords": [
+        "0 và 1",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin6_b3_q2",
@@ -35,10 +36,11 @@
         "C": "1 Byte = 8 bit",
         "D": "1 Byte = 10 bit"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Rất chuẩn! 1 Byte luôn được tạo thành từ 8 bit ghép lại với nhau, đủ để biểu diễn một kí tự chữ cái trong máy tính.",
       "goi_y_khi_sai": "Em hãy xem lại bảng đơn vị đo ở Mục 2: 1 Byte gồm bao nhiêu bit ghép lại?",
-      "forbidden_keywords": ["8 bit", "đáp án C"]
+      "forbidden_keywords": [
+        "8 bit",
+        "đáp án C"
+      ]
     },
     {
       "id": "tin6_b3_q3",
@@ -52,10 +54,11 @@
         "C": "GramByte",
         "D": "MegaByte"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! GB là viết tắt của GigaByte, đơn vị đo xấp xỉ bằng một tỉ byte.",
       "goi_y_khi_sai": "Kí tự 'G' là viết tắt của tiền tố Giga, còn chữ 'B' viết hoa là viết tắt của Byte hay Bit? Xem lại Bảng đơn vị đo nhé!",
-      "forbidden_keywords": ["GigaByte", "đáp án A"]
+      "forbidden_keywords": [
+        "GigaByte",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin6_b3_q4",
@@ -69,10 +72,11 @@
         "C": "Kilobyte → Byte → Gigabyte → Terabyte",
         "D": "Gigabyte → Megabyte → Kilobyte → Byte"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất xuất sắc! Thứ tự đúng từ nhỏ đến lớn là: Byte (B) → Kilobyte (KB) → Megabyte (MB) → Gigabyte (GB) → Terabyte (TB).",
       "goi_y_khi_sai": "Hãy nhớ quy tắc: Byte nhỏ nhất, tiếp theo đến Kilo (nghìn), Mega (triệu), Giga (tỉ). Đâu là phương án xếp từ bé đến lớn?",
-      "forbidden_keywords": ["Byte → Kilobyte", "đáp án B"]
+      "forbidden_keywords": [
+        "Byte → Kilobyte",
+        "đáp án B"
+      ]
     }
   ]
 }

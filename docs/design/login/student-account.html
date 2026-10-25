@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tài khoản học sinh · sgk</title><link rel="stylesheet" href="login.css"></head>
+<body><span id="design-states" hidden=""></span><main class="shell"><header class="brand" aria-label="sgk — Góc học tập"><span class="wordmark">sgk</span><small>GÓC HỌC TẬP</small></header>
+<dialog open="" class="card" aria-labelledby="account-title"><div class="account-summary"><h2 id="account-title">Tài khoản của em</h2><div id="account-info">Học sinh mẫu · Lớp 9A</div></div>
+<div id="account-must-change" class="notice account-note" hidden="">Hãy đổi mã PIN do giáo viên cấp để bảo mật tài khoản.</div>
+<div class="intro"><h3>Đổi mã PIN</h3><p>Mã PIN mới có ít nhất 6 chữ số.</p></div>
+<form id="student-change-pin-form" method="dialog">
+<div class="field"><label for="student-old">Mã PIN hiện tại</label><div class="pin-wrap"><input id="student-old" name="old_pin" type="password" autocomplete="current-password" required="" inputmode="numeric" maxlength="16"><button class="reveal" type="button" data-reveal="student-old" aria-controls="student-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin hiện tại">Hiện</button></div></div>
+<div class="field"><label for="student-new">Mã PIN mới</label><div class="pin-wrap"><input id="student-new" name="new_pin" type="password" autocomplete="new-password" required="" minlength="6" inputmode="numeric" maxlength="16"><button class="reveal" type="button" data-reveal="student-new" aria-controls="student-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin mới">Hiện</button></div></div>
+<div class="field"><label for="student-confirm">Nhập lại mã PIN mới</label><div class="pin-wrap"><input id="student-confirm" name="confirm_pin" type="password" autocomplete="new-password" required="" inputmode="numeric" maxlength="16"><button class="reveal" type="button" data-reveal="student-confirm" aria-controls="student-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn nhập lại mã pin mới">Hiện</button></div></div>
+<p id="student-change-pin-status" class="notice error status" role="alert" aria-live="polite"></p><button class="primary" type="submit">Lưu mã PIN mới</button></form>
+<div class="actions"><button id="logout" class="secondary" type="button">Đăng xuất</button></div></dialog><details class="samples"><summary>Xem trạng thái đổi mã PIN</summary><div class="sample-grid"><article class="is-error"><h3>Chưa khớp</h3><p class="notice error" role="alert">Hai mã PIN mới chưa khớp.</p></article><article class="is-error"><h3>Trùng mã cũ</h3><p class="notice error" role="alert">Mã PIN mới phải khác mã cũ.</p></article><article><h3>Thành công</h3><p class="notice success" role="status" aria-live="polite">Đã đổi mã PIN.</p></article></div></details>
+</main><script>
+document.addEventListener('click',e=>{const b=e.target.closest('[data-reveal]');if(!b)return;const i=document.getElementById(b.dataset.reveal);const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Ẩn':'Hiện';b.setAttribute('aria-pressed',String(show));});
+</script>
+
+</body></html>

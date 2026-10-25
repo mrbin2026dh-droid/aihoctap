@@ -19,10 +19,11 @@
         "C": "Cảm tính nhất thời",
         "D": "Tin đồn không rõ nguồn gốc"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Thông tin là cơ sở khoa học để chúng ta phân tích tình huống, nhận diện thuận lợi - khó khăn và đưa ra quyết định chính xác.",
       "goi_y_khi_sai": "Để giải quyết vấn đề hiệu quả và khoa học, chúng ta cần dựa vào cơ sở dữ liệu và điều gì? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Thông tin", "đáp án A"]
+      "forbidden_keywords": [
+        "Thông tin",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b2_q2",
@@ -36,10 +37,12 @@
         "C": "Tính thẩm mỹ",
         "D": "Tính dung lượng"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Rất chuẩn! Số liệu từ 3 năm trước là dữ liệu cũ, không phản ánh thực tế tuyển sinh của năm học hiện tại, vi phạm Tính mới (cập nhật).",
       "goi_y_khi_sai": "Thông tin phản ánh đúng thời điểm hiện tại và chưa bị lỗi thời liên quan đến tiêu chí nào trong 4 tiêu chí? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["Tính mới", "Tính cập nhật", "đáp án A"]
+      "forbidden_keywords": [
+        "Tính mới",
+        "Tính cập nhật",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b2_q3",
@@ -53,10 +56,11 @@
         "C": "Bài đăng chia sẻ không rõ nguồn trên mạng xã hội",
         "D": "Tin nhắn quảng cáo dịch vụ luyện thi"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Cổng thông tin của Sở Giáo dục và Đào tạo là cơ quan quản lý nhà nước có thẩm quyền, thông tin phát hành luôn chuẩn xác và có giá trị pháp lý.",
       "goi_y_khi_sai": "Hãy chọn cơ quan nhà nước có thẩm quyền quản lý chuyên ngành giáo dục trong Mục 1 nhé!",
-      "forbidden_keywords": ["Sở Giáo dục", "đáp án A"]
+      "forbidden_keywords": [
+        "Sở Giáo dục",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b2_q4",
@@ -70,10 +74,12 @@
         "C": "Tính chính xác",
         "D": "Tính dung lượng"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Rất tốt! Dù thông tin mới và chính xác nhưng không ăn nhập gì với mục tiêu bài toán đang cần giải quyết thì nó thiếu Tính sử dụng được.",
       "goi_y_khi_sai": "Tiêu chí đòi hỏi thông tin phải có ích và liên quan trực tiếp đến mục đích giải quyết vấn đề là gì? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["sử dụng được", "liên quan", "đáp án A"]
+      "forbidden_keywords": [
+        "sử dụng được",
+        "liên quan",
+        "đáp án A"
+      ]
     }
   ]
 }

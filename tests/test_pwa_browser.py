@@ -71,6 +71,9 @@ def publish(teacher, *, title="Phân số", body="Nội dung phiên bản một.
 def login(page, code="123456"):
     page.get_by_role("button", name="Đăng nhập", exact=True).click()
     page.get_by_label("Mã học sinh", exact=True).fill(code)
+    pin_input = page.locator("#student-pin")
+    if pin_input.is_visible():
+        pin_input.fill("123456")
     page.get_by_role("button", name="Vào học", exact=True).click()
     expect(page.get_by_role("button", name="Đăng nhập", exact=True)).to_be_hidden()
 

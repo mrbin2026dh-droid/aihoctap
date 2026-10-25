@@ -1,0 +1,37 @@
+[
+  {
+    "pair": "Chữ chính/nền",
+    "ratio": 12.72,
+    "required": 4.5
+  },
+  {
+    "pair": "Chữ phụ/bề mặt",
+    "ratio": 5.97,
+    "required": 4.5
+  },
+  {
+    "pair": "Chữ phụ/mục chọn",
+    "ratio": 5.11,
+    "required": 4.5
+  },
+  {
+    "pair": "Chữ nút/nhấn",
+    "ratio": 11.64,
+    "required": 4.5
+  },
+  {
+    "pair": "Chữ nút/xóa",
+    "ratio": 8.32,
+    "required": 4.5
+  },
+  {
+    "pair": "Focus/bề mặt",
+    "ratio": 6.32,
+    "required": 3
+  },
+  {
+    "pair": "Viền input/bề mặt",
+    "ratio": 3.62,
+    "required": 3
+  }
+]

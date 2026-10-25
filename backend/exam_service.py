@@ -19,7 +19,7 @@ DATA_DIR = BASE_DIR / "data"
 EXAMS_DIR = DATA_DIR / "exams"
 SUBMISSIONS_DIR = EXAMS_DIR / "submissions"
 
-FIREBASE_RTDB_URL = os.getenv("FIREBASE_DATABASE_URL", "https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app")
+FIREBASE_RTDB_URL = os.getenv("FIREBASE_DATABASE_URL", "https://your-project-id-default-rtdb.asia-southeast1.firebasedatabase.app")
 
 def sync_to_firebase_rtdb(path_str: str, data: Any = None, method: str = "PUT") -> bool:
     """Đồng bộ dữ liệu sang Firebase Realtime Database qua REST API an toàn với hỗ trợ Auth Credentials (R08)."""

@@ -18,10 +18,11 @@
         "C": "Thông tin",
         "D": "Quyết định"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Ánh sáng màu đỏ là tín hiệu hình ảnh thô mắt em thu nhận trực tiếp từ thế giới bên ngoài, chưa qua suy nghĩ nên nó là Dữ liệu.",
       "goi_y_khi_sai": "Em hãy nhớ lại Lưu ý ở Mục 1: Những tín hiệu hình ảnh hay âm thanh thu nhận trực tiếp qua giác quan trước khi suy nghĩ thì được gọi là gì? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Dữ liệu", "đáp án B"]
+      "forbidden_keywords": [
+        "Dữ liệu",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin6_b1_q2",
@@ -35,10 +36,11 @@
         "C": "Vật mang tin",
         "D": "Phương tiện giao thông"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất tốt! Sự hiểu biết mà bộ não rút ra sau khi nhìn thấy đèn đỏ chính là Thông tin, giúp em ra quyết định dừng xe an toàn.",
       "goi_y_khi_sai": "Hãy chú ý cụm từ 'sự hiểu biết của con người'. Khái niệm nào trong SGK định nghĩa là sự hiểu biết thu nhận được sau khi não xử lý? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Thông tin", "đáp án B"]
+      "forbidden_keywords": [
+        "Thông tin",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin6_b1_q3",
@@ -52,10 +54,11 @@
         "C": "Ý nghĩ 'ngày mai mình sẽ đi thư viện' trong đầu em",
         "D": "Tấm biển báo giao thông cắm bên lề đường"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Chính xác! Vật mang tin phải là vật thể vật lý chứa dữ liệu bên ngoài. Ý nghĩ trong đầu là thông tin/suy nghĩ của con người, không phải vật thể vật lý.",
       "goi_y_khi_sai": "Vật mang tin là một phương tiện hoặc vật thể cụ thể (cầm được, nhìn thấy được) dùng để chứa dữ liệu. Cái nào trong 4 phương án chỉ là suy nghĩ trong đầu? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Ý nghĩ", "đáp án C"]
+      "forbidden_keywords": [
+        "Ý nghĩ",
+        "đáp án C"
+      ]
     },
     {
       "id": "tin6_b1_q4",
@@ -69,10 +72,11 @@
         "C": "Giúp biến thông tin thành vật mang tin",
         "D": "Thay đổi lịch thi học kỳ của nhà trường"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Rất chuẩn! Thông tin giúp con người đưa ra những lựa chọn đúng đắn và chuẩn bị hành động hiệu quả, an toàn trong đời sống.",
       "goi_y_khi_sai": "Thông tin đem lại sự hiểu biết và giúp ích gì cho hành động của chúng ta? Xem lại Mục 2 về Tầm quan trọng của thông tin nhé!",
-      "forbidden_keywords": ["trang phục phù hợp", "đáp án A"]
+      "forbidden_keywords": [
+        "trang phục phù hợp",
+        "đáp án A"
+      ]
     }
   ]
 }

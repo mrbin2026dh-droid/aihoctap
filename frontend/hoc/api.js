@@ -1,5 +1,5 @@
 // @ts-check
-const isLocalhostBackend = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port === '8000';
+export const isLocalhostBackend = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 export const API_BASE = isLocalhostBackend ? `${location.origin}/api` : 'https://aihoctap-gate.mrbin2026dh.workers.dev/api';
 export class ApiError extends Error {
   /** @param {number} status @param {string} message @param {string} [code] */

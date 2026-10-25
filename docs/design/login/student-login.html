@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Học sinh đăng nhập · sgk</title><link rel="stylesheet" href="login.css"></head>
+<body><span id="design-states" hidden=""></span><main class="shell"><header class="brand" aria-label="sgk — Góc học tập"><span class="wordmark">sgk</span><small>GÓC HỌC TẬP</small></header>
+<dialog open="" id="login-dialog" class="card" aria-labelledby="login-title" aria-describedby="login-help">
+<div class="intro"><h2 id="login-title">Vào góc học tập</h2><p id="login-help">Dùng mã học sinh và mã PIN do giáo viên cấp.</p></div>
+<form id="login-form" method="dialog">
+<div class="field"><label for="student-code">Mã học sinh</label><input id="student-code" name="code" autocomplete="username" pattern="[A-Za-z0-9_-]{1,64}" type="text" autocapitalize="none" spellcheck="false" required=""></div>
+<div class="field"><label for="student-pin">Mã PIN</label><div class="pin-wrap"><input id="student-pin" name="pin" type="password" autocomplete="current-password" required="" inputmode="numeric" maxlength="16"><button class="reveal" type="button" data-reveal="student-pin" aria-controls="student-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin">Hiện</button></div></div>
+<p id="login-error" class="notice error status" role="alert" aria-live="polite"></p>
+<button class="primary" type="submit">Vào học</button><button id="close-login" class="text-button" type="submit" formnovalidate="">Đóng</button>
+</form></dialog><details class="samples"><summary>Xem các trạng thái mẫu</summary><div class="sample-grid">
+<article><h3>Focus</h3><label for="sample-focus">Mã học sinh</label><input id="sample-focus" class="focus-example" type="text" autocomplete="off" placeholder="Nhập mã học sinh"></article>
+<article class="is-loading" aria-busy="true"><h3>Đang gửi</h3><button class="primary" type="button" disabled="">Đang vào…</button></article>
+<article class="is-error"><h3>Sai mã</h3><p class="notice error" role="alert">Mã học sinh hoặc PIN không chính xác.</p></article>
+<article class="is-error"><h3>Tạm khóa</h3><div class="notice error" role="alert"><p>Nhập sai 5 lần. Tài khoản bị tạm khóa 60 giây.</p><p>Thử lại sau 00:59</p></div><button class="primary" type="button" disabled="">Chờ để thử lại</button></article>
+<article class="is-error"><h3>Tài khoản bị khóa</h3><p class="notice error" role="alert">Tài khoản đang bị khóa. Hãy liên hệ giáo viên.</p></article>
+<article class="is-offline"><h3>Mất mạng</h3><p class="notice error" role="alert">Chưa có mạng. Em cần mạng để đăng nhập.</p></article>
+</div></details>
+</main><script>
+document.addEventListener('click',e=>{const b=e.target.closest('[data-reveal]');if(!b)return;const i=document.getElementById(b.dataset.reveal);const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Ẩn':'Hiện';b.setAttribute('aria-pressed',String(show));});
+</script>
+
+</body></html>

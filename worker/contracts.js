@@ -22,6 +22,10 @@ export const IdValidationContract = {
     return this.ID_REGEX.test(id);
   },
 
+  isValidStudentId(id) {
+    return this.isValidId(id);
+  },
+
   assertValidId(id, fieldName = 'ID') {
     if (!this.isValidId(id)) {
       throw new Error(`Giá trị ${fieldName} không hợp lệ: phải khớp định dạng ^[A-Za-z0-9_-]{1,64}$ (cấm ký tự đường dẫn).`);
@@ -125,7 +129,7 @@ export const TeacherAuthContract = {
    * Invariant: IF NOT (A OR B) THEN FAIL_CLOSED (403 Forbidden).
    */
   isValidSecret(providedSecret, configuredSecret) {
-    if (!configuredSecret || typeof configuredSecret !== 'string' || configuredSecret.length < 16) {
+    if (!configuredSecret || typeof configuredSecret !== 'string' || configuredSecret.length < 8) {
       return false; // Fail-closed: unconfigured or weak secret is never valid
     }
     if (!providedSecret || typeof providedSecret !== 'string') {

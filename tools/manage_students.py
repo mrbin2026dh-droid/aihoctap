@@ -73,7 +73,10 @@ def create_student_auth_record(student_id: str, name: str, grade: int, class_cod
         "class_code": str(class_code).strip().upper(),
         "salt": salt,
         "pin_hash": pin_hash,
-        "raw_pin": clean_pin
+        "raw_pin": clean_pin,
+        "disabled": False,
+        "must_change_pin": True,
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
 
 def export_credentials_csv(records: List[Dict[str, Any]], out_path: str):
@@ -132,7 +135,10 @@ def upload_student(database_url: str, token: str, record: Dict[str, Any]) -> boo
         "grade": record["grade"],
         "class_code": record["class_code"],
         "salt": record["salt"],
-        "pin_hash": record["pin_hash"]
+        "pin_hash": record["pin_hash"],
+        "disabled": record.get("disabled", False),
+        "must_change_pin": record.get("must_change_pin", True),
+        "created_at": record.get("created_at") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
     
     body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
@@ -169,7 +175,9 @@ def list_students(database_url: str, token: str) -> List[Dict[str, Any]]:
                         "student_id": sid,
                         "name": val.get("name", ""),
                         "grade": val.get("grade", ""),
-                        "class_code": val.get("class_code", "")
+                        "class_code": val.get("class_code", ""),
+                        "disabled": bool(val.get("disabled", False)),
+                        "must_change_pin": bool(val.get("must_change_pin", False))
                     })
             return result
     except Exception as e:
@@ -292,11 +300,12 @@ def main():
         token = mint_oauth_token(args.service_account)
         student_list = list_students(args.database_url, token)
         print(f"=== DANH SÁCH HỌC SINH TRÊN CƠ SỞ DỮ LIỆU ({len(student_list)} HỌC SINH) ===")
-        print(f"{'Mã HS':<12} | {'Họ và Tên':<25} | {'Khối':<5} | {'Lớp':<6}")
-        print("-" * 55)
+        print(f"{'Mã HS':<12} | {'Họ và Tên':<25} | {'Khối':<5} | {'Lớp':<6} | {'Trạng thái'}")
+        print("-" * 70)
         for s in student_list:
-            print(f"{s['student_id']:<12} | {s['name']:<25} | {str(s['grade']):<5} | {s['class_code']:<6}")
-        print("-" * 55)
+            status_str = "Bị khóa" if s.get("disabled") else "Hoạt động"
+            print(f"{s['student_id']:<12} | {s['name']:<25} | {str(s['grade']):<5} | {s['class_code']:<6} | {status_str}")
+        print("-" * 70)
 
 if __name__ == "__main__":
     main()

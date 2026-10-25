@@ -19,10 +19,12 @@
         "C": "Vỏ kim loại bảo vệ",
         "D": "Dây nguồn cung cấp điện"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Bộ vi xử lí (CPU - Central Processing Unit) là thành phần cốt lõi thực hiện các phép tính logic và điều khiển toàn bộ hoạt động của thiết bị số.",
       "goi_y_khi_sai": "Em hãy nhớ lại: Thành phần nào được ví như 'bộ não' của máy tính và thiết bị thông minh? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Bộ vi xử lí", "CPU", "đáp án A"]
+      "forbidden_keywords": [
+        "Bộ vi xử lí",
+        "CPU",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b1_q2",
@@ -36,10 +38,11 @@
         "C": "Robot hút bụi tự động định vị trong nhà",
         "D": "Điện thoại thông minh (Smartphone)"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Bảng đen viết phấn là công cụ vật lý truyền thống, không chứa mạch điện tử hay bộ vi xử lí thông tin.",
       "goi_y_khi_sai": "Thiết bị số cần có vi mạch xử lý thông tin điện tử. Trong 4 phương án, vật dụng nào là đồ dùng học tập cơ học truyền thống? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Bảng đen", "đáp án B"]
+      "forbidden_keywords": [
+        "Bảng đen",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b1_q3",
@@ -53,10 +56,11 @@
         "C": "Mỹ thuật và hội họa",
         "D": "Thời trang may mặc"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Hệ thống ETC tự động nhận diện thẻ định danh phương tiện và trừ tiền qua tài khoản, giúp xe lưu thông liên tục trên đường cao tốc.",
       "goi_y_khi_sai": "Trạm thu phí đường bộ phục vụ việc quản lý các phương tiện xe cộ qua lại, vậy nó thuộc lĩnh vực nào trong đời sống? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Giao thông vận tải", "đáp án A"]
+      "forbidden_keywords": [
+        "Giao thông vận tải",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b1_q4",
@@ -70,10 +74,12 @@
         "C": "Khả năng có cảm xúc, tình cảm và lòng trắc ẩn riêng",
         "D": "Khả năng làm việc liên tục 24/7 không biết mệt mỏi"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Rất tốt! Máy tính là cỗ máy điện tử tính toán logic theo chỉ lệnh, không có cảm xúc, tình cảm hay tâm tư như con người.",
       "goi_y_khi_sai": "Hãy tìm đặc điểm thuộc về tâm lý, tình cảm đặc trưng duy nhất của con người mà máy móc không thể có trong Mục 2 nhé!",
-      "forbidden_keywords": ["cảm xúc", "tình cảm", "đáp án C"]
+      "forbidden_keywords": [
+        "cảm xúc",
+        "tình cảm",
+        "đáp án C"
+      ]
     }
   ]
 }

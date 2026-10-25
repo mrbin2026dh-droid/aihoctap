@@ -19,10 +19,12 @@
         "C": "Xóa toàn bộ dữ liệu trong máy vi tính",
         "D": "Tự động tắt nguồn máy tính khi nhập điểm kém"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Data Validation đóng vai trò như một người gác cổng, chỉ cho phép dữ liệu hợp lệ đi qua và từ chối các giá trị sai quy tắc.",
       "goi_y_khi_sai": "Data Validation giúp người nhập liệu tránh được sai sót gì khi gõ số liệu vào ô tính? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Kiểm soát và giới hạn", "ngăn chặn", "đáp án B"]
+      "forbidden_keywords": [
+        "Kiểm soát và giới hạn",
+        "ngăn chặn",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b9_q2",
@@ -36,10 +38,12 @@
         "C": "Kiểu ngày tháng năm bất kỳ",
         "D": "Không cần thiết lập gì cả"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Điểm số thường có số lẻ (như 7.5 hay 8.25), do đó cần chọn kiểu số thực (Decimal) trong khoảng (between) từ 0 đến 10.",
       "goi_y_khi_sai": "Điểm số học sinh có chứa phần thập phân không? Ta chọn kiểu Whole number (nguyên) hay Decimal (thực)? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Decimal", "between từ 0 đến 10", "đáp án B"]
+      "forbidden_keywords": [
+        "Decimal",
+        "between từ 0 đến 10",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b9_q3",
@@ -53,10 +57,11 @@
         "C": "3 đối số: (điều_kiện_logic, giá_trị_nếu_đúng, giá_trị_nếu_sai)",
         "D": "10 đối số bắt buộc"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Chính xác! Hàm IF có đúng 3 đối số: thứ nhất là điều kiện kiểm tra, thứ hai là kết quả trả về khi điều kiện đúng, thứ ba là kết quả trả về khi điều kiện sai.",
       "goi_y_khi_sai": "Cú pháp =IF(..., ..., ...) có mấy vị trí ngăn cách nhau bởi dấu phẩy? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["3 đối số", "đáp án C"]
+      "forbidden_keywords": [
+        "3 đối số",
+        "đáp án C"
+      ]
     },
     {
       "id": "tin9_b9_q4",
@@ -70,10 +75,11 @@
         "C": "Báo lỗi #VALUE!",
         "D": "Ô D2 hoàn toàn để trống"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Do giá trị 7 lớn hơn hoặc bằng 5 là điều kiện ĐÚNG (TRUE), nên hàm IF trả về đối số thứ hai là chuỗi chữ \"Đạt\".",
       "goi_y_khi_sai": "Số 7 có lớn hơn hoặc bằng 5 không? Khi điều kiện đúng thì hàm IF chọn giá trị ở vị trí thứ hai hay thứ ba? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["Đạt", "đáp án B"]
+      "forbidden_keywords": [
+        "Đạt",
+        "đáp án B"
+      ]
     }
   ]
 }

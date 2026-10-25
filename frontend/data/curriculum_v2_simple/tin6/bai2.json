@@ -18,10 +18,11 @@
         "C": "Xử lí thông tin",
         "D": "Truyền thông tin"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Tai là giác quan tiếp nhận âm thanh từ môi trường bên ngoài vào cơ thể, đó chính là hoạt động Thu nhận thông tin.",
       "goi_y_khi_sai": "Em hãy nhớ lại: Mắt nhìn, tai nghe, mũi ngửi để đón nhận dữ liệu từ thế giới bên ngoài là hoạt động nào trong 4 bước? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Thu nhận", "đáp án A"]
+      "forbidden_keywords": [
+        "Thu nhận",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin6_b2_q2",
@@ -35,10 +36,11 @@
         "C": "Bộ não suy nghĩ và tính nhẩm phép tính 25 + 17 = 42 trong đầu",
         "D": "Dùng bút viết kết quả 42 vào bài thi để nộp cho thầy cô"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Rất chuẩn! Suy nghĩ, tính nhẩm trong đầu là bộ não đang thực hiện biến đổi dữ liệu thành kết quả mới, đó chính là hoạt động Xử lí thông tin.",
       "goi_y_khi_sai": "Xử lí thông tin là hoạt động mà bộ não suy nghĩ, tính toán hoặc so sánh để tìm ra kết luận mới. Phương án nào mô tả bộ não đang suy nghĩ tính nhẩm?",
-      "forbidden_keywords": ["tính nhẩm", "đáp án C"]
+      "forbidden_keywords": [
+        "tính nhẩm",
+        "đáp án C"
+      ]
     },
     {
       "id": "tin6_b2_q3",
@@ -52,10 +54,12 @@
         "C": "Màn hình hiển thị",
         "D": "Loa và tai nghe"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất tốt! Bộ vi xử lí CPU (Central Processing Unit) là trung tâm điều khiển và tính toán của máy tính, tương đương với bộ não của con người.",
       "goi_y_khi_sai": "Hãy tìm thành phần được ví như 'bộ não của máy tính', có nhiệm vụ điều khiển và tính toán dữ liệu trong Mục 2 nhé!",
-      "forbidden_keywords": ["CPU", "Bộ vi xử lí", "đáp án B"]
+      "forbidden_keywords": [
+        "CPU",
+        "Bộ vi xử lí",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin6_b2_q4",
@@ -69,10 +73,11 @@
         "C": "Máy tính có thể tính toán hàng triệu phép tính mỗi giây với độ chính xác cao và không bị mệt mỏi",
         "D": "Máy tính có khả năng tự sáng tác nghệ thuật mà không cần học hỏi"
       },
-      "dap_an_dung": "C",
-      "giai_thich_su_pham": "Chính xác! Tốc độ xử lí siêu nhanh, độ chính xác tuyệt đối và khả năng làm việc liên tục không mệt mỏi là ưu thế vượt trội nhất của máy tính.",
       "goi_y_khi_sai": "Xem lại 4 ưu điểm vượt trội của máy tính ở Mục 2: Máy tính có tốc độ và độ bền bỉ như thế nào so với con người?",
-      "forbidden_keywords": ["hàng triệu phép tính", "đáp án C"]
+      "forbidden_keywords": [
+        "hàng triệu phép tính",
+        "đáp án C"
+      ]
     }
   ]
 }

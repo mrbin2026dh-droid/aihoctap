@@ -1,0 +1,1070 @@
+{
+  "date": "2026-10-25",
+  "scope": "Static mockups only",
+  "engines": [
+    {
+      "name": "Chrome",
+      "version": "155.0.8059.85"
+    }
+  ],
+  "layouts": [
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 375,
+      "height": 667,
+      "scrollWidth": 375,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 412,
+      "height": 915,
+      "scrollWidth": 412,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 600,
+      "height": 960,
+      "scrollWidth": 600,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 820,
+      "height": 1180,
+      "scrollWidth": 820,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 2560,
+      "height": 1440,
+      "scrollWidth": 2560,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 844,
+      "height": 390,
+      "scrollWidth": 844,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 375,
+      "height": 667,
+      "scrollWidth": 375,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 412,
+      "height": 915,
+      "scrollWidth": 412,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 600,
+      "height": 960,
+      "scrollWidth": 600,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 820,
+      "height": 1180,
+      "scrollWidth": 820,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 2560,
+      "height": 1440,
+      "scrollWidth": 2560,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 844,
+      "height": 390,
+      "scrollWidth": 844,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 375,
+      "height": 667,
+      "scrollWidth": 375,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 412,
+      "height": 915,
+      "scrollWidth": 412,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 600,
+      "height": 960,
+      "scrollWidth": 600,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 820,
+      "height": 1180,
+      "scrollWidth": 820,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 2560,
+      "height": 1440,
+      "scrollWidth": 2560,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 844,
+      "height": 390,
+      "scrollWidth": 844,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 375,
+      "height": 667,
+      "scrollWidth": 375,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 412,
+      "height": 915,
+      "scrollWidth": 412,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 600,
+      "height": 960,
+      "scrollWidth": 600,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 820,
+      "height": 1180,
+      "scrollWidth": 820,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 2560,
+      "height": 1440,
+      "scrollWidth": 2560,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 844,
+      "height": 390,
+      "scrollWidth": 844,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 360,
+      "height": 640,
+      "scrollWidth": 360,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 375,
+      "height": 667,
+      "scrollWidth": 375,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 412,
+      "height": 915,
+      "scrollWidth": 412,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 430,
+      "height": 932,
+      "scrollWidth": 430,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 600,
+      "height": 960,
+      "scrollWidth": 600,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 820,
+      "height": 1180,
+      "scrollWidth": 820,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 1280,
+      "height": 800,
+      "scrollWidth": 1280,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 2560,
+      "height": 1440,
+      "scrollWidth": 2560,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 844,
+      "height": 390,
+      "scrollWidth": 844,
+      "minTarget": 50
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "width": 360,
+      "height": 320,
+      "scrollWidth": 360,
+      "minTarget": 50
+    }
+  ],
+  "stress": [
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 320,
+      "scrollWidth": 320,
+      "minTarget": 68.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 360,
+      "scrollWidth": 360,
+      "minTarget": 68.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 768,
+      "scrollWidth": 768,
+      "minTarget": 68.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "minTarget": 68.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 320,
+      "scrollWidth": 320,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 360,
+      "scrollWidth": 360,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 768,
+      "scrollWidth": 768,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 320,
+      "scrollWidth": 320,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 360,
+      "scrollWidth": 360,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 768,
+      "scrollWidth": 768,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 320,
+      "scrollWidth": 320,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 360,
+      "scrollWidth": 360,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 768,
+      "scrollWidth": 768,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "fontScale": 2,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "fontScale": 2,
+      "width": 320,
+      "scrollWidth": 320,
+      "minTarget": 73.59375
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "fontScale": 2,
+      "width": 360,
+      "scrollWidth": 360,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "fontScale": 2,
+      "width": 768,
+      "scrollWidth": 768,
+      "minTarget": 70.796875
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "fontScale": 2,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "minTarget": 70.796875
+    }
+  ],
+  "keyboard": [
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "tabStops": 5,
+      "focusVisible": true
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "tabStops": 8,
+      "focusVisible": true
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "tabStops": 3,
+      "focusVisible": true
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "tabStops": 7,
+      "focusVisible": true
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "tabStops": 7,
+      "focusVisible": true
+    }
+  ],
+  "contracts": [
+    {
+      "browser": "Chrome",
+      "file": "student-login.html",
+      "hash": "",
+      "ids": true,
+      "labels": true,
+      "attributes": true,
+      "toggleButtons": 1
+    },
+    {
+      "browser": "Chrome",
+      "file": "student-account.html",
+      "hash": "",
+      "ids": true,
+      "labels": true,
+      "attributes": true,
+      "toggleButtons": 3
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-login.html",
+      "hash": "",
+      "ids": true,
+      "labels": true,
+      "attributes": true,
+      "toggleButtons": 1
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "",
+      "ids": true,
+      "labels": true,
+      "attributes": true,
+      "toggleButtons": 3
+    },
+    {
+      "browser": "Chrome",
+      "file": "teacher-change-pin.html",
+      "hash": "#change-pin-section",
+      "ids": true,
+      "labels": true,
+      "attributes": true,
+      "toggleButtons": 3
+    }
+  ],
+  "screenshots": [
+    "review-student-login-360x640.png",
+    "review-student-login-1280x800.png",
+    "review-student-login-640x360.png",
+    "review-student-account-360x640.png",
+    "review-student-account-1280x800.png",
+    "review-teacher-login-360x640.png",
+    "review-teacher-login-1280x800.png",
+    "review-teacher-change-pin-360x640.png",
+    "review-teacher-change-pin-1280x800.png",
+    "review-teacher-change-pin-regular-360x640.png",
+    "review-teacher-change-pin-regular-1280x800.png"
+  ],
+  "notTested": [
+    "Physical iOS/Android devices",
+    "Safari/WebKit and Firefox",
+    "Screen-reader announcements",
+    "Backend/authentication",
+    "Full WCAG conformance or Lighthouse",
+    "Claude ACCEPT"
+  ],
+  "launchFailures": [
+    {
+      "name": "Edge",
+      "error": "browserType.launch: Target page, context or browser has been closed"
+    }
+  ]
+}

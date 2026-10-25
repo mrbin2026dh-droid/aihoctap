@@ -1,9 +1,13 @@
 // Student shell only: never intercept API requests, identity or teacher pages.
-const CACHE = 'aisgk-student-shell-4bd541a4c68fcf4248e3e141';
+const CACHE = 'aisgk-student-shell-95d8a72e04fb10e9ea3b03a5';
 const FILES = ['./', './index.html', './styles.css', './app.js', './api.js', './db.js', './dom.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'];
 const ALLOWED = new Set(FILES.map(path => new URL(path, self.registration.scope).href));
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
+  event.waitUntil(caches.open(CACHE).then(cache => Promise.all(FILES.map(async path => {
+    const response = await fetch(new Request(path, { cache: 'reload' }));
+    if (!response.ok) throw new Error(`Không nạp được ${path}: ${response.status}`);
+    await cache.put(new Request(path), response);
+  }))));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(Promise.all([
@@ -13,8 +17,17 @@ self.addEventListener('activate', event => {
 });
 self.addEventListener('message', event => {
   if (event.data?.type === 'ACTIVATE') self.skipWaiting();
+  if (event.data?.type === 'VERSION') event.source.postMessage({type: 'VERSION', value: CACHE.slice(-8)});
 });
 self.addEventListener('fetch', event => {
+  if (event.request.mode === 'navigate' && new URL(event.request.url).origin === self.location.origin) {
+    const url = new URL(event.request.url);
+    const scope = new URL(self.registration.scope);
+    if (url.pathname === scope.pathname || url.pathname === scope.pathname + 'index.html') {
+      event.respondWith(caches.open(CACHE).then(async c => (await c.match(new URL('./index.html', scope).href)) || fetch(event.request)));
+      return;
+    }
+  }
   if (event.request.method !== 'GET' || !ALLOWED.has(event.request.url)) return;
   event.respondWith(caches.open(CACHE).then(async cache => {
     const cached = await cache.match(event.request);

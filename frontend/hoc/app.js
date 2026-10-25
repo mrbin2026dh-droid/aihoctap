@@ -1,7 +1,7 @@
 // @ts-check
-import { api, ApiError, verifyPackage } from './api.js';
+import { api, ApiError, verifyPackage, isLocalhostBackend } from './api.js';
 import * as db from './db.js';
-import { el, button, notify, renderMarkdown } from './dom.js';
+import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox } from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
 /** @typedef {import('./contracts').Draft} Draft */
@@ -16,6 +16,8 @@ function form(id) { return /** @type {HTMLFormElement} */ (node(id)); }
 /** @type {import('./contracts').Catalog|null} */ let catalog = null;
 /** @type {Lesson|null} */ let active = null;
 /** @type {Draft|null} */ let draft = null;
+// @ts-ignore
+if (typeof window !== 'undefined') window.__testHook = { setDraft: (d) => { draft = d; } };
 let practice = false;
 let locked = false;
 let saveChain = Promise.resolve();
@@ -110,9 +112,19 @@ function identityUI() {
   node('account').hidden = !session;
   node('account').textContent = session ? session.identity.student_name || 'Tài khoản' : 'Tài khoản';
   node('logout').hidden = !session;
+  const loginSection = document.getElementById('login-section');
+  if (loginSection) loginSection.hidden = Boolean(session);
+  const accountSection = document.getElementById('account-section');
+  if (accountSection) accountSection.hidden = !session;
   node('login-form').hidden = Boolean(session);
   node('account-info').hidden = !session;
-  node('account-info').textContent = session ? `${session.identity.student_name} · ${session.identity.class_code}` : '';
+  node('account-info').textContent = session ? `${session.identity.student_name} · Lớp ${session.identity.class_code}` : '';
+  const changePinForm = node('student-change-pin-form');
+  if (changePinForm) changePinForm.hidden = !session;
+  const mustChangeNotice = node('account-must-change');
+  if (mustChangeNotice) mustChangeNotice.hidden = !(session && session.identity.must_change_pin);
+  const openSettingsBtn = document.getElementById('open-settings');
+  if (openSettingsBtn) openSettingsBtn.hidden = !session;
   if (session) /** @type {HTMLSelectElement} */ (node('grade')).value = String(session.identity.grade);
   /** @type {HTMLSelectElement} */ (node('grade')).disabled = Boolean(session);
   /** @type {HTMLButtonElement} */ (node('sync')).disabled = !session || !navigator.onLine;
@@ -121,6 +133,10 @@ function identityUI() {
 function show(name) {
   viewGeneration++;
   currentView = name;
+  if (studentSettingsActive) {
+    studentSettingsActive = false;
+    renderStudentSettings(false);
+  }
   for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'materials']) node(`${view}-view`).hidden = view !== name;
   const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name;
   for (const tab of document.querySelectorAll('button[data-tab]')) {
@@ -297,7 +313,7 @@ function renderQuestions() {
     if (question.hint) {
       const details = el('details'); details.append(el('summary', 'Xem gợi ý'), el('p', question.hint, 'hint')); fieldset.append(details);
     }
-    const tutorBtn = button('💡 Hỏi gợi ý AI', () => openTutor(question.id), 'question-tutor-btn');
+    const tutorBtn = button('Hỏi gợi ý AI', () => openTutor(question.id), 'question-tutor-btn');
     tutorBtn.dataset.questionId = question.id;
     fieldset.append(tutorBtn);
     questions.append(fieldset);
@@ -454,10 +470,36 @@ async function start() {
   if (!catalog && !navigator.onLine) {catalogUnavailable('Cần kết nối mạng để nhận danh mục lần đầu.'); notify('Thiết bị chưa có bài tải offline.', true);}
 }
 on('login', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal());
-on('account', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal());
+on('account', () => {
+  if (session) {
+    openStudentSettings();
+  } else {
+    /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal();
+  }
+});
 on('close-login', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).close());
+if (document.getElementById('close-account')) {
+  on('close-account', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).close());
+}
+document.addEventListener('click', e => {
+  const target = /** @type {HTMLElement|null} */ (e.target);
+  const b = target?.closest('[data-reveal]');
+  if (!b) return;
+  const targetId = b.getAttribute('data-reveal');
+  if (!targetId) return;
+  const input = /** @type {HTMLInputElement|null} */ (document.getElementById(targetId));
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  b.textContent = show ? 'Ẩn' : 'Hiện';
+  b.setAttribute('aria-pressed', String(show));
+});
 on('logout', async () => {
   viewGeneration++;
+  if (studentSettingsActive) {
+    studentSettingsActive = false;
+    renderStudentSettings(false);
+  }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   await db.remove('meta', 'session'); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
@@ -466,33 +508,119 @@ on('logout', async () => {
 });
 form('login-form').addEventListener('submit', async event => {
   viewGeneration++;
-  event.preventDefault(); node('login-error').textContent = '';
-  const submitButton = /** @type {HTMLButtonElement} */ (form('login-form').querySelector('button[type=submit]'));
-  submitButton.disabled = true;
-  try {
-    const guestLesson = !session ? active : null;
-    const guestAnswers = guestLesson ? Object.fromEntries(new FormData(form('question-form')).entries()) : null;
-    await saveDraft();
-    const loginData = new FormData(form('login-form'));
-    const code = String(loginData.get('code') || '').trim();
-    const pin = String(loginData.get('pin') || '').trim();
-    const response = await api('/login', {method:'POST', body:{student_id:code, pin}});
-    const identity = await api('/pwa/me', {token:response.token});
-    const next = {token:response.token, identity};
-    await db.put('meta', 'session', next); session = next;
-    draft = null; locked = false; identityUI(); renderCatalog();
-    if (active) {
-      const course = catalog?.courses.find(item => item.id === active?.course_id);
-      if (course && course.grade !== session.identity.grade) {active = null; draft = null; locked = false; show('catalog'); updateResume();}
-      else {
-        await openLesson(active);
-        if (guestLesson && guestAnswers) await adoptGuestAnswers(guestLesson, /** @type {Record<string,string>} */ (guestAnswers));
+  event.preventDefault();
+  node('login-error').textContent = '';
+  const loginForm = form('login-form');
+  const submitButton = /** @type {HTMLButtonElement} */ (loginForm.querySelector('button[type=submit]'));
+  const codeInput = /** @type {HTMLInputElement} */ (loginForm.querySelector('[name=code]'));
+  const pinInput = /** @type {HTMLInputElement} */ (loginForm.querySelector('[name=pin]'));
+
+  codeInput.addEventListener('input', () => setFieldError(codeInput, ''));
+  pinInput.addEventListener('input', () => setFieldError(pinInput, ''));
+
+  const code = codeInput.value.trim();
+  const pin = pinInput.value.trim();
+
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(code)) {
+    setFieldError(codeInput, 'Mã học sinh chỉ gồm chữ, số, - và _.');
+    codeInput.focus();
+    return;
+  }
+  if (pin.length < 6) {
+    setFieldError(pinInput, 'Mã PIN tối thiểu 6 ký tự.');
+    pinInput.focus();
+    return;
+  }
+
+  await withBusy(submitButton, 'Đang đăng nhập…', async () => {
+    try {
+      const guestLesson = !session ? active : null;
+      const guestAnswers = guestLesson ? Object.fromEntries(new FormData(form('question-form')).entries()) : null;
+      await saveDraft();
+      const response = isLocalhostBackend
+        ? await api('/student/lan-login', {method:'POST', body:{student_code:code}})
+        : await api('/login', {method:'POST', body:{student_id:code, pin}});
+      const identity = await api('/pwa/me', {token:response.token});
+      identity.must_change_pin = Boolean(response.must_change_pin);
+      const next = {token:response.token, identity};
+      await db.put('meta', 'session', next); session = next;
+      draft = null; locked = false; identityUI(); renderCatalog();
+      if (active) {
+        const course = catalog?.courses.find(item => item.id === active?.course_id);
+        if (course && course.grade !== session.identity.grade) {active = null; draft = null; locked = false; show('catalog'); updateResume();}
+        else {
+          await openLesson(active);
+          if (guestLesson && guestAnswers) await adoptGuestAnswers(guestLesson, /** @type {Record<string,string>} */ (guestAnswers));
+        }
       }
+      /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
+      notify('Đã đăng nhập. Nháp được lưu riêng cho em.'); await sync();
+    } catch (error) {
+      node('login-error').textContent = mapErrorMessage(error);
     }
-    /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
-    notify('Đã đăng nhập. Nháp được lưu riêng cho em.'); await sync();
-  } catch (error) { node('login-error').textContent = error instanceof Error ? error.message : 'Chưa đăng nhập được.'; }
-  finally { submitButton.disabled = false; }
+  });
+});
+form('student-change-pin-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const formEl = /** @type {HTMLFormElement} */ (event.target);
+  const statusNode = node('student-change-pin-status');
+  statusNode.textContent = '';
+  statusNode.className = 'notice status';
+
+  const oldPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=old_pin]'));
+  const newPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=new_pin]'));
+  const confirmPinInput = /** @type {HTMLInputElement} */ (formEl.querySelector('[name=confirm_pin]'));
+
+  oldPinInput.addEventListener('input', () => setFieldError(oldPinInput, ''));
+  newPinInput.addEventListener('input', () => setFieldError(newPinInput, ''));
+  confirmPinInput.addEventListener('input', () => setFieldError(confirmPinInput, ''));
+
+  const oldPin = oldPinInput.value.trim();
+  const newPin = newPinInput.value.trim();
+  const confirmPin = confirmPinInput.value.trim();
+
+  if (!oldPin) {
+    setFieldError(oldPinInput, 'Vui lòng nhập mã PIN hiện tại.');
+    oldPinInput.focus();
+    return;
+  }
+  if (newPin.length < 6) {
+    setFieldError(newPinInput, 'Mã PIN tối thiểu 6 ký tự.');
+    newPinInput.focus();
+    return;
+  }
+  if (newPin !== confirmPin) {
+    setFieldError(confirmPinInput, 'Mã PIN xác nhận không khớp.');
+    confirmPinInput.focus();
+    return;
+  }
+  if (newPin === oldPin) {
+    setFieldError(newPinInput, 'Mã PIN mới phải khác mã cũ.');
+    newPinInput.focus();
+    return;
+  }
+
+  const submitBtn = /** @type {HTMLButtonElement} */ (formEl.querySelector('button[type=submit]'));
+  await withBusy(submitBtn, 'Đang đổi mã PIN…', async () => {
+    try {
+      await api('/pwa/change-pin', {
+        method: 'POST',
+        body: { old_pin: oldPin, new_pin: newPin },
+        token: session?.token
+      });
+      statusNode.textContent = 'Đã đổi mã PIN.';
+      statusNode.className = 'notice success status';
+      formEl.reset();
+      if (session) {
+        session.identity.must_change_pin = false;
+        await db.put('meta', 'session', session);
+        node('account-must-change').hidden = true;
+      }
+    } catch (err) {
+      statusNode.textContent = mapErrorMessage(err);
+      statusNode.className = 'notice error status';
+    }
+  });
 });
 node('grade').addEventListener('change', () => {gradeChosen = true; selectedCourse = ''; renderCatalog();});
 node('search').addEventListener('input', renderCatalog);
@@ -634,21 +762,83 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) saveDraft().catch(report);
   else {refreshCatalog().catch(report); sync().catch(report);}
 });
+let updateRequested = false, hadController = Boolean(navigator.serviceWorker?.controller);
+const swVersion = () => (document.documentElement.dataset.build || '');
+/** @param {boolean} [manual] */
+async function checkForUpdate(manual = false) {
+  if (!registration || !navigator.onLine) {
+    if (manual) await confirmBox({ title: 'Không kiểm tra được', body: 'Cần kết nối mạng để kiểm tra cập nhật.', okText: 'Đã hiểu', kind: 'notice' });
+    return;
+  }
+  try {
+    await registration.update();
+  } catch {
+    if (manual) await confirmBox({ title: 'Chưa kiểm tra được', body: 'Thử lại sau.', okText: 'Đã hiểu', kind: 'notice' });
+    return;
+  }
+  const has = Boolean(registration.waiting || registration.installing);
+  if (manual && !has) await confirmBox({ title: 'Đã là bản mới nhất', body: `Phiên bản ${swVersion()}.`, okText: 'Đã hiểu', kind: 'notice' });
+}
+
 on('update-app', async () => {
-  await saveDraft();
-  if (draft && !locked && Object.keys(draft.answers).length) {notify('Hoàn thành bài đang làm trước khi cập nhật ứng dụng.'); return;}
-  registration?.waiting?.postMessage({type:'ACTIVATE'});
-});
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    // First install claims the page; updates reload only after explicit activation.
-    if (node('update-notice').hidden === false) location.reload();
+  const btn = /** @type {HTMLButtonElement} */ (node('update-app'));
+  await withBusy(btn, 'Đang cập nhật…', async () => {
+    await saveDraft();
+    if (draft && !locked && Object.keys(draft.answers).length) {
+      notify('Hoàn thành bài đang làm trước khi cập nhật ứng dụng.', true);
+      await confirmBox({
+        title: 'Chưa thể cập nhật',
+        body: 'Em hãy hoàn thành bài đang làm trước khi cập nhật ứng dụng.',
+        okText: 'Đã hiểu',
+        kind: 'notice'
+      });
+      return;
+    }
+    if (node('update-notice').dataset.reload) {
+      location.reload();
+      return;
+    }
+    if (!registration?.waiting) {
+      notify('Đang kiểm tra bản cập nhật…');
+      await checkForUpdate();
+      return;
+    }
+    updateRequested = true;
+    registration.waiting.postMessage({ type: 'ACTIVATE' });
   });
-  navigator.serviceWorker.register('./sw.js', {scope:'./'}).then(result => {
+});
+
+if ('serviceWorker' in navigator) {
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) { hadController = true; return; }     // lần cài đầu: không tải lại
+    if (reloading) return;
+    if (updateRequested) { reloading = true; location.reload(); return; }
+    node('update-text').textContent = 'Ứng dụng vừa cập nhật ở cửa sổ khác. Tải lại để dùng bản mới.';
+    node('update-notice').hidden = false;
+    node('update-notice').dataset.reload = '1';   // P5
+  });
+  navigator.serviceWorker.addEventListener('message', ev => {
+    if (ev.data?.type === 'VERSION') {
+      document.documentElement.dataset.build = ev.data.value;
+      const vSpan = document.getElementById('app-version');
+      if (vSpan) vSpan.textContent = ev.data.value;
+    }
+  });
+  navigator.serviceWorker.register('./sw.js', { scope: './' }).then(result => {
     registration = result;
     const check = () => { if (result.waiting && navigator.serviceWorker.controller) node('update-notice').hidden = false; };
-    check(); result.addEventListener('updatefound', () => result.installing?.addEventListener('statechange', check));
+    check();
+    result.addEventListener('updatefound', () => result.installing?.addEventListener('statechange', check));
+    navigator.serviceWorker.controller?.postMessage({ type: 'VERSION' });
+    setInterval(() => checkForUpdate(), 60 * 60 * 1000);                       // P4: mỗi giờ
+    window.addEventListener('online', () => checkForUpdate());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
   }).catch(report);
+}
+
+if (document.getElementById('check-update')) {
+  on('check-update', () => withBusy(/** @type {HTMLButtonElement} */ (node('check-update')), 'Đang kiểm tra…', () => checkForUpdate(true)));
 }
 /** @type {Event & {prompt:()=>Promise<void> }|null} */ let installPrompt = null;
 let installedThisSession = false;
@@ -662,7 +852,7 @@ function installState() {
 window.addEventListener('beforeinstallprompt', event => {event.preventDefault(); installPrompt = /** @type {typeof installPrompt} */ (event);});
 window.addEventListener('appinstalled', () => {installPrompt = null; installedThisSession = true; installState(); notify('Trình duyệt đã xác nhận cài ứng dụng. Mở từ biểu tượng SGK để dùng.');});
 on('install', async () => {
-  if (installPrompt) {const prompt = installPrompt; installPrompt = null; await prompt.prompt();}
+  if (installPrompt) {const pwaPrompt = installPrompt; installPrompt = null; await pwaPrompt.prompt();}
   else {installState(); /** @type {HTMLDialogElement} */ (node('install-help-dialog')).showModal();}
 });
 on('close-install', () => /** @type {HTMLDialogElement} */ (node('install-help-dialog')).close());
@@ -735,3 +925,178 @@ form('tutor-form').addEventListener('submit', async event => {
 });
 installState(); updateConnection();
 start().catch(error => {catalogUnavailable('Kiểm tra quyền lưu trữ của trình duyệt rồi thử lại.'); report(error);});
+
+
+// ==========================================
+// STUDENT ADAPTIVE SETTINGS MENU (AGENTS.md J & K)
+// ==========================================
+let studentSettingsActive = false;
+let studentActiveView = '';
+
+async function renderDownloadedLessonsForSettings() {
+  const container = document.getElementById('settings-offline-list');
+  if (!container) return;
+  container.replaceChildren();
+  const lessons = await db.allLessons();
+  if (!lessons.length) {
+    const emptyP = el('p', 'Chưa có bài tải ngoại tuyến.', 'muted');
+    container.append(emptyP);
+    return;
+  }
+  for (const lesson of lessons) {
+    const row = el('article', '', 'card');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.justifyContent = 'space-between';
+    row.style.gap = '12px';
+    const info = el('div');
+    info.append(el('h3', lesson.title), el('p', `${lesson.subject_name || 'Bài học'} · Đã lưu`, 'muted'));
+    const delBtn = button('Xóa bản tải', async () => {
+      if (!await confirmBox({
+        title: 'Xóa bản tải?',
+        body: `${lesson.title}. Em cần kết nối mạng để tải lại bài trên thiết bị này.`,
+        okText: 'Xóa bản tải',
+        danger: true
+      })) return;
+      await db.deleteLesson(lesson.id);
+      notify('Đã xóa bản tải.');
+      await renderDownloadedLessonsForSettings();
+      renderDownloads();
+    }, 'danger');
+    row.append(info, delBtn);
+    container.append(row);
+  }
+}
+
+function renderStudentSettings(focus = true) {
+  const settingsEl = document.getElementById('settings');
+  const openSettingsBtn = document.getElementById('open-settings');
+  const settingsLayout = document.getElementById('settings-layout');
+  if (!settingsEl) return;
+
+  settingsEl.hidden = !studentSettingsActive;
+  if (openSettingsBtn) openSettingsBtn.setAttribute('aria-expanded', String(studentSettingsActive));
+
+  if (!studentSettingsActive) {
+    if (focus) {
+      document.getElementById('open-settings')?.focus();
+    }
+    return;
+  }
+
+  const isWide = window.matchMedia('(min-width: 960px)').matches;
+  if (isWide && !studentActiveView) studentActiveView = 'account';
+  if (settingsLayout) {
+    if (isWide) {
+      settingsLayout.classList.add('has-detail');
+    } else {
+      settingsLayout.classList.toggle('has-detail', Boolean(studentActiveView));
+    }
+  }
+
+  const panels = ['account', 'offline', 'help'];
+  for (const p of panels) {
+    const elP = document.getElementById('panel-' + p);
+    if (elP) elP.hidden = p !== studentActiveView;
+  }
+
+  document.querySelectorAll('#settings .settings-menu .group-link').forEach(btn => {
+    const b = /** @type {HTMLButtonElement} */ (btn);
+    if (b.dataset.view === studentActiveView) {
+      b.setAttribute('aria-current', 'page');
+    } else {
+      b.removeAttribute('aria-current');
+    }
+  });
+
+  if (studentActiveView === 'offline') {
+    renderDownloadedLessonsForSettings();
+  }
+
+  if (focus) {
+    const heading = document.getElementById('heading-' + studentActiveView) || document.getElementById('settings-title');
+    heading?.focus();
+  }
+}
+
+function studentSettingsBack() {
+  const wide = window.matchMedia('(min-width: 960px)').matches;
+  if (!wide && studentActiveView) { studentActiveView = ''; renderStudentSettings(false); return true; }
+  return false;
+}
+
+function openStudentSettings() {
+  studentSettingsActive = true;
+  const wide = window.matchMedia('(min-width: 960px)').matches;
+  if (!wide) studentActiveView = '';
+  history.pushState({ studentSettings: 1 }, '');
+  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'materials-view'];
+  tabs.forEach(id => { const elem = document.getElementById(id); if (elem) elem.hidden = true; });
+  renderStudentSettings();
+  window.scrollTo(0, 0);
+}
+
+function closeStudentSettings() {
+  if (history.state?.studentSettings) {
+    history.back();
+  } else {
+    studentSettingsActive = false;
+    renderStudentSettings(false);
+    show(active ? 'lesson' : 'catalog');
+    document.getElementById('open-settings')?.focus();
+  }
+}
+
+window.addEventListener('popstate', () => {
+  if (!studentSettingsActive) return;
+  if (studentSettingsBack()) history.pushState({ studentSettings: 1 }, '');
+  else {
+    studentSettingsActive = false;
+    renderStudentSettings(false);
+    show(active ? 'lesson' : 'catalog');
+  }
+});
+
+if (document.getElementById('close-settings')) {
+  on('close-settings', closeStudentSettings);
+}
+
+document.getElementById('open-settings')?.addEventListener('click', () => {
+  if (session) openStudentSettings();
+  else /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal();
+});
+
+document.querySelectorAll('#settings .settings-menu .group-link').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = /** @type {HTMLElement} */ (btn).dataset.view;
+    if (!v) return;
+    const wide = window.matchMedia('(min-width: 960px)').matches;
+    if (!wide && !studentActiveView) {
+      history.pushState({ studentSettings: 1, studentView: v }, '');
+    }
+    studentActiveView = v;
+    renderStudentSettings();
+    window.scrollTo(0, 0);
+  });
+});
+
+document.querySelectorAll('#settings .settings-detail [data-back]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const old = studentActiveView;
+    const isWide = window.matchMedia('(min-width: 960px)').matches;
+    if (!isWide) {
+      studentActiveView = '';
+      renderStudentSettings(false);
+      const item = /** @type {HTMLElement|null} */ (document.querySelector(`#settings .settings-menu [data-view="${old}"]`));
+      if (item) item.focus();
+      else document.getElementById('settings-title')?.focus();
+    } else {
+      closeStudentSettings();
+    }
+  });
+});
+
+window.matchMedia('(min-width: 960px)').addEventListener('change', () => {
+  if (studentSettingsActive && !studentActiveView) studentActiveView = 'account';
+  renderStudentSettings(false);
+});

@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Giáo viên đăng nhập · sgk</title><link rel="stylesheet" href="login.css"></head>
+<body><span id="design-states" hidden=""></span><main class="shell"><header class="brand" aria-label="sgk — Góc học tập"><span class="wordmark">sgk</span><small>GÓC HỌC TẬP</small></header>
+<dialog open="" class="card" aria-labelledby="teacher-login-title"><section id="auth-section"><div class="intro"><h1 id="teacher-login-title">Vào trang quản lý</h1></div>
+<form id="teacher-login" method="dialog"><div class="field"><label for="teacher-pin">Mã PIN giáo viên</label><div class="pin-wrap"><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required=""><button class="reveal" type="button" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin giáo viên">Hiện</button></div></div>
+<p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p><button class="primary" type="submit">Đăng nhập giáo viên</button></form></section></dialog><details class="samples"><summary>Xem các trạng thái mẫu</summary><div class="sample-grid">
+<article><h3>Focus</h3><label for="sample-focus">Mã PIN giáo viên</label><input id="sample-focus" class="focus-example" type="password" autocomplete="off" placeholder="Nhập mã PIN"></article>
+<article class="is-loading" aria-busy="true"><h3>Đang gửi</h3><button class="primary" type="button" disabled="">Đang vào…</button></article>
+<article class="is-error"><h3>Sai mã</h3><p class="notice error" role="alert">Mã PIN giáo viên không chính xác.</p></article>
+<article class="is-error"><h3>Tạm khóa</h3><div class="notice error" role="alert"><p>Nhập sai 5 lần. Tài khoản bị tạm khóa 60 giây.</p><p>Thử lại sau 00:59</p></div><button class="primary" type="button" disabled="">Chờ để thử lại</button></article>
+<article class="is-error"><h3>Tài khoản bị khóa</h3><p class="notice error" role="alert">Tài khoản đang bị khóa. Hãy liên hệ người quản trị.</p></article>
+<article class="is-offline"><h3>Mất mạng</h3><p class="notice error" role="alert">Chưa có mạng. Thầy/cô cần mạng để đăng nhập.</p></article>
+</div></details>
+</main><script>
+document.addEventListener('click',e=>{const b=e.target.closest('[data-reveal]');if(!b)return;const i=document.getElementById(b.dataset.reveal);const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Ẩn':'Hiện';b.setAttribute('aria-pressed',String(show));});
+</script>
+
+</body></html>

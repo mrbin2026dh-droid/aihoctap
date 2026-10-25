@@ -1201,6 +1201,94 @@ export function getRtdbHeaders(accessToken) {
   return headers;
 }
 
+export const newSalt = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
+export const autoPin = () => String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
+
+export async function rtdb(env, signingKeys, method, path, body) {
+  if (!env.FIREBASE_DATABASE_URL) {
+    if (SecurityConfigContract.isMockModeAllowed(env)) {
+      return new Response(null, { status: 404 });
+    }
+    return new Response(JSON.stringify({ detail: 'Thiếu cấu hình FIREBASE_DATABASE_URL.' }), { status: 500 });
+  }
+  const tok = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+  const reqInit = {
+    method,
+    headers: getRtdbHeaders(tok)
+  };
+  if (body !== undefined && method !== 'GET' && method !== 'HEAD') {
+    reqInit.body = JSON.stringify(body);
+  }
+  const r = await fetch(`${env.FIREBASE_DATABASE_URL}/${path}.json`, reqInit);
+  return r;
+}
+
+export async function requireTeacher(request, env, signingKeys, { allowMustChange = false, corsHeaders = {} } = {}) {
+  const origin = request.headers.get('Origin') || '*';
+  const defaultCors = {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret, If-None-Match',
+    ...corsHeaders
+  };
+
+  const providedSecret = request.headers.get('X-Admin-Secret') || '';
+  const authHeader = request.headers.get('Authorization') || '';
+  
+  if (SecurityConfigContract.isMockModeAllowed(env) &&
+      TeacherAuthContract.isValidSecret(providedSecret, env.TEACHER_ADMIN_SECRET)) {
+    return { authorized: true, user: { role: 'teacher', admin: true }, isSecret: true };
+  }
+  
+  if (authHeader.startsWith('Bearer ') && signingKeys?.publicKey) {
+    const token = authHeader.slice(7).trim();
+    const verification = await verifyJwtToken(token, signingKeys.publicKey);
+    if (!verification.valid) {
+      return {
+        authorized: false,
+        response: new Response(JSON.stringify({ detail: 'Token xác thực không hợp lệ hoặc đã hết hạn.' }), {
+          status: 403,
+          headers: { ...defaultCors, 'Content-Type': 'application/json' }
+        })
+      };
+    }
+    if (!TeacherAuthContract.hasTeacherClaims(verification.payload)) {
+      return {
+        authorized: false,
+        response: new Response(JSON.stringify({ detail: 'Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ.' }), {
+          status: 403,
+          headers: { ...defaultCors, 'Content-Type': 'application/json' }
+        })
+      };
+    }
+    if (verification.payload.claims?.must_change && !allowMustChange) {
+      return {
+        authorized: false,
+        response: new Response(JSON.stringify({
+          error: 'TEACHER_PIN_CHANGE_REQUIRED',
+          detail: 'Hãy đổi mã PIN trước khi tiếp tục.'
+        }), {
+          status: 403,
+          headers: { ...defaultCors, 'Content-Type': 'application/json' }
+        })
+      };
+    }
+    return { authorized: true, user: verification.payload, token };
+  }
+
+  const isPwa = new URL(request.url).pathname.startsWith('/api/pwa/teacher/');
+  return {
+    authorized: false,
+    response: new Response(JSON.stringify({
+      detail: isPwa ? 'Thiếu token xác thực.' : 'Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ.'
+    }), {
+      status: isPwa ? 401 : 403,
+      headers: { ...defaultCors, 'Content-Type': 'application/json' }
+    })
+  };
+}
+
+
 /**
  * Socratic Pedagogy System Prompt for Worker AI Tutor (E2, F1, F3)
  */
@@ -1493,6 +1581,9 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // G2, H2, H3: Load Service Account signing keys
+    const signingKeys = await loadOrDeriveServiceAccountKeys(env);
+
     // Health check
     if (url.pathname === '/api/health') {
       return new Response(JSON.stringify({ status: 'healthy', serverless: true }), {
@@ -1550,6 +1641,26 @@ export default {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
+        // Grade RBAC: Cross-grade lesson check
+        const authHeader = request.headers.get('Authorization') || '';
+        if (authHeader.startsWith('Bearer ') && signingKeys?.publicKey) {
+          const token = authHeader.slice(7).trim();
+          const verification = await verifyJwtToken(token, signingKeys.publicKey);
+          if (verification.valid && !TeacherAuthContract.hasTeacherClaims(verification.payload)) {
+            const studentGrade = verification.payload.claims?.grade || verification.payload.grade;
+            const match = courseId.match(/(\d+)/);
+            const courseGrade = match ? parseInt(match[1], 10) : null;
+            if (studentGrade && courseGrade && Number(studentGrade) !== Number(courseGrade)) {
+              return new Response(JSON.stringify({
+                detail: 'Từ chối truy cập: Học sinh không được phép truy cập bài học của khối lớp khác.'
+              }), {
+                status: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          }
+        }
+
         if (env.FIREBASE_DATABASE_URL) {
           try {
             const pkgKey = encodeURIComponent(`${courseId}:${lessonId}`);
@@ -1593,8 +1704,7 @@ export default {
     const gateId = env.GATE_DO.idFromName('global_gate');
     const gateStub = env.GATE_DO.get(gateId);
 
-    // G2, H2, H3: Load Service Account signing keys
-    const signingKeys = await loadOrDeriveServiceAccountKeys(env);
+
 
     // 0c. Student LAN login: /api/student/lan-login (L1: Strict fail-closed 403 in production)
     if (url.pathname === '/api/student/lan-login' && request.method === 'POST') {
@@ -1878,6 +1988,15 @@ export default {
         });
       }
 
+      if (studentCred.disabled === true) {
+        return new Response(JSON.stringify({
+          detail: 'Tài khoản đang bị khóa. Hãy liên hệ giáo viên.'
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Reset lockout on successful login
       await gateStub.fetch('http://do/reset-lockout', {
         method: 'POST',
@@ -1913,7 +2032,8 @@ export default {
         name: studentCred.name,
         grade: studentCred.grade,
         class_code: studentCred.class_code,
-        status: 'authenticated'
+        status: 'authenticated',
+        must_change_pin: Boolean(studentCred.must_change_pin)
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1959,7 +2079,44 @@ export default {
         });
       }
 
-      if (!TeacherAuthContract.isValidSecret(pin, env.TEACHER_ADMIN_SECRET)) {
+      // Check RTDB teacher_auth/main
+      const rtdbTeacherRes = await rtdb(env, signingKeys, 'GET', 'teacher_auth/main');
+      if (!rtdbTeacherRes.ok && rtdbTeacherRes.status !== 404) {
+        return new Response(JSON.stringify({
+          detail: `Lỗi kết nối cơ sở dữ liệu Firebase (HTTP ${rtdbTeacherRes.status}). Vui lòng thử lại sau.`
+        }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      let isPinValid = false;
+      let mustChange = false;
+
+      if (env.FIREBASE_DATABASE_URL) {
+        if (rtdbTeacherRes.status === 404) {
+          if (TeacherAuthContract.isValidSecret(pin, env.TEACHER_ADMIN_SECRET)) {
+            isPinValid = true;
+            mustChange = true;
+          }
+        } else {
+          const rec = await rtdbTeacherRes.json();
+          if (rec && rec.salt && rec.pin_hash) {
+            const hashedInput = await hashPinPbkdf2(pin, rec.salt);
+            if (hashedInput === rec.pin_hash) {
+              isPinValid = true;
+              mustChange = Boolean(rec.must_change);
+            }
+          }
+        }
+      } else if (SecurityConfigContract.isMockModeAllowed(env)) {
+        if (TeacherAuthContract.isValidSecret(pin, env.TEACHER_ADMIN_SECRET)) {
+          isPinValid = true;
+          mustChange = false;
+        }
+      }
+
+      if (!isPinValid) {
         const failReq = new Request('http://do/record-failed-login', {
           method: 'POST',
           body: JSON.stringify({ pairKey: teacherPairKey, ipKey: teacherIpKey })
@@ -1994,7 +2151,8 @@ export default {
         {
           role: 'teacher',
           admin: true,
-          name: 'Giáo viên bộ môn'
+          name: 'Giáo viên bộ môn',
+          must_change: mustChange
         },
         signingKeys.privateKey,
         env.FIREBASE_CLIENT_EMAIL,
@@ -2003,7 +2161,149 @@ export default {
       return new Response(JSON.stringify({
         success: true,
         token: token,
-        role: 'teacher'
+        role: 'teacher',
+        must_change: mustChange
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Change PIN: /api/teacher/change-pin
+    if (url.pathname === '/api/teacher/change-pin' && request.method === 'POST') {
+      const auth = await requireTeacher(request, env, signingKeys, { allowMustChange: true, corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const teacherPairKey = `lock:teacher_admin:${clientIp}`;
+      const teacherIpKey = `ipflood:${clientIp}`;
+
+      // Check lockout
+      const checkTeacherReq = new Request(`http://do/get-lockout?key=${encodeURIComponent(teacherPairKey)}`);
+      const teacherRes = await gateStub.fetch(checkTeacherReq);
+      const teacherLock = await teacherRes.json();
+      if (teacherLock.locked) {
+        return new Response(JSON.stringify({
+          detail: `Tài khoản giáo viên bị tạm khóa ${teacherLock.retryAfter}s do nhập sai quá nhiều lần.`,
+          retryAfter: teacherLock.retryAfter
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Retry-After': String(teacherLock.retryAfter), 'Content-Type': 'application/json' },
+        });
+      }
+
+      const body = await request.json().catch(() => ({}));
+      const { old_pin, new_pin } = body;
+
+      if (!old_pin || typeof old_pin !== 'string' || !new_pin || typeof new_pin !== 'string') {
+        return new Response(JSON.stringify({ detail: 'Vui lòng cung cấp mã PIN hiện tại và mã PIN mới.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (new_pin.length < 8) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN mới phải có độ dài tối thiểu 8 ký tự.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (new_pin === old_pin) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN mới phải khác mã PIN hiện tại.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (/^(.)\1+$/.test(new_pin)) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN mới không được là chuỗi các ký tự trùng lặp.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Verify old PIN
+      const rtdbTeacherRes = await rtdb(env, signingKeys, 'GET', 'teacher_auth/main');
+      if (!rtdbTeacherRes.ok && rtdbTeacherRes.status !== 404) {
+        return new Response(JSON.stringify({ detail: `Lỗi kết nối cơ sở dữ liệu Firebase (HTTP ${rtdbTeacherRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      let isOldPinValid = false;
+      if (rtdbTeacherRes.status === 404) {
+        isOldPinValid = TeacherAuthContract.isValidSecret(old_pin, env.TEACHER_ADMIN_SECRET);
+      } else {
+        const rec = await rtdbTeacherRes.json();
+        if (rec && rec.salt && rec.pin_hash) {
+          const hashedInput = await hashPinPbkdf2(old_pin, rec.salt);
+          isOldPinValid = (hashedInput === rec.pin_hash);
+        }
+      }
+
+      if (!isOldPinValid) {
+        const failReq = new Request('http://do/record-failed-login', {
+          method: 'POST',
+          body: JSON.stringify({ pairKey: teacherPairKey, ipKey: teacherIpKey })
+        });
+        const failRes = await gateStub.fetch(failReq);
+        const failData = await failRes.json();
+        if (failData.locked) {
+          return new Response(JSON.stringify({
+            detail: `Nhập sai quá nhiều lần. Tài khoản giáo viên bị tạm khóa ${failData.retryAfter}s.`,
+            retryAfter: failData.retryAfter
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Retry-After': String(failData.retryAfter), 'Content-Type': 'application/json' }
+          });
+        }
+        return new Response(JSON.stringify({ detail: 'Mã PIN hiện tại không chính xác.' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Reset lockout
+      await gateStub.fetch('http://do/reset-lockout', {
+        method: 'POST',
+        body: JSON.stringify({ pairKey: teacherPairKey })
+      });
+
+      // Save new PIN hash to RTDB
+      const salt = newSalt();
+      const pinHash = await hashPinPbkdf2(new_pin, salt);
+      const putRes = await rtdb(env, signingKeys, 'PUT', 'teacher_auth/main', {
+        salt,
+        pin_hash: pinHash,
+        must_change: false,
+        updated_at: new Date().toISOString()
+      });
+
+      if (!putRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi ghi mã PIN mới vào Firebase RTDB (HTTP ${putRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Issue new token with must_change: false
+      const newToken = await createFirebaseCustomToken(
+        'teacher_admin',
+        {
+          role: 'teacher',
+          admin: true,
+          name: 'Giáo viên bộ môn',
+          must_change: false
+        },
+        signingKeys.privateKey,
+        env.FIREBASE_CLIENT_EMAIL,
+        env.FIREBASE_PRIVATE_KEY_ID
+      );
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        message: 'Đổi mã PIN giáo viên thành công.',
+        token: newToken
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -2018,21 +2318,8 @@ export default {
 
     // Teacher Results: /api/pwa/teacher/results
     if (url.pathname === '/api/pwa/teacher/results' && request.method === 'GET') {
-      const authHeader = request.headers.get('Authorization') || '';
-      if (!authHeader.startsWith('Bearer ')) {
-        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      const token = authHeader.slice(7).trim();
-      const authResult = await verifyJwtToken(token, signingKeys?.publicKey);
-      if (!authResult.valid || !authResult.payload.claims?.admin) {
-        return new Response(JSON.stringify({ detail: 'Yêu cầu quyền giáo viên.' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
       let results = [];
       if (env.FIREBASE_DATABASE_URL) {
         const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
@@ -2065,21 +2352,8 @@ export default {
 
     // Teacher Publish Lesson: /api/pwa/teacher/publish (Phase 1, B2, C1)
     if (url.pathname === '/api/pwa/teacher/publish' && request.method === 'POST') {
-      const authHeader = request.headers.get('Authorization') || '';
-      if (!authHeader.startsWith('Bearer ')) {
-        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      const token = authHeader.slice(7).trim();
-      const authResult = await verifyJwtToken(token, signingKeys?.publicKey);
-      if (!authResult.valid || !authResult.payload.claims?.admin) {
-        return new Response(JSON.stringify({ detail: 'Yêu cầu quyền giáo viên để xuất bản bài học.' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
 
       const body = await request.json().catch(() => ({}));
       const { subject_id, subject_name, grade, lesson_id, title, content_markdown, questions } = body;
@@ -2343,21 +2617,8 @@ export default {
 
     // Teacher Get Lesson For Editing: /api/pwa/teacher/lesson/{course_id}/{lesson_id}
     if (url.pathname.startsWith('/api/pwa/teacher/lesson/') && request.method === 'GET') {
-      const authHeader = request.headers.get('Authorization') || '';
-      if (!authHeader.startsWith('Bearer ')) {
-        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      const token = authHeader.slice(7).trim();
-      const authResult = await verifyJwtToken(token, signingKeys?.publicKey);
-      if (!authResult.valid || !authResult.payload.claims?.admin) {
-        return new Response(JSON.stringify({ detail: 'Yêu cầu quyền giáo viên.' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
 
       const parts = url.pathname.slice('/api/pwa/teacher/lesson/'.length).split('/');
       if (parts.length >= 2) {
@@ -2418,21 +2679,8 @@ export default {
 
     // Teacher Materials: POST /api/pwa/teacher/materials & GET /api/pwa/materials/{course_id}
     if (url.pathname === '/api/pwa/teacher/materials' && request.method === 'POST') {
-      const authHeader = request.headers.get('Authorization') || '';
-      if (!authHeader.startsWith('Bearer ')) {
-        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực.' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      const token = authHeader.slice(7).trim();
-      const authResult = await verifyJwtToken(token, signingKeys?.publicKey);
-      if (!authResult.valid || !authResult.payload.claims?.admin) {
-        return new Response(JSON.stringify({ detail: 'Yêu cầu quyền giáo viên.' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
       const { id, title, course_id, drive_url, url: legacyUrl, description } = await request.json().catch(() => ({}));
       if (!id || !IdValidationContract.isValidId(id)) {
         return new Response(JSON.stringify({ detail: 'Mã tài liệu không hợp lệ.' }), {
@@ -2698,28 +2946,8 @@ export default {
 
     // Gemini Key Pool Management (C5)
     if (url.pathname === '/api/teacher/gemini-keys') {
-      const providedSecret = request.headers.get('X-Admin-Secret') || '';
-      const authHeader = request.headers.get('Authorization') || '';
-      let isAuthorized = false;
-
-      if (TeacherAuthContract.isValidSecret(providedSecret, env.TEACHER_ADMIN_SECRET)) {
-        isAuthorized = true;
-      }
-      if (!isAuthorized && authHeader.startsWith('Bearer ') && signingKeys?.publicKey) {
-        const token = authHeader.slice(7).trim();
-        const verification = await verifyJwtToken(token, signingKeys.publicKey);
-        if (verification.valid && TeacherAuthContract.hasTeacherClaims(verification.payload)) {
-          isAuthorized = true;
-        }
-      }
-      if (!isAuthorized) {
-        return new Response(JSON.stringify({
-          detail: 'Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ.'
-        }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
 
       // O1: Fail-closed nếu máy chủ chưa cấu hình KEY_ENC_SECRET (>= 32 ký tự)
       if (!isKeyEncSecretValid(env.KEY_ENC_SECRET)) {
@@ -2799,30 +3027,483 @@ export default {
       });
     }
 
-    // Teacher AI Usage & Limits Management (A9 / B7)
-    if (url.pathname.startsWith('/api/teacher/ai-')) {
-      const providedSecret = request.headers.get('X-Admin-Secret') || '';
+    // Student Change PIN: POST /api/pwa/change-pin
+    if (url.pathname === '/api/pwa/change-pin' && request.method === 'POST') {
       const authHeader = request.headers.get('Authorization') || '';
-      let isAuthorized = false;
-
-      if (TeacherAuthContract.isValidSecret(providedSecret, env.TEACHER_ADMIN_SECRET)) {
-        isAuthorized = true;
-      }
-      if (!isAuthorized && authHeader.startsWith('Bearer ') && signingKeys?.publicKey) {
-        const token = authHeader.slice(7).trim();
-        const verification = await verifyJwtToken(token, signingKeys.publicKey);
-        if (verification.valid && TeacherAuthContract.hasTeacherClaims(verification.payload)) {
-          isAuthorized = true;
-        }
-      }
-      if (!isAuthorized) {
-        return new Response(JSON.stringify({
-          detail: 'Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ.'
-        }), {
-          status: 403,
+      if (!authHeader.startsWith('Bearer ') || !signingKeys?.publicKey) {
+        return new Response(JSON.stringify({ detail: 'Thiếu token xác thực học sinh.' }), {
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+      const token = authHeader.slice(7).trim();
+      const verification = await verifyJwtToken(token, signingKeys.publicKey);
+      if (!verification.valid) {
+        return new Response(JSON.stringify({ detail: 'Token không hợp lệ hoặc đã hết hạn.' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const studentId = verification.payload.uid || verification.payload.sub;
+      const studentPairKey = `lock:student:${studentId}`;
+
+      const checkLockReq = new Request(`http://do/get-lockout?key=${encodeURIComponent(studentPairKey)}`);
+      const lockRes = await gateStub.fetch(checkLockReq);
+      const lockData = await lockRes.json();
+      if (lockData.locked) {
+        return new Response(JSON.stringify({
+          detail: `Tài khoản tạm thời bị khóa do nhập sai quá nhiều lần. Vui lòng thử lại sau ${lockData.retryAfter}s.`,
+          retryAfter: lockData.retryAfter
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Retry-After': String(lockData.retryAfter), 'Content-Type': 'application/json' }
+        });
+      }
+
+      const body = await request.json().catch(() => ({}));
+      const { old_pin, new_pin } = body;
+
+      if (!old_pin || typeof old_pin !== 'string' || !new_pin || typeof new_pin !== 'string') {
+        return new Response(JSON.stringify({ detail: 'Vui lòng cung cấp mã PIN cũ và mã PIN mới.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (new_pin.length < 6) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN mới phải có độ dài tối thiểu 6 ký tự.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (new_pin === old_pin) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN mới phải khác mã PIN cũ.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (/^(.)\1+$/.test(new_pin)) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN mới không được là chuỗi các ký tự trùng lặp.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const studRes = await rtdb(env, signingKeys, 'GET', `students_auth/${studentId}`);
+      if (studRes.status === 404) {
+        return new Response(JSON.stringify({ detail: 'Không tìm thấy tài khoản học sinh.' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (!studRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi kết nối Firebase RTDB (HTTP ${studRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const stud = await studRes.json();
+      const oldHash = await hashPinPbkdf2(old_pin, stud.salt);
+      if (oldHash !== stud.pin_hash) {
+        const failReq = new Request('http://do/record-failed-login', {
+          method: 'POST',
+          body: JSON.stringify({ pairKey: studentPairKey, ipKey: `ipflood:${clientIp}` })
+        });
+        const failRes = await gateStub.fetch(failReq);
+        const failData = await failRes.json();
+        if (failData.locked) {
+          return new Response(JSON.stringify({
+            detail: `Nhập sai 5 lần. Tài khoản bị tạm khóa ${failData.retryAfter}s.`,
+            retryAfter: failData.retryAfter
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Retry-After': String(failData.retryAfter), 'Content-Type': 'application/json' }
+          });
+        }
+        return new Response(JSON.stringify({ detail: 'Mã PIN hiện tại không chính xác.' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      await gateStub.fetch('http://do/reset-lockout', {
+        method: 'POST',
+        body: JSON.stringify({ pairKey: studentPairKey })
+      });
+
+      const salt = newSalt();
+      const pinHash = await hashPinPbkdf2(new_pin, salt);
+      const patchRes = await rtdb(env, signingKeys, 'PATCH', `students_auth/${studentId}`, {
+        salt,
+        pin_hash: pinHash,
+        must_change_pin: false
+      });
+      if (!patchRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi lưu mã PIN mới vào RTDB (HTTP ${patchRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        message: 'Đổi mã PIN thành công.'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Student Management: GET /api/teacher/students
+    if (url.pathname === '/api/teacher/students' && request.method === 'GET') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const r = await rtdb(env, signingKeys, 'GET', 'students_auth');
+      if (r.status === 404) {
+        return new Response(JSON.stringify([]), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (!r.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi đọc danh sách học sinh từ Firebase RTDB (HTTP ${r.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const data = (await r.json()) || {};
+      const students = Object.entries(data).map(([id, s]) => ({
+        id,
+        name: s?.name || '',
+        grade: Number(s?.grade) || 6,
+        class_code: s?.class_code || '',
+        disabled: Boolean(s?.disabled),
+        must_change_pin: Boolean(s?.must_change_pin),
+        created_at: s?.created_at || null
+      }));
+      students.sort((a, b) => a.class_code.localeCompare(b.class_code) || a.name.localeCompare(b.name));
+      return new Response(JSON.stringify(students), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Student Management: POST /api/teacher/students
+    if (url.pathname === '/api/teacher/students' && request.method === 'POST') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const body = await request.json().catch(() => ({}));
+      const { name, grade, class_code, pin } = body;
+
+      if (!name || typeof name !== 'string' || !name.trim() || name.trim().length > 60) {
+        return new Response(JSON.stringify({ detail: 'Họ và tên học sinh phải từ 1 đến 60 ký tự.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const gradeNum = Number(grade);
+      if (!Number.isInteger(gradeNum) || gradeNum < 6 || gradeNum > 12) {
+        return new Response(JSON.stringify({ detail: 'Khối lớp không hợp lệ (phải từ 6 đến 12).' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (!class_code || typeof class_code !== 'string' || !/^[A-Za-z0-9_-]{1,10}$/.test(class_code.trim())) {
+        return new Response(JSON.stringify({ detail: 'Mã lớp không hợp lệ (1-10 ký tự chữ, số hoặc gạch nối).' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      let pinToUse = '';
+      if (pin !== undefined && pin !== null && String(pin).trim() !== '') {
+        const pinStr = String(pin).trim();
+        if (pinStr.length < 6) {
+          return new Response(JSON.stringify({ detail: 'Mã PIN học sinh phải có độ dài tối thiểu 6 ký tự.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        pinToUse = pinStr;
+      } else {
+        pinToUse = autoPin();
+      }
+
+      let studentId = '';
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const rand = [...crypto.getRandomValues(new Uint8Array(4))].map(b => b.toString(36)).join('').slice(0, 6).toLowerCase();
+        const candidateId = `hs${rand}`;
+        const checkRes = await rtdb(env, signingKeys, 'GET', `students_auth/${candidateId}`);
+        if (checkRes.status === 404) {
+          studentId = candidateId;
+          break;
+        }
+      }
+      if (!studentId) {
+        studentId = `hs${Date.now().toString(36).slice(-6)}`;
+      }
+
+      const salt = newSalt();
+      const pinHash = await hashPinPbkdf2(pinToUse, salt);
+      const studentRecord = {
+        name: name.trim(),
+        grade: gradeNum,
+        class_code: class_code.trim().toUpperCase(),
+        salt,
+        pin_hash: pinHash,
+        disabled: false,
+        must_change_pin: true,
+        created_at: new Date().toISOString()
+      };
+
+      const putRes = await rtdb(env, signingKeys, 'PUT', `students_auth/${studentId}`, studentRecord);
+      if (!putRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi ghi học sinh vào Firebase RTDB (HTTP ${putRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        id: studentId,
+        name: studentRecord.name,
+        grade: studentRecord.grade,
+        class_code: studentRecord.class_code,
+        pin: pinToUse
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Student Management: POST /api/teacher/students/{id}/reset-pin
+    if (url.pathname.startsWith('/api/teacher/students/') && url.pathname.endsWith('/reset-pin') && request.method === 'POST') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const studentId = url.pathname.slice('/api/teacher/students/'.length, -'/reset-pin'.length);
+      if (!IdValidationContract.isValidStudentId(studentId)) {
+        return new Response(JSON.stringify({ detail: 'Mã học sinh không hợp lệ.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const checkRes = await rtdb(env, signingKeys, 'GET', `students_auth/${studentId}`);
+      if (checkRes.status === 404) {
+        return new Response(JSON.stringify({ error: 'STUDENT_NOT_FOUND', detail: 'Không tìm thấy học sinh.' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (!checkRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi đọc Firebase RTDB (HTTP ${checkRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const body = await request.json().catch(() => ({}));
+      let pinToUse = '';
+      if (body.pin !== undefined && body.pin !== null && String(body.pin).trim() !== '') {
+        const pinStr = String(body.pin).trim();
+        if (pinStr.length < 6) {
+          return new Response(JSON.stringify({ detail: 'Mã PIN học sinh phải có độ dài tối thiểu 6 ký tự.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        pinToUse = pinStr;
+      } else {
+        pinToUse = autoPin();
+      }
+
+      const salt = newSalt();
+      const pinHash = await hashPinPbkdf2(pinToUse, salt);
+      const patchRes = await rtdb(env, signingKeys, 'PATCH', `students_auth/${studentId}`, {
+        salt,
+        pin_hash: pinHash,
+        must_change_pin: true
+      });
+      if (!patchRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi ghi mã PIN mới vào RTDB (HTTP ${patchRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      await gateStub.fetch('http://do/reset-lockout', {
+        method: 'POST',
+        body: JSON.stringify({ pairKey: `lock:student:${studentId}` })
+      });
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        id: studentId,
+        pin: pinToUse
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Student Management: POST /api/teacher/students/{id}/lock
+    if (url.pathname.startsWith('/api/teacher/students/') && url.pathname.endsWith('/lock') && request.method === 'POST') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const studentId = url.pathname.slice('/api/teacher/students/'.length, -'/lock'.length);
+      if (!IdValidationContract.isValidStudentId(studentId)) {
+        return new Response(JSON.stringify({ detail: 'Mã học sinh không hợp lệ.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const checkRes = await rtdb(env, signingKeys, 'GET', `students_auth/${studentId}`);
+      if (checkRes.status === 404) {
+        return new Response(JSON.stringify({ error: 'STUDENT_NOT_FOUND', detail: 'Không tìm thấy học sinh.' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (!checkRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi đọc Firebase RTDB (HTTP ${checkRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const body = await request.json().catch(() => ({}));
+      const locked = Boolean(body.locked);
+      const patchRes = await rtdb(env, signingKeys, 'PATCH', `students_auth/${studentId}`, { disabled: locked });
+      if (!patchRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi cập nhật trạng thái khóa RTDB (HTTP ${patchRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        id: studentId,
+        disabled: locked
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Student Management: PATCH /api/teacher/students/{id}
+    if (url.pathname.startsWith('/api/teacher/students/') && request.method === 'PATCH') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const studentId = url.pathname.slice('/api/teacher/students/'.length);
+      if (!IdValidationContract.isValidStudentId(studentId)) {
+        return new Response(JSON.stringify({ detail: 'Mã học sinh không hợp lệ.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const checkRes = await rtdb(env, signingKeys, 'GET', `students_auth/${studentId}`);
+      if (checkRes.status === 404) {
+        return new Response(JSON.stringify({ error: 'STUDENT_NOT_FOUND', detail: 'Không tìm thấy học sinh.' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (!checkRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi đọc Firebase RTDB (HTTP ${checkRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const body = await request.json().catch(() => ({}));
+      const patchData = {};
+      if (body.name !== undefined) {
+        const trimmed = String(body.name).trim();
+        if (!trimmed || trimmed.length > 60) {
+          return new Response(JSON.stringify({ detail: 'Họ và tên học sinh phải từ 1 đến 60 ký tự.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        patchData.name = trimmed;
+      }
+      if (body.grade !== undefined) {
+        const gradeNum = Number(body.grade);
+        if (!Number.isInteger(gradeNum) || gradeNum < 6 || gradeNum > 12) {
+          return new Response(JSON.stringify({ detail: 'Khối lớp không hợp lệ (6-12).' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        patchData.grade = gradeNum;
+      }
+      if (body.class_code !== undefined) {
+        const trimmed = String(body.class_code).trim().toUpperCase();
+        if (!/^[A-Za-z0-9_-]{1,10}$/.test(trimmed)) {
+          return new Response(JSON.stringify({ detail: 'Mã lớp không hợp lệ (1-10 ký tự).' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        patchData.class_code = trimmed;
+      }
+
+      const patchRes = await rtdb(env, signingKeys, 'PATCH', `students_auth/${studentId}`, patchData);
+      if (!patchRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi cập nhật Firebase RTDB (HTTP ${patchRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        id: studentId,
+        ...patchData
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher Student Management: DELETE /api/teacher/students/{id}
+    if (url.pathname.startsWith('/api/teacher/students/') && request.method === 'DELETE') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+
+      const studentId = url.pathname.slice('/api/teacher/students/'.length);
+      if (!IdValidationContract.isValidStudentId(studentId)) {
+        return new Response(JSON.stringify({ detail: 'Mã học sinh không hợp lệ.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const delRes = await rtdb(env, signingKeys, 'DELETE', `students_auth/${studentId}`);
+      if (!delRes.ok) {
+        return new Response(JSON.stringify({ detail: `Lỗi xóa học sinh khỏi RTDB (HTTP ${delRes.status}).` }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        status: 'success',
+        message: 'Đã xóa tài khoản học sinh.'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Teacher AI Usage & Limits Management (A9 / B7)
+    if (url.pathname.startsWith('/api/teacher/ai-')) {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
 
       // GET /api/teacher/ai-settings
       if (url.pathname === '/api/teacher/ai-settings' && request.method === 'GET') {
@@ -2950,33 +3631,8 @@ export default {
 
     // 2. Teacher Unlock Endpoint (G1, G4, H1)
     if (url.pathname === '/api/teacher/unlock' && request.method === 'POST') {
-      const providedSecret = request.headers.get('X-Admin-Secret') || '';
-      const authHeader = request.headers.get('Authorization') || '';
-      let isAuthorized = false;
-
-      // Check Condition A: Secret matches configured env.TEACHER_ADMIN_SECRET
-      if (TeacherAuthContract.isValidSecret(providedSecret, env.TEACHER_ADMIN_SECRET)) {
-        isAuthorized = true;
-      }
-
-      // Check Condition B: Valid Teacher JWT signed by Service Account
-      if (!isAuthorized && authHeader.startsWith('Bearer ') && signingKeys?.publicKey) {
-        const token = authHeader.slice(7).trim();
-        const verification = await verifyJwtToken(token, signingKeys.publicKey);
-        if (verification.valid && TeacherAuthContract.hasTeacherClaims(verification.payload)) {
-          isAuthorized = true;
-        }
-      }
-
-      // Fail-closed (G1): No hardcoded strings, fake headers rejected with 403
-      if (!isAuthorized) {
-        return new Response(JSON.stringify({
-          detail: 'Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ hoặc Teacher Admin Secret hợp lệ.'
-        }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
 
       const { student_id } = await request.json().catch(() => ({}));
 

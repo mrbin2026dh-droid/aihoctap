@@ -20,8 +20,6 @@
         "C": "Cảm tính nhất thời",
         "D": "Tin đồn không rõ nguồn gốc"
       },
-      "dap_an_dung": "A",
-      "giai_thich": "Thông tin là cơ sở khoa học để chúng ta phân tích tình huống, nhận diện thuận lợi - khó khăn và đưa ra quyết định chính xác.",
       "muc_sgk": "Mục 1: Vai trò của thông tin"
     },
     {
@@ -33,8 +31,6 @@
         "C": "Tính thẩm mỹ",
         "D": "Tính dung lượng"
       },
-      "dap_an_dung": "A",
-      "giai_thich": "Số liệu từ 3 năm trước là dữ liệu cũ, không phản ánh thực tế tuyển sinh của năm học hiện tại, vi phạm Tính mới (cập nhật).",
       "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin"
     },
     {
@@ -46,8 +42,6 @@
         "C": "Màn hình hiển thị",
         "D": "Bộ nguồn máy tính"
       },
-      "dap_an_dung": "A",
-      "giai_thich": "Bộ vi xử lý (CPU) là trung tâm điều khiển, tiếp nhận và xử lý mọi phép toán và lệnh điều hành của thiết bị số.",
       "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí"
     },
     {
@@ -59,8 +53,6 @@
         "C": "Khả năng thấu cảm và rung động cảm xúc nghệ thuật",
         "D": "Khả năng làm việc liên tục không mệt mỏi"
       },
-      "dap_an_dung": "C",
-      "giai_thich": "Máy tính xử lý dữ liệu theo thuật toán logic, không có cảm xúc, tình cảm hay sự rung động tinh tế như con người.",
       "muc_sgk": "Mục 2: Ưu thế của máy tính"
     },
     {
@@ -72,8 +64,6 @@
         "C": "Bình luận trên diễn đàn trò chuyện tự do",
         "D": "Tin nhắn truyền miệng giữa bạn bè"
       },
-      "dap_an_dung": "A",
-      "giai_thich": "Cổng thông tin chính thức của cơ quan quản lý nhà nước (Sở GD&ĐT) là nguồn thông tin chính thống, có tính pháp lý và độ chính xác tuyệt đối.",
       "muc_sgk": "Mục 1: Vai trò của thông tin"
     }
   ]

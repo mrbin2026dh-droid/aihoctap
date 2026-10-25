@@ -22,8 +22,6 @@
             "C": "Cảm tính nhất thời",
             "D": "Tin đồn không rõ nguồn gốc"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Thông tin là cơ sở khoa học để chúng ta phân tích tình huống, nhận diện thuận lợi - khó khăn và đưa ra quyết định chính xác.",
           "muc_sgk": "Mục 1: Vai trò của thông tin"
         },
         {
@@ -35,8 +33,6 @@
             "C": "Tính thẩm mỹ",
             "D": "Tính dung lượng"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Số liệu từ 3 năm trước là dữ liệu cũ, không phản ánh thực tế tuyển sinh của năm học hiện tại, vi phạm Tính mới (cập nhật).",
           "muc_sgk": "Mục 2: Tiêu chí chất lượng thông tin"
         },
         {
@@ -48,8 +44,6 @@
             "C": "Màn hình hiển thị",
             "D": "Bộ nguồn máy tính"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Bộ vi xử lý (CPU) là trung tâm điều khiển, tiếp nhận và xử lý mọi phép toán và lệnh điều hành của thiết bị số.",
           "muc_sgk": "Mục 1: Thiết bị có gắn bộ xử lí"
         },
         {
@@ -61,8 +55,6 @@
             "C": "Khả năng thấu cảm và rung động cảm xúc nghệ thuật",
             "D": "Khả năng làm việc liên tục không mệt mỏi"
           },
-          "dap_an_dung": "C",
-          "giai_thich": "Máy tính xử lý dữ liệu theo thuật toán logic, không có cảm xúc, tình cảm hay sự rung động tinh tế như con người.",
           "muc_sgk": "Mục 2: Ưu thế của máy tính"
         },
         {
@@ -74,8 +66,6 @@
             "C": "Bình luận trên diễn đàn trò chuyện tự do",
             "D": "Tin nhắn truyền miệng giữa bạn bè"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Cổng thông tin chính thức của cơ quan quản lý nhà nước (Sở GD&ĐT) là nguồn thông tin chính thống, có tính pháp lý và độ chính xác tuyệt đối.",
           "muc_sgk": "Mục 1: Vai trò của thông tin"
         }
       ]
@@ -102,8 +92,6 @@
             "C": "Không ghi nguồn gốc và không có ngày tháng xuất bản",
             "D": "Tiêu đề viết hoa toàn bộ kèm lời kêu gọi chia sẻ khẩn cấp"
           },
-          "dap_an_dung": "B",
-          "giai_thich": "Các tên miền .gov.vn, .edu.vn thuộc các cơ quan nhà nước, trường học có quy trình kiểm duyệt nội dung chặt chẽ và tác giả rõ ràng.",
           "muc_sgk": "Mục 2: Quy trình thực hành"
         },
         {
@@ -115,8 +103,6 @@
             "C": "Chỉ nhấp vào kết quả đầu tiên xuất hiện mà không cần so sánh",
             "D": "Sử dụng các từ cảm thán dài dòng"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Đặt cụm từ chính xác trong dấu ngoặc kép giúp công cụ tìm kiếm lọc đúng chuỗi từ cần tìm, giảm thiểu kết quả rác.",
           "muc_sgk": "Mục 2: Quy trình thực hành"
         },
         {
@@ -128,8 +114,6 @@
             "C": "Thêm bình luận chỉ trích gay gắt",
             "D": "Bỏ qua không cần quan tâm đến tính đúng sai"
           },
-          "dap_an_dung": "B",
-          "giai_thich": "Kiểm chứng chéo với các nguồn tin chính thống là kỹ năng số bắt buộc để phòng ngừa tin giả và thông tin sai lệch.",
           "muc_sgk": "Mục 2: Quy trình thực hành"
         },
         {
@@ -141,8 +125,6 @@
             "C": "Tính thẩm mỹ",
             "D": "Tính bảo mật"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Thông tin thiếu các khía cạnh cần thiết để đưa ra quyết định toàn diện là thông tin vi phạm tiêu chí Tính đầy đủ.",
           "muc_sgk": "Mục 1: Mục tiêu thực hành"
         }
       ]
@@ -169,8 +151,6 @@
             "C": "Văn bản in trên sách báo",
             "D": "Hình ảnh chụp từ điện thoại"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Theo định nghĩa SGK Tin học 6, thông tin là tất cả những hiểu biết của con người về thế giới xung quanh và về chính mình.",
           "muc_sgk": "Mục 1: Thông tin và dữ liệu"
         },
         {
@@ -182,8 +162,6 @@
             "C": "Người đưa thư",
             "D": "Sóng điện thoại"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Vật mang tin là các phương tiện, vật thể chứa đựng dữ liệu để lưu trữ và truyền đạt thông tin đến người khác.",
           "muc_sgk": "Mục 2: Vật mang tin"
         },
         {
@@ -195,8 +173,6 @@
             "C": "Thông tin là dữ liệu chưa qua xử lý",
             "D": "Không có mối liên hệ nào"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Dữ liệu là các con số, ký tự, hình ảnh thô; khi được con người hoặc máy tính tiếp nhận và hiểu được ý nghĩa thì trở thành thông tin.",
           "muc_sgk": "Mục 1: Thông tin và dữ liệu"
         },
         {
@@ -208,8 +184,6 @@
             "C": "Vẽ tranh theo sở thích cá nhân",
             "D": "Ngủ một giấc thật ngon"
           },
-          "dap_an_dung": "A",
-          "giai_thich": "Nhận được thông tin dự báo thời tiết giúp em đưa ra quyết định đúng đắn là chuẩn bị áo mưa để bảo vệ sức khỏe.",
           "muc_sgk": "Mục 3: Tầm quan trọng của thông tin"
         }
       ]

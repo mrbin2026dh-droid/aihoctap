@@ -19,10 +19,11 @@
         "C": "Bài viết có trích dẫn nguồn số liệu thống kê rõ ràng",
         "D": "Nội dung được nhiều chuyên gia và báo chí chính thống dẫn lại"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Tiêu đề giật gân, thiếu tên tác giả và không ghi ngày đăng là những dấu hiệu điển hình của trang tin giả mạo câu tương tác.",
       "goi_y_khi_sai": "Dấu hiệu đáng ngờ của các trang tin không chính thống là gì? Hãy tìm đặc điểm thiếu minh bạch trong Mục 2 nhé!",
-      "forbidden_keywords": ["giật gân", "đáp án B"]
+      "forbidden_keywords": [
+        "giật gân",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b3_q2",
@@ -36,10 +37,12 @@
         "C": "Nhấp chuột ngẫu nhiên vào đường link quảng cáo đầu tiên",
         "D": "Tải tất cả các tệp đính kèm lạ về máy tính"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Rất chuẩn! Xác định mục tiêu và chọn từ khóa ngắn gọn, đúng trọng tâm là chìa khóa giúp máy tìm kiếm trả về kết quả chính xác nhất.",
       "goi_y_khi_sai": "Trước khi gõ vào thanh tìm kiếm, việc chuẩn bị từ khóa có vai trò như thế nào? Xem lại Bước 1 ở Mục 2 nhé!",
-      "forbidden_keywords": ["từ khóa", "mục tiêu", "đáp án A"]
+      "forbidden_keywords": [
+        "từ khóa",
+        "mục tiêu",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b3_q3",
@@ -53,10 +56,12 @@
         "C": "Viết bình luận kích động tranh cãi dưới bài đăng",
         "D": "Tin ngay vì bài đăng có hàng nghìn lượt thích (like)"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất tốt! Đối chiếu với văn bản pháp quy từ cơ quan nhà nước là nguyên tắc vàng để bảo vệ bản thân và cộng đồng khỏi tin đồn thất thiệt.",
       "goi_y_khi_sai": "Phương pháp đối chiếu chéo với các nguồn tin chính thống được trình bày ở Bước 2 như thế nào? Xem lại nhé!",
-      "forbidden_keywords": ["Đối chiếu", "kiểm chứng", "đáp án B"]
+      "forbidden_keywords": [
+        "Đối chiếu",
+        "kiểm chứng",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b3_q4",
@@ -70,10 +75,11 @@
         "C": "Tính hợp pháp",
         "D": "Tính dung lượng"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Thiếu các dữ liệu quan trọng liên quan đến quyết định chọn trường có nghĩa là thông tin thu thập chưa đạt Tính đầy đủ.",
       "goi_y_khi_sai": "Thông tin cần bao quát toàn diện các khía cạnh cần thiết của vấn đề là tiêu chí nào? Xem lại Mục 1 và Mục 2 nhé!",
-      "forbidden_keywords": ["Tính đầy đủ", "đáp án A"]
+      "forbidden_keywords": [
+        "Tính đầy đủ",
+        "đáp án A"
+      ]
     }
   ]
 }

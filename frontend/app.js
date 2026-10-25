@@ -4790,13 +4790,13 @@ function formatLastSeen(ts) {
    ========================================================================== */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC54m3EGcnp6GWCOZVgwk3u-piEz3iwARQ",
-  authDomain: "ai-sgk-tinhoc.firebaseapp.com",
-  databaseURL: "https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ai-sgk-tinhoc",
-  storageBucket: "ai-sgk-tinhoc.firebasestorage.app",
-  messagingSenderId: "368135385597",
-  appId: "1:368135385597:web:3cbd9b90f41d547e4ca994"
+  apiKey: "FIREBASE_API_KEY_PLACEHOLDER",
+  authDomain: "your-project-id.firebaseapp.com",
+  databaseURL: "https://your-project-id-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.firebasestorage.app",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:0000000000000000000000"
 };
 
 let firebaseInitialized = false;

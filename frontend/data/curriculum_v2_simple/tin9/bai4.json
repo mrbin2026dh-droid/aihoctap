@@ -19,10 +19,12 @@
         "C": "Gửi email chúc mừng sinh nhật cho thầy cô và bạn bè",
         "D": "Tham gia nhóm học tập trực tuyến do nhà trường tổ chức"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Chính xác! Vu khống, xúc phạm nhân phẩm danh dự người khác trên không gian mạng là hành vi vi phạm pháp luật và sẽ bị xử phạt nghiêm khắc.",
       "goi_y_khi_sai": "Hành vi nào gây tổn hại đến quyền lợi, danh dự của người khác được nêu trong danh mục cấm ở Mục 2? Xem lại nhé!",
-      "forbidden_keywords": ["vu khống", "bịa đặt", "đáp án B"]
+      "forbidden_keywords": [
+        "vu khống",
+        "bịa đặt",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b4_q2",
@@ -36,10 +38,12 @@
         "C": "Chỉnh sửa vài câu từ rồi nhận là sáng tác độc quyền của bản thân",
         "D": "Sử dụng thoải mái vì tài nguyên trên mạng không có bản quyền"
       },
-      "dap_an_dung": "B",
-      "giai_thich_su_pham": "Rất chuẩn! Luật Sở hữu trí tuệ quy định khi sử dụng tác phẩm của người khác cần xin phép hoặc ghi rõ tác giả và nguồn gốc xuất xứ.",
       "goi_y_khi_sai": "Tôn trọng quyền sở hữu trí tuệ đòi hỏi chúng ta phải làm gì đối với tên tuổi tác giả? Xem lại Mục 2 nhé!",
-      "forbidden_keywords": ["Xin phép", "nguồn trích dẫn", "đáp án B"]
+      "forbidden_keywords": [
+        "Xin phép",
+        "nguồn trích dẫn",
+        "đáp án B"
+      ]
     },
     {
       "id": "tin9_b4_q3",
@@ -53,10 +57,12 @@
         "C": "Không gây tác hại gì vì các linh kiện sẽ tự phân hủy sinh học trong vài ngày",
         "D": "Giúp tiết kiệm chi phí xử lý rác cho xã hội"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Chính xác! Rác thải điện tử chứa nhiều kim loại nặng cực kỳ độc hại như chì, thủy ngân, cadimi gây ô nhiễm môi trường lâu dài nếu không xử lý đúng quy trình.",
       "goi_y_khi_sai": "Khái niệm rác thải điện tử (E-waste) và nguy cơ ô nhiễm môi trường sống được giải thích như thế nào trong Mục 1? Xem lại nhé!",
-      "forbidden_keywords": ["rác thải điện tử", "kim loại nặng", "đáp án A"]
+      "forbidden_keywords": [
+        "rác thải điện tử",
+        "kim loại nặng",
+        "đáp án A"
+      ]
     },
     {
       "id": "tin9_b4_q4",
@@ -70,10 +76,12 @@
         "C": "Quyền tự do ngôn luận cá nhân",
         "D": "Một hoạt động giao lưu trực tuyến bình thường"
       },
-      "dap_an_dung": "A",
-      "giai_thich_su_pham": "Rất tốt! Bạo lực mạng (Cyberbullying) gây tổn thương tâm lý nghiêm trọng cho nạn nhân và là hành vi bị pháp luật nghiêm cấm.",
       "goi_y_khi_sai": "Thuật ngữ chỉ hành vi quấy rối, bắt nạt hoặc lăng mạ người khác trên không gian mạng là gì? Xem lại Mục 1 nhé!",
-      "forbidden_keywords": ["Bạo lực mạng", "Cyberbullying", "đáp án A"]
+      "forbidden_keywords": [
+        "Bạo lực mạng",
+        "Cyberbullying",
+        "đáp án A"
+      ]
     }
   ]
 }

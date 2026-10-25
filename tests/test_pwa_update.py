@@ -40,6 +40,8 @@ def test_new_service_worker_waits_for_active_answers(pwa_browser, monkeypatch):
     expect(page.locator('#status')).to_contain_text('Hoàn thành bài đang làm')
     expect(page.locator('textarea[name="q2"]')).to_have_value('Draft must survive a service worker update.')
     assert page.evaluate('navigator.serviceWorker.getRegistration().then(registration => Boolean(registration.waiting))')
+    if page.locator('#msg-dialog[open]').count():
+        page.locator('#msg-ok').click()
     page.get_by_role('button', name='Nộp bài', exact=True).click()
     expect(page.locator('#status')).to_contain_text('Đã nộp')
     with page.expect_navigation():

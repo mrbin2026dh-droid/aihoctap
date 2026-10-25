@@ -218,6 +218,10 @@ def load_lesson_data(grade: int, lesson_id: int) -> Dict[str, Any]:
     # 2. Fallback sang file Markdown và Quiz Legacy
     md_file, json_file = get_lesson_files(grade, lesson_id)
     if not md_file or not md_file.exists():
+        # Fallback 3: Kiểm tra trong curriculum_v2_simple
+        v2_simple = load_lesson_v2_simple(grade, lesson_id)
+        if v2_simple:
+            return v2_simple
         raise FileNotFoundError(f"Không tìm thấy tài liệu bài học cho Tin học {grade} - Bài {lesson_id}")
 
     with open(md_file, "r", encoding="utf-8") as f:

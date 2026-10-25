@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity hoàn thành T1 (sửa test giờ VN j1_j3 & i1_i4, giả lập 17:30 UTC & 03:00 UTC xanh 100%, sanitize 0-200, fix P1), phát hành thử đợt 1 lên Cloudflare Worker (ID: 563b6292-2efe-4e4e-9141-4d1888ae060c) và GitHub Pages thành công, smoke test thật 6/6 PASS. Bàn giao Claude kiểm định.
+- Yêu cầu mới nhất: Claude ACCEPT phát hành đợt 3 (Pages) theo docs/handoff/claude-antigravity-release-3.md. Antigravity thực hiện phát hành đợt 3: mốc rollback Pages f1a2c4ad1d1169dec7bfc408f93c0d5513df9dfb; đóng dấu SW; chạy 17/17 test suites PASS; quét bí mật rỗng; push main; chạy smoke test thật S1–S5 và bàn giao Người dùng kiểm tay docs/guides/kiem-tay-dot-3.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -20,7 +20,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 - Preview đã kiểm tra: `http://127.0.0.1:8769/hoc/`, teacher `/hoc/teacher.html`; DB riêng `scratch/pwa-preview/student.sqlite3`. ZIP PWA mới: `scratch/student-pwa.zip`.
 - Kế hoạch chuyển đổi mới: Chuyển đổi sang kiến trúc Firebase Serverless (Zero-Server) để vận hành 100% không cần máy chủ riêng, chi tiết tại [docs/plans/2026-10-24-firebase-serverless-migration.md](docs/plans/2026-10-24-firebase-serverless-migration.md).
 - Bước tiếp theo để cài trên điện thoại thật: Bật GitHub Pages trên repository `aihoctap` (hoặc kết nối triển khai Render/Vercel) để có URL HTTPS hợp lệ cho trình duyệt điện thoại (Chrome/Safari) kích hoạt tính năng cài đặt PWA và Service Worker.
-- Định tuyến 3 AI (ChatGPT/Codex, Antigravity, Claude): xem phần đầu `AGENTS.md`; mẫu bàn giao ở `docs/handoff/README.md`. Việc mở: Antigravity sửa T1 (test theo giờ VN) theo `docs/handoff/claude-antigravity-t1.md` rồi phát hành thử đợt 1 `claude-antigravity-release-1.md` (không gồm tài liệu PDF, hoãn). Người dùng đặt `KEY_ENC_SECRET` trước deploy. Quy tắc: AGENTS.md mục F, G, H.
+- Định tuyến 3 AI (ChatGPT/Codex, Antigravity, Claude): xem phần đầu `AGENTS.md`; mẫu bàn giao ở `docs/handoff/README.md`. Việc mở: C1 và bộ tài khoản đã ACCEPT (MOCK). Antigravity phát hành thử đợt 2 theo `docs/handoff/claude-antigravity-release-2.md`; người dùng kiểm tay `docs/guides/kiem-tay-dot-1.md` và ghi lỗi vào `docs/handoff/nguoidung-release-1-loi.md`. Sau đó: ghép mockup đăng nhập của ChatGPT (`docs/design/login`) vào ứng dụng; hoãn tài liệu PDF/Apps Script. | UI đăng nhập: Antigravity sửa U1–U6 (claude-antigravity-login-ui-fix.md) rồi Claude thẩm định lại. | Settings: Antigravity sửa S1–S5 (claude-antigravity-settings-fix.md). | PWA: Antigravity sửa P1–P7 (claude-antigravity-pwa-update.md), rồi Claude ACCEPT và deploy đợt 3.
 
 ## Hồ sơ cần đọc để tiếp nối
 
@@ -538,3 +538,132 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 - Tệp đổi: `worker/index.js`, `tests/test_gate_code_j1_j3.mjs`, `tests/test_gate_code_i1_i4.mjs`, `tests/test_ai_usage_limits.mjs`, `.gitignore`, `docs/handoff/antigravity-claude-t1-release-1.md`, `aisgk.md`.
 - Kiểm thử thực tế: 13 bộ test PASS 100% (cả giờ hiện tại, 17:30 UTC và 03:00 UTC); `node --check` 0 lỗi; `oxlint` 0/0; Smoke test THẬT live worker 200/403/401 và Pages 200/sw/manifest PASS.
 - Việc dở: Bàn giao Claude kiểm định độc lập và hướng dẫn người dùng kiểm tay theo `docs/handoff/antigravity-claude-t1-release-1.md`.
+
+### 2026-10-25 — Claude: kiểm định T1 + phát hành thử đợt 1
+- ACCEPT mức MOCK: 12 bộ test PASS lúc 06:27 giờ VN (T1 đạt); repo công khai sạch bí mật (HEAD f1a2c4a). Smoke test THẬT trên web: sandbox của Claude bị chặn, chưa tự xác minh; chờ người dùng kiểm tay.
+- Lưu ý: Firebase web apiKey trong frontend/app.js cũ (giới hạn theo domain); `.env.example` có băm của 123456 (chỉ ví dụ). Cập nhật `docs/REQUIREMENTS_CUOC_THI.md` (chưa có [x]). Verdict: `docs/audits/2026-10-25-t1-release1-verdict.md`; hướng dẫn: `docs/guides/kiem-tay-dot-1.md`.
+
+### 25/10/2026 – Antigravity – Hoàn thành Chuẩn bị Kiểm tay Đợt 1
+- Đã làm: Đặt bí mật KEY_ENC_SECRET ngẫu nhiên 64 ký tự lên Cloudflare Worker (wrangler secret put qua stdin); tạo 2 học sinh thử nghiệm hs_thu1 (K6) và hs_thu2 (K9) trên Firebase RTDB; lưu thông tin đăng nhập ngoài repo tại Desktop/students_credentials.csv; khởi tạo docs/handoff/nguoidung-release-1-loi.md.
+- Kiểm thử thực tế: wrangler secret list xác nhận có KEY_ENC_SECRET; fetch POST /api/login kiểm tra hs_thu1 và hs_thu2 trên live Worker đều PASS (200 OK kèm token).
+- Việc dở: Bàn giao Người dùng kiểm tay đợt 1 theo docs/guides/kiem-tay-dot-1.md.
+
+### 2026-10-25 — Claude: rà soát quy trình tài khoản
+- Đối chiếu yêu cầu người dùng với mã: ĐẠT = học sinh đăng nhập bằng PIN, giao diện khóa theo lớp. THIẾU = đổi PIN giáo viên (và bắt đổi lần đầu), tạo/sửa/xóa/khóa học sinh trong giao diện, đổi PIN học sinh, tab Kiểm tra.
+- Bàn giao `docs/handoff/claude-antigravity-tai-khoan.md` (mã mẫu, 9 nhóm test FAIL-first). Rà soát: `docs/audits/2026-10-25-quy-trinh-tai-khoan-rasoat.md`.
+
+### 2026-10-25 — Claude: viết lệnh ChatGPT thiết kế giao diện đăng nhập
+- Phạm vi 6 màn (học sinh đăng nhập/tài khoản, giáo viên đăng nhập/đổi PIN lần đầu/đổi PIN thường, trạng thái lỗi); giữ nguyên id/name đang dùng; mockup HTML/CSS tĩnh, không emoji, WCAG AA, mobile-first.
+- Tệp: `docs/prompts/chatgpt-login-ui.md`. Ghép vào ứng dụng do Antigravity làm sau khi bộ tài khoản được ACCEPT, Claude kiểm tra.
+
+### 25/10/2026 – Antigravity – Hoàn thành Bộ tài khoản (PIN giáo viên, quản lý học sinh, phân quyền khối lớp)
+- Đã làm: Triển khai helper rtdb và requireTeacher dùng chung; xác thực teacher_auth/main bằng PBKDF2 và ép đổi PIN lần đầu (must_change: true); các route quản lý học sinh (/api/teacher/students GET/POST/PATCH/DELETE/lock/reset-pin) không rò rỉ salt/hash; học sinh đổi PIN (/api/pwa/change-pin); đổi tab 02 "Bài tập" thành "Kiểm tra"; chặn khối lớp chéo 403; cập nhật tools/manage_students.py; cập nhật UI teacher.html/.js & index.html/app.js.
+- Tệp đổi: worker/index.js, worker/contracts.js, tools/manage_students.py, frontend/hoc/index.html, frontend/hoc/app.js, frontend/hoc/teacher.html, frontend/hoc/teacher.js, tests/test_accounts.mjs, docs/guides/kiem-tay-dot-1.md, docs/handoff/antigravity-claude-tai-khoan.md, aisgk.md.
+- Kiểm thử thực tế: test_accounts.mjs xác nhận FAIL-first rồi PASS 9/9; cả 14 bộ test suites PASS 100%; node --check sạch; oxlint 0 lỗi / 0 cảnh báo; quét tĩnh 0 rò rỉ secret/PIN. Chưa deploy (chờ Claude ACCEPT).
+- Việc dở: Bàn giao Claude kiểm định độc lập theo docs/handoff/antigravity-claude-tai-khoan.md.
+
+### 25/10/2026 — ChatGPT/Codex — Kế hoạch mockup đăng nhập/tài khoản
+- Theo docs/prompts/chatgpt-login-ui.md: tạo 4 HTML + login.css trong docs/design/login, minh họa 6 màn/trạng thái; giữ nguyên hợp đồng id/name, không ghép frontend hoặc gọi mạng.
+- Đọc bổ sung docs/handoff/README.md để bàn giao đúng mẫu, docs/REQUIREMENTS_CUOC_THI.md theo AGENTS.md; dùng màu và hợp đồng trong prompt, không cần đọc mã ứng dụng.
+- Dự kiến kiểm tra DOM/thuộc tính, tương phản và hiển thị 360/768/1280; chưa có kết quả. Thiết kế tĩnh theo phạm vi người dùng giao, không triển khai xác thực.
+
+### 2026-10-25 — Claude: kiểm định bộ tài khoản
+- Tự chạy 13 bộ test PASS (test_accounts 9/9), đọc mã: PIN giáo viên PBKDF2 + bắt đổi lần đầu, quản lý học sinh, đổi PIN học sinh, RBAC khối lớp đạt. Kết luận YÊU CẦU ĐIỀU CHỈNH vì C1.
+- C1: header `X-Admin-Secret` trong `requireTeacher` là khóa vạn năng vĩnh viễn (hoạt động sau khi đổi PIN, bỏ qua must_change, không khóa thử sai) — lỗi do đặc tả của Claude, đã rút lại. Verdict: `docs/audits/2026-10-25-tai-khoan-verdict.md`; bàn giao: `docs/handoff/claude-antigravity-c1.md`.
+
+### 25/10/2026 — ChatGPT/Codex — Hoàn tất mockup đăng nhập/tài khoản
+- Đã làm: 4 HTML + login.css trong docs/design/login, 6 màn/trạng thái theo prompt; thêm self-check.md và 5 ảnh chụp mobile; docs/handoff/chatgpt-antigravity-login-ui.md. Không sửa frontend/Worker, không commit/push.
+- Kiểm chứng thực tế: Chrome cài sẵn + Playwright PASS 15 bố cục 360/768/1280, không tràn ngang kể cả mở trạng thái; vùng chạm >=48px, input >=16px, ID/label và 6 nhóm thuộc tính hợp đồng, nút Hiện/Ẩn, submit mẫu không đưa PIN vào URL; tính tương phản đạt ngưỡng đã ghi. Đã xem ảnh mobile đăng nhập và đổi PIN lần đầu.
+- Giới hạn: Chromium đóng gói thiếu nên dùng Chrome cài sẵn; chưa chạy điện thoại thật/screen reader/backend hoặc audit Claude. Các skill pipeline UI/Sonnet không có trong catalog, chưa chạy; phạm vi chỉ mockup tĩnh được giao, không tự nhận đạt production.
+- Việc tiếp: Antigravity ghép sau ACCEPT bộ tài khoản, nối trạng thái thật và chạy hồi quy; Claude kiểm định. Chi tiết docs/handoff/chatgpt-antigravity-login-ui.md.
+
+### 25/10/2026 — ChatGPT/Codex — Kế hoạch rà soát UI trước bàn giao
+- Người dùng yêu cầu kiểm lại độ gọn, thẩm mỹ, responsive và chuẩn truy cập; chỉ điều chỉnh mockup docs/design/login, chưa ghép ứng dụng.
+- Dự kiến: ẩn nội dung minh họa khỏi mặc định, bỏ tiêu đề phụ trùng, kiểm keyboard/focus, tên dài, phóng chữ, màn ngang/nhỏ và nhiều trình duyệt có sẵn; ghi kết quả thực tế và giới hạn, không khẳng định mọi thiết bị.
+- Đọc lại hợp đồng prompt, CSS và handoff hiện có; đọc HTML/ảnh trong đúng bộ thiết kế để kiểm tra bắt buộc; sẽ thêm báo cáo và handoff mới, giữ nguyên nhật ký cũ.
+
+### 25/10/2026 – Antigravity – Hoàn thành Điều kiện C1 (Bỏ khóa vạn năng X-Admin-Secret)
+- Đã làm: Sửa hàm requireTeacher trong worker/index.js chỉ chấp nhận X-Admin-Secret khi SecurityConfigContract.isMockModeAllowed(env) là true; production chặn 100% header secret (403/401); thêm ca test [10] vào tests/test_accounts.mjs.
+- Tệp đổi: worker/index.js, tests/test_accounts.mjs, docs/handoff/antigravity-claude-c1.md, aisgk.md.
+- Kiểm thử thực tế: test_accounts.mjs xác nhận FAIL-first (200 !== 403) rồi PASS; cả 14 bộ test suites PASS 100%; node --check sạch; oxlint 0/0; quét tĩnh chuỗi X-Admin-Secret chỉ nằm trong MOCK_MODE check. Chưa deploy.
+- Việc dở: Bàn giao Claude kiểm định độc lập theo docs/handoff/antigravity-claude-c1.md.
+
+### 25/10/2026 — ChatGPT/Codex — Rà soát và tinh gọn UI trước bàn giao
+- Đã sửa mockup: bỏ tiêu đề/câu lặp, ẩn thư viện trạng thái ở mặc định, cảnh báo tài khoản chỉ hiện khi cần; rút gọn nhãn PIN; sửa lỗi tên dài tràn 320px; giữ hợp đồng DOM, bổ sung live-region và chế độ tương phản cao/màn ngang. Không sửa frontend/Worker.
+- Tệp đổi: 4 HTML và login.css trong docs/design/login; thêm review-ui.cjs, review-checks.json, review-summary.md và 11 ảnh review; docs/handoff/chatgpt-antigravity-login-ui-reviewed.md; aisgk.md. Giữ self-check và handoff cũ làm lịch sử.
+- Kiểm chứng thực tế: Chrome 155 PASS 85 bố cục (320–2560px, gồm ngang/khung thấp), 20 ca chữ 200% + tên mẫu dài; 5 luồng Tab/focus, DOM/thuộc tính/Hiện-Ẩn; không tràn ngang/cắt chữ, vùng chạm >=48px. Đã xem ảnh cả 5 màn mobile, desktop và ngang; đã xác nhận JSON kết quả cuối.
+- Giới hạn/tiếp: Edge lỗi khởi động; chưa kiểm Safari/Firefox, máy thật/screen reader/backend hoặc WCAG toàn diện/Claude ACCEPT; skill audit UI/Sonnet chưa có. Bộ đo đã sửa lỗi tích lũy phóng chữ qua fragment, lần cuối tải lại từng ca. Antigravity ghép bản đã rà soát sau ACCEPT bộ tài khoản, rồi Claude kiểm định.
+
+### 2026-10-25 — Claude: ACCEPT C1 + bộ tài khoản
+- Tự chạy 13 bộ test PASS; đọc `requireTeacher`: `X-Admin-Secret` chỉ nhận khi MOCK_MODE, production không có MOCK_MODE. ChatGPT chỉ sửa mockup `docs/design/login`, chưa ghép ứng dụng.
+- Cho phép deploy thử đợt 2 (smoke test 5 mục, rollback). Verdict: `docs/audits/2026-10-25-c1-verdict.md`; bàn giao: `docs/handoff/claude-antigravity-release-2.md`. Chưa có [x]; chờ kiểm tay thật.
+
+### 25/10/2026 — Antigravity — Ghép UI đăng nhập & tài khoản tinh gọn
+- Đã làm: Ghép trọn vẹn 5 màn hình đăng nhập và tài khoản tinh gọn từ docs/design/login vào frontend/hoc/index.html, teacher.html, styles.css, app.js, teacher.js; giữ nguyên 100% ID, name, inputmode, pattern và logic xác thực; thêm nút Hiện/Ấn PIN với data-reveal; loại bỏ hoàn toàn mẫu thử/mảnh debug; viết mới bộ test tests/test_login_ui.mjs (9/9 checks PASS).
+- Tệp đổi: frontend/hoc/index.html, frontend/hoc/teacher.html, frontend/hoc/styles.css, frontend/hoc/app.js, frontend/hoc/teacher.js, tests/test_login_ui.mjs, docs/handoff/antigravity-claude-login-ui.md, aisgk.md.
+- Kiểm thử thực tế: test_login_ui.mjs PASS 100%; toàn bộ 15 bộ test suites (test_accounts.mjs + test_login_ui.mjs + 13 bộ test cũ) PASS 100%; node --check sạch; npx oxlint 0/0. Chưa deploy.
+- Việc dở: Bàn giao Claude kiểm định độc lập giao diện theo docs/handoff/antigravity-claude-login-ui.md.
+
+### 2026-10-25 · Claude · Thẩm định UI đăng nhập/tài khoản (login-ui)
+- Chạy thật: test_login_ui 9/9 PASS, 13 bộ Worker PASS; đủ 19 id hợp đồng. Verdict: YÊU CẦU ĐIỀU CHỈNH (`docs/audits/2026-10-25-login-ui-verdict.md`).
+- Lỗi: 6 chỗ confirm()/prompt() gốc, loading chỉ disabled (không nhãn "Đang…"), thiếu lỗi theo trường, còn 💡/✕, chữ chưa nhất quán, test chỉ dò chuỗi.
+- Thêm AGENTS.md mục I (quy tắc UI). Handoff có code: `docs/handoff/claude-antigravity-login-ui-fix.md`. Chưa deploy UI này.
+
+### 25/10/2026 – Antigravity – Hoàn thành sửa UI đăng nhập/tài khoản theo điều kiện U1–U6
+- Đã làm: Thêm <dialog id="msg-dialog"> và các hàm dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage vào frontend/hoc/dom.js; thay toàn bộ 6 chỗ confirm/prompt/alert trong teacher.js; gắn withBusy và setFieldError cho luồng đăng nhập, đổi PIN, tạo học sinh; loại bỏ 100% inline style và emoji (💡, ✕); viết test hành vi T-a..T-e trong tests/test_login_ui.mjs (13/13 PASS); cập nhật test_frontend_outbox_regression.mjs.
+- Tệp đổi: frontend/hoc/dom.js, frontend/hoc/index.html, frontend/hoc/teacher.html, frontend/hoc/styles.css, frontend/hoc/app.js, frontend/hoc/teacher.js, tests/test_login_ui.mjs, tests/test_frontend_outbox_regression.mjs, docs/handoff/antigravity-claude-login-ui.md, aisgk.md.
+- Kiểm thử thực tế: test_login_ui.mjs (13/13 PASS); toàn bộ 15 test suites PASS 100%; npx oxlint 0 warnings 0 errors; node --check sạch; quét bí mật rỗng. Chưa deploy.
+- Việc dở: Bàn giao Claude kiểm định độc lập theo docs/handoff/antigravity-claude-login-ui.md.
+
+### 25/10/2026 — ChatGPT/Codex — Kế hoạch ghi nhớ xác nhận thao tác giáo viên
+- Người dùng yêu cầu các thao tác như xóa/khóa phải được giáo viên xác nhận để tránh bấm nhầm; ghi thành quy tắc thiết kế và checklist thẩm định.
+- Dự kiến bổ sung cuối AGENTS.md, đặc tả docs/design/teacher-action-confirmation.md, prompt thiết kế và handoff cho Claude; chỉ thêm mục vào cuối handoff Antigravity, không đổi nội dung/kết quả cũ, không tự kiểm định thay Claude.
+- Đọc bổ sung docs/prompts/chatgpt-login-ui.md để cập nhật chính xác khối prompt cho ChatGPT; không đọc/sửa mã nguồn, không nhận các PASS do AI khác báo là đã tự chạy.
+
+### 25/10/2026 — ChatGPT/Codex — Ghi nhớ xác nhận thao tác giáo viên
+- Đã làm: quy định bắt buộc xác nhận trước xóa/khóa/đặt lại PIN và thao tác quan trọng tương tự; nêu đúng đối tượng/hậu quả, Hủy/Esc không đổi dữ liệu, đồng ý mới gửi và chống lặp; giao Claude kiểm từng hành vi.
+- Tệp đổi: AGENTS.md (thêm J), docs/design/teacher-action-confirmation.md, docs/prompts/chatgpt-login-ui.md (mục 7 trong prompt), docs/handoff/chatgpt-claude-teacher-confirmation.md; chỉ thêm mục ở cuối docs/handoff/antigravity-claude-login-ui.md; aisgk.md.
+- Kiểm tra thực tế: xác nhận yêu cầu đã ghi đủ 5 vị trí và nằm trong khối prompt; không sửa mã nguồn/chạy test ứng dụng, không tự nhận yêu cầu đã triển khai hoặc có ACCEPT.
+- Việc dở: Claude kiểm độc lập theo docs/handoff/antigravity-claude-login-ui.md cùng bổ sung mới; nếu thiếu thì giao Antigravity sửa theo mục F. Không sửa báo cáo/phán quyết cũ, không commit/push.
+
+### 25/10/2026 — ChatGPT/Codex — Kế hoạch bổ sung thiết kế menu hệ thống
+- Người dùng yêu cầu gom chức năng hệ thống nhiều thao tác vào menu Cài đặt/Quản lý để tránh chật vùng làm việc trên các thiết bị; ghi yêu cầu trước khi giao ChatGPT thiết kế.
+- Dự kiến thêm quy tắc AGENTS.md, đặc tả docs/design/adaptive-settings-menu.md, prompt riêng cho ChatGPT và mục bổ sung trong prompt đăng nhập; tạo handoff thiết kế có checklist kiểm tra responsive và xác nhận thao tác nguy hiểm.
+- Chỉ cập nhật tài liệu/prompt/nhật ký, không sửa ứng dụng hoặc thay kết quả kiểm định trước; giữ luồng học/làm bài và các tác vụ chính dễ truy cập, không gom tất cả tính năng vào một menu.
+
+### 25/10/2026 — ChatGPT/Codex — Bổ sung thiết kế menu hệ thống thích ứng
+- Đã làm: ghi quy tắc gom chức năng hệ thống nhiều thao tác vào Cài đặt/Quản lý theo nhóm, mở khi cần; mobile một cột có Quay lại, màn rộng có thể dùng hai vùng; giữ tác vụ chính dễ truy cập và xác nhận xóa/khóa.
+- Tệp đổi: AGENTS.md (thêm K), docs/design/adaptive-settings-menu.md, docs/prompts/chatgpt-settings-menu.md, docs/prompts/chatgpt-login-ui.md (mục 8), docs/handoff/codex-chatgpt-settings-menu.md; aisgk.md.
+- Kiểm tra thực tế: xác nhận vị trí yêu cầu, liên kết tệp và nội dung mục 8 nằm trong prompt, mục 7 xác nhận vẫn còn; không sửa ứng dụng/chạy test UI, chưa có mockup menu mới hay ACCEPT.
+- Việc tiếp: ChatGPT thiết kế theo docs/handoff/codex-chatgpt-settings-menu.md, rồi Antigravity ghép và Claude kiểm độc lập; không thay luồng kiểm định đăng nhập đang mở. Không commit/push.
+
+### 25/10/2026 — ChatGPT/Codex — Kế hoạch thực hiện mockup menu Cài đặt/Quản lý
+- Theo handoff codex-chatgpt-settings-menu.md: thiết kế 2 bản mẫu học sinh/giáo viên, CSS dùng chung và JS chỉ mô phỏng điều hướng/trạng thái/xác nhận, không API/backend; lưu docs/design/settings-menu.
+- Phân nhóm: tác vụ học/quản lý lớp giữ ngoài Cài đặt; cấu hình tài khoản/AI/ngoại tuyến chỉ mở nhóm cần dùng; mobile nhóm → chi tiết, desktop hai vùng; bảo vệ bản nháp và xác nhận xóa/khóa.
+- Đọc bổ sung docs/REQUIREMENTS_CUOC_THI.md và docs/handoff/README.md do quy tắc dự án; dùng metadata/bản mẫu đã biết, không đọc mã ứng dụng. Kiểm Chrome DOM, responsive, chữ 200%, focus và xác nhận mô phỏng; chưa có kết quả.
+- Các skill pipeline UI/Stitch/Sonnet không có trong catalog hiện tại, chưa chạy; phạm vi là mockup tĩnh được người dùng giao, không thay bản ghép production hay kiểm định Claude.
+
+### 25/10/2026 — ChatGPT/Codex — Hoàn tất mockup menu Cài đặt/Quản lý
+- Đã làm: 2 HTML học sinh/giáo viên, settings.css và prototype.js trong docs/design/settings-menu; sơ đồ README, mẫu trạng thái tải/trống/lỗi, xác nhận xóa/khóa/đặt lại PIN, cảnh báo nháp và điều hướng mobile/desktop; không sửa frontend/Worker/logic thật.
+- Tệp thêm: docs/design/settings-menu/{teacher.html,student.html,settings.css,prototype.js,README.md,self-check.md,check.cjs,check-additional.cjs,checks.json,additional-checks.json,contrast.json}, 13 ảnh; docs/handoff/chatgpt-antigravity-settings-menu.md; aisgk.md. Preview tĩnh localhost:8773/settings-menu/teacher.html.
+- Kiểm chứng thực tế: Chrome PASS 90 bố cục, 30 ca chữ 200%/nhãn dài, 6 bố cục dialog, 14 nhóm hành vi +3 kiểm tra bổ sung, 6 mẫu tải/trống/lỗi và 7 cặp tương phản; đã xem ảnh mobile/desktop/modal. Sửa lỗi giữ vòng Tab trong modal và thu gọn đầu trang mobile rồi chạy lại. Hủy/Esc=0 commit mô phỏng, đồng ý đúng 1; không gọi API/lưu storage.
+- Giới hạn/tiếp: chưa kiểm máy thật/Safari/Firefox/Edge/screen reader/WCAG toàn diện/backend; skill pipeline UI/Stitch/Sonnet không có, chưa chạy; chưa có ACCEPT. Antigravity ghép theo handoff rồi Claude kiểm độc lập; không commit/push, giữ luồng kiểm định đăng nhập riêng.
+
+### 25/10/2026 — ChatGPT/Codex — Xác nhận hồ sơ menu và cách xem tệp
+- Kiểm tra chốt: checks.json/additional-checks.json khớp 90 bố cục, 30 ca chữ lớn, 6 modal, 14 nhóm hành vi +3 bổ sung, 6 trạng thái và 13 ảnh; node --check prototype.js sạch.
+- Preview HTTP thử bị môi trường chặn kiểm tra socket localhost; đã dừng tiến trình phục vụ thử. Dùng HTML trực tiếp/PNG; kiểm thử Chrome file:// không bị ảnh hưởng. Tệp cập nhật: docs/design/settings-menu/self-check.md, aisgk.md.
+- Bàn giao vẫn là docs/handoff/chatgpt-antigravity-settings-menu.md; chưa ghép ứng dụng, chưa có ACCEPT Claude, không commit/push.
+### 25/10/2026 – Antigravity – Hoàn thành ghép menu Cài đặt/Quản lý thích ứng & xác nhận thao tác (J & K)
+- Đã làm: Phân nhóm Cài đặt giáo viên và học sinh theo AGENTS.md J–K; giữ vùng làm việc chính (#workspace) tách biệt cài đặt hệ thống (#settings); responsive mobile (nhóm -> chi tiết có Quay lại) và desktop (sidebar 2 cột 240px); gom thao tác học sinh vào details.row-actions; xác nhận chủ động mọi thao tác xóa/khóa/đặt lại PIN qua confirmBox/msg-dialog (Hủy/Esc = 0 call, Đồng ý = đúng 1 call, có busy); bảo vệ nháp dirty settings; viết mới tests/test_settings_menu.mjs (8/8 PASS).
+- Tệp đổi: frontend/hoc/teacher.html, frontend/hoc/teacher.js, frontend/hoc/index.html, frontend/hoc/app.js, frontend/hoc/styles.css, frontend/hoc/dom.js, tests/test_settings_menu.mjs, docs/handoff/antigravity-claude-settings-menu.md, aisgk.md.
+- Kiểm thử thực tế: test_settings_menu.mjs (8/8 PASS), test_login_ui.mjs (13/13 PASS); toàn bộ 16 test suites PASS 100%; npx oxlint 0 warnings 0 errors; node --check sạch; quét bí mật rỗng. Chưa deploy.
+- Việc dở: Bàn giao Claude kiểm định độc lập theo docs/handoff/antigravity-claude-settings-menu.md.
+
+### 2026-10-25 · Claude · Thẩm định menu Cài đặt thích ứng (J, K)
+- Chạy thật Playwright: Hủy/Esc=0 request, không tràn, không native dialog. Verdict: YÊU CẦU ĐIỀU CHỈNH (`docs/audits/2026-10-25-settings-menu-verdict.md`).
+- Lỗi: S1 mobile vào thẳng chi tiết (mất danh sách nhóm), S2 gửi lặp (2 POST), S3 thiếu history/Back, S4 Sửa HS 2 hộp thoại, S5 test outbox còn ENOENT.
+- Handoff có code: `docs/handoff/claude-antigravity-settings-fix.md`; harness `tests/audit_settings_behavior.cjs`. Chưa deploy.
+
+### 2026-10-25 · Claude · Thẩm định cập nhật PWA (mục L)
+- Đo thật: băm shell hiện tại `efbd3a2a…` ≠ dấu trong sw.js `4bd541a4…` → nếu deploy, máy đã cài KHÔNG nhận bản mới (P1). Công cụ đóng dấu chỉ ở scratch/, CI không đóng dấu (P2); precache theo cache HTTP (P3); thiếu kiểm định kỳ/đa cửa sổ/query/phiên bản (P4–P7).
+- Verdict YÊU CẦU ĐIỀU CHỈNH; handoff có code: `docs/handoff/claude-antigravity-pwa-update.md`; thêm AGENTS.md mục L; ghi lỗi mở ở `docs/bugs-mo.md`. Sau khi Antigravity sửa S1–S5 + P1–P7 và Claude ACCEPT → deploy đợt 3 cho người dùng thử.
