@@ -107,8 +107,14 @@ function closeTutor() {
 function report(error) { notify(error.message, true); }
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }
+function clearTeacherSession() {
+  try { sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); } catch { /* bỏ qua */ }
+}
 function gateUI() {
   const gated = !session;
+  if (session) clearTeacherSession();
+  const teacherLink = document.querySelector('.teacher-link');
+  if (teacherLink) /** @type {HTMLElement} */ (teacherLink).hidden = Boolean(session);
   document.body.classList.remove('booting');
   document.body.classList.toggle('is-gated', gated);
   const gate = document.getElementById('gate');
@@ -556,6 +562,7 @@ form('login-form').addEventListener('submit', async event => {
       identity.must_change_pin = Boolean(response.must_change_pin);
       const next = {token:response.token, identity};
       await db.put('meta', 'session', next); session = next;
+      clearTeacherSession();
       draft = null; locked = false; identityUI(); renderCatalog();
       if (active) {
         const course = catalog?.courses.find(item => item.id === active?.course_id);

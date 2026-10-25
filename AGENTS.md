@@ -127,3 +127,7 @@ Mỗi bàn giao Claude → Antigravity/ChatGPT phải ghi: (1) tệp + tên hàm
 - Mọi lần phát hành giao diện học sinh: `sw.js` phải được đóng dấu lại theo byte của shell (`python tools/package_student_pwa.py --stamp`) và CI phải tự đóng dấu rồi `--check`; không deploy nếu dấu không khớp.
 - Học sinh đã cài ứng dụng phải nhận bản mới mà không bị treo: kiểm tra cập nhật định kỳ và khi mở lại, thông báo bằng hộp thoại, giữ nháp bài đang làm, chỉ tải lại sau khi người dùng đồng ý.
 - API Worker và cấu trúc IndexedDB chỉ thay đổi theo hướng tương thích ngược (thêm, không bỏ), vì bản cũ có thể còn chạy trên máy học sinh.
+
+## N. Cách ly vai trò và chữ tiếng Việt (người dùng chốt 25/10/2026)
+- Một máy chỉ giữ MỘT vai trò đăng nhập: học sinh đăng nhập thì xóa phiên giáo viên; giáo viên đăng nhập thì xóa phiên học sinh; học sinh không thấy liên kết giáo viên; trang giáo viên luôn đòi đăng nhập khi máy có phiên học sinh. Test `tests/test_role_isolation.cjs` phải xanh.
+- Cấm dùng phông thiếu dấu tiếng Việt (ví dụ Georgia). Chữ tiêu đề dùng phông tự lưu trữ có đủ U+1EA0–1EF9 (hiện là SGK Serif = Source Serif 4, giấy phép OFL), được tiền tải offline và tính vào dấu đóng gói SW. Mọi thiết kế giao diện mới phải kèm câu mẫu kiểm dấu (ế ề ể ễ ệ ố ồ ổ ỗ ộ ớ ờ ở ỡ ợ ứ ừ ử ữ ự) và `tests/test_fonts_vietnamese.cjs` xanh.

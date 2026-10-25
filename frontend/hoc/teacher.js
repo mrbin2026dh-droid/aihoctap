@@ -1,5 +1,6 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
+import * as db from './db.js';
 import {el, button, notify, renderMarkdown, dialogBox, confirmBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
 /** @typedef {import('./contracts').PrivateQuestion} PrivateQuestion */
@@ -8,6 +9,13 @@ function node(id) {const result = document.getElementById(id); if (!result) thro
 const form = /** @type {HTMLFormElement} */ (node('publish-form'));
 let token = sessionStorage.getItem('aisgk-pwa-teacher') || '';
 let mustChangePin = sessionStorage.getItem('aisgk-pwa-teacher-must-change') === 'true';
+// Cách ly vai trò: máy đang có phiên học sinh thì không giữ phiên giáo viên cũ.
+try {
+  if (await db.get('meta', 'session')) {
+    token = ''; mustChangePin = false;
+    sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change');
+  }
+} catch { /* không đọc được bộ nhớ: coi như chưa có phiên học sinh */ }
 let generation = 0;
 /** @param {Error} error */
 function fail(error) {
@@ -126,6 +134,7 @@ node('teacher-login').addEventListener('submit', async event => {
       mustChangePin = Boolean(response.must_change);
       sessionStorage.setItem('aisgk-pwa-teacher-must-change', String(mustChangePin));
       generation++;
+      await db.remove('meta', 'session').catch(() => {});   // đăng nhập giáo viên thì đăng xuất học sinh trên máy này
       sessionStorage.setItem('aisgk-pwa-teacher', token);
       loginForm.reset();
       updateAuth();
