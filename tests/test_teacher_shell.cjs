@@ -57,7 +57,7 @@ assert(await pg.isVisible('#detail-lessons'),T+'Hủy = ở lại');assert.stric
 await pg.click('#nav-exams');await pg.waitForTimeout(300);await pg.click('#msg-ok');await pg.waitForTimeout(300);
 assert(await pg.isVisible('#view-exams'));assert.strictEqual(await pg.textContent('#workspace-title'),'Kiểm tra');
 assert(await pg.isVisible('#exams-preview-note'),T+'ghi chú bản xem thử');
-await pg.click('#act-exams-new');await pg.waitForTimeout(200);assert(await pg.isDisabled('#form-exams button[type=submit]'),T+'không lưu đề giả');
+await pg.click('#act-exams-new');await pg.waitForTimeout(200);assert(!(await pg.isDisabled('#form-exams button[type=submit]')),T+'nút Lưu đề hoạt động');
 if(SHOTS)await pg.screenshot({path:`${SHOTS}/${vp.n}-3-exams.png`,fullPage:true});
 // tài liệu
 await pg.click('#nav-materials');await pg.waitForTimeout(200);await pg.click('#act-materials-new');await pg.waitForTimeout(200);

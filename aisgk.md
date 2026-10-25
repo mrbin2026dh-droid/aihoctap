@@ -836,3 +836,10 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Việc mở: lưu đề lên máy chủ (kế hoạch bước 2); `wrangler deploy` + rules vẫn chờ Antigravity (lỗi 404 analytics là do máy chủ chưa cập nhật).
 XONG nhập Excel / TIẾP THEO → Antigravity
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
+
+## 2026-10-25 - Claude - Bước 2 kiểm tra: máy chủ + quản lý đề
+- Làm: `worker/exams.js` (kiểm tra đề, trạng thái, trộn câu, chấm theo điểm từng câu), các đường `/api/pwa/teacher/exams*` và `/api/pwa/exams/{start,save,submit,review}` + danh sách; phiên thi có hạn theo đồng hồ máy chủ, ân hạn 30 giây, tự nộp phiên bỏ dở, giới hạn lượt bằng Durable Object; đề Thử làm nhiều lần. Giao diện giáo viên: Lưu đề, danh sách đề, Sửa, Mở/Đóng đề. `database.rules.json` thêm exams, exams_private, exam_sessions, attempt_details.
+- Test: tests/test_exam_backend.mjs, test_exam_import_browser.cjs (lưu đề).
+- Việc mở: màn hình thi của học sinh (bước 3); `wrangler deploy` + deploy rules (Antigravity).
+XONG bước 2 kiểm tra / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."

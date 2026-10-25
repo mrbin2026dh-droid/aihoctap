@@ -145,7 +145,7 @@
 </section>
 </section>
 <section id="view-exams" hidden aria-label="Kiểm tra">
-<p class="notice t-warning" role="note" id="exams-preview-note">Phân hệ Kiểm tra đang được xây dựng. Đây là bản xem thử giao diện với dữ liệu [THỬ]; chưa lưu hoặc giao đề thật được.</p>
+<p class="notice t-warning" role="note" id="exams-preview-note">Đề kiểm tra đã lưu được trên máy chủ. Màn hình làm bài của học sinh đang được xây dựng; hai mục Theo dõi và Thống kê bên dưới vẫn là dữ liệu minh họa.</p>
 <section id="list-exams" class="t-list">
 <h2 class="visually-hidden">Đề kiểm tra</h2>
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-exams-new" class="t-button t-primary" data-action="new-exams" >Thêm đề kiểm tra</button></div>
@@ -162,20 +162,7 @@
 <th scope="col">Thao tác</th>
 </tr>
 </thead>
-<tbody>
-<tr>
-<td data-label="Tên đề">Kiểm tra giữa kỳ I — Tin học 9 [THỬ]</td>
-<td data-label="Lớp / Môn">9A · Tin học</td>
-<td data-label="Loại / Thời lượng">Giữa kỳ · 45 phút</td>
-<td data-label="Mở – Đóng">08:00 – 09:00<br>25/10/2026</td>
-<td data-label="Trạng thái"><span class="t-badge">Nháp</span>
-</td>
-<td class="t-number" data-label="Bài nộp">0</td>
-<td data-label="Thao tác">
-<div class="t-icon-actions" role="group" aria-label="Thao tác"><button type="button" id="act-exams-edit-exam" class="t-icon-btn" data-icon="edit" aria-label="Sửa bài kiểm tra" title="Sửa bài kiểm tra" data-action="edit-exam" data-id="sample-01"></button><button type="button" id="act-exams-lock-exam" class="t-icon-btn" data-icon="lock" aria-label="Khóa bài kiểm tra" title="Khóa bài kiểm tra" data-action="lock-exam" disabled aria-disabled="true" data-id="sample-01"></button><button type="button" id="act-exams-monitor-exam" class="t-icon-btn" data-icon="monitor" aria-label="Theo dõi học sinh" title="Theo dõi học sinh" data-action="monitor-exam" data-id="sample-01"></button><button type="button" id="act-exams-stats-exam" class="t-icon-btn" data-icon="stats" aria-label="Thống kê bài kiểm tra" title="Thống kê bài kiểm tra" data-action="stats-exam" data-id="sample-01"></button><button type="button" id="act-exams-delete-exam" class="t-icon-btn t-danger" data-icon="trash" aria-label="Xóa bài kiểm tra" title="Xóa bài kiểm tra" data-action="delete-exam" disabled aria-disabled="true" data-id="sample-01"></button></div>
-</td>
-</tr>
-</tbody>
+<tbody id="exams-tbody"><tr><td colspan="7" class="t-muted">Chưa tải danh sách đề.</td></tr></tbody>
 </table>
 </section>
 <section id="detail-exams" hidden class="t-detail"><button type="button" id="act-exams-edit-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
@@ -210,7 +197,7 @@
 <h3>Câu hỏi từ file Excel</h3>
 <div id="exam-import-preview"><p class="t-muted">Chưa tải file. Bấm "Tải mẫu Excel đề", điền câu hỏi và điểm từng câu rồi tải lên.</p></div>
 </section>
-<div class="t-actions"><button type="submit" class="t-button t-primary" data-action="save-exam" disabled aria-disabled="true">Lưu đề</button>
+<div class="t-actions"><button type="submit" class="t-button t-primary" data-action="save-exam" id="save-exam">Lưu đề</button><p class="t-hint" id="exam-save-status" role="status"></p>
 </div>
 </form>
 </section>

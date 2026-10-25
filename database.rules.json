@@ -75,6 +75,18 @@
       ".read": false,
       ".write": "auth != null && auth.token.admin === true"
     },
+    "exams": {
+      ".read": false,
+      ".write": false
+    },
+    "exams_private": {
+      ".read": false,
+      ".write": false
+    },
+    "exam_sessions": {
+      ".read": false,
+      ".write": false
+    },
     "attempt_details": {
       ".read": "auth != null && auth.token.admin === true",
       ".write": "auth != null && auth.token.admin === true"

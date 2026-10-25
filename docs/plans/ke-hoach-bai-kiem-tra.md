@@ -55,7 +55,7 @@ Chống gian lận mức hợp lý (không hứa hơn khả năng của trình d
 
 ## 6. Thứ tự làm
 1. (xong) Menu "Thi" học sinh, trường "Hình thức" trên form giáo viên.
-2. Mô hình dữ liệu + Worker `exams/start|save|submit|list` + test (hết giờ, hết lượt, ngoài giờ mở, lớp khác, nộp trùng, ân hạn).
+2. (xong 2026-10-25) Mô hình dữ liệu + Worker `exams/start|save|submit|list|review` + quản lý đề của giáo viên + test (hết giờ, hết lượt, ngoài giờ mở, lớp khác, nộp trùng, ân hạn). Ghi chú thực hiện: chỉ trộn thứ tự câu (không trộn đáp án); nộp quá ân hạn thì chỉ tính phần đã lưu (không từ chối, để học sinh không mất bài); phiên bỏ dở được máy chủ tự nộp khi học sinh vào lại; đề Thử dùng cùng đường start/submit, không giờ, không giới hạn lượt; bài thi tách khỏi thống kê luyện tập nhưng vào báo cáo điểm yếu của giáo viên.
 3. Màn hình thi học sinh (có test hành vi: đồng hồ, bảng câu, đánh dấu, nộp, hết giờ, mất mạng, khôi phục).
 4. Giáo viên: quản lý đề, nhập Excel, báo cáo kết quả.
 5. Thi thử với một lớp, đo và sửa trước khi dùng thật.

@@ -17,6 +17,7 @@ import {
   SecurityConfigContract,
   TutorContract
 } from './contracts.js';
+import {validateExamInput, examState, examTargetsStudent, studentExamView, questionOrder, sessionDeadline, cleanAnswers, gradeExam, canRevealAnswers, isExamId, GRACE_MS} from './exams.js';
 
 // Base64URL encoding / decoding (RFC 7515)
 export function base64UrlEncode(bufferOrStr) {
@@ -1410,12 +1411,12 @@ function mergeDetails(records, details) {
 }
 
 /** Tải mọi bài học công khai được nhắc tới trong danh sách bài nộp. */
-async function loadLessonsFor(env, records) {
+async function loadLessonsFor(env, records, signingKeys = null) {
   const keys = new Set(records.map(r => `${r.course_id}:${r.lesson_id}`));
   const out = {};
   await Promise.all([...keys].map(async key => {
     const [c, l] = key.split(':');
-    const lesson = await loadPublicLesson(env, c, l);
+    const lesson = await loadPublicLesson(env, c, l, signingKeys);
     if (lesson) out[key] = lesson;
   }));
   return out;
@@ -1426,9 +1427,10 @@ async function loadLessonsFor(env, records) {
  * Không tin dữ liệu bài học do trình duyệt gửi lên.
  * @returns {Promise<{content_markdown?:string,title?:string,questions?:any[]}|null>}
  */
-async function loadPublicLesson(env, courseId, lessonId) {
+async function loadPublicLesson(env, courseId, lessonId, signingKeys = null) {
   if (!IdValidationContract.isValidId(courseId || '') || !IdValidationContract.isValidId(lessonId || '')) return null;
   try {
+    if (courseId === 'exam') return await dbGet(env, signingKeys, `exams/${lessonId}`);
     if (env.FIREBASE_DATABASE_URL) {
       const res = await fetch(`${env.FIREBASE_DATABASE_URL}/packages/${encodeURIComponent(`${courseId}:${lessonId}`)}.json`);
       if (res.ok) return (await res.json()) || null;
@@ -1439,6 +1441,210 @@ async function loadPublicLesson(env, courseId, lessonId) {
     console.error('[TUTOR_LESSON_LOAD_ERROR]', e?.message || e);
   }
   return null;
+}
+
+
+// ---------- Kho dữ liệu cho bài kiểm tra: Firebase RTDB (quyền quản trị của Worker) hoặc bộ nhớ khi chạy thử ----------
+function mockStore(env) { if (!env.__MOCK_DB) env.__MOCK_DB = new Map(); return env.__MOCK_DB; }
+async function dbGet(env, signingKeys, path) {
+  if (env.FIREBASE_DATABASE_URL) {
+    const token = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+    const res = await fetch(`${env.FIREBASE_DATABASE_URL}/${path}.json`, { headers: getRtdbHeaders(token) });
+    if (!res.ok) throw new Error(`RTDB đọc ${path}: HTTP ${res.status}`);
+    return await res.json();
+  }
+  if (!SecurityConfigContract.isMockModeAllowed(env)) throw new Error('Thiếu FIREBASE_DATABASE_URL');
+  const store = mockStore(env);
+  if (store.has(path)) return JSON.parse(store.get(path));
+  const prefix = path + '/'; let out = null;
+  for (const [key, raw] of store) {
+    if (!key.startsWith(prefix)) continue;
+    const parts = key.slice(prefix.length).split('/'); out = out || {};
+    let node = out; parts.slice(0, -1).forEach(part => { node = node[part] = node[part] || {}; });
+    node[parts[parts.length - 1]] = JSON.parse(raw);
+  }
+  return out;
+}
+async function dbPut(env, signingKeys, path, value) {
+  if (env.FIREBASE_DATABASE_URL) {
+    const token = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+    const res = await fetch(`${env.FIREBASE_DATABASE_URL}/${path}.json`, { method: 'PUT', headers: getRtdbHeaders(token), body: JSON.stringify(value) });
+    if (!res.ok) throw new Error(`RTDB ghi ${path}: HTTP ${res.status}`);
+    return;
+  }
+  if (!SecurityConfigContract.isMockModeAllowed(env)) throw new Error('Thiếu FIREBASE_DATABASE_URL');
+  const store = mockStore(env);
+  for (const key of [...store.keys()]) if (key === path || key.startsWith(path + '/')) store.delete(key);
+  store.set(path, JSON.stringify(value));
+}
+
+/** Số lượt đã nộp và điểm cao nhất của một học sinh cho từng đề. */
+function examAttemptStats(attemptsOfUser) {
+  const stats = {};
+  for (const a of Object.values(attemptsOfUser || {})) {
+    if (!a || !a.exam_id) continue;
+    const row = stats[a.exam_id] || (stats[a.exam_id] = { used: 0, best: null });
+    row.used += 1; if (typeof a.score === 'number' && (row.best === null || a.score > row.best)) row.best = a.score;
+  }
+  return stats;
+}
+
+/** Chấm và ghi bài thi (dùng chung cho nộp thường, nộp muộn và tự nộp khi phiên đã hết hạn). */
+async function finalizeExamAttempt({ env, signingKeys, gateStub, uid, claims, exam, secret, session, answers, late, now }) {
+  const graded = gradeExam(exam, secret, cleanAnswers(exam, answers));
+  const record = {
+    attempt_id: session.attempt_id, course_id: 'exam', lesson_id: exam.exam_id, exam_id: exam.exam_id, mode: exam.mode, status: 'submitted',
+    score: graded.score, correct: graded.correct, total: graded.total, earned: graded.earned, total_points: graded.total_points,
+    needs_review: graded.needs_review, submitted_at: now, late: late || undefined, message: late ? 'Bài được nộp sau giờ; chỉ tính phần đã lưu trước khi hết giờ.' : 'Nộp bài thành công.'
+  };
+  const sub = await gateStub.fetch('http://do/save-submission', { method: 'POST', body: JSON.stringify({
+    idempotencyKey: `${uid}:${session.attempt_id}`, countKey: `${uid}:exam:${exam.exam_id}`, result: record, maxAttempts: exam.mode === 'real' ? exam.max_attempts : 100000 }) });
+  const subData = await sub.json();
+  if (sub.status !== 200) return { status: sub.status, body: subData.body || subData };
+  const stored = { ...record, student_name: claims?.name ? String(claims.name) : undefined, class_code: claims?.class_code ? String(claims.class_code) : undefined, grade: claims?.grade ?? undefined };
+  await dbPut(env, signingKeys, `attempts/${uid}/${session.attempt_id}`, stored);
+  await dbPut(env, signingKeys, `attempt_details/${uid}/${session.attempt_id}`, { per_question: graded.perQuestion });
+  if (!env.FIREBASE_DATABASE_URL && SecurityConfigContract.isMockModeAllowed(env)) { env.TEST_ALL_RESULTS = env.TEST_ALL_RESULTS || []; env.TEST_ALL_RESULTS.push({ uid, ...stored, per_question: graded.perQuestion }); }
+  const finished = { ...session, submitted_at: now, ack: record, answers: cleanAnswers(exam, answers) };
+  await dbPut(env, signingKeys, `exam_sessions/${uid}/${exam.exam_id}`, finished);
+  return { status: 200, body: { ...record, answers_key: canRevealAnswers(exam, now, true) ? secret.answers : undefined } };
+}
+
+/** Các đường dẫn /api/pwa/exams/* (học sinh) và /api/pwa/teacher/exams* (giáo viên). Trả null nếu không phải. */
+async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, gateStub }) {
+  const path = url.pathname;
+  const isStudent = path.startsWith('/api/pwa/exams');
+  const isTeacher = path.startsWith('/api/pwa/teacher/exams');
+  if (!isStudent && !isTeacher) return null;
+  const respond = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const sub = path.replace(/^\/api\/pwa\/(teacher\/)?exams\/?/, '');
+  const now = Date.now();
+  try {
+    if (isTeacher) {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+      if (sub === '' && request.method === 'POST') {
+        const body = await request.json().catch(() => null);
+        const checked = validateExamInput(body, isExamId(body?.exam_id) ? body.exam_id : null);
+        if (checked.error) return respond({ detail: checked.error }, 400);
+        const old = await dbGet(env, signingKeys, `exams/${checked.exam.exam_id}`);
+        await dbPut(env, signingKeys, `exams/${checked.exam.exam_id}`, { ...checked.exam, created_at: old?.created_at || now, updated_at: now });
+        await dbPut(env, signingKeys, `exams_private/${checked.exam.exam_id}`, checked.secret);
+        return respond({ exam_id: checked.exam.exam_id, status: checked.exam.status });
+      }
+      if (sub === '' && request.method === 'GET') {
+        const exams = (await dbGet(env, signingKeys, 'exams')) || {};
+        const counts = {};
+        const all = (await dbGet(env, signingKeys, 'attempts')) || {};
+        for (const byUser of Object.values(all)) for (const a of Object.values(byUser || {})) if (a?.exam_id) counts[a.exam_id] = (counts[a.exam_id] || 0) + 1;
+        const list = Object.values(exams).map(e => ({ exam_id: e.exam_id, title: e.title, grade: e.grade, class_codes: e.class_codes, mode: e.mode, kind: e.kind, minutes: e.minutes, opens_at: e.opens_at, closes_at: e.closes_at,
+          status: e.status, state: examState(e, now), question_count: e.question_count, total_points: e.total_points, submissions: counts[e.exam_id] || 0, updated_at: e.updated_at }))
+          .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+        return respond({ exams: list });
+      }
+      const m = sub.match(/^([^/]+)(?:\/(status))?$/);
+      if (m && isExamId(m[1])) {
+        const exam = await dbGet(env, signingKeys, `exams/${m[1]}`);
+        if (!exam) return respond({ detail: 'Không tìm thấy đề kiểm tra.' }, 404);
+        if (!m[2] && request.method === 'GET') {
+          const secret = (await dbGet(env, signingKeys, `exams_private/${m[1]}`)) || { answers: {} };
+          return respond({ ...exam, questions: exam.questions.map(q => ({ ...q, correct_answer: secret.answers?.[q.id] || '' })) });
+        }
+        if (m[2] === 'status' && request.method === 'POST') {
+          const body = await request.json().catch(() => ({}));
+          if (!['draft', 'open', 'closed'].includes(body.status)) return respond({ detail: 'Trạng thái không hợp lệ.' }, 400);
+          await dbPut(env, signingKeys, `exams/${m[1]}`, { ...exam, status: body.status, updated_at: now });
+          return respond({ exam_id: m[1], status: body.status });
+        }
+      }
+      return respond({ detail: 'Endpoint không tồn tại.' }, 404);
+    }
+
+    // ----- Học sinh -----
+    const authHeader = request.headers.get('Authorization') || '';
+    if (!authHeader.startsWith('Bearer ')) return respond({ detail: 'Thiếu token xác thực.' }, 401);
+    const verified = await verifyJwtToken(authHeader.slice(7).trim(), signingKeys?.publicKey);
+    if (!verified.valid) return respond({ detail: verified.error }, 401);
+    const uid = verified.payload.uid; const claims = verified.payload.claims || {};
+    if (!uid || !IdValidationContract.isValidId(uid) || claims.grade === undefined) return respond({ detail: 'Tài khoản học sinh không hợp lệ.' }, 403);
+    const myAttempts = (await dbGet(env, signingKeys, `attempts/${uid}`)) || {};
+    const stats = examAttemptStats(myAttempts);
+    const loadExam = async id => {
+      if (!isExamId(id)) return null;
+      const exam = await dbGet(env, signingKeys, `exams/${id}`);
+      return exam && exam.status !== 'draft' && examTargetsStudent(exam, claims.grade, claims.class_code) ? exam : null;
+    };
+
+    if (sub === '' && request.method === 'GET') {
+      const exams = Object.values((await dbGet(env, signingKeys, 'exams')) || {}).filter(e => e.status !== 'draft' && examTargetsStudent(e, claims.grade, claims.class_code));
+      const sessions = (await dbGet(env, signingKeys, `exam_sessions/${uid}`)) || {};
+      const order = { open: 0, upcoming: 1, closed: 2 };
+      const list = exams.map(e => {
+        const st = stats[e.exam_id] || { used: 0, best: null }; const state = examState(e, now); const ses = sessions[e.exam_id];
+        const inProgress = Boolean(ses && !ses.submitted_at && (e.mode === 'trial' || now <= ses.deadline + GRACE_MS));
+        return { exam_id: e.exam_id, title: e.title, mode: e.mode, kind: e.kind, minutes: e.minutes, opens_at: e.opens_at, closes_at: e.closes_at, state,
+          question_count: e.question_count, total_points: e.total_points, attempts_used: st.used, attempts_left: e.mode === 'real' ? Math.max(0, e.max_attempts - st.used) : null,
+          best_score: st.best, in_progress: inProgress, server_now: now };
+      }).sort((a, b) => order[a.state] - order[b.state] || (a.opens_at || 0) - (b.opens_at || 0));
+      return respond({ exams: list, server_now: now });
+    }
+
+    const body = request.method === 'GET' ? {} : await request.json().catch(() => ({}));
+    const examId = body.exam_id || url.searchParams.get('exam_id');
+    const exam = await loadExam(examId);
+    if (!exam) return respond({ detail: 'Không tìm thấy bài kiểm tra của lớp em.' }, 404);
+    const secret = (await dbGet(env, signingKeys, `exams_private/${exam.exam_id}`)) || { answers: {}, points: {} };
+    const sessionPath = `exam_sessions/${uid}/${exam.exam_id}`;
+    let session = await dbGet(env, signingKeys, sessionPath);
+    const expired = s => exam.mode === 'real' && now > s.deadline + GRACE_MS;
+    const st = stats[exam.exam_id] || { used: 0, best: null };
+
+    if (sub === 'start' && request.method === 'POST') {
+      const state = examState(exam, now);
+      if (session && !session.submitted_at && expired(session)) {
+        // Phiên cũ đã quá hạn mà chưa nộp: máy chủ tự nộp phần đã lưu để không mất bài.
+        const done = await finalizeExamAttempt({ env, signingKeys, gateStub, uid, claims, exam, secret, session, answers: session.answers || {}, late: true, now });
+        if (done.status === 200) st.used += 1;
+        session = null;
+      }
+      if (session && !session.submitted_at) {
+        return respond({ ...studentExamView(exam, session.order), attempt_id: session.attempt_id, attempt_no: session.attempt_no, started_at: session.started_at, deadline: session.deadline, answers: session.answers || {}, resumed: true, server_now: now });
+      }
+      if (state === 'draft' || state === 'closed') return respond({ detail: 'Bài kiểm tra đã đóng.' }, 403);
+      if (state === 'upcoming') return respond({ detail: 'Bài kiểm tra chưa đến giờ mở.' }, 403);
+      if (exam.mode === 'real' && st.used >= exam.max_attempts) return respond({ detail: 'Em đã dùng hết số lần làm bài.' }, 403);
+      const bytes = new Uint8Array(8); crypto.getRandomValues(bytes);
+      const attemptId = 'x' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+      const created = { attempt_id: attemptId, attempt_no: st.used + 1, started_at: now, deadline: exam.mode === 'real' ? sessionDeadline(exam, now) : null, order: questionOrder(exam, `${uid}:${attemptId}`), answers: {}, saved_at: now };
+      await dbPut(env, signingKeys, sessionPath, created);
+      return respond({ ...studentExamView(exam, created.order), attempt_id: attemptId, attempt_no: created.attempt_no, started_at: now, deadline: created.deadline, answers: {}, resumed: false, server_now: now });
+    }
+
+    if (sub === 'save' && request.method === 'PUT') {
+      if (!session || session.submitted_at || session.attempt_id !== body.attempt_id) return respond({ detail: 'Không có phiên làm bài đang mở.' }, 409);
+      if (expired(session)) return respond({ detail: 'Đã hết giờ làm bài.' }, 403);
+      session = { ...session, answers: cleanAnswers(exam, body.answers), saved_at: now };
+      await dbPut(env, signingKeys, sessionPath, session);
+      return respond({ saved_at: now, server_now: now, deadline: session.deadline });
+    }
+
+    if (sub === 'submit' && request.method === 'POST') {
+      if (session?.submitted_at && session.attempt_id === body.attempt_id) return respond({ ...session.ack, answers_key: canRevealAnswers(exam, now, true) ? secret.answers : undefined });
+      if (!session || session.attempt_id !== body.attempt_id) return respond({ detail: 'Không tìm thấy phiên làm bài. Hãy vào lại bài kiểm tra.' }, 404);
+      const late = expired(session);
+      const done = await finalizeExamAttempt({ env, signingKeys, gateStub, uid, claims, exam, secret, session, answers: late ? (session.answers || {}) : (body.answers ?? session.answers ?? {}), late, now });
+      return respond(done.body, done.status);
+    }
+
+    if (sub === 'review' && request.method === 'GET') {
+      if (!canRevealAnswers(exam, now, st.used > 0)) return respond({ detail: 'Chưa được xem đáp án.' }, 403);
+      return respond({ exam_id: exam.exam_id, answers_key: secret.answers });
+    }
+    return respond({ detail: 'Endpoint không tồn tại.' }, 404);
+  } catch (e) {
+    console.error('[EXAM_ROUTE_ERROR]', path, e?.message || e);
+    return respond({ detail: 'Máy chủ chưa xử lý được yêu cầu bài kiểm tra. Hãy thử lại.' }, 502);
+  }
 }
 
 export const WORKER_SOCRATIC_PROMPT = `Bạn là Thầy/Cô Trợ lý Sư phạm Tin học THCS, giảng dạy theo chuẩn Sách giáo khoa Tin học.
@@ -1985,9 +2191,9 @@ export default {
           if (dres.ok) attemptsWithDetail = mergeDetails(attempts.map(a => ({ ...a, uid: uidKey })), { [uidKey]: await dres.json() });
         } catch (e) { console.error('[RTDB_PROGRESS_DETAIL_ERROR]', e); }
       }
-      const lessonsForReview = await loadLessonsFor(env, attempts);
+      const lessonsForReview = await loadLessonsFor(env, attempts, signingKeys);
       const review = reviewTopicsForStudent(attemptsWithDetail, lessonsForReview);
-      attempts = attempts.map(publicAttempt);
+      attempts = attempts.filter(a => !a.exam_id).map(publicAttempt);
       return new Response(JSON.stringify({ attempts, review }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -2523,6 +2729,12 @@ export default {
       });
     }
 
+    // Bài kiểm tra Thử / Thật
+    if (url.pathname.startsWith('/api/pwa/exams') || url.pathname.startsWith('/api/pwa/teacher/exams')) {
+      const examResponse = await handleExamRoutes({ request, url, env, signingKeys, corsHeaders, gateStub });
+      if (examResponse) return examResponse;
+    }
+
     // Teacher Analytics: /api/pwa/teacher/analytics - điểm yếu theo bài, câu, chủ đề, học sinh
     if (url.pathname === '/api/pwa/teacher/analytics' && request.method === 'GET') {
       const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
@@ -2547,7 +2759,7 @@ export default {
           if (dres.ok) records = mergeDetails(records, await dres.json());
         } catch (e) { console.error('[RTDB_DETAILS_ERROR]', e); }
       }
-      const lessons = await loadLessonsFor(env, records);
+      const lessons = await loadLessonsFor(env, records, signingKeys);
       return new Response(JSON.stringify(analyzeAttempts(records, lessons)), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 

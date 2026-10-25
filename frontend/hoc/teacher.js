@@ -237,6 +237,95 @@ async function importExamFile(file) {
 const examFileInput = /** @type {HTMLInputElement|null} */ (document.getElementById('field-exam-file'));
 examFileInput?.addEventListener('change', () => { const file = examFileInput.files?.[0]; if (file) importExamFile(file).catch(e => notify(e instanceof Error ? e.message : 'Chưa đọc được file.', true)).finally(() => { examFileInput.value = ''; }); });
 document.getElementById('act-exams-template')?.addEventListener('click', () => { downloadExamTemplate().catch(e => notify(e instanceof Error ? e.message : 'Chưa tạo được file mẫu.', true)); });
+/** @type {string|null} */
+let editingExamId = null;
+const EXAM_STATE_TEXT = {draft: 'Nháp', upcoming: 'Sắp mở', open: 'Đang mở', closed: 'Đã đóng'};
+/** @param {number|null|undefined} ms */
+function dateText(ms) { return ms ? new Date(ms).toLocaleString('vi-VN', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '—'; }
+/** @param {number|null|undefined} ms */
+function localInput(ms) { if (!ms) return ''; const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); }
+/** @param {string} id */
+function examField(id) { return /** @type {HTMLInputElement} */ (node(`field-${id}`)); }
+function resetExamForm() {
+  editingExamId = null; importedExam = {questions: [], total_points: 0};
+  /** @type {HTMLFormElement} */ (node('form-exams')).reset();
+  node('exam-import-preview').replaceChildren(el('p', 'Chưa tải file. Bấm "Tải mẫu Excel đề", điền câu hỏi và điểm từng câu rồi tải lên.', 't-muted'));
+  node('exam-save-status').textContent = '';
+  examField('exam_mode').dispatchEvent(new Event('change'));
+}
+async function loadExams() {
+  const captured = generation;
+  const body = node('exams-tbody');
+  /** @type {any} */ let data;
+  try { data = await api('/pwa/teacher/exams', {token}); }
+  catch (error) {
+    if (isAuthError(error)) throw error;
+    if (captured === generation) { const tr = el('tr'); const td = el('td', error instanceof ApiError && error.status === 404 ? 'Máy chủ chưa cập nhật phần kiểm tra. Hãy triển khai bản máy chủ mới rồi tải lại.' : 'Chưa tải được danh sách đề.', 't-muted'); td.colSpan = 7; tr.append(td); body.replaceChildren(tr); }
+    return;
+  }
+  if (captured !== generation || !token) return;
+  body.replaceChildren();
+  const exams = Array.isArray(data?.exams) ? data.exams : [];
+  if (!exams.length) { const tr = el('tr'); const td = el('td', 'Chưa có đề kiểm tra. Bấm "Thêm đề kiểm tra".', 't-muted'); td.colSpan = 7; tr.append(td); body.append(tr); return; }
+  for (const e of exams) {
+    const tr = el('tr'); /** @param {string} label @param {Node|string} content */
+    const cell = (label, content) => { const td = el('td'); td.dataset.label = label; td.append(content); tr.append(td); return td; };
+    cell('Tên đề', e.title);
+    cell('Lớp / Môn', `Lớp ${e.grade}${e.class_codes?.length ? ' · ' + e.class_codes.join(', ') : ''}`);
+    cell('Loại / Thời lượng', e.mode === 'real' ? `Thật · ${e.minutes} phút` : 'Thử · không giới hạn giờ');
+    cell('Mở – Đóng', e.mode === 'real' ? `${dateText(e.opens_at)} – ${dateText(e.closes_at)}` : '—');
+    cell('Trạng thái', el('span', EXAM_STATE_TEXT[/** @type {keyof typeof EXAM_STATE_TEXT} */ (e.state)] || e.state, `t-badge${e.state === 'closed' ? ' t-badge-error' : ''}`));
+    const n = cell('Bài nộp', String(e.submissions)); n.className = 't-number';
+    const actions = el('div', '', 't-actions-inline');
+    actions.append(button('Sửa', () => editExam(e.exam_id).catch(fail), 't-button'));
+    const toggle = e.status === 'open' ? ['Đóng đề', 'closed'] : ['Mở đề', 'open'];
+    actions.append(button(toggle[0], () => setExamStatus(e.exam_id, toggle[1]).catch(fail), 't-button'));
+    cell('Thao tác', actions); body.append(tr);
+  }
+}
+/** @param {string} id @param {string} status */
+async function setExamStatus(id, status) {
+  await api(`/pwa/teacher/exams/${id}/status`, {method: 'POST', token, body: {status}});
+  notify(status === 'open' ? 'Đã mở đề cho học sinh.' : 'Đã đóng đề.');
+  await loadExams();
+}
+/** @param {string} id */
+async function editExam(id) {
+  const exam = await api(`/pwa/teacher/exams/${id}`, {token});
+  resetExamForm(); editingExamId = id;
+  examField('exam_title').value = exam.title; examField('exam_grade').value = String(exam.grade); examField('exam_kind').value = exam.kind; examField('exam_mode').value = exam.mode;
+  examField('exam_mode').dispatchEvent(new Event('change'));
+  examField('exam_minutes').value = exam.minutes ?? ''; examField('exam_open').value = localInput(exam.opens_at); examField('exam_close').value = localInput(exam.closes_at);
+  examField('exam_attempts').value = String(exam.max_attempts ?? 1); examField('exam_answers').value = exam.reveal; examField('exam-shuffle').checked = Boolean(exam.shuffle);
+  importedExam = {questions: exam.questions.map(/** @param {any} q @param {number} i */ (q, i) => ({row: i + 2, kind: q.kind, prompt: q.prompt, options: q.options, correct_answer: q.correct_answer, points: q.points, topic: q.topic || '', hint: q.hint || ''})), total_points: exam.total_points};
+  node('exam-import-preview').replaceChildren(el('p', `Đề đang có ${exam.questions.length} câu, tổng ${String(exam.total_points).replace('.', ',')} điểm. Tải file Excel mới nếu muốn thay toàn bộ câu hỏi.`, 'notice success'));
+  await ui.showSub('detail-exams');
+}
+document.getElementById('act-exams-new')?.addEventListener('click', resetExamForm);
+document.getElementById('form-exams')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const status = node('exam-save-status'); status.textContent = ''; const real = examField('exam_mode').value === 'real';
+  const title = examField('exam_title');
+  if (!title.value.trim()) { setFieldError(title, 'Nhập tiêu đề đề kiểm tra.'); title.focus(); return; }
+  setFieldError(title, '');
+  if (!importedExam.questions.length) { status.textContent = 'Chưa có câu hỏi. Hãy tải file Excel câu hỏi hợp lệ lên trước.'; return; }
+  const ms = (/** @type {string} */ id) => { const v = examField(id).value; return v ? new Date(v).getTime() : NaN; };
+  const payload = {
+    exam_id: editingExamId || undefined, title: title.value.trim(), grade: Number(examField('exam_grade').value), subject_id: examField('exam_subject').value, mode: examField('exam_mode').value,
+    kind: examField('exam_kind').value, minutes: real ? Number(examField('exam_minutes').value) : undefined, opens_at: real ? ms('exam_open') : undefined, closes_at: real ? ms('exam_close') : undefined,
+    max_attempts: real ? Number(examField('exam_attempts').value) : undefined, shuffle: examField('exam-shuffle').checked, reveal: examField('exam_answers').value, status: 'draft',
+    questions: importedExam.questions.map(({kind, prompt, options, correct_answer, points, topic, hint}) => ({kind, prompt, options, correct_answer, points, topic, hint}))
+  };
+  const submit = /** @type {HTMLButtonElement} */ (node('save-exam'));
+  await withBusy(submit, 'Đang lưu…', async () => {
+    try {
+      if (editingExamId) { const old = await api(`/pwa/teacher/exams/${editingExamId}`, {token}); payload.status = old.status; }
+      const res = await api('/pwa/teacher/exams', {method: 'POST', token, body: payload});
+      notify(payload.status === 'open' ? 'Đã lưu đề (đang mở).' : 'Đã lưu đề ở trạng thái nháp. Bấm "Mở đề" trong danh sách khi sẵn sàng giao cho học sinh.');
+      editingExamId = res.exam_id; await loadExams(); await ui.showSub('list-exams');
+    } catch (error) { if (isAuthError(error)) { fail(error); return; } status.textContent = mapErrorMessage(error); }
+  });
+});
 const LEVEL_TEXT = {weak: 'Yếu', fair: 'Cần củng cố', good: 'Tốt', none: 'Chưa có'};
 /** @param {number|null} percent @param {string} level */
 function levelBar(percent, level) {
@@ -322,7 +411,7 @@ node('teacher-login').addEventListener('submit', async event => {
       updateAuth();
       ui.reset();
       if (!mustChangePin) {
-        const parts = [['danh sách bài', refresh], ['bài học sinh đã nộp', results], ['báo cáo điểm yếu', loadAnalytics], ['khóa Gemini', loadGeminiKeys], ['hạn mức AI', loadAiUsage], ['danh sách học sinh', loadStudents]];
+        const parts = [['danh sách bài', refresh], ['bài học sinh đã nộp', results], ['báo cáo điểm yếu', loadAnalytics], ['danh sách đề kiểm tra', loadExams], ['khóa Gemini', loadGeminiKeys], ['hạn mức AI', loadAiUsage], ['danh sách học sinh', loadStudents]];
         const settled = await Promise.allSettled(parts.map(([, fn]) => fn()));
         const failed = parts.filter((_, i) => settled[i].status === 'rejected').map(([name]) => name);
         if (failed.length) notify(`Đã đăng nhập nhưng chưa tải được: ${failed.join(', ')}. Tải lại trang để thử lại.`, true);
@@ -1005,7 +1094,7 @@ node('teacher-must-change-form')?.addEventListener('submit', async event => {
       formEl.reset();
       updateAuth();
       ui.reset();
-      await refresh(); await results(); await loadAnalytics(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents();
+      await refresh(); await results(); await loadAnalytics(); await loadExams(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents();
       notify('Đổi mã PIN giáo viên thành công. Đã mở khóa quyền quản trị.');
     } catch (e) {
       errNode.textContent = mapErrorMessage(e);
@@ -1082,6 +1171,7 @@ if (token && !mustChangePin) {
     if (captured === generation) {
       results();
       loadAnalytics().catch(fail);
+      loadExams().catch(fail);
       loadGeminiKeys();
       loadAiUsage();
       loadStudents();
