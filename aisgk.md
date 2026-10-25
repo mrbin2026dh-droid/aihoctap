@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Claude ACCEPT phát hành đợt 3 (Pages) theo docs/handoff/claude-antigravity-release-3.md. Antigravity thực hiện phát hành đợt 3: mốc rollback Pages f1a2c4ad1d1169dec7bfc408f93c0d5513df9dfb; đóng dấu SW; chạy 17/17 test suites PASS; quét bí mật rỗng; push main; chạy smoke test thật S1–S5 và bàn giao Người dùng kiểm tay docs/guides/kiem-tay-dot-3.md.
+- Yêu cầu mới nhất: Antigravity phát hành đợt 4 (Cổng đăng nhập bắt buộc & Dọn dẹp dữ liệu) theo docs/handoff/claude-antigravity-release-4-gate.md. Mốc rollback 794453138c56613d10e04a179cd0a0120b1ca7ef; SW cache bf2a34e5c4d74f141241c247; 17/17 test suites + test_login_gate 7/7 PASS; đã đặt lại PIN khởi tạo giáo viên và dọn dẹp sạch students_auth trên RTDB (đếm lại = 0). Bàn giao Người dùng kiểm tay.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -20,7 +20,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 - Preview đã kiểm tra: `http://127.0.0.1:8769/hoc/`, teacher `/hoc/teacher.html`; DB riêng `scratch/pwa-preview/student.sqlite3`. ZIP PWA mới: `scratch/student-pwa.zip`.
 - Kế hoạch chuyển đổi mới: Chuyển đổi sang kiến trúc Firebase Serverless (Zero-Server) để vận hành 100% không cần máy chủ riêng, chi tiết tại [docs/plans/2026-10-24-firebase-serverless-migration.md](docs/plans/2026-10-24-firebase-serverless-migration.md).
 - Bước tiếp theo để cài trên điện thoại thật: Bật GitHub Pages trên repository `aihoctap` (hoặc kết nối triển khai Render/Vercel) để có URL HTTPS hợp lệ cho trình duyệt điện thoại (Chrome/Safari) kích hoạt tính năng cài đặt PWA và Service Worker.
-- Định tuyến 3 AI (ChatGPT/Codex, Antigravity, Claude): xem phần đầu `AGENTS.md`; mẫu bàn giao ở `docs/handoff/README.md`. Việc mở: C1 và bộ tài khoản đã ACCEPT (MOCK). Antigravity phát hành thử đợt 2 theo `docs/handoff/claude-antigravity-release-2.md`; người dùng kiểm tay `docs/guides/kiem-tay-dot-1.md` và ghi lỗi vào `docs/handoff/nguoidung-release-1-loi.md`. Sau đó: ghép mockup đăng nhập của ChatGPT (`docs/design/login`) vào ứng dụng; hoãn tài liệu PDF/Apps Script. | UI đăng nhập: Antigravity sửa U1–U6 (claude-antigravity-login-ui-fix.md) rồi Claude thẩm định lại. | Settings: Antigravity sửa S1–S5 (claude-antigravity-settings-fix.md). | PWA: Antigravity sửa P1–P7 (claude-antigravity-pwa-update.md), rồi Claude ACCEPT và deploy đợt 3.
+- Định tuyến 3 AI (ChatGPT/Codex, Antigravity, Claude): xem phần đầu `AGENTS.md`; mẫu bàn giao ở `docs/handoff/README.md`. Việc mở: C1 và bộ tài khoản đã ACCEPT (MOCK). Antigravity phát hành thử đợt 2 theo `docs/handoff/claude-antigravity-release-2.md`; người dùng kiểm tay `docs/guides/kiem-tay-dot-1.md` và ghi lỗi vào `docs/handoff/nguoidung-release-1-loi.md`. Sau đó: ghép mockup đăng nhập của ChatGPT (`docs/design/login`) vào ứng dụng; hoãn tài liệu PDF/Apps Script. | UI đăng nhập: Antigravity sửa U1–U6 (claude-antigravity-login-ui-fix.md) rồi Claude thẩm định lại. | Settings: Antigravity sửa S1–S5 (claude-antigravity-settings-fix.md). | PWA: Antigravity sửa P1–P7 (claude-antigravity-pwa-update.md), rồi Claude ACCEPT và deploy đợt 3. | ĐỢT 4: Antigravity push cổng đăng nhập, đặt lại PIN GV, xóa HS thử (claude-antigravity-release-4-gate.md).
 
 ## Hồ sơ cần đọc để tiếp nối
 
@@ -673,3 +673,14 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 - Đã làm: Đóng dấu SW cache chuẩn hóa eol=lf (`25780fc55def0c94a353e588`), lưu mốc rollback origin/main `f1a2c4ad1d1169dec7bfc408f93c0d5513df9dfb`, quét bí mật rỗng, chạy 17/17 test suites PASS; push commit c915a1c & bca0749; CI GitHub Actions workflow deploy-pages chạy xanh 100%; tạo hướng dẫn `docs/guides/kiem-tay-dot-3.md` và nhật ký lỗi `docs/handoff/nguoidung-release-3-loi.md`.
 - Kiểm thử thực tế: Smoke test thật (S1–S5) trên production GitHub Pages (mrbin2026dh-droid.github.io/aihoctap): S1 (SW cache trùng 100%, có open-settings & update-text), S2 (tải sạch HTTP 200, 0 console errors, SW registered), S3 (mở 2 lần hiện phiên bản a353e588, check update hiện modal "Đã là bản mới nhất"), S4 (mobile 390px danh sách nhóm -> chi tiết -> Back -> group list), S5 (thao tác Khóa học sinh hiện dialog xác nhận, Hủy = 0 request, Đồng ý = đúng 1 POST, 0 native alert). PASS 100%.
 - Việc dở: Bàn giao Người dùng kiểm tay theo docs/guides/kiem-tay-dot-3.md.
+
+### 2026-10-25 · Claude · Cổng đăng nhập bắt buộc (theo lệnh chủ dự án)
+- Chưa đăng nhập chỉ thấy cổng chọn Học sinh/Giáo viên; bài học ẩn; phiên giữ sau tải lại; đăng xuất về cổng. Mã: index.html, app.js, styles.css, sw.js (dấu bf2a34e5…), `tests/test_login_gate.cjs` 7/7; toàn bộ suite exit 0.
+- PIN khởi tạo giáo viên: người dùng tự gõ bằng wrangler (không ghi giá trị); xóa tài khoản học sinh thử đã được chủ dự án cho phép. Handoff: `docs/handoff/claude-antigravity-release-4-gate.md`.
+
+
+### 25/10/2026 – Antigravity – Phát hành đợt 4 (Cổng đăng nhập bắt buộc & Dọn dẹp dữ liệu)
+- Đã làm: Kiểm tra toàn bộ mã cổng đăng nhập, đóng dấu SW cache `bf2a34e5c4d74f141241c247` khớp 100%, chạy 17/17 test suites .mjs và test_login_gate.cjs 7/7 PASS, oxlint 0/0; lưu mốc rollback 794453138c56613d10e04a179cd0a0120b1ca7ef; commit và push origin main (Pages deploy-pages workflow xanh); đã đặt lại PIN khởi tạo giáo viên trên Worker và xác nhận xóa/trống teacher_auth/main trên RTDB; xóa toàn bộ 2 tài khoản học sinh thử (hs_thu1, hs_thu2) trên students_auth và xác nhận đếm lại = 0.
+- Tệp đổi: frontend/hoc/index.html, frontend/hoc/app.js, frontend/hoc/styles.css, frontend/hoc/sw.js, tests/test_login_gate.cjs, tests/test_pwa_update_integrity.mjs, docs/handoff/claude-antigravity-release-4-gate.md, aisgk.md.
+- Kiểm thử thực tế: test_login_gate.cjs PASS 7/7; toàn bộ 17 test suites PASS 100%; GitHub Actions Pages deploy xanh 100%.
+- Việc dở: Bàn giao Người dùng kiểm tay theo docs/handoff/claude-antigravity-release-4-gate.md.

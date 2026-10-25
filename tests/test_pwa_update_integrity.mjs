@@ -282,6 +282,12 @@ try {
     const page = await context.newPage();
     await page.goto(`http://localhost:${PORT}/index.html`);
     await page.waitForTimeout(500);
+    // Cổng đăng nhập: phải đăng nhập mới thấy Cài đặt
+    await page.click('#gate-student');
+    await page.fill('#student-code', 'hs01');
+    await page.fill('#student-pin', '123456');
+    await page.click('#login-form button[type=submit]');
+    await page.waitForSelector('#gate', { state: 'hidden', timeout: 5000 });
 
     // Set document build version and make help panel active
     await page.evaluate(() => {

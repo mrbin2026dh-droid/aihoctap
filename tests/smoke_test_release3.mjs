@@ -1,6 +1,5 @@
 import https from 'https';
 import fs from 'fs';
-import path from 'path';
 
 function get(url) {
   return new Promise((resolve, reject) => {

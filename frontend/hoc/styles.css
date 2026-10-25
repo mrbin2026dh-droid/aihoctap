@@ -431,6 +431,14 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
   clip-path: inset(50%);
 }
 
-
-
-
+/* Cổng đăng nhập: chưa có phiên thì chỉ thấy cổng, không thấy bài học */
+.is-gated .teacher-link,.is-gated main,.is-gated .bottom-nav,.is-gated #status,.is-gated #login,.is-gated #open-settings,.is-gated #account{display:none!important}
+.gate{min-height:calc(100dvh - 140px);display:grid;place-items:center;padding:24px 20px}
+.gate-card{width:min(440px,100%);padding:32px 24px;background:var(--surface);border:1px solid var(--line);border-radius:14px;text-align:center}
+.gate-card h1{font-size:clamp(24px,6vw,30px);margin:8px 0}
+.gate-lead{color:var(--muted);margin:0 0 24px}
+.gate-actions{display:grid;gap:12px}
+.gate-actions button,.gate-link{display:flex;align-items:center;justify-content:center;min-height:52px;padding:10px 16px;border-radius:9px;font-size:16px;font-weight:600;text-decoration:none}
+.gate-link{border:1px solid var(--blue);color:var(--blue);background:var(--surface)}
+.gate-link:hover{background:#eaf1eb}
+.booting main,.booting .bottom-nav,.booting #gate{display:none!important}

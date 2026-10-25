@@ -12,10 +12,21 @@
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.js"></script>
 </head>
-<body class="student-app is-loading">
+<body class="student-app is-loading booting">
   <a class="skip" href="#main">Đến nội dung</a>
   <header class="topbar"><a class="wordmark" href="./" aria-label="SGK — Góc học tập">sgk<span>Góc học tập</span></a><div class="actions"><span id="connection" class="connection">Đang kiểm tra mạng</span><button id="install" class="quiet">Cài ứng dụng</button><button id="login" class="primary">Đăng nhập</button><button id="account" hidden>Tài khoản</button><button id="open-settings" class="quiet" hidden aria-controls="settings" aria-expanded="false">Cài đặt</button><a href="./teacher.html" class="teacher-link quiet" title="Góc dành cho Giáo viên">Góc Giáo viên</a></div></header>
   <nav class="bottom-nav" aria-label="Góc học tập"><span class="nav-label">KHÔNG GIAN CỦA EM</span><button data-tab="catalog" aria-current="page"><span class="nav-number" aria-hidden="true">01</span>Môn học</button><button data-tab="practice"><span class="nav-number" aria-hidden="true">02</span>Kiểm tra</button><button data-tab="downloads"><span class="nav-number" aria-hidden="true">03</span>Đã tải</button><button data-tab="progress"><span class="nav-number" aria-hidden="true">04</span>Tiến độ</button><button data-tab="materials"><span class="nav-number" aria-hidden="true">05</span>Tài liệu</button><p class="nav-note">Mỗi ngày một chút.<br>Hiểu bài theo cách của em.</p></nav>
+  <section id="gate" class="gate" aria-labelledby="gate-title" hidden>
+    <div class="gate-card">
+      <p class="eyebrow">SGK · Góc học tập</p>
+      <h1 id="gate-title" tabindex="-1">Đăng nhập để tiếp tục</h1>
+      <p class="gate-lead">Chọn vai trò của bạn.</p>
+      <div class="gate-actions">
+        <button id="gate-student" class="primary" type="button">Học sinh</button>
+        <a id="gate-teacher" class="gate-link" href="./teacher.html">Giáo viên</a>
+      </div>
+    </div>
+  </section>
   <div class="workspace">
     <div class="notice" id="status" role="status" aria-live="polite">Đang tải bài học…</div>
     <div id="update-notice" class="notice" hidden><span id="update-text">Ứng dụng có bản cập nhật.</span> <button id="update-app">Cập nhật khi sẵn sàng</button></div>

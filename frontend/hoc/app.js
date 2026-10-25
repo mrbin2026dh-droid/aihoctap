@@ -107,7 +107,15 @@ function closeTutor() {
 function report(error) { notify(error.message, true); }
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }
+function gateUI() {
+  const gated = !session;
+  document.body.classList.remove('booting');
+  document.body.classList.toggle('is-gated', gated);
+  const gate = document.getElementById('gate');
+  if (gate) gate.hidden = !gated;
+}
 function identityUI() {
+  gateUI();
   node('login').hidden = Boolean(session);
   node('account').hidden = !session;
   node('account').textContent = session ? session.identity.student_name || 'Tài khoản' : 'Tài khoản';
@@ -470,6 +478,10 @@ async function start() {
   if (!catalog && !navigator.onLine) {catalogUnavailable('Cần kết nối mạng để nhận danh mục lần đầu.'); notify('Thiết bị chưa có bài tải offline.', true);}
 }
 on('login', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal());
+on('gate-student', () => {
+  /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal();
+  document.getElementById('student-code')?.focus();
+});
 on('account', () => {
   if (session) {
     openStudentSettings();
