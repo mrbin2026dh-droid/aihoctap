@@ -67,6 +67,14 @@
       ".read": false,
       ".write": "auth != null && auth.token.admin === true"
     },
+    "exam_defs": {
+      ".read": false,
+      ".write": false
+    },
+    "exam_secrets": {
+      ".read": false,
+      ".write": false
+    },
     "exams": {
       ".read": false,
       ".write": false

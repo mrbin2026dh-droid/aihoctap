@@ -416,7 +416,7 @@ document.getElementById('form-exams')?.addEventListener('submit', async event =>
       const res = await api('/pwa/teacher/exams', {method: 'POST', token, body: payload});
       notify(payload.status === 'open' ? 'Đã lưu đề (đang mở).' : 'Đã lưu đề ở trạng thái nháp. Bấm "Mở đề" trong danh sách khi sẵn sàng giao cho học sinh.');
       editingExamId = res.exam_id; await loadExams(); await ui.showSub('list-exams');
-    } catch (error) { if (isAuthError(error)) { fail(error); return; } status.textContent = mapErrorMessage(error); }
+    } catch (error) { if (isAuthError(error)) { fail(error); return; } status.textContent = error instanceof ApiError && error.status === 400 ? error.message : mapErrorMessage(error); }
   });
 });
 const LEVEL_TEXT = {weak: 'Yếu', fair: 'Cần củng cố', good: 'Tốt', none: 'Chưa có'};

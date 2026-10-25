@@ -1430,7 +1430,7 @@ async function loadLessonsFor(env, records, signingKeys = null) {
 async function loadPublicLesson(env, courseId, lessonId, signingKeys = null) {
   if (!IdValidationContract.isValidId(courseId || '') || !IdValidationContract.isValidId(lessonId || '')) return null;
   try {
-    if (courseId === 'exam') return await dbGet(env, signingKeys, `exams/${lessonId}`);
+    if (courseId === 'exam') return await dbGet(env, signingKeys, `exam_defs/${lessonId}`);
     if (env.FIREBASE_DATABASE_URL) {
       const res = await fetch(`${env.FIREBASE_DATABASE_URL}/packages/${encodeURIComponent(`${courseId}:${lessonId}`)}.json`);
       if (res.ok) return (await res.json()) || null;
@@ -1536,27 +1536,27 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
         const body = await request.json().catch(() => null);
         const checked = validateExamInput(body, isExamId(body?.exam_id) ? body.exam_id : null);
         if (checked.error) return respond({ detail: checked.error }, 400);
-        const old = await dbGet(env, signingKeys, `exams/${checked.exam.exam_id}`);
-        await dbPut(env, signingKeys, `exams/${checked.exam.exam_id}`, { ...checked.exam, created_at: old?.created_at || now, updated_at: now });
-        await dbPut(env, signingKeys, `exams_private/${checked.exam.exam_id}`, checked.secret);
+        const old = await dbGet(env, signingKeys, `exam_defs/${checked.exam.exam_id}`);
+        await dbPut(env, signingKeys, `exam_defs/${checked.exam.exam_id}`, { ...checked.exam, created_at: old?.created_at || now, updated_at: now });
+        await dbPut(env, signingKeys, `exam_secrets/${checked.exam.exam_id}`, checked.secret);
         return respond({ exam_id: checked.exam.exam_id, status: checked.exam.status });
       }
       if (sub === '' && request.method === 'GET') {
-        const exams = (await dbGet(env, signingKeys, 'exams')) || {};
+        const exams = (await dbGet(env, signingKeys, 'exam_defs')) || {};
         const counts = {};
         const all = (await dbGet(env, signingKeys, 'attempts')) || {};
         for (const byUser of Object.values(all)) for (const a of Object.values(byUser || {})) if (a?.exam_id) counts[a.exam_id] = (counts[a.exam_id] || 0) + 1;
-        const list = Object.values(exams).map(e => ({ exam_id: e.exam_id, title: e.title, grade: e.grade, class_codes: e.class_codes, mode: e.mode, kind: e.kind, minutes: e.minutes, opens_at: e.opens_at, closes_at: e.closes_at,
+        const list = Object.values(exams).filter(e => isExamId(e?.exam_id) && Array.isArray(e.questions)).map(e => ({ exam_id: e.exam_id, title: e.title, grade: e.grade, class_codes: e.class_codes, mode: e.mode, kind: e.kind, minutes: e.minutes, opens_at: e.opens_at, closes_at: e.closes_at,
           status: e.status, state: examState(e, now), question_count: e.question_count, total_points: e.total_points, submissions: counts[e.exam_id] || 0, updated_at: e.updated_at }))
           .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
         return respond({ exams: list });
       }
       const m = sub.match(/^([^/]+)(?:\/(status|results|extend))?$/);
       if (m && isExamId(m[1])) {
-        const exam = await dbGet(env, signingKeys, `exams/${m[1]}`);
+        const exam = await dbGet(env, signingKeys, `exam_defs/${m[1]}`);
         if (!exam) return respond({ detail: 'Không tìm thấy đề kiểm tra.' }, 404);
         if (!m[2] && request.method === 'GET') {
-          const secret = (await dbGet(env, signingKeys, `exams_private/${m[1]}`)) || { answers: {} };
+          const secret = (await dbGet(env, signingKeys, `exam_secrets/${m[1]}`)) || { answers: {} };
           return respond({ ...exam, questions: exam.questions.map(q => ({ ...q, correct_answer: secret.answers?.[q.id] || '' })) });
         }
         if (m[2] === 'results' && request.method === 'GET') {
@@ -1588,7 +1588,7 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
         if (m[2] === 'status' && request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
           if (!['draft', 'open', 'closed'].includes(body.status)) return respond({ detail: 'Trạng thái không hợp lệ.' }, 400);
-          await dbPut(env, signingKeys, `exams/${m[1]}`, { ...exam, status: body.status, updated_at: now });
+          await dbPut(env, signingKeys, `exam_defs/${m[1]}`, { ...exam, status: body.status, updated_at: now });
           return respond({ exam_id: m[1], status: body.status });
         }
       }
@@ -1606,12 +1606,12 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
     const stats = examAttemptStats(myAttempts);
     const loadExam = async id => {
       if (!isExamId(id)) return null;
-      const exam = await dbGet(env, signingKeys, `exams/${id}`);
+      const exam = await dbGet(env, signingKeys, `exam_defs/${id}`);
       return exam && exam.status !== 'draft' && examTargetsStudent(exam, claims.grade, claims.class_code) ? exam : null;
     };
 
     if (sub === '' && request.method === 'GET') {
-      const exams = Object.values((await dbGet(env, signingKeys, 'exams')) || {}).filter(e => e.status !== 'draft' && examTargetsStudent(e, claims.grade, claims.class_code));
+      const exams = Object.values((await dbGet(env, signingKeys, 'exam_defs')) || {}).filter(e => isExamId(e?.exam_id) && Array.isArray(e.questions) && e.status !== 'draft' && examTargetsStudent(e, claims.grade, claims.class_code));
       const sessions = (await dbGet(env, signingKeys, `exam_sessions/${uid}`)) || {};
       const order = { open: 0, upcoming: 1, closed: 2 };
       const list = exams.map(e => {
@@ -1628,7 +1628,7 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
     const examId = body.exam_id || url.searchParams.get('exam_id');
     const exam = await loadExam(examId);
     if (!exam) return respond({ detail: 'Không tìm thấy bài kiểm tra của lớp em.' }, 404);
-    const secret = (await dbGet(env, signingKeys, `exams_private/${exam.exam_id}`)) || { answers: {}, points: {} };
+    const secret = (await dbGet(env, signingKeys, `exam_secrets/${exam.exam_id}`)) || { answers: {}, points: {} };
     const sessionPath = `exam_sessions/${uid}/${exam.exam_id}`;
     let session = await dbGet(env, signingKeys, sessionPath);
     const expired = s => exam.mode === 'real' && now > s.deadline + GRACE_MS;

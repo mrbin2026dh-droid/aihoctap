@@ -855,3 +855,9 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Làm: Chạy node --check (0 lỗi), oxlint (0 lỗi, 14 cảnh báo), quét bí mật sạch, lưu ID Worker cũ dd0e821d-ec46-47af-b194-213e91135e68. Dọn duplicate rule exams trong database.rules.json. Deploy Worker aihoctap-gate thành công (bản mới: 22f4c063-0104-4bfd-8823-d328b6d33063).
 - Kiểm thử thực tế: 21 test suite PASS 100% (gồm test_exam_backend.mjs, test_exam_student_ui.cjs, test_exam_teacher_monitor.cjs, test_exam_import_browser.cjs). Smoke test thật: /api/health 200, /api/pwa/catalog 200, /api/pwa/exams 401, /api/pwa/teacher/exams 401, /api/pwa/teacher/analytics 401 (triệt tiêu hoàn toàn lỗi 404 cũ); F12 console 0 lỗi.
 - Việc mở: Người dùng cập nhật database.rules.json lên Firebase Console (hoặc npx firebase-tools); Claude nghiệm thu độc lập theo AGENTS.md.
+
+## 2026-10-25 - Claude - Sửa lỗi lưu đề 400 / "undefined"
+- Nguyên nhân nghi: nút `exams` trên Firebase còn dữ liệu cũ khác định dạng. Đổi sang `exam_defs` + `exam_secrets` (rules đã thêm, không bắt buộc deploy vì mặc định chặn client), lọc bản ghi hỏng, form đề hiện lý do lỗi 400.
+- Việc mở: Antigravity chạy lại `npx wrangler deploy`; (tuỳ chọn) deploy rules. Đề đã lưu trước đó phải tạo lại.
+XONG sửa lỗi lưu đề / TIẾP THEO → Antigravity
+Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate), ghi ID bản cũ/mới, smoke test 401 như lần trước, rồi lưu thử 1 đề [THỬ] từ trang giáo viên."
