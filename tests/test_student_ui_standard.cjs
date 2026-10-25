@@ -36,7 +36,7 @@ for(const scheme of ['light','dark'])for(const vp of [{w:360,h:740},{w:390,h:844
  await pg.goto(B+'/');await pg.waitForTimeout(500);const T=`${scheme} ${vp.w}`;const res={};
  const grab=async n=>{res[n]=await pg.evaluate(scan,MIN_TEXT);if(SHOTS)await pg.screenshot({path:`${SHOTS}/${scheme}-${vp.w}-${n}.png`,fullPage:false})};
  await grab('gate');
- await pg.click('#gate-student');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(1000);
+ await pg.click('#gate-student');await pg.waitForTimeout(200);await grab('login');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(1000);
  await grab('catalog');
  for(const tab of ['practice','downloads','progress','materials']){const btn=pg.locator(`[data-tab="${tab}"]`).first();if(await btn.isVisible()){await btn.click();await pg.waitForTimeout(250);await grab(tab)}}
  const lessonBtn=pg.locator('[data-tab="catalog"]').first();if(await lessonBtn.isVisible()){await lessonBtn.click();await pg.waitForTimeout(200)}

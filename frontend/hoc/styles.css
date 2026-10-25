@@ -474,16 +474,6 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app .lesson-card h3,.student-app .lesson-card h2{font-size:18px}
 @media(max-width:760px){
   .student-app .topbar{position:static}
-  .student-app .topbar{flex-wrap:wrap;row-gap:8px;column-gap:12px;padding:10px 16px;align-items:center;min-height:0}
-  .student-app .wordmark{display:flex;align-items:center;gap:10px;font-size:34px;min-height:44px;min-width:44px}
-  .student-app .wordmark span{margin:0;white-space:nowrap}
-  .student-app .topbar .actions{flex:1 1 100%;width:100%;max-width:none;flex-wrap:nowrap;justify-content:stretch;align-items:center;gap:8px}
-  .student-app .topbar .actions>button,.student-app .topbar .actions>a.teacher-link{flex:1 1 0;min-width:0;padding:8px 8px;min-height:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-content:center}
-  .student-app #account{display:none}
-  .student-app .topbar .actions>button,.student-app .topbar .actions>a.teacher-link{text-overflow:clip}
-  .student-app .connection{margin:0;order:-1;flex:0 0 auto}
-  .student-app .connection:not(.is-offline){font-size:0;gap:0}
-  .student-app .connection:not(.is-offline)::before{width:10px;height:10px}
   .student-app main{padding-inline:16px}
   .student-app .bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
   .student-app .bottom-nav button{padding:8px 2px;min-height:48px;white-space:normal;line-height:1.25;display:flex;align-items:center;justify-content:center}
@@ -495,94 +485,274 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
   .student-app .tutor-quota-badge{white-space:normal}
 }
 
+/* ===== Giao diện đăng nhập và thanh trên theo mẫu: nền trung tính, thẻ bo góc, biểu tượng thay chữ ===== */
+.student-app{--auth-btn-bg:#18181b;--auth-btn-fg:#fff;--control:#8a8a93;--radius:12px}
+.ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.student-app .topbar{height:72px;padding:0 24px;gap:12px}
+.student-app .topbar .actions{max-width:none;margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.student-app .wordmark{display:flex;align-items:center;gap:10px;font-size:34px;min-height:44px}
+.student-app .wordmark span{margin:0;font-family:system-ui,sans-serif;font-size:var(--fs-label);font-weight:600;letter-spacing:.06em;white-space:nowrap}
+.student-app .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);text-decoration:none;position:relative}
+.student-app .icon-btn:hover{background:#f1f1f3;border-color:var(--control)}
+.student-app #theme-toggle[aria-pressed=true],.student-app #theme-toggle[aria-pressed=true]:hover{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.student-app .icon-btn:focus-visible,.student-app .auth-btn:focus-visible{outline:3px solid #2d7a6c;outline-offset:2px}
+.student-app .btn-login{display:inline-flex;align-items:center;gap:8px;min-height:44px;border-radius:var(--radius);background:var(--auth-btn-bg);color:var(--auth-btn-fg);border-color:var(--auth-btn-bg)}
+.student-app .btn-login:hover{background:#27272a}
+.student-app .avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:var(--fs-small)}
+.student-app .avatar-btn{border-radius:50%;width:48px;height:48px}
+.student-app .connection{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0;color:#15803d}
+.student-app .connection::before{display:none}
+.student-app .connection .ic-offline,.student-app .connection.is-offline .ic-online{display:none}
+.student-app .connection.is-offline .ic-offline{display:block}
+.student-app .connection.is-offline{color:#b45309}
+.student-app .ic-moon,:root[data-theme=dark] .ic-sun{display:none}
+:root[data-theme=dark] .ic-moon{display:block}
+:root[data-theme=light] .ic-sun{display:block}
+:root[data-theme=light] .ic-moon{display:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .ic-sun{display:none}:root:not([data-theme=light]) .ic-moon{display:block}}
+.student-app .gate{background:var(--paper)}
+.student-app .auth-card,.student-app .auth-dialog{border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08)}
+.student-app .auth-card{width:min(440px,100%);padding:36px 28px;text-align:center}
+.student-app .auth-logo{display:inline-grid;place-items:center;width:64px;height:64px;margin-bottom:16px;border-radius:50%;background:var(--auth-btn-bg);color:var(--auth-btn-fg);font-family:'SGK Serif','Times New Roman',serif;font-weight:700;font-size:26px;letter-spacing:-1.5px}
+.student-app .auth-card h1,.student-app .auth-dialog h2{margin:0 0 6px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:30px;line-height:1.2;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.student-app .gate-lead,.student-app .form-help{margin:0 0 24px;font-size:var(--fs-body);color:var(--muted)}
+.student-app .gate-actions{display:grid;gap:12px}
+.student-app .auth-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:56px;padding:12px 20px;border:1px solid var(--auth-btn-bg);border-radius:14px;background:var(--auth-btn-bg);color:var(--auth-btn-fg);font-size:17px;font-weight:700;text-decoration:none;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .12s,background .15s}
+.student-app .auth-btn:hover{background:#27272a;color:#fff;border-color:#27272a}
+.student-app .auth-btn:active{transform:translateY(1px)}
+.student-app .auth-btn span{flex:1;text-align:left}
+.student-app .auth-btn .ic-end{margin-left:auto}
+.student-app .auth-btn-alt{background:var(--surface);color:var(--ink);border-color:var(--control);box-shadow:none}
+.student-app .auth-btn-alt:hover{background:#f4f4f5;color:var(--ink);border-color:var(--ink)}
+.student-app .auth-dialog{width:min(440px,calc(100% - 32px));max-width:440px;padding:36px 28px 28px;color:var(--ink)}
+.student-app .auth-dialog::backdrop{background:rgba(9,9,11,.55);backdrop-filter:blur(3px)}
+.student-app .auth-dialog .form-intro{text-align:center}
+.student-app .dialog-close{position:absolute;top:12px;right:12px;border-color:transparent;background:transparent}
+.student-app .auth-dialog .field{display:grid;gap:8px;margin-bottom:16px;text-align:left}
+.student-app .auth-dialog label{font-size:var(--fs-small);font-weight:700;color:var(--ink)}
+.student-app .input-icon{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 6px 0 16px;border:1px solid var(--control);border-radius:var(--radius);background:var(--surface);color:var(--muted)}
+.student-app .input-icon:focus-within{border-color:#2d7a6c;outline:3px solid rgba(45,122,108,.35);outline-offset:0}
+.student-app .input-icon input{flex:1;min-width:0;min-height:52px;padding:0;border:0!important;background:transparent!important;color:var(--ink);font-size:var(--fs-control);outline:0}
+.student-app .input-icon input:focus-visible{outline:0}
+.student-app .input-icon .reveal{display:inline-grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--muted)}
+.student-app .input-icon .reveal:hover{background:rgba(127,127,127,.15)}
+.student-app .reveal .ic-eyeoff,.student-app .reveal[aria-pressed=true] .ic-eye{display:none}
+.student-app .reveal[aria-pressed=true] .ic-eyeoff{display:block}
+.student-app .pin-wrap{border:1px solid var(--control)}
+.student-app .auth-dialog .btn-full{margin-top:8px}
+.student-app .auth-dialog .notice.error:empty{display:none}
+@media(max-width:760px){
+  .student-app .topbar{height:64px;padding:0 16px}
+  .student-app .topbar .actions{gap:6px}
+  .student-app .wordmark span{display:none}
+  .student-app .btn-login span{display:none}
+  .student-app .btn-login{width:44px;padding:0;justify-content:center}
+  .student-app .auth-card{padding:28px 20px}
+  .student-app .auth-card h1,.student-app .auth-dialog h2{font-size:28px}
+}
+
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
-.student-app{--ink:#e8efea;--muted:#b0beb7;--paper:#0f1513;--blue:#2d7a6c;--line:#33423c;--surface:#171f1c;--danger:#ff9f95;--brand-text:#93d4c3;color-scheme:dark}
-:root{color-scheme:dark;--ink:#e8efea;--muted:#b0beb7;--paper:#0f1513;--blue:#2d7a6c;--line:#33423c;--surface:#171f1c;--danger:#ff9f95}
+:root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;color-scheme:dark}
+:where(:root:not([data-theme=light])) button:hover{background:#252a2f}
+:where(:root:not([data-theme=light])) a{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) :focus-visible{outline:3px solid #364471}
+:where(:root:not([data-theme=light])) .notice{background:#252a2f;color:#9fb0e3}
+:where(:root:not([data-theme=light])) .notice.error{background:#302e26;border-color:#6e4731;color:#edbfa5}
+:where(:root:not([data-theme=light])) .eyebrow{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .page-heading .eyebrow{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) input,:where(:root:not([data-theme=light])) textarea,:where(:root:not([data-theme=light])) select{border:1px solid #464d56;background:var(--surface)}
+:where(:root:not([data-theme=light])) #lesson-content pre{background:#2b2d2f}
+:where(:root:not([data-theme=light])) #lesson-content blockquote{border-left:4px solid #464d56}
+:where(:root:not([data-theme=light])) .bottom-nav{background:var(--surface)}
+:where(:root:not([data-theme=light])) .option:has(input:checked){background:#252a2f}
+:where(:root:not([data-theme=light])) .hint{background:#302e26;color:#edbfa5}
+:where(:root:not([data-theme=light])) .success{background:#272f2b;color:#aff4e0}
+:where(:root:not([data-theme=light])) .skip{background:var(--surface)}
+:where(:root:not([data-theme=light])) .teacher-section{background:var(--surface)}
+:where(:root:not([data-theme=light])) .danger{color:#ea93ab}
+:where(:root:not([data-theme=light])) .status-ok{color:#a2e9bc}
+:where(:root:not([data-theme=light])) .status-wait{color:#efb487}
+:where(:root:not([data-theme=light])) .status-out{color:#e38787}
+:where(:root:not([data-theme=light])) .student-app .topbar{box-shadow:0 1px 3px rgba(0,0,0,.55)}
+:where(:root:not([data-theme=light])) a.teacher-link:hover{color:var(--brand-text);background:#252a2f}
+:where(:root:not([data-theme=light])) .student-app .wordmark{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .connection::before{background:#3a6d5a}
+:where(:root:not([data-theme=light])) .connection.is-offline::before{background:#835b25}
+:where(:root:not([data-theme=light])) .student-app button:hover{background:#2b2d2c;border-color:#4b5c54}
+:where(:root:not([data-theme=light])) .student-app button.primary:hover,:where(:root:not([data-theme=light])) .student-app button[aria-current=page]:hover{background:#3a6760}
+:where(:root:not([data-theme=light])) .student-app :focus-visible{outline-color:#416157}
+:where(:root:not([data-theme=light])) .student-app .bottom-nav{background:#2e2e2c}
+:where(:root:not([data-theme=light])) .student-app .notice.error{color:#e7b9a0;background:#322e27}
+:where(:root:not([data-theme=light])) .student-app #update-notice{background:#2d2f2c;color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .student-app .eyebrow{color:#b4d0c6}
+:where(:root:not([data-theme=light])) .hero-book{color:#d1b7a1}
+:where(:root:not([data-theme=light])) .student-app input,:where(:root:not([data-theme=light])) .student-app select,:where(:root:not([data-theme=light])) .student-app textarea{border-color:#49504a}
+:where(:root:not([data-theme=light])) .student-app .lesson-open{background:#2c2e2b;color:#bedfd7}
+:where(:root:not([data-theme=light])) .study-tip{border-left:3px solid #665946}
+:where(:root:not([data-theme=light])) .empty-state{border:1px dashed #485048}
+:where(:root:not([data-theme=light])) .resume-card{background:#2e2f2c;border:1px solid #424e3e}
+:where(:root:not([data-theme=light])) .mode-switch{background:#2e2f2d}
+:where(:root:not([data-theme=light])) .inline-note{background:#2d2f2b;color:#c3d4c7}
+:where(:root:not([data-theme=light])) .student-app .option:has(input:checked){border-color:#465c54;background:#2c2e2b}
+:where(:root:not([data-theme=light])) .score-text{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .text-button{color:#dbbbaf}
+:where(:root:not([data-theme=light])) .student-app .hint{background:#312f29;color:#edd5ae}
+:where(:root:not([data-theme=light])) .student-app .success{background:#2d2f2c;color:#c3ddc9}
+:where(:root:not([data-theme=light])) .course-skeleton{background:#2e2f2d}
+:where(:root:not([data-theme=light])) .lesson-skeleton{background:#2d2e2c}
+:where(:root:not([data-theme=light])) .tutor-btn{background:#2c2e2b;color:#c5e5e1;border:1px solid #424e3f}
+:where(:root:not([data-theme=light])) .tutor-btn:hover{background:#2f322e;border-color:#3c5d59}
+:where(:root:not([data-theme=light])) .question-tutor-btn{border:1px dashed #505a54;color:#badbd6}
+:where(:root:not([data-theme=light])) .question-tutor-btn:hover{background:#2b2d2a}
+:where(:root:not([data-theme=light])) .tutor-dialog{box-shadow:0 12px 32px rgba(0,0,0,.55)}
+:where(:root:not([data-theme=light])) .tutor-dialog::backdrop{background:rgba(57,96,91,0.45)}
+:where(:root:not([data-theme=light])) .tutor-header{background:#2b2c28}
+:where(:root:not([data-theme=light])) .tutor-header h2{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .tutor-quota-badge{background:#2c2d2b;color:#badbd6;border:1px solid #41483c}
+:where(:root:not([data-theme=light])) .tutor-quota-badge.is-locked{background:#302727;color:#e49696;border-color:#602828}
+:where(:root:not([data-theme=light])) .close-btn:hover{background:#2e2f2c !important}
+:where(:root:not([data-theme=light])) .tutor-messages{background:var(--surface)}
+:where(:root:not([data-theme=light])) .tutor-bot{background:#2c2d2b;border:1px solid #41483c}
+:where(:root:not([data-theme=light])) .tutor-offline-banner{background:#322e27;color:#e7b9a0;border-top:1px solid #564830}
+:where(:root:not([data-theme=light])) .pin-wrap{border:1px solid #545956;background:var(--surface, var(--surface))}
+:where(:root:not([data-theme=light])) .pin-wrap:focus-within{outline:3px solid #3b655f}
+:where(:root:not([data-theme=light])) .reveal{border-left:1px solid var(--line, #3b434d);color:var(--blue, #c5e5e1)}
+:where(:root:not([data-theme=light])) .reveal:hover{background:#292b2d}
+:where(:root:not([data-theme=light])) .secondary{border:1px solid var(--line, #3b434d);color:var(--ink, #ced7ea)}
+:where(:root:not([data-theme=light])) .secondary:hover{background:#292b2d;border-color:#464d56}
+:where(:root:not([data-theme=light])) .text-button{color:var(--muted, #b4bdc9)}
+:where(:root:not([data-theme=light])) .auth-dialog{box-shadow:0 8px 28px rgba(0,0,0,.55)}
+:where(:root:not([data-theme=light])) .account-summary{border-bottom:1px solid var(--line, #3b434d)}
+:where(:root:not([data-theme=light])) #account-info{color:var(--muted, #b4bdc9)}
+:where(:root:not([data-theme=light])) .account-note{background:#302e26;color:#edb898;border-left:3px solid #7e612f}
+:where(:root:not([data-theme=light])) .field .hint{color:var(--muted, #b4bdc9)}
+:where(:root:not([data-theme=light])) .notice.error{background:#302826;color:#dea39f;border-color:#693e3b;border-left:3px solid #693e3b}
+:where(:root:not([data-theme=light])) .notice.success{background:#2a2d2a;color:#b8decc;border-color:#3e6050;border-left:3px solid #3e6050}
+:where(:root:not([data-theme=light])) .msg-dialog{box-shadow:0 10px 30px rgba(0,0,0,.55)}
+:where(:root:not([data-theme=light])) .danger-btn{background:var(--danger, #793530) !important;border-color:var(--danger, #693e3b) !important}
+:where(:root:not([data-theme=light])) .danger-btn:hover{background:#76342f !important;border-color:#673c39 !important}
+:where(:root:not([data-theme=light])) .field-error{color:var(--danger, #dea39f)}
+:where(:root:not([data-theme=light])) .group-link[aria-current=page]{background:#252a2f}
+:where(:root:not([data-theme=light])) .action-list{background:#282a2c}
+:where(:root:not([data-theme=light])) .gate-link{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .gate-link:hover{background:#2b2d2c}
+:where(:root:not([data-theme=light])) .student-app .icon-btn:hover{background:#2b2b2c}
+:where(:root:not([data-theme=light])) .student-app .icon-btn:focus-visible,:where(:root:not([data-theme=light])) .student-app .auth-btn:focus-visible{outline:3px solid #3f645d}
+:where(:root:not([data-theme=light])) .student-app .btn-login:hover{background:#4b4b50}
+:where(:root:not([data-theme=light])) .student-app .connection{color:#a2e9bc}
+:where(:root:not([data-theme=light])) .student-app .connection.is-offline{color:#efb487}
+:where(:root:not([data-theme=light])) .student-app .auth-card,:where(:root:not([data-theme=light])) .student-app .auth-dialog{box-shadow:0 1px 2px rgba(0,0,0,.55),0 12px 32px rgba(0,0,0,.55)}
+:where(:root:not([data-theme=light])) .student-app .auth-btn{box-shadow:0 1px 2px rgba(0,0,0,.55),inset 0 1px 0 rgba(0,0,0,.55)}
+:where(:root:not([data-theme=light])) .student-app .auth-btn:hover{background:#4b4b50;border-color:#4b4b4e}
+:where(:root:not([data-theme=light])) .student-app .auth-btn-alt:hover{background:#2b2b2b}
+:where(:root:not([data-theme=light])) .student-app .auth-dialog::backdrop{background:rgba(67,67,78,0.55)}
+:where(:root:not([data-theme=light])) .student-app .input-icon:focus-within{border-color:#3f645d;outline:3px solid rgba(62,100,93,0.35)}
+:where(:root:not([data-theme=light])) .student-app .input-icon .reveal:hover{background:rgba(90,90,90,0.15)}
+:where(:root:not([data-theme=light])) .student-app .auth-btn:hover,:where(:root:not([data-theme=light])) .student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
+:where(:root:not([data-theme=light])) .student-app .auth-btn-alt:hover{background:#1c1c1f;color:var(--ink);border-color:var(--ink)}
+:where(:root:not([data-theme=light])) .student-app .connection{color:#4ade80}
+:where(:root:not([data-theme=light])) .student-app .connection.is-offline{color:#fbbf24}
 }
-@media (prefers-color-scheme:dark){
-button:hover{background:#252a2f}
-a{color:var(--brand-text)}
-:focus-visible{outline:3px solid #364471}
-.notice{background:#252a2f;color:#9fb0e3}
-.notice.error{background:#302e26;border-color:#6e4731;color:#edbfa5}
-.eyebrow{color:var(--brand-text)}
-.page-heading .eyebrow{color:var(--brand-text)}
-input,textarea,select{border:1px solid #464d56;background:var(--surface)}
-#lesson-content pre{background:#2b2d2f}
-#lesson-content blockquote{border-left:4px solid #464d56}
-.bottom-nav{background:var(--surface)}
-.option:has(input:checked){background:#252a2f}
-.hint{background:#302e26;color:#edbfa5}
-.success{background:#272f2b;color:#aff4e0}
-.skip{background:var(--surface)}
-.teacher-section{background:var(--surface)}
-.danger{color:#ea93ab}
-.status-ok{color:#a2e9bc}
-.status-wait{color:#efb487}
-.status-out{color:#e38787}
-.student-app .topbar{box-shadow:0 1px 3px rgba(0,0,0,.55)}
-a.teacher-link:hover{color:var(--brand-text);background:#252a2f}
-.student-app .wordmark{color:var(--brand-text)}
-.connection::before{background:#3a6d5a}
-.connection.is-offline::before{background:#835b25}
-.student-app button:hover{background:#2b2d2c;border-color:#4b5c54}
-.student-app button.primary:hover,.student-app button[aria-current=page]:hover{background:#3a6760}
-.student-app :focus-visible{outline-color:#416157}
-.student-app .bottom-nav{background:#2e2e2c}
-.student-app .notice.error{color:#e7b9a0;background:#322e27}
-.student-app #update-notice{background:#2d2f2c;color:var(--brand-text)}
-.student-app .eyebrow{color:#b4d0c6}
-.hero-book{color:#d1b7a1}
-.student-app input,.student-app select,.student-app textarea{border-color:#49504a}
-.student-app .lesson-open{background:#2c2e2b;color:#bedfd7}
-.study-tip{border-left:3px solid #665946}
-.empty-state{border:1px dashed #485048}
-.resume-card{background:#2e2f2c;border:1px solid #424e3e}
-.mode-switch{background:#2e2f2d}
-.inline-note{background:#2d2f2b;color:#c3d4c7}
-.student-app .option:has(input:checked){border-color:#465c54;background:#2c2e2b}
-.score-text{color:var(--brand-text)}
-.text-button{color:#dbbbaf}
-.student-app .hint{background:#312f29;color:#edd5ae}
-.student-app .success{background:#2d2f2c;color:#c3ddc9}
-.course-skeleton{background:#2e2f2d}
-.lesson-skeleton{background:#2d2e2c}
-.tutor-btn{background:#2c2e2b;color:#c5e5e1;border:1px solid #424e3f}
-.tutor-btn:hover{background:#2f322e;border-color:#3c5d59}
-.question-tutor-btn{border:1px dashed #505a54;color:#badbd6}
-.question-tutor-btn:hover{background:#2b2d2a}
-.tutor-dialog{box-shadow:0 12px 32px rgba(0,0,0,.55)}
-.tutor-dialog::backdrop{background:rgba(57,96,91,0.45)}
-.tutor-header{background:#2b2c28}
-.tutor-header h2{color:var(--brand-text)}
-.tutor-quota-badge{background:#2c2d2b;color:#badbd6;border:1px solid #41483c}
-.tutor-quota-badge.is-locked{background:#302727;color:#e49696;border-color:#602828}
-.close-btn:hover{background:#2e2f2c !important}
-.tutor-messages{background:var(--surface)}
-.tutor-bot{background:#2c2d2b;border:1px solid #41483c}
-.tutor-offline-banner{background:#322e27;color:#e7b9a0;border-top:1px solid #564830}
-.pin-wrap{border:1px solid #545956;background:var(--surface, var(--surface))}
-.pin-wrap:focus-within{outline:3px solid #3b655f}
-.reveal{border-left:1px solid var(--line, #3b434d);color:var(--blue, #c5e5e1)}
-.reveal:hover{background:#292b2d}
-.secondary{border:1px solid var(--line, #3b434d);color:var(--ink, #ced7ea)}
-.secondary:hover{background:#292b2d;border-color:#464d56}
-.text-button{color:var(--muted, #b4bdc9)}
-.auth-dialog{box-shadow:0 8px 28px rgba(0,0,0,.55)}
-.account-summary{border-bottom:1px solid var(--line, #3b434d)}
-#account-info{color:var(--muted, #b4bdc9)}
-.account-note{background:#302e26;color:#edb898;border-left:3px solid #7e612f}
-.field .hint{color:var(--muted, #b4bdc9)}
-.notice.error{background:#302826;color:#dea39f;border-color:#693e3b;border-left:3px solid #693e3b}
-.notice.success{background:#2a2d2a;color:#b8decc;border-color:#3e6050;border-left:3px solid #3e6050}
-.msg-dialog{box-shadow:0 10px 30px rgba(0,0,0,.55)}
-.danger-btn{background:var(--danger, #793530) !important;border-color:var(--danger, #693e3b) !important}
-.danger-btn:hover{background:#76342f !important;border-color:#673c39 !important}
-.field-error{color:var(--danger, #dea39f)}
-.group-link[aria-current=page]{background:#252a2f}
-.action-list{background:#282a2c}
-.gate-link{color:var(--brand-text)}
-.gate-link:hover{background:#2b2d2c}
-}
+:root[data-theme=dark],:root[data-theme=dark] .student-app{--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;color-scheme:dark}
+:where(:root[data-theme=dark]) button:hover{background:#252a2f}
+:where(:root[data-theme=dark]) a{color:var(--brand-text)}
+:where(:root[data-theme=dark]) :focus-visible{outline:3px solid #364471}
+:where(:root[data-theme=dark]) .notice{background:#252a2f;color:#9fb0e3}
+:where(:root[data-theme=dark]) .notice.error{background:#302e26;border-color:#6e4731;color:#edbfa5}
+:where(:root[data-theme=dark]) .eyebrow{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .page-heading .eyebrow{color:var(--brand-text)}
+:where(:root[data-theme=dark]) input,:where(:root[data-theme=dark]) textarea,:where(:root[data-theme=dark]) select{border:1px solid #464d56;background:var(--surface)}
+:where(:root[data-theme=dark]) #lesson-content pre{background:#2b2d2f}
+:where(:root[data-theme=dark]) #lesson-content blockquote{border-left:4px solid #464d56}
+:where(:root[data-theme=dark]) .bottom-nav{background:var(--surface)}
+:where(:root[data-theme=dark]) .option:has(input:checked){background:#252a2f}
+:where(:root[data-theme=dark]) .hint{background:#302e26;color:#edbfa5}
+:where(:root[data-theme=dark]) .success{background:#272f2b;color:#aff4e0}
+:where(:root[data-theme=dark]) .skip{background:var(--surface)}
+:where(:root[data-theme=dark]) .teacher-section{background:var(--surface)}
+:where(:root[data-theme=dark]) .danger{color:#ea93ab}
+:where(:root[data-theme=dark]) .status-ok{color:#a2e9bc}
+:where(:root[data-theme=dark]) .status-wait{color:#efb487}
+:where(:root[data-theme=dark]) .status-out{color:#e38787}
+:where(:root[data-theme=dark]) .student-app .topbar{box-shadow:0 1px 3px rgba(0,0,0,.55)}
+:where(:root[data-theme=dark]) a.teacher-link:hover{color:var(--brand-text);background:#252a2f}
+:where(:root[data-theme=dark]) .student-app .wordmark{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .connection::before{background:#3a6d5a}
+:where(:root[data-theme=dark]) .connection.is-offline::before{background:#835b25}
+:where(:root[data-theme=dark]) .student-app button:hover{background:#2b2d2c;border-color:#4b5c54}
+:where(:root[data-theme=dark]) .student-app button.primary:hover,:where(:root[data-theme=dark]) .student-app button[aria-current=page]:hover{background:#3a6760}
+:where(:root[data-theme=dark]) .student-app :focus-visible{outline-color:#416157}
+:where(:root[data-theme=dark]) .student-app .bottom-nav{background:#2e2e2c}
+:where(:root[data-theme=dark]) .student-app .notice.error{color:#e7b9a0;background:#322e27}
+:where(:root[data-theme=dark]) .student-app #update-notice{background:#2d2f2c;color:var(--brand-text)}
+:where(:root[data-theme=dark]) .student-app .eyebrow{color:#b4d0c6}
+:where(:root[data-theme=dark]) .hero-book{color:#d1b7a1}
+:where(:root[data-theme=dark]) .student-app input,:where(:root[data-theme=dark]) .student-app select,:where(:root[data-theme=dark]) .student-app textarea{border-color:#49504a}
+:where(:root[data-theme=dark]) .student-app .lesson-open{background:#2c2e2b;color:#bedfd7}
+:where(:root[data-theme=dark]) .study-tip{border-left:3px solid #665946}
+:where(:root[data-theme=dark]) .empty-state{border:1px dashed #485048}
+:where(:root[data-theme=dark]) .resume-card{background:#2e2f2c;border:1px solid #424e3e}
+:where(:root[data-theme=dark]) .mode-switch{background:#2e2f2d}
+:where(:root[data-theme=dark]) .inline-note{background:#2d2f2b;color:#c3d4c7}
+:where(:root[data-theme=dark]) .student-app .option:has(input:checked){border-color:#465c54;background:#2c2e2b}
+:where(:root[data-theme=dark]) .score-text{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .text-button{color:#dbbbaf}
+:where(:root[data-theme=dark]) .student-app .hint{background:#312f29;color:#edd5ae}
+:where(:root[data-theme=dark]) .student-app .success{background:#2d2f2c;color:#c3ddc9}
+:where(:root[data-theme=dark]) .course-skeleton{background:#2e2f2d}
+:where(:root[data-theme=dark]) .lesson-skeleton{background:#2d2e2c}
+:where(:root[data-theme=dark]) .tutor-btn{background:#2c2e2b;color:#c5e5e1;border:1px solid #424e3f}
+:where(:root[data-theme=dark]) .tutor-btn:hover{background:#2f322e;border-color:#3c5d59}
+:where(:root[data-theme=dark]) .question-tutor-btn{border:1px dashed #505a54;color:#badbd6}
+:where(:root[data-theme=dark]) .question-tutor-btn:hover{background:#2b2d2a}
+:where(:root[data-theme=dark]) .tutor-dialog{box-shadow:0 12px 32px rgba(0,0,0,.55)}
+:where(:root[data-theme=dark]) .tutor-dialog::backdrop{background:rgba(57,96,91,0.45)}
+:where(:root[data-theme=dark]) .tutor-header{background:#2b2c28}
+:where(:root[data-theme=dark]) .tutor-header h2{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .tutor-quota-badge{background:#2c2d2b;color:#badbd6;border:1px solid #41483c}
+:where(:root[data-theme=dark]) .tutor-quota-badge.is-locked{background:#302727;color:#e49696;border-color:#602828}
+:where(:root[data-theme=dark]) .close-btn:hover{background:#2e2f2c !important}
+:where(:root[data-theme=dark]) .tutor-messages{background:var(--surface)}
+:where(:root[data-theme=dark]) .tutor-bot{background:#2c2d2b;border:1px solid #41483c}
+:where(:root[data-theme=dark]) .tutor-offline-banner{background:#322e27;color:#e7b9a0;border-top:1px solid #564830}
+:where(:root[data-theme=dark]) .pin-wrap{border:1px solid #545956;background:var(--surface, var(--surface))}
+:where(:root[data-theme=dark]) .pin-wrap:focus-within{outline:3px solid #3b655f}
+:where(:root[data-theme=dark]) .reveal{border-left:1px solid var(--line, #3b434d);color:var(--blue, #c5e5e1)}
+:where(:root[data-theme=dark]) .reveal:hover{background:#292b2d}
+:where(:root[data-theme=dark]) .secondary{border:1px solid var(--line, #3b434d);color:var(--ink, #ced7ea)}
+:where(:root[data-theme=dark]) .secondary:hover{background:#292b2d;border-color:#464d56}
+:where(:root[data-theme=dark]) .text-button{color:var(--muted, #b4bdc9)}
+:where(:root[data-theme=dark]) .auth-dialog{box-shadow:0 8px 28px rgba(0,0,0,.55)}
+:where(:root[data-theme=dark]) .account-summary{border-bottom:1px solid var(--line, #3b434d)}
+:where(:root[data-theme=dark]) #account-info{color:var(--muted, #b4bdc9)}
+:where(:root[data-theme=dark]) .account-note{background:#302e26;color:#edb898;border-left:3px solid #7e612f}
+:where(:root[data-theme=dark]) .field .hint{color:var(--muted, #b4bdc9)}
+:where(:root[data-theme=dark]) .notice.error{background:#302826;color:#dea39f;border-color:#693e3b;border-left:3px solid #693e3b}
+:where(:root[data-theme=dark]) .notice.success{background:#2a2d2a;color:#b8decc;border-color:#3e6050;border-left:3px solid #3e6050}
+:where(:root[data-theme=dark]) .msg-dialog{box-shadow:0 10px 30px rgba(0,0,0,.55)}
+:where(:root[data-theme=dark]) .danger-btn{background:var(--danger, #793530) !important;border-color:var(--danger, #693e3b) !important}
+:where(:root[data-theme=dark]) .danger-btn:hover{background:#76342f !important;border-color:#673c39 !important}
+:where(:root[data-theme=dark]) .field-error{color:var(--danger, #dea39f)}
+:where(:root[data-theme=dark]) .group-link[aria-current=page]{background:#252a2f}
+:where(:root[data-theme=dark]) .action-list{background:#282a2c}
+:where(:root[data-theme=dark]) .gate-link{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .gate-link:hover{background:#2b2d2c}
+:where(:root[data-theme=dark]) .student-app .icon-btn:hover{background:#2b2b2c}
+:where(:root[data-theme=dark]) .student-app .icon-btn:focus-visible,:where(:root[data-theme=dark]) .student-app .auth-btn:focus-visible{outline:3px solid #3f645d}
+:where(:root[data-theme=dark]) .student-app .btn-login:hover{background:#4b4b50}
+:where(:root[data-theme=dark]) .student-app .connection{color:#a2e9bc}
+:where(:root[data-theme=dark]) .student-app .connection.is-offline{color:#efb487}
+:where(:root[data-theme=dark]) .student-app .auth-card,:where(:root[data-theme=dark]) .student-app .auth-dialog{box-shadow:0 1px 2px rgba(0,0,0,.55),0 12px 32px rgba(0,0,0,.55)}
+:where(:root[data-theme=dark]) .student-app .auth-btn{box-shadow:0 1px 2px rgba(0,0,0,.55),inset 0 1px 0 rgba(0,0,0,.55)}
+:where(:root[data-theme=dark]) .student-app .auth-btn:hover{background:#4b4b50;border-color:#4b4b4e}
+:where(:root[data-theme=dark]) .student-app .auth-btn-alt:hover{background:#2b2b2b}
+:where(:root[data-theme=dark]) .student-app .auth-dialog::backdrop{background:rgba(67,67,78,0.55)}
+:where(:root[data-theme=dark]) .student-app .input-icon:focus-within{border-color:#3f645d;outline:3px solid rgba(62,100,93,0.35)}
+:where(:root[data-theme=dark]) .student-app .input-icon .reveal:hover{background:rgba(90,90,90,0.15)}
+:where(:root[data-theme=dark]) .student-app .auth-btn:hover,:where(:root[data-theme=dark]) .student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
+:where(:root[data-theme=dark]) .student-app .auth-btn-alt:hover{background:#1c1c1f;color:var(--ink);border-color:var(--ink)}
+:where(:root[data-theme=dark]) .student-app .connection{color:#4ade80}
+:where(:root[data-theme=dark]) .student-app .connection.is-offline{color:#fbbf24}
 /* DARK-THEME:END */

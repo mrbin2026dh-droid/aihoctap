@@ -5,8 +5,10 @@ Quy tắc: nền sáng -> nền tối nâng nhẹ; chữ tối -> chữ sáng; m
 import re, colorsys, pathlib
 P = pathlib.Path(__file__).resolve().parents[1] / 'frontend/hoc/styles.css'
 BEGIN, END = '/* DARK-THEME:BEGIN */', '/* DARK-THEME:END */'
-TOKENS = ('.student-app{--ink:#e8efea;--muted:#b0beb7;--paper:#0f1513;--blue:#2d7a6c;--line:#33423c;--surface:#171f1c;--danger:#ff9f95;--brand-text:#93d4c3;color-scheme:dark}'
-          ':root{color-scheme:dark;--ink:#e8efea;--muted:#b0beb7;--paper:#0f1513;--blue:#2d7a6c;--line:#33423c;--surface:#171f1c;--danger:#ff9f95}')
+TOK_VARS = '--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;color-scheme:dark'
+EXTRA = ('.student-app .auth-btn:hover,.student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}'
+         '.student-app .auth-btn-alt:hover{background:#1c1c1f;color:var(--ink);border-color:var(--ink)}'
+         '.student-app .connection{color:#4ade80}.student-app .connection.is-offline{color:#fbbf24}')
 COLOR = re.compile(r'#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\([^)]*\)')
 def hexrgb(h):
     h = h[1:]
@@ -92,9 +94,25 @@ rules, _ = parse(css)
 items = emit(rules, '')
 groups = {}
 for w, rule in items: groups.setdefault(w, []).append(rule)
-blocks = []
-for w, rs in groups.items():
-    blocks.append('@media (prefers-color-scheme:dark)%s{\n%s\n}' % (w, '\n'.join(rs)))
-body = '@media (prefers-color-scheme:dark){\n'+TOKENS.replace('}', '}\n').strip()+'\n}\n'
-P.write_text(css+'\n'+BEGIN+'\n'+body+'\n'.join(blocks)+'\n'+END+'\n', encoding='utf-8', newline='')
+def prefixed(rule, pre):
+    sel, body = rule.split('{', 1)
+    sels = [s.strip() for s in sel.split(',')]
+    return ','.join(f'{pre} {s}' for s in sels) + '{' + body
+def render(pre, wrapmedia):
+    out = []
+    for w, rs in groups.items():
+        out.append('@media (prefers-color-scheme:dark)%s{\n%s\n}' % (w, '\n'.join(rs))) if False else None
+    return out
+auto_pre = ':where(:root:not([data-theme=light]))'
+expl_pre = ':where(:root[data-theme=dark])'
+def block(pre, tok_sel):
+    parts = [tok_sel + '{' + TOK_VARS + '}']
+    for w, rs in groups.items():
+        inner = '\n'.join(prefixed(r, pre) for r in rs)
+        parts.append(('@media (max-width:0)' if False else '') + (('@media ' + w[5:] + '{\n' + inner + '\n}') if w else inner))
+    parts.append(prefixed(EXTRA.replace('}.', '}\n.'), pre) if False else '\n'.join(prefixed(r + '}', pre) for r in EXTRA.split('}') if r))
+    return '\n'.join(parts)
+auto = '@media (prefers-color-scheme:dark){\n' + block(auto_pre, ':root:not([data-theme=light]),:root:not([data-theme=light]) .student-app') + '\n}'
+expl = block(expl_pre, ':root[data-theme=dark],:root[data-theme=dark] .student-app')
+P.write_text(css + '\n' + BEGIN + '\n' + auto + '\n' + expl + '\n' + END + '\n', encoding='utf-8', newline='')
 print('rules:', len(items), 'groups:', len(groups))

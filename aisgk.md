@@ -731,3 +731,10 @@ Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-bo-cuc-giao-vien.md rồi
 - Việc mở: chế độ tối cho giáo viên; nút chọn giao diện; kiểm tra Safari/máy thật.
 XONG chuẩn giao diện học sinh / TIẾP THEO → Claude (kiểm tra bản chạy thật)
 Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
+
+## 2026-10-25 — Claude: thiết kế lại đăng nhập và thanh trên theo mẫu
+- Đăng nhập học sinh, hộp thoại đăng nhập, đăng nhập giáo viên: thẻ bo góc, logo, ô nhập có biểu tượng, nút lớn có mũi tên. Thanh trên chuyển hết sang biểu tượng; thêm nút sáng/tối; mắt hiện/ẩn PIN thay chữ.
+- Giao diện tối chuyển sang bảng màu trung tính; sinh lại bằng tools/gen_dark_theme.py (hỗ trợ data-theme). Thêm tests/test_theme_toggle.cjs.
+- Việc mở: chế độ tối cho giáo viên; kiểm tra bản chạy thật và máy thật.
+XONG đăng nhập theo mẫu / TIẾP THEO → Claude
+Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."

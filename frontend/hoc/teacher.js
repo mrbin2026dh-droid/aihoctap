@@ -226,7 +226,7 @@ document.addEventListener('click', e => {
   if (!input) return;
   const show = input.type === 'password';
   input.type = show ? 'text' : 'password';
-  b.textContent = show ? 'Ẩn' : 'Hiện';
+  b.setAttribute('aria-label', (show ? 'Ẩn ' : 'Hiện ') + 'mã PIN');
   b.setAttribute('aria-pressed', String(show));
 });
 

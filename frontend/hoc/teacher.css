@@ -178,3 +178,24 @@
 .teacher-app .t-toolbar-actions-only{display:flex;justify-content:flex-end}
 .teacher-app .t-toolbar>.t-button{white-space:nowrap}
 @media(max-width:760px){.teacher-app .t-toolbar:has(>.t-primary),.teacher-app .t-toolbar-students{grid-template-columns:repeat(2,minmax(0,1fr))!important}.teacher-app .t-toolbar>.t-primary{grid-column:1/-1}.teacher-app .t-auth{width:auto;margin:24px 16px;max-width:none}}
+
+/* Đăng nhập giáo viên theo mẫu: thẻ bo góc, ô nhập có biểu tượng, nút đen */
+.teacher-app .ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.teacher-app .t-auth{max-width:440px;padding:36px 28px;border-radius:20px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08)}
+.teacher-app .t-auth-logo{display:inline-grid;place-items:center;width:64px;height:64px;margin-bottom:16px;border-radius:50%;background:#18181b;color:#fff;font-family:'SGK Serif','Times New Roman',serif;font-weight:700;font-size:26px;letter-spacing:-1.5px}
+.teacher-app .t-auth>h2{margin:0 0 6px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.teacher-app .t-auth-lead{margin:0 0 24px;color:var(--muted)}
+.teacher-app .t-auth .t-field{text-align:left}
+.teacher-app .t-auth .t-field label{font-weight:700}
+.teacher-app .t-input-icon{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 6px 0 16px;border:1px solid #8a8a93;border-radius:12px;color:var(--muted);background:var(--surface)}
+.teacher-app .t-input-icon input{flex:1;width:0;min-height:52px;padding:0;border:0;background:transparent;color:var(--ink);font-size:16px;outline:0}
+.teacher-app .t-input-icon:focus-within{border-color:var(--brand);outline:3px solid rgba(24,62,57,.3);outline-offset:0}
+.teacher-app .t-input-icon .t-reveal{display:inline-grid;place-items:center;width:44px;height:44px;min-width:44px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--muted)}
+.teacher-app .t-input-icon .t-reveal:hover{background:rgba(127,127,127,.15)}
+.teacher-app .t-reveal .ic-eyeoff,.teacher-app .t-reveal[aria-pressed=true] .ic-eye{display:none}
+.teacher-app .t-reveal[aria-pressed=true] .ic-eyeoff{display:block}
+.teacher-app .t-button.t-auth-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:16px;padding:12px 20px;border-radius:14px;background:#18181b;border-color:#18181b;color:#fff;font-size:17px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.teacher-app .t-auth-btn span{flex:1;text-align:left}
+.teacher-app .t-button.t-auth-btn:hover{background:#27272a;border-color:#27272a}
+.teacher-app .t-auth-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:12px;color:var(--muted);text-decoration:none;font-weight:600}
+.teacher-app .t-auth-back:hover{color:var(--ink);text-decoration:underline}

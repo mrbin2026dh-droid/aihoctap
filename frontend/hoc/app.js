@@ -124,7 +124,9 @@ function identityUI() {
   gateUI();
   node('login').hidden = Boolean(session);
   node('account').hidden = !session;
-  node('account').textContent = session ? session.identity.student_name || 'Tài khoản' : 'Tài khoản';
+  const accountName = session ? session.identity.student_name || 'Tài khoản' : 'Tài khoản';
+  node('account').setAttribute('aria-label', accountName); node('account').title = accountName;
+  node('account-avatar').textContent = (accountName.trim().split(/\s+/).pop() || '?').charAt(0).toUpperCase();
   node('logout').hidden = !session;
   const loginSection = document.getElementById('login-section');
   if (loginSection) loginSection.hidden = Boolean(session);
@@ -509,7 +511,8 @@ document.addEventListener('click', e => {
   if (!input) return;
   const show = input.type === 'password';
   input.type = show ? 'text' : 'password';
-  b.textContent = show ? 'Ẩn' : 'Hiện';
+  const what = b.getAttribute('data-reveal') === 'student-pin' || /pin/i.test(b.getAttribute('data-reveal') || '') ? 'mã PIN' : 'mật khẩu';
+  b.setAttribute('aria-label', (show ? 'Ẩn ' : 'Hiện ') + what);
   b.setAttribute('aria-pressed', String(show));
 });
 on('logout', async () => {
@@ -773,7 +776,7 @@ for (const tab of document.querySelectorAll('button[data-tab]')) tab.addEventLis
     else {show('catalog'); renderCatalog();}
   } catch (error) {report(error instanceof Error ? error : new Error('Chưa chuyển được trang.'));}
 });
-function updateConnection() {node('connection').textContent = navigator.onLine ? 'Có kết nối mạng' : 'Đang offline'; node('connection').classList.toggle('is-offline', !navigator.onLine); /** @type {HTMLButtonElement} */ (node('sync')).disabled = !session || !navigator.onLine; updateTutorStatus();}
+function updateConnection() {const connText = navigator.onLine ? 'Có kết nối mạng' : 'Đang offline'; node('connection-text').textContent = connText; node('connection').title = connText; node('connection').classList.toggle('is-offline', !navigator.onLine); /** @type {HTMLButtonElement} */ (node('sync')).disabled = !session || !navigator.onLine; updateTutorStatus();}
 window.addEventListener('online', () => {updateConnection(); refreshCatalog().catch(report); sync().catch(report);});
 window.addEventListener('offline', () => {updateConnection(); notify('Mất kết nối. Nháp vẫn được giữ trên máy.');});
 window.addEventListener('focus', () => {refreshCatalog().catch(report);});
@@ -866,7 +869,7 @@ function installState() {
   let label = 'Cài ứng dụng'; let detail = 'Trang hiện đang mở trong trình duyệt. Làm theo hướng dẫn phù hợp với thiết bị.';
   if (installedThisSession) {label = 'Đã cài ứng dụng'; detail = 'Trình duyệt đã xác nhận cài đặt. Em có thể mở từ biểu tượng SGK.';}
   if (standalone) {label = 'Đang dùng ứng dụng'; detail = 'Em đang mở ứng dụng ở chế độ độc lập.';}
-  node('install').textContent = label; node('install-state').textContent = detail;
+  node('install-label').textContent = label; node('install').setAttribute('aria-label', label); node('install').title = label; node('install-state').textContent = detail;
 }
 window.addEventListener('beforeinstallprompt', event => {event.preventDefault(); installPrompt = /** @type {typeof installPrompt} */ (event);});
 window.addEventListener('appinstalled', () => {installPrompt = null; installedThisSession = true; installState(); notify('Trình duyệt đã xác nhận cài ứng dụng. Mở từ biểu tượng SGK để dùng.');});
@@ -1119,3 +1122,28 @@ window.matchMedia('(min-width: 960px)').addEventListener('change', () => {
   if (studentSettingsActive && !studentActiveView) studentActiveView = 'account';
   renderStudentSettings(false);
 });
+
+// Giao diện sáng/tối: mặc định theo hệ thống; nút mặt trời/mặt trăng lưu lựa chọn trên thiết bị.
+function effectiveTheme() {
+  const set = document.documentElement.dataset.theme;
+  return set === 'light' || set === 'dark' ? set : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+function syncThemeButton() {
+  const dark = effectiveTheme() === 'dark';
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.setAttribute('aria-pressed', String(dark));
+  const label = dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối';
+  btn.setAttribute('aria-label', label); btn.title = label;
+  let meta = document.querySelector('meta[name="theme-color"][data-dynamic]');
+  if (!meta) { meta = document.createElement('meta'); meta.setAttribute('name', 'theme-color'); meta.setAttribute('data-dynamic', ''); document.head.prepend(meta); }
+  meta.setAttribute('content', dark ? '#111113' : '#ffffff');
+}
+document.getElementById('theme-toggle')?.addEventListener('click', () => {
+  const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('aisgk-theme', next); } catch { /* chế độ riêng tư: chỉ đổi trong phiên */ }
+  syncThemeButton();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', syncThemeButton);
+syncThemeButton();

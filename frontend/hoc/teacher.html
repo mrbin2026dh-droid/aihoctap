@@ -16,13 +16,16 @@
 <main id="main" class="t-main" tabindex="-1">
 <p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
 <section id="auth-section" class="t-auth" aria-labelledby="teacher-login-title">
-<h2 id="teacher-login-title">Đăng nhập giáo viên</h2>
+<span class="t-auth-logo" aria-hidden="true">sgk</span>
+<h2 id="teacher-login-title">Đăng nhập</h2>
+<p class="t-auth-lead">Góc dành cho giáo viên.</p>
 <form id="teacher-login" class="t-form">
 <div class="t-field"><label for="teacher-pin">Mã PIN giáo viên</label>
-<div class="t-pin"><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin giáo viên">Hiện</button>
+<div class="t-pin t-input-icon"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện mã PIN"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
-<p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p><button type="submit" class="t-button t-primary">Đăng nhập</button>
+<p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p><button type="submit" class="t-button t-primary t-auth-btn"><span>Đăng nhập</span><svg class="ic ic-end" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14 M13 6l6 6-6 6"/></svg></button>
+<a class="t-auth-back" href="./" aria-label="Về góc học sinh" title="Về góc học sinh"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22 10 12 5 2 10l10 5 10-5z M6 12v5c3 2 9 2 12 0v-5"/></svg><span>Góc học sinh</span></a>
 </form>
 </section>
 <section id="teacher-must-change-section" class="t-auth" hidden aria-labelledby="first-pin-title">
@@ -30,15 +33,15 @@
 <p id="first-pin-help">Đây là lần đăng nhập đầu. Hãy đổi mã PIN trước khi tiếp tục.</p>
 <form id="teacher-must-change-form" class="t-form">
 <div class="t-field"><label for="first-old">Mã PIN hiện tại</label>
-<div class="t-pin"><input id="first-old" name="old_pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="first-old" aria-controls="first-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin hiện tại">Hiện</button>
+<div class="t-pin"><input id="first-old" name="old_pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="first-old" aria-controls="first-old" aria-pressed="false" aria-label="Hiện mã pin hiện tại"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <div class="t-field"><label for="first-new">Mã PIN mới</label>
-<div class="t-pin"><input id="first-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="first-length"><button type="button" class="t-reveal" data-reveal="first-new" aria-controls="first-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin mới">Hiện</button>
+<div class="t-pin"><input id="first-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="first-length"><button type="button" class="t-reveal" data-reveal="first-new" aria-controls="first-new" aria-pressed="false" aria-label="Hiện mã pin mới"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <div class="t-field"><label for="first-confirm">Nhập lại mã PIN mới</label>
-<div class="t-pin"><input id="first-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="t-reveal" data-reveal="first-confirm" aria-controls="first-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn nhập lại mã pin mới">Hiện</button>
+<div class="t-pin"><input id="first-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="t-reveal" data-reveal="first-confirm" aria-controls="first-confirm" aria-pressed="false" aria-label="Hiện nhập lại mã pin mới"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <p id="first-length" class="t-muted">Ít nhất 8 ký tự.</p>
@@ -445,7 +448,7 @@
 <div class="t-field"><label for="field-add-student-form-class_code">Mã lớp</label><input name="class_code" required maxlength="10" id="field-add-student-form-class_code">
 </div>
 <div class="t-field"><label for="field-add-student-form-pin">Mã PIN (để trống để tự sinh)</label>
-<div class="t-pin"><input name="pin" type="password" minlength="6" maxlength="16" id="field-add-student-form-pin" autocomplete="off" inputmode="numeric"><button type="button" class="t-reveal" data-reveal="field-add-student-form-pin" aria-controls="field-add-student-form-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin (để trống để tự sinh)">Hiện</button>
+<div class="t-pin"><input name="pin" type="password" minlength="6" maxlength="16" id="field-add-student-form-pin" autocomplete="off" inputmode="numeric"><button type="button" class="t-reveal" data-reveal="field-add-student-form-pin" aria-controls="field-add-student-form-pin" aria-pressed="false" aria-label="Hiện mã pin (để trống để tự sinh)"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 </div><button type="submit" class="t-button t-primary" data-action="save-student">Thêm học sinh</button>
@@ -463,15 +466,15 @@
 <h3 id="regular-pin-title">Đổi mã PIN</h3>
 <form id="teacher-regular-change-pin-form" class="t-form">
 <div class="t-field"><label for="regular-old">Mã PIN hiện tại</label>
-<div class="t-pin"><input id="regular-old" name="old_pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="regular-old" aria-controls="regular-old" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin hiện tại">Hiện</button>
+<div class="t-pin"><input id="regular-old" name="old_pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="regular-old" aria-controls="regular-old" aria-pressed="false" aria-label="Hiện mã pin hiện tại"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <div class="t-field"><label for="regular-new">Mã PIN mới</label>
-<div class="t-pin"><input id="regular-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="regular-length"><button type="button" class="t-reveal" data-reveal="regular-new" aria-controls="regular-new" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin mới">Hiện</button>
+<div class="t-pin"><input id="regular-new" name="new_pin" type="password" autocomplete="new-password" required minlength="8" aria-describedby="regular-length"><button type="button" class="t-reveal" data-reveal="regular-new" aria-controls="regular-new" aria-pressed="false" aria-label="Hiện mã pin mới"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <div class="t-field"><label for="regular-confirm">Nhập lại mã PIN mới</label>
-<div class="t-pin"><input id="regular-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="t-reveal" data-reveal="regular-confirm" aria-controls="regular-confirm" aria-pressed="false" aria-label="Hiện hoặc ẩn nhập lại mã pin mới">Hiện</button>
+<div class="t-pin"><input id="regular-confirm" name="confirm_pin" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="t-reveal" data-reveal="regular-confirm" aria-controls="regular-confirm" aria-pressed="false" aria-label="Hiện nhập lại mã pin mới"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <p id="regular-length" class="t-muted">Ít nhất 8 ký tự.</p>
@@ -513,7 +516,7 @@
 <p id="pool-banner" class="notice" role="status">Chưa tải dữ liệu khóa.</p>
 <form id="add-key-form" class="t-form">
 <div class="t-field"><label for="field-gemini-key">Khóa API Gemini</label>
-<div class="t-pin"><input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" id="field-gemini-key"><button type="button" class="t-reveal" data-reveal="field-gemini-key" aria-controls="field-gemini-key" aria-pressed="false" aria-label="Hiện hoặc ẩn khóa api gemini">Hiện</button>
+<div class="t-pin"><input name="gemini_api_key" type="password" required minlength="20" maxlength="100" autocomplete="off" id="field-gemini-key"><button type="button" class="t-reveal" data-reveal="field-gemini-key" aria-controls="field-gemini-key" aria-pressed="false" aria-label="Hiện khóa api gemini"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <div class="t-field"><label for="field-add-key-form-gemini_key_note">Ghi chú</label><input name="gemini_key_note" maxlength="100" id="field-add-key-form-gemini_key_note">

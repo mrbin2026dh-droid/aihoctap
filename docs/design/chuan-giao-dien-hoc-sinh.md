@@ -24,3 +24,9 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 - Giao diện giáo viên chưa có chế độ tối (teacher.css riêng).
 - Chưa có nút chọn Sáng/Tối/Theo hệ thống trong Cài đặt.
 - Chưa đo trên máy thật và trình duyệt Safari.
+
+## Đăng nhập và thanh trên (theo mẫu tham khảo)
+- Thẻ đăng nhập bo góc 20px trên nền trung tính; logo tròn, tiêu đề đậm 30px, mô tả một dòng, nút cao 56px bo 14px (đen ở chế độ sáng, trắng ở chế độ tối) có biểu tượng đầu và mũi tên cuối.
+- Ô nhập cao 56px, biểu tượng đầu dòng (người dùng, ổ khóa), nút mắt hiện/ẩn mã PIN; nhãn nằm trên ô; lỗi nằm dưới và báo bằng `role=alert`.
+- Thanh trên chỉ dùng biểu tượng 44px có tên truy cập: kết nối mạng, cài ứng dụng, sáng/tối, cài đặt, tài khoản (chữ cái đầu tên), góc giáo viên. Không còn nút chữ "Hiện", "Đóng", "Cài ứng dụng".
+- Nút sáng/tối lưu lựa chọn trên thiết bị (`aisgk-theme`); mặc định theo hệ thống.
