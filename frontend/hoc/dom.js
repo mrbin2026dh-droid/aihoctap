@@ -277,16 +277,17 @@ export const noticeBox = o => dialogBox({kind: 'notice', ...o});
  * @returns {Promise<T>}
  */
 export async function withBusy(btn, busyText, fn) {
+  const iconOnly = Boolean(btn.classList?.contains('icon-btn') && btn.querySelector?.('svg'));
   const old = btn.textContent;
   btn.disabled = true;
   btn.setAttribute('aria-busy', 'true');
-  btn.textContent = busyText;
+  if (!iconOnly) btn.textContent = busyText;
   try {
     return await fn();
   } finally {
     btn.disabled = false;
     btn.removeAttribute('aria-busy');
-    btn.textContent = old;
+    if (!iconOnly) btn.textContent = old;
   }
 }
 

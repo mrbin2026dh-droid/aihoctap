@@ -1,5 +1,5 @@
 /* 1. Biến thiết kế: styles.css provides the local SGK Serif font. */
-:root{--ink:#18302d;--muted:#536762;--paper:#f5f4ef;--surface:#fffefa;--sidebar:#eeeee6;--line:#d8dfd8;--brand:#183e39;--brand-hover:#28574f;--brand-soft:#e5eedf;--ok:#245b41;--ok-bg:#e5eedf;--warn:#78350f;--warn-bg:#fff3dd;--danger:#8b2d26;--danger-bg:#fdecea;--info:#183e39;--info-bg:#e5eedf;--control:#74847d;--white:#ffffff;--backdrop:#18302d80;--shadow:0 4px 16px #18302d14;--t-nav-width:224px;--t-nav-height:72px;--t-header-height:64px;--t-radius:8px;--t-card-radius:12px;--t-text:16px;--t-small:14px;--t-tiny:12px;--t-medium:18px;--t-h3:22px;--t-h2:28px;--t-h1:36px}
+:root{--ink:#18302d;--muted:#536762;--paper:#f5f4ef;--surface:#fffefa;--sidebar:#eeeee6;--line:#d8dfd8;--brand:#183e39;--brand-hover:#28574f;--brand-soft:#e5eedf;--ok:#245b41;--ok-bg:#e5eedf;--warn:#78350f;--warn-bg:#fff3dd;--danger:#8b2d26;--danger-bg:#fdecea;--info:#183e39;--info-bg:#e5eedf;--control:#74847d;--white:#ffffff;--backdrop:#18302d80;--shadow:0 4px 16px #18302d14;--t-nav-width:224px;--t-nav-height:72px;--t-header-height:64px;--t-radius:8px;--t-card-radius:12px;--t-text:16px;--t-small:14px;--t-tiny:14px;--t-medium:18px;--t-h3:22px;--t-h2:28px;--t-h1:36px}
 /* 2. Nền tảng — every non-token selector is scoped to teacher-app. */
 .teacher-app{margin:0;background:var(--paper);color:var(--ink);font:var(--t-text)/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--blue:var(--brand)}
 .teacher-app *,.teacher-app *::before,.teacher-app *::after{box-sizing:border-box}
@@ -199,3 +199,6 @@
 .teacher-app .t-button.t-auth-btn:hover{background:#27272a;border-color:#27272a}
 .teacher-app .t-auth-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:12px;color:var(--muted);text-decoration:none;font-weight:600}
 .teacher-app .t-auth-back:hover{color:var(--ink);text-decoration:underline}
+
+@media(max-width:760px){:root{--t-text:clamp(18px,4.6vw,22px);--t-small:clamp(16px,4.1vw,20px);--t-tiny:clamp(15px,3.8vw,18px)}}
+.teacher-app h1,.teacher-app .t-workspace-head h1{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:800;letter-spacing:-.02em}

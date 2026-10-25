@@ -30,6 +30,7 @@ const DRAFT_KEY = 'aisgk-teacher-draft';
 /** @param {Error} error */
 function fail(error) {
   if (error instanceof ApiError && error.status === 401) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); mustChangePin = false; generation++; updateAuth();}
+  if (error instanceof ApiError && error.status === 401) { notify('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.', true); return; }
   notify(error instanceof Error ? error.message : 'Thao tác chưa hoàn thành. Hãy thử lại.', true);
 }
 /** @param {string} id @param {()=>void|Promise<void>} action */

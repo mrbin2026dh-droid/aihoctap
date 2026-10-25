@@ -38,3 +38,10 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 - Trạng thái rỗng có biểu tượng tròn, tiêu đề và một hành động tiếp theo.
 - Bài tập có thanh tiến độ theo số câu đã trả lời; kết quả có biểu tượng hoàn thành.
 - Nút chính màu đen (trắng ở chế độ tối); nút phụ viền; mọi nút thao tác có biểu tượng đi kèm chữ.
+
+## Cập nhật, chữ thừa và phiên hết hạn
+- Chữ co giãn theo chiều rộng khi màn hình hẹp: nội dung 18–22px, chữ phụ 16–20px, nhãn 15–18px, nút và ô nhập 17–20px. Máy tính giữ 17/15/14/16px. Kiểm định yêu cầu tối thiểu 15px trên điện thoại.
+- Thông báo cập nhật là biểu tượng làm mới có chấm đỏ ở đầu thanh trên (có tên truy cập "Cập nhật ứng dụng"), không còn thanh chữ.
+- Bỏ khẩu hiệu và chữ trang trí: "SGK · Học theo nhịp của em", "Mỗi ngày một chút", nhãn in hoa phía trên tiêu đề, câu mở đầu trang chủ. Thông báo trạng thái bình thường chỉ dành cho trình đọc màn hình; chỉ lỗi mới hiện chữ.
+- Token đăng nhập (học sinh và giáo viên) hết hạn sau 1 giờ. Khi gặp 401, ứng dụng hiện một hộp thoại duy nhất, giữ nháp và bài chờ nộp, rồi mở đăng nhập với mã học sinh đã điền (PIN luôn để trống).
+- Giao diện giáo viên khai báo `only light` để Chrome không tự ép tối; chữ giáo viên cũng theo thang trên (tests/test_teacher_ui_standard.cjs).

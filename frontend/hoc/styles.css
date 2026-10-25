@@ -29,7 +29,7 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app .topbar .actions{justify-content:flex-end;max-width:80%}.connection{font-size:12px;color:var(--muted);display:inline-flex;gap:6px;align-items:center;margin-right:12px}.connection::before{content:'';width:7px;height:7px;border-radius:50%;background:#2f6f58}.connection.is-offline::before{background:#915c15}
 .student-app button{border-radius:8px;transition:background .15s,border-color .15s}.student-app button:hover{background:#eaf1eb;border-color:#527b68}.student-app button.primary:hover,.student-app button[aria-current=page]:hover{background:#28574f;color:#fff}.student-app .quiet{background:transparent;border-color:transparent}.student-app :focus-visible{outline-color:#306d5a}.student-app button:disabled{cursor:not-allowed}
 .student-app .bottom-nav{width:218px;top:92px;right:auto;bottom:0;display:flex;flex-direction:column;gap:8px;padding:32px 18px;background:#eeeee6;border-right:1px solid var(--line);border-top:0;z-index:4}.nav-label{font-size:10px;font-weight:750;letter-spacing:1.4px;color:var(--muted);padding:0 14px 20px}.student-app .bottom-nav button{display:flex;align-items:center;gap:16px;padding:14px 16px;text-align:left;border-radius:8px;font-size:15px;background:transparent;color:var(--muted);font-weight:650}.student-app .bottom-nav button[aria-current=page]{background:var(--blue);color:#fff}.nav-number{font-size:11px;opacity:.8;font-variant-numeric:tabular-nums}.nav-note{font-size:12px;line-height:1.8;color:var(--muted);padding:20px 14px;margin-top:auto;border-top:1px solid var(--line)}
-.student-app .workspace{margin-left:218px}.student-app main{max-width:1100px;padding:0 36px 40px;margin:0 auto;min-height:calc(100dvh - 225px)}.student-app .notice{max-width:1028px;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--muted);margin:0 auto 26px;padding:12px 0;font-size:12px;min-height:43px}.student-app .notice.error{color:#843d17;background:#fff3dd;border-radius:8px;padding-inline:16px}.student-app #update-notice{background:#e5eedf;padding:12px 16px;color:var(--blue)}
+.student-app .workspace{margin-left:218px}.student-app main{max-width:1100px;padding:0 36px 40px;margin:0 auto;min-height:calc(100dvh - 225px)}.student-app .notice{max-width:1028px;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--muted);margin:0 auto 26px;padding:12px 0;font-size:12px;min-height:43px}.student-app .notice.error{color:#843d17;background:#fff3dd;border-radius:8px;padding-inline:16px}
 .study-hero{display:grid;grid-template-columns:1.6fr 1fr;align-items:center;gap:28px;padding:16px 0 32px;border-bottom:1px solid var(--line)}.student-app .eyebrow{font-size:11px;letter-spacing:1.6px;color:#3c6758;font-weight:750}.study-hero h1{font-family:'SGK Serif','Times New Roman',Times,serif;font-weight:500;font-size:clamp(34px,4.2vw,54px);line-height:1.12;letter-spacing:-1.6px;margin:18px 0}.study-hero>div>p:last-child{color:var(--muted);font-size:15px}.hero-note{border-left:1px solid var(--line);padding:10px 0 10px 28px}.hero-book{display:block;font-family:'SGK Serif','Times New Roman',Times,serif;font-size:60px;line-height:1.1;letter-spacing:-5px;color:#8b613c}.hero-note p{font-weight:700;font-size:16px;margin:12px 0 2px}.hero-note small{font-size:12px;color:var(--muted)}
 .catalog-toolbar{display:grid;grid-template-columns:210px 1fr;gap:20px;margin:24px 0}.student-app label{font-size:13px;color:var(--ink);margin:0}.student-app input,.student-app select,.student-app textarea{border-color:#a8b7ac;background:var(--surface);border-radius:7px}.student-app .grade-filter{max-width:none}.student-app .course-grid{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 28px}.student-app .course-card{border:1px solid var(--line);padding:14px 18px;min-width:180px;flex:1;margin:0;border-radius:9px;display:grid;grid-template-columns:1fr auto;gap:0 16px;align-items:center;background:var(--surface)}.student-app .course-card h2{font-size:18px;grid-row:2;margin:0}.student-app .course-card .meta{font-size:11px;margin:0}.student-app .course-card button{grid-column:2;grid-row:1/3;font-size:12px;padding:6px 12px;min-height:40px}.student-app .course-card button[aria-pressed=true]{background:var(--blue);color:white}
 .section-title{font-size:18px;letter-spacing:-.3px;margin:0 0 16px}.student-app .lesson-card{padding:20px 22px;margin:0;border-radius:0;background:var(--surface);border:0;border-bottom:1px solid var(--line);gap:24px}.student-app .lesson-card:first-of-type{border-radius:10px 10px 0 0}.student-app .lesson-card:last-child{border-radius:0 0 10px 10px}.lesson-description{min-width:0}.student-app .lesson-card h3{font-size:17px;line-height:1.5;letter-spacing:-.2px;max-width:65ch}.student-app .lesson-card .meta{font-size:12px;margin:3px 0}.student-app .lesson-open{flex-shrink:0;font-size:13px;min-width:100px;background:#edf1e9;color:#214f43;border-color:transparent}.student-app .lesson-open:hover{background:var(--blue);color:#fff}.lesson-stack{margin-top:18px}.study-tip{margin-top:28px;padding:16px 20px;border-left:3px solid #a9844d;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px}.study-tip strong{color:var(--ink)}
@@ -604,9 +604,29 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
   .student-app .lesson-card,.student-app .lesson-card:first-of-type,.student-app .lesson-card:last-child{grid-template-columns:auto 1fr;gap:12px 14px}
   .student-app .lesson-open{grid-column:1/-1;width:100%}
   .student-app .course-card{grid-template-columns:auto 1fr;grid-template-areas:"t m" "t h" "b b";gap:0 14px}
+  .student-app .course-card,.student-app .course-card:only-child{grid-template-columns:auto 1fr;min-height:0}
+  .student-app .course-grid{display:grid;grid-template-columns:1fr;min-height:0}
   .student-app .course-card button{margin-top:12px;width:100%;text-align:center}.student-app .course-card button span{text-align:center}
   .student-app .workspace{padding-bottom:88px}
 }
+
+/* ===== Chữ co giãn theo màn hình hẹp, thông báo cập nhật dạng biểu tượng, bỏ chữ thừa ===== */
+@media(max-width:760px){
+  .student-app{--fs-body:clamp(18px,4.6vw,22px);--fs-small:clamp(16px,4.1vw,20px);--fs-label:clamp(15px,3.8vw,18px);--fs-control:clamp(17px,4.3vw,20px)}
+  .student-app .bottom-nav button{letter-spacing:0}
+  .student-app .study-hero{display:none}
+}
+.student-app .update-wrap{display:inline-flex}
+.student-app .update-wrap[hidden]{display:none}
+.student-app .update-btn{border-color:#2d7a6c;color:#2d7a6c}
+.student-app .badge-dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:#dc2626;border:2px solid var(--surface)}
+.student-app .icon-btn[aria-busy=true] svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.student-app #status:not(.error){position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0;padding:0;border:0;min-height:0}
+.student-app .student-footer,.student-app .nav-note,.student-app .nav-label{display:none}
+.student-app label.option,.student-app fieldset legend,.student-app .hint{font-size:var(--fs-body)}
+.student-app label.option{min-height:52px;line-height:1.4}
+.student-app .update-wrap,.student-app #update-notice{background:transparent;border:0;padding:0;margin:0;min-height:0;max-width:none}
 
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
@@ -641,7 +661,6 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root:not([data-theme=light])) .student-app :focus-visible{outline-color:#416157}
 :where(:root:not([data-theme=light])) .student-app .bottom-nav{background:#2e2e2c}
 :where(:root:not([data-theme=light])) .student-app .notice.error{color:#e7b9a0;background:#322e27}
-:where(:root:not([data-theme=light])) .student-app #update-notice{background:#2d2f2c;color:var(--brand-text)}
 :where(:root:not([data-theme=light])) .student-app .eyebrow{color:#b4d0c6}
 :where(:root:not([data-theme=light])) .hero-book{color:#d1b7a1}
 :where(:root:not([data-theme=light])) .student-app input,:where(:root:not([data-theme=light])) .student-app select,:where(:root:not([data-theme=light])) .student-app textarea{border-color:#49504a}
@@ -712,6 +731,9 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root:not([data-theme=light])) .student-app .course-card{box-shadow:0 1px 2px rgba(0,0,0,.55)}
 :where(:root:not([data-theme=light])) .student-app .result-title .ic{color:#a2e9bc}
 :where(:root:not([data-theme=light])) .student-app .bottom-nav button[aria-current=page] .nav-ic{color:var(--brand-text)}
+:where(:root:not([data-theme=light])) .student-app .update-btn{border-color:#3f645d;color:#a8d9d0}
+:where(:root:not([data-theme=light])) .student-app .badge-dot{background:#661e1e}
+:where(:root:not([data-theme=light])) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root:not([data-theme=light])) .student-app .lesson-open,:where(:root:not([data-theme=light])) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root:not([data-theme=light])) .student-app button.primary:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
 :where(:root:not([data-theme=light])) .student-app .lesson-open:hover{background:#fafafa;color:#09090b;border-color:#fafafa}
@@ -752,7 +774,6 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root[data-theme=dark]) .student-app :focus-visible{outline-color:#416157}
 :where(:root[data-theme=dark]) .student-app .bottom-nav{background:#2e2e2c}
 :where(:root[data-theme=dark]) .student-app .notice.error{color:#e7b9a0;background:#322e27}
-:where(:root[data-theme=dark]) .student-app #update-notice{background:#2d2f2c;color:var(--brand-text)}
 :where(:root[data-theme=dark]) .student-app .eyebrow{color:#b4d0c6}
 :where(:root[data-theme=dark]) .hero-book{color:#d1b7a1}
 :where(:root[data-theme=dark]) .student-app input,:where(:root[data-theme=dark]) .student-app select,:where(:root[data-theme=dark]) .student-app textarea{border-color:#49504a}
@@ -823,6 +844,9 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :where(:root[data-theme=dark]) .student-app .course-card{box-shadow:0 1px 2px rgba(0,0,0,.55)}
 :where(:root[data-theme=dark]) .student-app .result-title .ic{color:#a2e9bc}
 :where(:root[data-theme=dark]) .student-app .bottom-nav button[aria-current=page] .nav-ic{color:var(--brand-text)}
+:where(:root[data-theme=dark]) .student-app .update-btn{border-color:#3f645d;color:#a8d9d0}
+:where(:root[data-theme=dark]) .student-app .badge-dot{background:#661e1e}
+:where(:root[data-theme=dark]) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root[data-theme=dark]) .student-app .lesson-open,:where(:root[data-theme=dark]) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root[data-theme=dark]) .student-app button.primary:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}
 :where(:root[data-theme=dark]) .student-app .lesson-open:hover{background:#fafafa;color:#09090b;border-color:#fafafa}

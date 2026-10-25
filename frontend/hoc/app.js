@@ -104,7 +104,27 @@ function closeTutor() {
 
 
 /** @param {Error} error */
-function report(error) { notify(error.message, true); }
+function report(error) { if (error instanceof ApiError && error.status === 401) { void expireSession(); return; } notify(error.message, true); }
+let expiring = false;
+/** Token học sinh hết hạn sau 1 giờ: giữ nháp và bài chờ nộp, yêu cầu đăng nhập lại một lần. */
+async function expireSession() {
+  if (!session || expiring) return;
+  expiring = true;
+  const uid = session.identity?.uid || '';
+  try {
+    viewGeneration++;
+    await saveDraft();
+    session = null; active = null; draft = null; locked = false;
+    await db.remove('meta', 'session');
+    identityUI(); renderCatalog(); show('catalog');
+    const again = await confirmBox({title: 'Phiên đăng nhập đã hết hạn', body: 'Bài làm và bài chờ nộp vẫn được giữ trên máy. Hãy đăng nhập lại để tiếp tục.', okText: 'Đăng nhập'});
+    if (again) {
+      const code = /** @type {HTMLInputElement|null} */ (document.getElementById('student-code')); if (code) code.value = uid; const pin = /** @type {HTMLInputElement|null} */ (document.getElementById('student-pin')); if (pin) pin.value = '';
+      /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal();
+    }
+  } finally { expiring = false; }
+}
+window.addEventListener('aisgk:unauthorized', () => { void expireSession(); });
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }
 function clearTeacherSession() {
@@ -420,7 +440,7 @@ async function sync() {
       } catch (error) {
         await db.put('outbox', item.key, {...item, error: error instanceof Error ? error.message : 'Đồng bộ chưa xong.'});
         if (session === captured) {
-          if (error instanceof ApiError && (error.status === 401 || error.status === 403)) notify('Phiên đăng nhập cần kiểm tra. Bài chờ vẫn được giữ.', true);
+          if (error instanceof ApiError && (error.status === 401 || error.status === 403)) { void expireSession(); }
           else report(error instanceof Error ? error : new Error('Chưa đồng bộ được bài.'));
         }
         break;
@@ -839,7 +859,7 @@ if ('serviceWorker' in navigator) {
     if (!hadController) { hadController = true; return; }     // lần cài đầu: không tải lại
     if (reloading) return;
     if (updateRequested) { reloading = true; location.reload(); return; }
-    node('update-text').textContent = 'Ứng dụng vừa cập nhật ở cửa sổ khác. Tải lại để dùng bản mới.';
+    node('update-text').textContent = 'Ứng dụng vừa cập nhật ở cửa sổ khác. Tải lại để dùng bản mới.'; node('update-app').title = node('update-text').textContent; node('update-app').setAttribute('aria-label', 'Tải lại để dùng bản mới');
     node('update-notice').hidden = false;
     node('update-notice').dataset.reload = '1';   // P5
   });

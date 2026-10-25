@@ -1,0 +1,26 @@
+// Chuẩn chữ giao diện giáo viên: chữ không nhỏ hơn 14px (15px trên điện thoại), vùng chạm 44px, không tràn ngang.
+// Chạy: NODE_PATH=$(npm root -g) node tests/test_teacher_ui_standard.cjs   (REPORT=1 để in vi phạm, SHOTS=thư_mục)
+const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.resolve(__dirname,'../frontend/hoc');const SHOTS=process.env.SHOTS||'';const REPORT=process.env.REPORT==='1';
+const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
+r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8171);
+const STUDENTS=[{id:'hs01',name:'Học sinh Thử 01',grade:9,class_code:'9A',disabled:false},{id:'hs02',name:'Học sinh Thử 02',grade:6,class_code:'6B',disabled:true}];
+function scan(min){const vis=el=>{const r=el.getBoundingClientRect();if(r.width<1||r.height<1)return false;for(let n=el;n;n=n.parentElement){const s=getComputedStyle(n);if(s.display==='none'||s.visibility==='hidden'||n.hidden)return false}return true};
+ const name=el=>el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+(typeof el.className==='string'&&el.className?'.'+el.className.trim().split(/\s+/)[0]:'');
+ const o={small:[],targets:[],overflow:document.documentElement.scrollWidth>innerWidth+1};const seen=new Set();
+ const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);for(let t=w.nextNode();t;t=w.nextNode()){const el=t.parentElement;if(!el||seen.has(el)||!t.textContent.trim()||!vis(el)||el.closest('.visually-hidden'))continue;seen.add(el);const fs=parseFloat(getComputedStyle(el).fontSize);if(fs>0&&fs<min)o.small.push(name(el)+' '+fs+'px "'+t.textContent.trim().slice(0,22)+'"')}
+ for(const el of document.querySelectorAll('button,a[href],input:not([type=hidden]):not([type=checkbox]),select,textarea')){if(!vis(el)||el.closest('.visually-hidden'))continue;const r=el.getBoundingClientRect();if(r.height<44||r.width<44)o.targets.push(name(el)+' '+Math.round(r.width)+'x'+Math.round(r.height))}
+ return o}
+(async()=>{const b=await chromium.launch();let bad=0;const out=[];
+for(const vp of [{w:360,h:740},{w:390,h:844},{w:768,h:1024},{w:1280,h:800}]){
+ const ctx=await b.newContext({viewport:{width:vp.w,height:vp.h},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+ await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body={};if(u.endsWith('/teacher/auth'))body={token:'tt',must_change:false};else if(u.endsWith('/pwa/catalog'))body={schema_version:1,revision:'r',courses:[]};else if(u.endsWith('/teacher/students'))body=STUDENTS;else if(u.includes('/pwa/teacher/results'))body=[];else if(u.endsWith('/ai-settings'))body={settings:{default_limit:10,exam_mode:false}};else if(u.endsWith('/ai-stats'))body={stats:[]};else if(u.endsWith('/gemini-keys'))body={keys:[]};
+  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
+ const min=vp.w<=760?15:14;const T='teacher '+vp.w;const res={};const grab=async n=>{await pg.waitForTimeout(250);res[n]=await pg.evaluate(scan,min);if(SHOTS)await pg.screenshot({path:`${SHOTS}/t-${vp.w}-${n}.png`})};
+ await pg.goto('http://localhost:8171/teacher.html');await pg.waitForTimeout(500);await grab('login');
+ await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(1200);await grab('lessons');
+ for(const [n,sel] of [['exams','#nav-exams'],['materials','#nav-materials'],['accounts','#nav-accounts']]){const l=pg.locator(vp.w<=760?`.t-nav ${sel}`:sel).first();if(await l.isVisible()){await l.click();await grab(n)}}
+ await pg.click('#open-settings').catch(()=>{});await grab('profile');
+ for(const [n,v] of Object.entries(res)){const c=v.small.length+v.targets.length+(v.overflow?1:0);bad+=c;out.push(`${T} ${n}: chữ nhỏ ${v.small.length}, vùng chạm ${v.targets.length}, tràn ngang ${v.overflow?'CÓ':'không'}`);if(REPORT&&c){console.log('--',T,n);for(const k of ['small','targets'])if(v[k].length)console.log(' ',k,[...new Set(v[k])].slice(0,14).join(' | '))}}
+ assert.strictEqual(errs.length,0,T+' lỗi trang: '+errs.join(';'));await ctx.close()}
+console.log(out.join('\n'));console.log('TỔNG VI PHẠM:',bad);await b.close();srv.close();process.exit(bad?1:0)})().catch(e=>{console.error(e);process.exit(1)});

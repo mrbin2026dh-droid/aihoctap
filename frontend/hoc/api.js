@@ -18,6 +18,7 @@ export async function api(path, options = {}) {
     if (!response.ok) {
       const detail = typeof data.detail === 'string' ? data.detail : 'Dữ liệu chưa hợp lệ. Kiểm tra lại nội dung.';
       const code = typeof data.error === 'string' ? data.error : undefined;
+      if (response.status === 401 && options.token && typeof window !== 'undefined') window.dispatchEvent(new Event('aisgk:unauthorized'));
       throw new ApiError(response.status, detail, code);
     }
     return data;

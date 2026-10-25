@@ -745,3 +745,11 @@ Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md r�
 - Việc mở: kiểm tra bản chạy thật/điện thoại thật; chế độ tối cho giáo viên; màn Cài đặt học sinh chưa rà riêng.
 XONG trang học sinh theo mẫu / TIẾP THEO → Claude
 Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
+
+## 2026-10-25 — Claude: lỗi 401, chữ nhỏ trên điện thoại, thông báo cập nhật, bỏ chữ thừa
+- Nguyên nhân 401: token đăng nhập (Firebase custom token) hết hạn sau 3600 giây, ứng dụng không làm mới nên /pwa/progress, /pwa/attempts, giáo viên đều bị 401. Sửa: hộp thoại hết hạn một lần, giữ nháp, đăng nhập lại có mã đã điền; thêm tests/test_session_expiry.cjs.
+- Chữ co giãn cho màn hẹp (học sinh và giáo viên), đáp án câu hỏi dùng cỡ nội dung; thêm tests/test_teacher_ui_standard.cjs; teacher.html only light.
+- Cập nhật ứng dụng thành biểu tượng ở đầu thanh trên; bỏ footer, nhãn nav, khẩu hiệu, nhãn in hoa, thanh trạng thái chữ.
+- Việc mở: cân nhắc làm mới token tự động (cần endpoint refresh trên Worker); kiểm tra trên máy thật.
+XONG sửa 401 + chuẩn chữ / TIẾP THEO → Claude
+Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."

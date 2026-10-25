@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'../frontend/hoc');const SHOTS=process.env.SHO
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
 r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8151);
 const B='http://localhost:8151';
-const MIN_TEXT=+(process.env.MIN_TEXT||14), MIN_BODY=16;
+const MIN_TEXT_DESKTOP=14, MIN_TEXT_MOBILE=15;
 function scan(MIN_TEXT){
   const parse=c=>{const m=c.match(/rgba?\(([^)]+)\)/);if(!m)return null;const p=m[1].split(/[,\s/]+/).filter(Boolean).map(Number);return {r:p[0],g:p[1],b:p[2],a:p.length>3?p[3]:1}};
   const lum=c=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)};return .2126*f(c.r)+.7152*f(c.g)+.0722*f(c.b)};
@@ -34,7 +34,7 @@ for(const scheme of ['light','dark'])for(const vp of [{w:360,h:740},{w:390,h:844
  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body=CAT;if(!u.endsWith('catalog')&&!u.endsWith('/login')&&!u.endsWith('/pwa/me'))body={attempts:[],results:[],items:[]};if(u.endsWith('/login'))body={token:'t',must_change_pin:false};if(u.endsWith('/pwa/me'))body={uid:'hs01',student_name:'Nguyễn Văn Nam',class_code:'9A',grade:9};if(u.includes('/pwa/lessons/'))body=LESSON;
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
  await pg.goto(B+'/');await pg.waitForTimeout(500);const T=`${scheme} ${vp.w}`;const res={};
- const grab=async n=>{res[n]=await pg.evaluate(scan,MIN_TEXT);if(SHOTS)await pg.screenshot({path:`${SHOTS}/${scheme}-${vp.w}-${n}.png`,fullPage:false})};
+ const grab=async n=>{res[n]=await pg.evaluate(scan,vp.w<=760?MIN_TEXT_MOBILE:MIN_TEXT_DESKTOP);if(SHOTS)await pg.screenshot({path:`${SHOTS}/${scheme}-${vp.w}-${n}.png`,fullPage:false})};
  await grab('gate');
  await pg.click('#gate-student');await pg.waitForTimeout(200);await grab('login');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(1000);
  await grab('catalog');
