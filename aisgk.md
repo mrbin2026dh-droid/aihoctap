@@ -667,3 +667,9 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 ### 2026-10-25 · Claude · Thẩm định cập nhật PWA (mục L)
 - Đo thật: băm shell hiện tại `efbd3a2a…` ≠ dấu trong sw.js `4bd541a4…` → nếu deploy, máy đã cài KHÔNG nhận bản mới (P1). Công cụ đóng dấu chỉ ở scratch/, CI không đóng dấu (P2); precache theo cache HTTP (P3); thiếu kiểm định kỳ/đa cửa sổ/query/phiên bản (P4–P7).
 - Verdict YÊU CẦU ĐIỀU CHỈNH; handoff có code: `docs/handoff/claude-antigravity-pwa-update.md`; thêm AGENTS.md mục L; ghi lỗi mở ở `docs/bugs-mo.md`. Sau khi Antigravity sửa S1–S5 + P1–P7 và Claude ACCEPT → deploy đợt 3 cho người dùng thử.
+
+
+### 25/10/2026 – Antigravity – Phát hành đợt 3 (Pages) & Hoàn thành Smoke Test thật (S1–S5)
+- Đã làm: Đóng dấu SW cache chuẩn hóa eol=lf (`25780fc55def0c94a353e588`), lưu mốc rollback origin/main `f1a2c4ad1d1169dec7bfc408f93c0d5513df9dfb`, quét bí mật rỗng, chạy 17/17 test suites PASS; push commit c915a1c & bca0749; CI GitHub Actions workflow deploy-pages chạy xanh 100%; tạo hướng dẫn `docs/guides/kiem-tay-dot-3.md` và nhật ký lỗi `docs/handoff/nguoidung-release-3-loi.md`.
+- Kiểm thử thực tế: Smoke test thật (S1–S5) trên production GitHub Pages (mrbin2026dh-droid.github.io/aihoctap): S1 (SW cache trùng 100%, có open-settings & update-text), S2 (tải sạch HTTP 200, 0 console errors, SW registered), S3 (mở 2 lần hiện phiên bản a353e588, check update hiện modal "Đã là bản mới nhất"), S4 (mobile 390px danh sách nhóm -> chi tiết -> Back -> group list), S5 (thao tác Khóa học sinh hiện dialog xác nhận, Hủy = 0 request, Đồng ý = đúng 1 POST, 0 native alert). PASS 100%.
+- Việc dở: Bàn giao Người dùng kiểm tay theo docs/guides/kiem-tay-dot-3.md.
