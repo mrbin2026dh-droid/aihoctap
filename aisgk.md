@@ -717,3 +717,9 @@ rontend/hoc/api.js, scratch/aihoctap-clean/*, isgk.md.
 - Việc mở: xem docs/bugs-mo.md.
 XONG giao diện biểu tượng / TIẾP THEO → Claude (kiểm tra bản chạy thật)
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/claude-chatgpt-teacher-ui-v3.md rồi làm theo."
+
+## 2026-10-25 — Claude: chuẩn bố cục giáo viên
+- Thêm docs/design/chuan-bo-cuc-giao-vien.md. Gộp nút hành động chính vào toolbar cùng hàng với tìm kiếm/lọc; "Tải lại" thành nút biểu tượng; bỏ tiêu đề phụ lặp (chỉ giữ một h1).
+- Việc mở: kiểm tra bản chạy thật sau khi Pages cập nhật; giao diện học sinh dùng thiết kế riêng, cần thống nhất sau.
+XONG bố cục toolbar / TIẾP THEO → Claude
+Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-bo-cuc-giao-vien.md rồi làm theo."

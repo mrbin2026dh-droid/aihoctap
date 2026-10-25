@@ -173,3 +173,8 @@
 .teacher-app .t-icon-btn.t-danger{color:var(--danger)}
 .teacher-app .t-icon-btn:disabled{opacity:.5;cursor:not-allowed}
 @media(min-width:1051px){.teacher-app .t-table td:last-child,.teacher-app .t-table th:last-child{width:304px;min-width:304px}.teacher-app .t-table .t-icon-actions{flex-wrap:nowrap}.teacher-app #students-tbody td:first-child,.teacher-app #students-table th:first-child{width:56px}}
+.teacher-app .t-toolbar:has(>.t-primary){grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)) auto}
+.teacher-app .t-toolbar-students{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 48px auto!important}
+.teacher-app .t-toolbar-actions-only{display:flex;justify-content:flex-end}
+.teacher-app .t-toolbar>.t-button{white-space:nowrap}
+@media(max-width:760px){.teacher-app .t-toolbar:has(>.t-primary),.teacher-app .t-toolbar-students{grid-template-columns:repeat(2,minmax(0,1fr))!important}.teacher-app .t-toolbar>.t-primary{grid-column:1/-1}.teacher-app .t-auth{width:auto;margin:24px 16px;max-width:none}}
