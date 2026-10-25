@@ -1,4 +1,4 @@
-export interface Question { id: string; prompt: string; options: Record<string,string>; hint: string; kind: 'choice'|'text'; }
+export interface Question { id: string; prompt: string; options: Record<string,string>; hint: string; kind: 'choice'|'text'; topic?: string; }
 export interface Lesson { schema_version: 1; course_id: string; lesson_id: string; version: string; grading_revision?: string; title: string; content_markdown: string; questions: Question[]; }
 export interface LessonSummary { id:string; title:string; version:string; question_count:number; }
 export interface Course { id:string; subject_id:string; subject_name:string; grade:number; title:string; lessons:LessonSummary[]; }

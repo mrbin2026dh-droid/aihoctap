@@ -85,3 +85,9 @@ Kiểm thử số liệu: tests/test_dashboard_numbers.cjs.
 - Màu theo khu vực (token `--teal/blue/amber/violet/green-bg|fg`, có bản tối): Tổng quan = xanh ngọc, Học = xanh dương, Luyện tập = vàng cam, Tài liệu = tím, kết quả tốt = xanh lá.
 - Thẻ thống kê có icon màu; thanh tiến độ chuyển sắc; tranh minh họa SVG tự vẽ ở đầu Tổng quan (ẩn trên điện thoại).
 - Khối CSS nằm giữa `UI-TEAL:BEGIN/END` trong `styles.css`; chạy lại `tools/gen_dark_theme.py` sau khi sửa.
+
+## Điểm yếu của học sinh (2026-10-25)
+- Máy chủ lưu kết quả từng câu ở `attempt_details/{uid}/{attempt_id}` (chỉ quản trị đọc). Học sinh không bao giờ nhận chi tiết từng câu.
+- Giáo viên: thẻ "Học sinh đang yếu ở đâu" ở đầu Soạn bài (chủ đề, câu hỏi nhiều bạn sai kèm đáp án sai phổ biến, học sinh cần hỗ trợ). Ngưỡng: Yếu <50%, Cần củng cố 50-79%, Tốt >=80%. Chỉ tính lần nộp mới nhất của mỗi học sinh cho mỗi bài. Không dùng AI.
+- Học sinh: mục "Em nên ôn lại" trên Tổng quan, theo chủ đề, chỉ bài luyện tập (không gồm `exam_`), chỉ hiện tên chủ đề và số câu đúng.
+- Muốn báo cáo theo chủ đề, giáo viên điền "Chủ đề kiến thức" cho từng câu khi soạn bài.

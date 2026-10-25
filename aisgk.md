@@ -818,3 +818,9 @@ XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pu
 - Việc mở: `wrangler deploy` (Antigravity); chưa thử trên điện thoại thật/Safari; giao diện giáo viên chưa đổi.
 XONG giao diện học sinh / TIẾP THEO → Antigravity
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
+
+## 2026-10-25 - Claude - Điểm yếu học sinh + gia sư nhận biết câu hỏi
+- Làm: lưu kết quả từng câu (`attempt_details`, rules chỉ admin), `GET /api/pwa/teacher/analytics`, thẻ báo cáo cho giáo viên, mục "Em nên ôn lại" cho học sinh, ô "Chủ đề kiến thức" khi soạn câu, gia sư nhận câu hỏi + lựa chọn + lựa chọn tạm của học sinh từ dữ liệu bài (thêm câu mới không cần sửa mã). Test: test_weakness_analytics.mjs, test_tutor_questions.mjs, dashboard + giao diện giáo viên.
+- Việc mở (Antigravity): `wrangler deploy` VÀ deploy `database.rules.json` (nhánh attempt_details mới). Bài nộp cũ không có dữ liệu từng câu; báo cáo chỉ có từ bài nộp mới. Gemini thật chưa thử.
+XONG điểm yếu học sinh / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."

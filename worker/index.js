@@ -1292,6 +1292,135 @@ export async function requireTeacher(request, env, signingKeys, { allowMustChang
 /**
  * Socratic Pedagogy System Prompt for Worker AI Tutor (E2, F1, F3)
  */
+/** Mốc phân loại mức nắm bài theo tỉ lệ câu đúng (%). */
+export const WEAK_PERCENT = 50;
+export const OK_PERCENT = 80;
+
+/** Bài nộp mới nhất của mỗi học sinh cho mỗi bài học. */
+function latestPerStudentLesson(records) {
+  const latest = new Map();
+  for (const r of records) {
+    if (!r || !r.uid || !r.course_id || !r.lesson_id) continue;
+    const key = `${r.uid}|${r.course_id}:${r.lesson_id}`;
+    const old = latest.get(key);
+    if (!old || (Number(r.submitted_at) || 0) >= (Number(old.submitted_at) || 0)) latest.set(key, r);
+  }
+  return [...latest.values()];
+}
+
+/**
+ * Phân tích điểm yếu từ các bài nộp (đã có per_question) và nội dung công khai của bài học.
+ * Không dùng AI: chỉ đếm, nên không thể "bịa".
+ * @param {any[]} records bài nộp, mỗi bài có uid, course_id, lesson_id, submitted_at, per_question
+ * @param {Record<string, any>} lessons khóa `${course_id}:${lesson_id}` -> bài học công khai
+ */
+export function analyzeAttempts(records, lessons) {
+  const latest = latestPerStudentLesson(records);
+  const lessonRows = new Map();
+  const topicRows = new Map();
+  const students = new Map();
+  const attemptsByLesson = new Map();
+  for (const r of records) { const k = `${r.course_id}:${r.lesson_id}`; attemptsByLesson.set(k, (attemptsByLesson.get(k) || 0) + 1); }
+  for (const r of latest) {
+    const key = `${r.course_id}:${r.lesson_id}`;
+    const lesson = lessons[key] || {};
+    const qList = Array.isArray(lesson.questions) ? lesson.questions : [];
+    let row = lessonRows.get(key);
+    if (!row) {
+      row = { course_id: r.course_id, lesson_id: r.lesson_id, title: lesson.title || r.lesson_id, students: 0, attempts: attemptsByLesson.get(key) || 0, sum_percent: 0, questions: new Map() };
+      lessonRows.set(key, row);
+    }
+    row.students += 1;
+    row.sum_percent += r.total ? (100 * r.correct) / r.total : 0;
+    let st = students.get(r.uid);
+    if (!st) { st = { uid: r.uid, name: r.student_name || r.uid, class_code: r.class_code || '', lessons: 0, sum_percent: 0, topics: new Map() }; students.set(r.uid, st); }
+    st.lessons += 1; st.sum_percent += r.total ? (100 * r.correct) / r.total : 0;
+    if (r.student_name) st.name = r.student_name;
+    const pq = r.per_question && typeof r.per_question === 'object' ? r.per_question : null;
+    if (!pq) continue;
+    qList.forEach((q, index) => {
+      const cell = pq[q.id];
+      if (!cell) return;
+      let qr = row.questions.get(q.id);
+      if (!qr) { qr = { id: q.id, number: index + 1, prompt: String(q.prompt || '').slice(0, 160), topic: String(q.topic || ''), options: q.options || {}, answered: 0, correct: 0, blank: 0, chosen: {} }; row.questions.set(q.id, qr); }
+      qr.answered += 1;
+      if (cell.ok) qr.correct += 1;
+      else if (!cell.a) qr.blank += 1;
+      else qr.chosen[cell.a] = (qr.chosen[cell.a] || 0) + 1;
+      if (q.topic) {
+        const t = String(q.topic);
+        const tr = topicRows.get(t) || { topic: t, correct: 0, total: 0 }; tr.total += 1; if (cell.ok) tr.correct += 1; topicRows.set(t, tr);
+        const ts = st.topics.get(t) || { topic: t, correct: 0, total: 0 }; ts.total += 1; if (cell.ok) ts.correct += 1; st.topics.set(t, ts);
+      }
+    });
+  }
+  const pct = (a, b) => (b ? Math.round((100 * a) / b) : null);
+  const level = percent => (percent === null ? 'none' : percent < WEAK_PERCENT ? 'weak' : percent < OK_PERCENT ? 'fair' : 'good');
+  const outLessons = [...lessonRows.values()].map(row => {
+    const questions = [...row.questions.values()].map(q => {
+      const wrongTop = Object.entries(q.chosen).sort((a, b) => b[1] - a[1])[0];
+      const percent = pct(q.correct, q.answered);
+      return { id: q.id, number: q.number, prompt: q.prompt, topic: q.topic, answered: q.answered, correct: q.correct, blank: q.blank, percent, level: level(percent),
+        top_wrong: wrongTop ? { key: wrongTop[0], text: String(q.options?.[wrongTop[0]] || '').slice(0, 120), count: wrongTop[1] } : null };
+    }).sort((a, b) => (a.percent ?? 101) - (b.percent ?? 101));
+    const avg = row.students ? Math.round(row.sum_percent / row.students) : null;
+    return { course_id: row.course_id, lesson_id: row.lesson_id, title: row.title, students: row.students, attempts: row.attempts, avg_percent: avg, level: level(avg), questions };
+  }).sort((a, b) => (a.avg_percent ?? 101) - (b.avg_percent ?? 101));
+  const outTopics = [...topicRows.values()].map(t => ({ ...t, percent: pct(t.correct, t.total), level: level(pct(t.correct, t.total)) })).sort((a, b) => a.percent - b.percent);
+  const outStudents = [...students.values()].map(st => {
+    const avg = st.lessons ? Math.round(st.sum_percent / st.lessons) : null;
+    const weak = [...st.topics.values()].map(t => ({ ...t, percent: pct(t.correct, t.total) })).filter(t => t.percent < OK_PERCENT).sort((a, b) => a.percent - b.percent).slice(0, 3);
+    return { uid: st.uid, name: st.name, class_code: st.class_code, lessons: st.lessons, avg_percent: avg, level: level(avg), weak_topics: weak };
+  }).sort((a, b) => (a.avg_percent ?? 101) - (b.avg_percent ?? 101));
+  return { generated_at: Date.now(), total_attempts: records.length, lessons: outLessons, topics: outTopics, students: outStudents };
+}
+
+/**
+ * Gợi ý ôn tập cho một học sinh: chủ đề còn yếu ở các bài luyện tập (không kể bài kiểm tra).
+ * Chỉ trả tên chủ đề và số câu đúng/tổng, không trả câu nào sai hay đáp án.
+ */
+export function reviewTopicsForStudent(records, lessons) {
+  const practice = records.filter(r => r && r.lesson_id && !String(r.lesson_id).startsWith('exam_'));
+  const rows = new Map();
+  for (const r of latestPerStudentLesson(practice.map(x => ({ ...x, uid: 'self' })))) {
+    const key = `${r.course_id}:${r.lesson_id}`; const lesson = lessons[key];
+    if (!lesson || !r.per_question) continue;
+    for (const q of lesson.questions || []) {
+      if (!q.topic || !r.per_question[q.id]) continue;
+      const rk = `${key}|${q.topic}`;
+      const row = rows.get(rk) || { course_id: r.course_id, lesson_id: r.lesson_id, lesson_title: lesson.title || r.lesson_id, topic: String(q.topic), correct: 0, total: 0 };
+      row.total += 1; if (r.per_question[q.id].ok) row.correct += 1; rows.set(rk, row);
+    }
+  }
+  return [...rows.values()].map(r => ({ ...r, percent: Math.round((100 * r.correct) / r.total) })).filter(r => r.percent < OK_PERCENT).sort((a, b) => a.percent - b.percent).slice(0, 5);
+}
+
+/** Bỏ chi tiết từng câu trước khi trả về trình duyệt học sinh (chống lộ câu nào đúng/sai). */
+function publicAttempt(record) {
+  const { per_question, student_name, class_code, grade, ...rest } = record || {};
+  return rest;
+}
+
+/** Ghép chi tiết từng câu (attempt_details) vào bài nộp theo uid + attempt_id. */
+function mergeDetails(records, details) {
+  return records.map(r => {
+    const d = details?.[r.uid]?.[r.attempt_id];
+    return d?.per_question ? { ...r, per_question: d.per_question } : r;
+  });
+}
+
+/** Tải mọi bài học công khai được nhắc tới trong danh sách bài nộp. */
+async function loadLessonsFor(env, records) {
+  const keys = new Set(records.map(r => `${r.course_id}:${r.lesson_id}`));
+  const out = {};
+  await Promise.all([...keys].map(async key => {
+    const [c, l] = key.split(':');
+    const lesson = await loadPublicLesson(env, c, l);
+    if (lesson) out[key] = lesson;
+  }));
+  return out;
+}
+
 /**
  * Tải nội dung bài học công khai từ máy chủ (Firebase RTDB hoặc kho thử) để làm căn cứ cho Gia sư AI.
  * Không tin dữ liệu bài học do trình duyệt gửi lên.
@@ -1845,9 +1974,21 @@ export default {
           console.error('[RTDB_PROGRESS_ERROR]', e);
         }
       } else if (SecurityConfigContract.isMockModeAllowed(env)) {
-        attempts = env.TEST_ATTEMPTS?.[authResult.payload.uid] || [];
+        attempts = env.TEST_ATTEMPTS?.[authResult.payload.uid] || (env.TEST_ALL_RESULTS || []).filter(r => r.uid === authResult.payload.uid);
       }
-      return new Response(JSON.stringify({ attempts }), {
+      let attemptsWithDetail = attempts;
+      if (env.FIREBASE_DATABASE_URL) {
+        try {
+          const uidKey = authResult.payload.uid;
+          const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+          const dres = await fetch(`${env.FIREBASE_DATABASE_URL}/attempt_details/${encodeURIComponent(uidKey)}.json`, { headers: getRtdbHeaders(rtdbAccessToken) });
+          if (dres.ok) attemptsWithDetail = mergeDetails(attempts.map(a => ({ ...a, uid: uidKey })), { [uidKey]: await dres.json() });
+        } catch (e) { console.error('[RTDB_PROGRESS_DETAIL_ERROR]', e); }
+      }
+      const lessonsForReview = await loadLessonsFor(env, attempts);
+      const review = reviewTopicsForStudent(attemptsWithDetail, lessonsForReview);
+      attempts = attempts.map(publicAttempt);
+      return new Response(JSON.stringify({ attempts, review }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -2382,6 +2523,34 @@ export default {
       });
     }
 
+    // Teacher Analytics: /api/pwa/teacher/analytics - điểm yếu theo bài, câu, chủ đề, học sinh
+    if (url.pathname === '/api/pwa/teacher/analytics' && request.method === 'GET') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+      let records = [];
+      if (env.FIREBASE_DATABASE_URL) {
+        const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+        try {
+          const res = await fetch(`${env.FIREBASE_DATABASE_URL}/attempts.json`, { headers: getRtdbHeaders(rtdbAccessToken) });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data === 'object') for (const [uid, byUser] of Object.entries(data)) if (byUser && typeof byUser === 'object') for (const att of Object.values(byUser)) records.push({ uid, ...att });
+          }
+        } catch (e) { console.error('[RTDB_ANALYTICS_ERROR]', e); }
+      } else if (SecurityConfigContract.isMockModeAllowed(env)) {
+        records = env.TEST_ALL_RESULTS || [];
+      }
+      if (env.FIREBASE_DATABASE_URL) {
+        try {
+          const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+          const dres = await fetch(`${env.FIREBASE_DATABASE_URL}/attempt_details.json`, { headers: getRtdbHeaders(rtdbAccessToken) });
+          if (dres.ok) records = mergeDetails(records, await dres.json());
+        } catch (e) { console.error('[RTDB_DETAILS_ERROR]', e); }
+      }
+      const lessons = await loadLessonsFor(env, records);
+      return new Response(JSON.stringify(analyzeAttempts(records, lessons)), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Teacher Publish Lesson: /api/pwa/teacher/publish (Phase 1, B2, C1)
     if (url.pathname === '/api/pwa/teacher/publish' && request.method === 'POST') {
       const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
@@ -2485,7 +2654,8 @@ export default {
           prompt: String(q.prompt || ''),
           kind: isText ? 'text' : 'choice',
           options,
-          hint: String(q.hint || '')
+          hint: String(q.hint || ''),
+          topic: String(q.topic || '').trim().slice(0, 60)
         });
       }
 
@@ -3708,6 +3878,7 @@ export default {
       }
 
       const uid = authResult.payload.uid;
+      const tokenClaimsForAttempt = authResult.payload.claims;
       const { attempt_id, course_id, lesson_id, answers, version } = await request.json().catch(() => ({}));
 
       // H1: Strict validation of IDs against path traversal before any external calls
@@ -3789,12 +3960,14 @@ export default {
       let correctCount = 0;
       const total = questions.length;
 
+      const perQuestion = {};
       for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
         const studentAns = answers?.[q.id] || answers?.[`q${i + 1}`];
-        if (studentAns && studentAns === q.correct_answer) {
-          correctCount += 1;
-        }
+        const ok = Boolean(studentAns && studentAns === q.correct_answer);
+        if (ok) correctCount += 1;
+        // Lưu từng câu để giáo viên biết học sinh yếu ở đâu; không bao giờ trả về trình duyệt học sinh.
+        perQuestion[q.id] = { ok, a: studentAns ? String(studentAns).slice(0, 8) : '' };
       }
 
       const score = total > 0 ? Math.round((correctCount / total) * 100) / 10 : 0;
@@ -3836,13 +4009,19 @@ export default {
         });
       }
 
+      const authClaims = tokenClaimsForAttempt;
+      const storedRecord = { ...evaluationResult, student_name: authClaims?.name ? String(authClaims.name) : undefined, class_code: authClaims?.class_code ? String(authClaims.class_code) : undefined, grade: authClaims?.grade ?? undefined };
+      if (!env.FIREBASE_DATABASE_URL && SecurityConfigContract.isMockModeAllowed(env)) {
+        env.TEST_ALL_RESULTS = env.TEST_ALL_RESULTS || [];
+        env.TEST_ALL_RESULTS.push({ uid, ...storedRecord, per_question: perQuestion });
+      }
       // H4, I1: Record attempt to RTDB and check response. If RTDB fails, return 502!
       if (env.FIREBASE_DATABASE_URL) {
         try {
           const rtdbSaveRes = await fetch(`${env.FIREBASE_DATABASE_URL}/attempts/${safeUid}/${safeAttemptId}.json`, {
             method: 'PUT',
             headers: getRtdbHeaders(rtdbAccessToken),
-            body: JSON.stringify(evaluationResult)
+            body: JSON.stringify(storedRecord)
           });
           if (!rtdbSaveRes.ok) {
             const errBody = await rtdbSaveRes.text().catch(() => '');
@@ -3854,6 +4033,10 @@ export default {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
           }
+          // Chi tiết từng câu nằm ở nhánh riêng chỉ quản trị đọc được; lỗi ở đây không làm mất bài nộp.
+          await fetch(`${env.FIREBASE_DATABASE_URL}/attempt_details/${safeUid}/${safeAttemptId}.json`, {
+            method: 'PUT', headers: getRtdbHeaders(rtdbAccessToken), body: JSON.stringify({ per_question: perQuestion })
+          }).then(r => { if (!r.ok) console.error('[RTDB_SAVE_DETAIL_ERROR]', r.status); }).catch(e => console.error('[RTDB_SAVE_DETAIL_ERROR]', e?.message || e));
         } catch (e) {
           console.error('[RTDB_SAVE_ATTEMPT_NETWORK_ERROR]', e);
           return new Response(JSON.stringify({
@@ -4027,7 +4210,15 @@ export default {
             systemText += '\n\nQUY TẮC CĂN CỨ: Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC ở trên. Nếu câu hỏi nằm ngoài tài liệu hoặc ngoài môn Tin học, hãy nói: "Phần này chưa có trong bài học, em hỏi thầy cô nhé." Không bịa số liệu, tên riêng, ví dụ hay nguồn trích dẫn ngoài tài liệu. Nếu không chắc, hãy nói rõ là chưa chắc.';
             const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId) : null;
             if (publicQuestion?.prompt) {
-              systemText += `\n\nCÂU HỎI HỌC SINH ĐANG LÀM:\n"""\n${String(publicQuestion.prompt).slice(0, 1000)}\n"""\n(Không bao giờ tiết lộ đáp án; chỉ gợi ý từng bước dựa trên tài liệu.)`;
+              systemText += `\n\nCÂU HỎI HỌC SINH ĐANG LÀM:\n"""\n${String(publicQuestion.prompt).slice(0, 1000)}\n"""`;
+              if (publicQuestion.topic) systemText += `\nChủ đề kiến thức của câu hỏi: ${String(publicQuestion.topic).slice(0, 60)}`;
+              const optionEntries = Object.entries(publicQuestion.options || {}).slice(0, 6);
+              if (optionEntries.length) {
+                systemText += `\nCác lựa chọn học sinh đang thấy (chỉ để em hiểu ngữ cảnh, KHÔNG được đọc lại, loại trừ hay xác nhận lựa chọn nào):\n${optionEntries.map(([k, v]) => `${k}. ${String(v).slice(0, 200)}`).join('\n')}`;
+                const picked = requestData.selected_option;
+                if (typeof picked === 'string' && publicQuestion.options?.[picked]) systemText += `\nHọc sinh đang tạm chọn ${picked}. Hãy hỏi em vì sao em chọn như vậy; tuyệt đối không nói chọn đúng hay sai.`;
+              }
+              systemText += '\n(Không bao giờ tiết lộ đáp án; chỉ gợi ý từng bước dựa trên tài liệu và nói rõ phần nào của bài học cần xem lại.)';
             }
           } else {
             systemText += '\n\nKHÔNG CÓ TÀI LIỆU BÀI HỌC KÈM THEO: chỉ giải thích khái niệm Tin học nền tảng ở mức THCS, nói rõ khi không chắc, và không bịa.';

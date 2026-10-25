@@ -68,6 +68,11 @@
 <section id="view-lessons" aria-label="Soạn bài">
 <section id="list-lessons" class="t-list">
 <h2 class="visually-hidden">Bài học</h2>
+<details class="t-card" id="analytics-card" open>
+<summary>Học sinh đang yếu ở đâu</summary>
+<div class="t-actions"><button type="button" id="refresh-analytics" class="t-button" data-action="refresh-analytics">Tải lại báo cáo</button></div>
+<div id="teacher-analytics"><p class="t-muted">Chưa tải báo cáo.</p></div>
+</details>
 <div class="t-toolbar">
 <div class="t-field"><label for="field-lesson_search">Tìm bài học</label><input id="field-lesson_search" name="lesson_search" type="search" >
 </div>

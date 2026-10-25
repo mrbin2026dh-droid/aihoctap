@@ -544,8 +544,10 @@ async function progress() {
   const queue = /** @type {Outbox[]} */ (await db.all('outbox'));
   let attempts = queue.filter(item => item.uid === captured.identity.uid && item.ack).map(item => /** @type {Ack} */ (item.ack));
   let fresh = false;
+  /** @type {{course_id:string,lesson_id:string,lesson_title:string,topic:string,correct:number,total:number,percent:number}[]} */
+  let review = [];
   if (navigator.onLine) {
-    try { attempts = (await api('/pwa/progress', {token:captured.token})).attempts; fresh = true; }
+    try { const data = await api('/pwa/progress', {token:captured.token}); attempts = data.attempts; review = Array.isArray(data.review) ? data.review : []; fresh = true; }
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
   if (session !== captured || generation !== viewGeneration) return;
@@ -633,6 +635,22 @@ async function progress() {
       bar.title = `${day.count} lượt`; col.append(el('em', String(day.count), 'week-num'), bar, el('span', day.label, 'week-day')); chart.append(col);
     }
     card.append(chart); target.append(card);
+  }
+
+  // Nên ôn lại: chủ đề còn yếu ở các bài luyện tập (máy chủ tính, chỉ gồm tên chủ đề và số câu đúng).
+  if (fresh && review.length) {
+    const card = el('section', '', 'panel review-panel'); card.append(el('h2', 'Em nên ôn lại', 'panel-title'), el('p', 'Các nội dung em còn làm chưa tốt ở bài luyện tập gần nhất.', 'meta'));
+    for (const item of review) {
+      const row = el('article', '', 'stat-row'); const top = el('div', '', 'stat-row-top');
+      top.append(el('h3', item.topic), el('strong', `${item.correct}/${item.total} câu đúng`, 'stat-row-score'));
+      const bar = el('div', '', 'bar'); const fill = el('span'); fill.style.width = item.percent + '%'; bar.append(fill);
+      const meta = el('p', `Trong bài: ${item.lesson_title}`, 'meta');
+      const summary = path.find(entry => entry.course.id === item.course_id && entry.summary.id === item.lesson_id);
+      row.append(top, bar, meta);
+      if (summary) row.append(withIcon(button('Ôn lại bài này', () => loadLesson(summary.course.id, summary.summary.id, summary.summary.version, true), 'quiet'), 'repeat'));
+      card.append(row);
+    }
+    target.append(card);
   }
 
   // Lộ trình: mỗi bài một chặng, nối nhau theo thứ tự giáo viên xếp.

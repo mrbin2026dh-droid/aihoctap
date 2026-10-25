@@ -76,7 +76,9 @@ function addQuestion(question) {
   const hint = inputLabel('Gợi ý (không ghi đáp án)', 'hint', question?.hint || '', true);
   /** @type {HTMLTextAreaElement} */ (hint.querySelector('textarea')).required = false;
   /** @type {HTMLTextAreaElement} */ (hint.querySelector('textarea')).maxLength = 1000;
-  section.append(hint, button('Xóa câu hỏi', () => section.remove(), 'danger'));
+  const topic = inputLabel('Chủ đề kiến thức (giúp báo cáo điểm yếu)', 'topic', question?.topic || '');
+  const topicInput = /** @type {HTMLInputElement} */ (topic.querySelector('input')); topicInput.required = false; topicInput.maxLength = 60; topicInput.placeholder = 'Ví dụ: Phần cứng máy tính';
+  section.append(topic, hint, button('Xóa câu hỏi', () => section.remove(), 'danger'));
   const toggle = () => {options.hidden = kind.value === 'text'; for (const input of options.querySelectorAll('input,select')) /** @type {HTMLInputElement} */ (input).disabled = options.hidden;};
   kind.addEventListener('change', toggle); toggle(); container.append(section);
 }
@@ -91,7 +93,7 @@ function documentValue() {
       const entry = /** @type {HTMLInputElement} */ (input);
       if (entry.value.trim() && entry.dataset.optionKey) options[entry.dataset.optionKey] = entry.value.trim();
     }
-    questions.push({id:value('question-id'), prompt:value('prompt'), kind, options, correct_answer:kind === 'choice' ? value('correct_answer') : '', hint:value('hint')});
+    questions.push({id:value('question-id'), prompt:value('prompt'), kind, options, correct_answer:kind === 'choice' ? value('correct_answer') : '', hint:value('hint'), topic:value('topic')});
   }
   return {subject_id:field('subject_id').value.trim(), subject_name:field('subject_name').value.trim(), grade:Number(field('grade').value), lesson_id:field('lesson_id').value.trim(), title:field('title').value.trim(), content_markdown:field('content_markdown').value, questions};
 }
@@ -167,6 +169,48 @@ async function results() {
   }
   if (!attempts.length) target.append(el('p', 'Chưa có bài nộp.'));
 }
+const LEVEL_TEXT = {weak: 'Yếu', fair: 'Cần củng cố', good: 'Tốt', none: 'Chưa có'};
+/** @param {number|null} percent @param {string} level */
+function levelBar(percent, level) {
+  const row = el('div', '', 'a-bar-row'); const track = el('div', '', 'a-bar'); const fill = el('span', '', `a-fill a-${level}`); fill.style.width = `${percent ?? 0}%`; track.append(fill);
+  row.append(track, el('span', percent === null ? '–' : `${percent}%`, 'a-pct'), el('span', LEVEL_TEXT[/** @type {keyof typeof LEVEL_TEXT} */ (level)] || '', `a-tag a-${level}`));
+  return row;
+}
+/** @param {string} title @param {string} [note] */
+function analyticsBlock(title, note) { const block = el('section', '', 'a-block'); block.append(el('h3', title)); if (note) block.append(el('p', note, 't-muted')); return block; }
+async function loadAnalytics() {
+  const captured = generation;
+  const target = node('teacher-analytics'); target.replaceChildren(el('p', 'Đang tải báo cáo…', 't-muted'));
+  const data = await api('/pwa/teacher/analytics', {token});
+  if (captured !== generation || !token) return;
+  target.replaceChildren();
+  const hasDetail = (data.lessons || []).some(/** @param {any} l */ l => l.questions.length);
+  const studentCount = (data.students || []).length;
+  const summary = el('p', `${data.total_attempts || 0} lượt nộp · ${studentCount} học sinh · ${(data.lessons || []).length} bài. Yếu: dưới 50% đúng · Cần củng cố: 50–79% · Tốt: từ 80%.`, 't-muted'); target.append(summary);
+  if (!hasDetail) { target.append(el('p', 'Chưa có dữ liệu từng câu. Báo cáo sẽ xuất hiện sau khi học sinh nộp bài mới.', 't-muted')); return; }
+  const topics = analyticsBlock('Chủ đề cần củng cố', 'Gom theo "Chủ đề kiến thức" gắn cho từng câu hỏi khi soạn bài.');
+  for (const item of data.topics || []) { const row = el('div', '', 'a-item'); row.append(el('strong', item.topic), el('span', `${item.correct}/${item.total} lượt đúng`, 't-muted'), levelBar(item.percent, item.level)); topics.append(row); }
+  if (!(data.topics || []).length) topics.append(el('p', 'Chưa có câu hỏi nào được gắn chủ đề. Hãy điền ô "Chủ đề kiến thức" trong phần Luyện tập của bài.', 't-muted'));
+  const weakQuestions = el('section', '', 'a-block'); weakQuestions.append(el('h3', 'Câu hỏi nhiều bạn làm sai'));
+  /** @type {any[]} */ const flat = [];
+  for (const lesson of data.lessons || []) for (const q of lesson.questions) if (q.level !== 'good') flat.push({lesson, q});
+  flat.sort((a, b) => (a.q.percent ?? 101) - (b.q.percent ?? 101));
+  for (const {lesson, q} of flat.slice(0, 8)) {
+    const row = el('div', '', 'a-item'); row.append(el('strong', `${lesson.title} · Câu ${q.number}`), el('span', q.prompt, 'a-prompt'), levelBar(q.percent, q.level));
+    const detail = [`${q.correct}/${q.answered} bạn đúng`]; if (q.blank) detail.push(`${q.blank} bạn bỏ trống`);
+    if (q.top_wrong) detail.push(`nhiều bạn chọn ${q.top_wrong.key}${q.top_wrong.text ? `: ${q.top_wrong.text}` : ''} (${q.top_wrong.count} bạn)`);
+    row.append(el('span', detail.join(' · '), 't-muted')); weakQuestions.append(row);
+  }
+  if (!flat.length) weakQuestions.append(el('p', 'Chưa có câu nào cần chú ý. Cả lớp đang làm tốt.', 't-muted'));
+  const people = analyticsBlock('Học sinh cần hỗ trợ', 'Điểm là trung bình các bài, lấy lần nộp gần nhất của mỗi bài.');
+  for (const st of (data.students || []).filter(/** @param {any} x */ x => x.level !== 'good').slice(0, 10)) {
+    const row = el('div', '', 'a-item'); row.append(el('strong', [st.name, st.class_code].filter(Boolean).join(' · ')), levelBar(st.avg_percent, st.level));
+    if (st.weak_topics.length) row.append(el('span', `Cần ôn: ${st.weak_topics.map(/** @param {any} w */ w => `${w.topic} (${w.percent}%)`).join(', ')}`, 't-muted'));
+    people.append(row);
+  }
+  if (!(data.students || []).some(/** @param {any} x */ x => x.level !== 'good')) people.append(el('p', 'Chưa có học sinh nào cần hỗ trợ.', 't-muted'));
+  target.append(topics, weakQuestions, people);
+}
 /** @param {PublishLesson} document */
 function fill(document) {
   /** @type {Array<keyof Omit<PublishLesson,'questions'>>} */
@@ -204,7 +248,7 @@ node('teacher-login').addEventListener('submit', async event => {
       updateAuth();
       ui.reset();
       if (!mustChangePin) {
-        const parts = [['danh sách bài', refresh], ['bài học sinh đã nộp', results], ['khóa Gemini', loadGeminiKeys], ['hạn mức AI', loadAiUsage], ['danh sách học sinh', loadStudents]];
+        const parts = [['danh sách bài', refresh], ['bài học sinh đã nộp', results], ['báo cáo điểm yếu', loadAnalytics], ['khóa Gemini', loadGeminiKeys], ['hạn mức AI', loadAiUsage], ['danh sách học sinh', loadStudents]];
         const settled = await Promise.allSettled(parts.map(([, fn]) => fn()));
         const failed = parts.filter((_, i) => settled[i].status === 'rejected').map(([name]) => name);
         if (failed.length) notify(`Đã đăng nhập nhưng chưa tải được: ${failed.join(', ')}. Tải lại trang để thử lại.`, true);
@@ -507,6 +551,7 @@ on('act-lessons-draft', () => {
   } catch { notify('Không lưu được nháp trên máy này.', true); }
 });
 on('refresh-results', results);
+on('refresh-analytics', loadAnalytics);
 /** @type {Array<any>} */
 let allStudents = [];
 
@@ -877,7 +922,7 @@ node('teacher-must-change-form')?.addEventListener('submit', async event => {
       formEl.reset();
       updateAuth();
       ui.reset();
-      await refresh(); await results(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents();
+      await refresh(); await results(); await loadAnalytics(); await loadGeminiKeys(); await loadAiUsage(); await loadStudents();
       notify('Đổi mã PIN giáo viên thành công. Đã mở khóa quyền quản trị.');
     } catch (e) {
       errNode.textContent = mapErrorMessage(e);
@@ -953,6 +998,7 @@ if (token && !mustChangePin) {
   refresh().then(() => {
     if (captured === generation) {
       results();
+      loadAnalytics().catch(fail);
       loadGeminiKeys();
       loadAiUsage();
       loadStudents();
