@@ -2,7 +2,7 @@
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
 import * as ui from './teacher-ui.js';
-import {el, button, notify, renderMarkdown, dialogBox, confirmBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
+import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
 /** @typedef {import('./contracts').PrivateQuestion} PrivateQuestion */
 /** @param {string} id */
@@ -17,6 +17,12 @@ try {
     sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change');
   }
 } catch { /* không đọc được bộ nhớ: coi như chưa có phiên học sinh */ }
+/** Thông báo dạng hộp thoại: mỗi thông báo một hộp thoại, hiện lần lượt (không dùng thanh nổi/toast).
+ * @param {string} text @param {boolean} [error] */
+function notify(text, error = false) {
+  if (!text) return;
+  void noticeBox({title: error ? 'Chưa thực hiện được' : 'Đã hoàn tất', body: text}).catch(() => {});
+}
 let generation = 0;
 let lessonDirty = false;
 let quotaDirty = false;
@@ -198,16 +204,14 @@ node('teacher-login').addEventListener('submit', async event => {
         const parts = [['danh sách bài', refresh], ['bài học sinh đã nộp', results], ['khóa Gemini', loadGeminiKeys], ['hạn mức AI', loadAiUsage], ['danh sách học sinh', loadStudents]];
         const settled = await Promise.allSettled(parts.map(([, fn]) => fn()));
         const failed = parts.filter((_, i) => settled[i].status === 'rejected').map(([name]) => name);
-        notify(failed.length ? `Đã đăng nhập. Chưa tải được: ${failed.join(', ')}. Tải lại trang để thử lại.` : 'Đã đăng nhập. Sẵn sàng soạn bài.', failed.length > 0);
+        if (failed.length) notify(`Đã đăng nhập nhưng chưa tải được: ${failed.join(', ')}. Tải lại trang để thử lại.`, true);
       } else {
-        notify('Vui lòng đổi mã PIN khởi tạo để tiếp tục.');
       }
     } catch (error) {
       const msg = mapErrorMessage(error);
       if (loginErr) {
         loginErr.textContent = msg;
       }
-      fail(new Error(msg));
     }
   });
 });
@@ -470,7 +474,7 @@ form.addEventListener('submit', async event => {
 on('teacher-logout', async () => {
   const oldToken = token; token = ''; mustChangePin = false; generation++; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); updateAuth();
   form.reset(); lessonDirty = false; quotaDirty = false; try {localStorage.removeItem(DRAFT_KEY);} catch {/* không có bộ nhớ */} ui.reset(); node('question-editors').replaceChildren(); node('preview').replaceChildren(); node('teacher-results').replaceChildren(); node('published').replaceChildren(); node('lesson-list').replaceChildren(); allStudents = []; node('students-tbody').replaceChildren();
-  try {await api('/teacher/logout', {method:'POST',token:oldToken}); notify('Đã đăng xuất.');} catch {notify('Đã đăng xuất trên máy. Phiên máy chủ chưa xác nhận thu hồi.', true);}
+  try {await api('/teacher/logout', {method:'POST',token:oldToken});} catch {notify('Đã đăng xuất trên máy. Phiên máy chủ chưa xác nhận thu hồi.', true);}
 });
 on('load-lesson', async () => {
   const value = /** @type {HTMLSelectElement} */ (node('published')).value;
@@ -487,9 +491,9 @@ on('new-lesson', async () => {
   try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { draft = null; }
   await ui.showSub('detail-lessons');
   if (draft && typeof draft.title === 'string' && Array.isArray(draft.questions) && await confirmBox({title: 'Khôi phục bản nháp?', body: 'Máy này có một bản nháp đã lưu. Khôi phục để soạn tiếp?', okText: 'Khôi phục'})) {
-    fill(draft); lessonDirty = false; notify('Đã khôi phục bản nháp.'); return;
+    fill(draft); lessonDirty = false;  return;
   }
-  notify('Đang soạn bài mới.');
+  
 });
 form.addEventListener('input', () => {lessonDirty = true;});
 on('act-lessons-draft', () => {
@@ -564,7 +568,6 @@ async function bulkAction(kind) {
   buttons.forEach(b => { /** @type {HTMLButtonElement} */ (b).disabled = true; });
   let done = 0; let failed = 0;
   try {
-    notify(`Đang ${label.toLowerCase()} ${ids.length} học sinh…`);
     for (const id of ids) {
       try {
         if (kind === 'delete') await api(`/teacher/students/${id}`, {method: 'DELETE', token});
@@ -583,18 +586,19 @@ node('act-accounts-bulk-lock').addEventListener('click', () => { void bulkAction
 node('act-accounts-bulk-unlock').addEventListener('click', () => { void bulkAction('unlock'); });
 node('act-accounts-bulk-delete').addEventListener('click', () => { void bulkAction('delete'); });
 
-function showStudentPinBanner(id, pin, name) {
-  const banner = node('student-pin-banner');
-  banner.hidden = false;
-  banner.replaceChildren();
-  const text = el('span', `Thông tin tài khoản: ${name ? name + ' — ' : ''}Mã HS: ${id} | Mã PIN: ${pin} (chỉ hiện một lần)`);
-  text.style.fontWeight = 'bold';
-  const copyBtn = button('Sao chép', () => {
-    navigator.clipboard.writeText(`Mã HS: ${id}\nMã PIN: ${pin}`);
-    notify('Đã sao chép thông tin tài khoản vào bộ nhớ đệm.');
+/** Thông tin tài khoản hiện một lần trong hộp thoại (không lưu, không ghi nhật ký). */
+async function showStudentPinBanner(id, pin, name) {
+  const copy = await confirmBox({
+    title: 'Thông tin tài khoản học sinh',
+    body: `${name ? `Học sinh: ${name}\n` : ''}Mã học sinh: ${id}\nMã PIN: ${pin}\n\nMã PIN chỉ hiện một lần. Hãy sao chép hoặc ghi lại ngay.`,
+    okText: 'Sao chép thông tin',
+    cancelText: 'Đóng'
   });
-  copyBtn.style.marginLeft = '12px';
-  banner.append(text, copyBtn);
+  if (!copy) return;
+  try {
+    await navigator.clipboard.writeText(`Mã HS: ${id}\nMã PIN: ${pin}`);
+    notify('Đã sao chép thông tin tài khoản.');
+  } catch { notify('Chưa sao chép được. Hãy ghi lại thông tin trong lần hiện trước.', true); }
 }
 
 function renderStudentsTable() {
@@ -684,8 +688,7 @@ function renderStudentsTable() {
             token,
             body: {}
           });
-          showStudentPinBanner(s.id, res.pin, s.name);
-          notify('Đã đặt lại mã PIN thành công.');
+          void showStudentPinBanner(s.id, res.pin, s.name);
           await loadStudents();
         } catch (e) {
           fail(e instanceof Error ? e : new Error('Chưa đặt lại được mã PIN.'));
@@ -805,8 +808,7 @@ node('add-student-form')?.addEventListener('submit', async event => {
         body: { name, grade, class_code: classCode, pin: pin || undefined }
       });
       formEl.reset();
-      showStudentPinBanner(res.id, res.pin, res.name);
-      notify('Đã thêm học sinh thành công.');
+      void showStudentPinBanner(res.id, res.pin, res.name);
       await loadStudents();
       await ui.showSub('list-accounts');
     } catch (e) {

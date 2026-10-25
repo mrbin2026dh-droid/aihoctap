@@ -199,10 +199,50 @@ export function init(options = {}) {
     }
   });
 
+  // "Thao tác" của mỗi dòng mở hộp thoại thay cho menu thả xuống trong bảng.
+  document.addEventListener('click', event => {
+    const summary = /** @type {HTMLElement|null} */ (event.target instanceof Element ? event.target.closest('details.row-actions > summary') : null);
+    if (!summary) return;
+    event.preventDefault();
+    if (summary.getAttribute('aria-disabled') === 'true') return;
+    const details = /** @type {HTMLDetailsElement} */ (summary.parentElement);
+    openActionDialog(details, summary);
+  });
+
   document.addEventListener('toggle', e => {
     const target = /** @type {HTMLDetailsElement|null} */ (e.target instanceof HTMLDetailsElement ? e.target : null);
     if (target?.matches('.row-actions[open]')) {
       for (const d of document.querySelectorAll('.row-actions[open]')) if (d !== target) /** @type {HTMLDetailsElement} */ (d).open = false;
     }
   }, true);
+}
+
+/** @param {HTMLDetailsElement} details @param {HTMLElement} summary */
+function openActionDialog(details, summary) {
+  const sources = /** @type {HTMLButtonElement[]} */ ([...details.querySelectorAll('.action-list button')]);
+  if (!sources.length) return;
+  const dialog = document.createElement('dialog');
+  dialog.className = 't-dialog t-action-dialog';
+  const label = (summary.textContent || 'Thao tác').replace(/\s+/g, ' ').trim();
+  const title = document.createElement('h2'); title.id = 'action-dialog-title'; title.textContent = label;
+  dialog.setAttribute('aria-labelledby', title.id);
+  const list = document.createElement('div'); list.className = 't-action-menu';
+  const close = () => { dialog.close(); dialog.remove(); summary.focus?.(); };
+  for (const source of sources) {
+    const choice = document.createElement('button');
+    choice.type = 'button'; choice.className = 't-button' + (source.classList.contains('danger') ? ' t-danger' : '');
+    choice.textContent = source.textContent;
+    choice.disabled = source.disabled;
+    choice.addEventListener('click', () => { close(); source.click(); });
+    list.append(choice);
+  }
+  const cancel = document.createElement('button');
+  cancel.type = 'button'; cancel.className = 't-button'; cancel.textContent = 'Đóng';
+  cancel.addEventListener('click', close);
+  const actions = document.createElement('div'); actions.className = 't-dialog-actions'; actions.append(cancel);
+  dialog.append(title, list, actions);
+  dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+  document.body.append(dialog);
+  dialog.showModal();
+  /** @type {HTMLElement} */ (list.querySelector('button:not(:disabled)') || cancel).focus();
 }

@@ -11,7 +11,9 @@ for(const vp of [{width:1280,height:800,n:'d'},{width:390,height:800,n:'m'}]){
 const ctx=await b.newContext({viewport:{width:vp.width,height:vp.height},serviceWorkers:'block'});const pg=await ctx.newPage();const reqs=[];const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;const m=r.request().method();let body={};let post=null;try{post=r.request().postDataJSON()}catch{}
 reqs.push({m,u,post});
+let status=200;
 if(u.endsWith('/teacher/auth'))body={token:'tt',must_change:false};
+else if(u.endsWith('/hs02/lock'))status=500;
 else if(u.endsWith('/pwa/catalog'))body={courses:[{id:'tin-hoc-9',title:'Tin học 9',grade:9,lessons:[{id:'bai-1',title:'Thông tin và dữ liệu',version:'abcdef123',question_count:4}]},{id:'tin-hoc-6',title:'Tin học 6',grade:6,lessons:[{id:'bai-2',title:'Máy tính và em',version:'zzzzzz',question_count:2}]}]};
 else if(u.includes('/pwa/teacher/lesson/'))body={subject_id:'tin-hoc-9',subject_name:'Tin học 9',grade:9,lesson_id:'bai-1',title:'Thông tin và dữ liệu',content_markdown:'# Nội dung',questions:[{id:'q1',prompt:'Câu 1?',kind:'choice',options:{A:'a',B:'b'},correct_answer:'A',hint:''}]};
 else if(u.includes('/pwa/teacher/results'))body=[];
@@ -20,12 +22,14 @@ else if(u.endsWith('/teacher/students')&&m==='POST')body={id:'hs99',name:post&&p
 else if(u.endsWith('/ai-settings'))body={settings:{default_limit:10,exam_mode:false}};
 else if(u.endsWith('/ai-stats'))body={stats:[]};
 else if(u.endsWith('/gemini-keys'))body={keys:[]};
-r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
-const T=vp.n+' ';
+r.fulfill({status,contentType:'application/json',body:JSON.stringify(body)})});
+const T=vp.n+' ';const ack=async(btn='#msg-ok')=>{await pg.waitForTimeout(250);if(await pg.isVisible('#msg-dialog'))await pg.click(btn);await pg.waitForTimeout(150)};
 await pg.goto(B+'/teacher.html');await pg.waitForTimeout(500);
+assert(!(await pg.isVisible('#teacher-login-error')),T+'ô lỗi đăng nhập rỗng phải ẩn');
+assert.strictEqual((await pg.textContent('#status')).trim(),'',T+'không có thanh thông báo nổi');
 // đăng nhập
 await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(1200);
-assert(await pg.isVisible('#editor'),T+'editor phải hiện sau đăng nhập');
+assert(await pg.isVisible('#editor'),T+'editor phải hiện sau đăng nhập');assert(!(await pg.isVisible('#msg-dialog')),T+'đăng nhập thành công không bật hộp thoại');
 assert.strictEqual(await pg.textContent('#workspace-title'),'Soạn bài');
 assert.strictEqual(await pg.getAttribute('#nav-lessons','aria-current'),'page');
 assert.strictEqual(await pg.locator('#lesson-list article').count(),2,T+'danh sách bài từ danh mục');
@@ -61,23 +65,30 @@ await pg.fill('[name=material_title]','Đề cương Tin học 9');
 const mid=await pg.inputValue('[name=material_id]');assert(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(mid)&&mid.startsWith('de-cuong-tin-hoc-9'),T+'mã tài liệu tự sinh: '+mid);
 await pg.selectOption('#field-material-form-material_course_id','tin-hoc-9');await pg.fill('[name=material_drive_url]','https://drive.google.com/file/d/abc/view');
 const before=reqs.length;await pg.click('#material-form button[type=submit]');await pg.waitForTimeout(500);
-const posts=reqs.slice(before).filter(r=>r.u.endsWith('/pwa/teacher/materials'));assert.strictEqual(posts.length,1,T+'một yêu cầu đăng tài liệu');assert.strictEqual(posts[0].post.course_id,'tin-hoc-9');
+const posts=reqs.slice(before).filter(r=>r.u.endsWith('/pwa/teacher/materials'));assert.strictEqual(posts.length,1,T+'một yêu cầu đăng tài liệu');assert.strictEqual(posts[0].post.course_id,'tin-hoc-9');assert(await pg.isVisible('#msg-dialog'),T+'kết quả báo bằng hộp thoại');await ack();
 assert(await pg.isVisible('#list-materials'),T+'về danh sách sau khi lưu');
 // học sinh
 await pg.click('#nav-accounts');await pg.waitForTimeout(500);
 assert.strictEqual(await pg.locator('#students-tbody tr').count(),3);
 await pg.fill('#field-student_search','thử 02');assert.strictEqual(await pg.locator('#students-tbody tr').count(),1,T+'tìm học sinh');await pg.fill('#field-student_search','');
+await pg.click('#students-tbody tr:nth-child(1) summary');await pg.waitForTimeout(200);
+assert(await pg.isVisible('.t-action-dialog'),T+'Thao tác mở hộp thoại');assert.strictEqual(await pg.locator('.t-action-dialog .t-action-menu button').count(),4);
+assert(!(await pg.locator('#students-tbody tr:nth-child(1) details').evaluate(d=>d.open)),T+'không mở menu thả trong bảng');
+let n1=reqs.length;await pg.click('.t-action-dialog .t-action-menu button:has-text("Khóa")');await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'),T+'chọn Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);
+assert.strictEqual(reqs.slice(n1).filter(r=>r.m==='POST').length,0,T+'Hủy = 0 yêu cầu');assert.strictEqual(await pg.locator('.t-action-dialog').count(),0);
+await pg.click('#students-tbody tr:nth-child(1) summary');await pg.keyboard.press('Escape');await pg.waitForTimeout(200);assert.strictEqual(await pg.locator('.t-action-dialog').count(),0,T+'Esc đóng hộp thoại thao tác');
 await pg.check('#students-tbody tr:nth-child(1) input[type=checkbox]');await pg.check('#students-tbody tr:nth-child(2) input[type=checkbox]');
 assert(await pg.isVisible('[data-bulk]'));assert.strictEqual(await pg.textContent('[data-selection-count]'),'2');
 let n0=reqs.length;await pg.click('#act-accounts-bulk-lock');await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'));
 await pg.click('#msg-cancel');await pg.waitForTimeout(200);assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST').length,0,T+'Hủy = 0 yêu cầu');
 await pg.click('#act-accounts-bulk-lock');await pg.waitForTimeout(250);await pg.click('#msg-ok');await pg.waitForTimeout(800);
 assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST'&&r.u.endsWith('/lock')).length,2,T+'khóa đúng 2 học sinh');
+assert(await pg.isVisible('#msg-dialog'));assert.strictEqual((await pg.textContent('#msg-title')).trim(),'Chưa thực hiện được',T+'một học sinh lỗi → một hộp thoại lỗi');await ack();
 if(SHOTS)await pg.screenshot({path:`${SHOTS}/${vp.n}-4-accounts.png`,fullPage:true});
 await pg.click('#act-accounts-new');await pg.waitForTimeout(200);assert(await pg.isVisible('#detail-accounts'));
 await pg.fill('#field-add-student-form-name','Học sinh Mới');await pg.fill('#field-add-student-form-class_code','9C');
 n0=reqs.length;await pg.click('#add-student-form button[type=submit]');await pg.waitForTimeout(700);
-assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST'&&r.u.endsWith('/teacher/students')).length,1,T+'thêm 1 lần');assert(await pg.isVisible('#list-accounts'));
+assert(await pg.isVisible('#msg-dialog'),T+'PIN hiện trong hộp thoại');assert((await pg.textContent('#msg-body')).includes('Mã PIN'));await pg.click('#msg-cancel');await pg.waitForTimeout(200);assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST'&&r.u.endsWith('/teacher/students')).length,1,T+'thêm 1 lần');assert(await pg.isVisible('#list-accounts'));
 // Hồ sơ
 await pg.click('#open-settings');await pg.waitForTimeout(200);assert(await pg.isVisible('#nav-profile'),T+'popover Hồ sơ');
 await pg.click('#act-profile-ai');await pg.waitForTimeout(300);

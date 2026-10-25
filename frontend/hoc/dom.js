@@ -48,7 +48,23 @@ export function renderMarkdown(container, markdown) {
  *   fields?: Array<{ name: string, label: string, value?: string, validate?: ((value: string) => string) | null }> | null
  * }} options
  */
-export function dialogBox({
+/** Mỗi lần chỉ một hộp thoại: các yêu cầu sau xếp hàng, hiện lần lượt (mỗi thông báo một hộp thoại).
+ * Khi chưa có hộp thoại nào đang mở, hộp thoại mới mở ngay (đồng bộ).
+ * @param {any} options @returns {Promise<any>} */
+export function dialogBox(options) {
+  return new Promise((resolve, reject) => {
+    const start = () => {
+      activeDialogs++;
+      const release = () => { activeDialogs--; const next = waitingDialogs.shift(); if (next) next(); };
+      showDialog(options).then(value => { release(); resolve(value); }, error => { release(); reject(error); });
+    };
+    if (activeDialogs === 0) start(); else waitingDialogs.push(start);
+  });
+}
+let activeDialogs = 0;
+/** @type {Array<() => void>} */
+const waitingDialogs = [];
+function showDialog({
   title,
   body,
   kind = 'notice',

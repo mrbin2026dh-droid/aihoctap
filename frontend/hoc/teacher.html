@@ -14,7 +14,7 @@
 </header>
 
 <main id="main" class="t-main" tabindex="-1">
-<p id="status" class="notice t-global-status" role="status" aria-live="polite">Đăng nhập để tiếp tục.</p>
+<p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
 <section id="auth-section" class="t-auth" aria-labelledby="teacher-login-title">
 <h2 id="teacher-login-title">Đăng nhập giáo viên</h2>
 <form id="teacher-login" class="t-form">
@@ -22,8 +22,7 @@
 <div class="t-pin"><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện hoặc ẩn mã pin giáo viên">Hiện</button>
 </div>
 </div>
-<p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite">
-</p><button type="submit" class="t-button t-primary">Đăng nhập</button>
+<p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p><button type="submit" class="t-button t-primary">Đăng nhập</button>
 </form>
 </section>
 <section id="teacher-must-change-section" class="t-auth" hidden aria-labelledby="first-pin-title">
@@ -43,8 +42,7 @@
 </div>
 </div>
 <p id="first-length" class="t-muted">Ít nhất 8 ký tự.</p>
-<p id="teacher-must-change-error" class="notice error status" role="alert">
-</p><button type="submit" class="t-button t-primary">Đổi mã PIN và tiếp tục</button>
+<p id="teacher-must-change-error" class="notice error status" role="alert"></p><button type="submit" class="t-button t-primary">Đổi mã PIN và tiếp tục</button>
 </form>
 </section>
 <div id="editor" class="t-editor" hidden>
@@ -439,8 +437,6 @@
 </div>
 <div class="t-actions"><button type="button" id="refresh-students" class="t-button" data-action="refresh-students" >Tải lại</button>
 </div>
-<div id="student-pin-banner" class="notice" hidden role="status">
-</div>
 <div class="t-bulk" data-bulk hidden>
 <p>Đã chọn <span data-selection-count>0</span> học sinh</p><button type="button" id="act-accounts-bulk-lock" class="t-button" data-action="bulk-lock" >Khóa</button><button type="button" id="act-accounts-bulk-unlock" class="t-button" data-action="bulk-unlock" >Mở khóa</button><button type="button" id="act-accounts-bulk-delete" class="t-button t-danger" data-action="bulk-delete">Xóa</button>
 </div>
@@ -501,8 +497,7 @@
 </div>
 </div>
 <p id="regular-length" class="t-muted">Ít nhất 8 ký tự.</p>
-<p id="teacher-change-pin-status" class="notice status" role="alert">
-</p><button type="submit" class="t-button t-primary">Lưu mã PIN mới</button>
+<p id="teacher-change-pin-status" class="notice status" role="alert"></p><button type="submit" class="t-button t-primary">Lưu mã PIN mới</button>
 </form>
 </section>
 <section class="t-card t-form" data-profile-panel="ai" hidden>
