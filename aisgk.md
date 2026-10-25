@@ -723,3 +723,11 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/claude-chatgpt-teacher-ui-v3.m
 - Việc mở: kiểm tra bản chạy thật sau khi Pages cập nhật; giao diện học sinh dùng thiết kế riêng, cần thống nhất sau.
 XONG bố cục toolbar / TIẾP THEO → Claude
 Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-bo-cuc-giao-vien.md rồi làm theo."
+
+## 2026-10-25 — Claude: chuẩn chữ/responsive/giao diện tối cho học sinh
+- Rà soát: nhiều chữ 9–13px, header điện thoại xếp 3 hàng, thanh dưới rớt hàng, hộp thoại Gia sư vỡ bố cục trên điện thoại, chưa có giao diện tối.
+- Sửa: thang chữ (17/15/14/16px), header gọn, thanh dưới 5 mục, hộp thoại Gia sư, giao diện tối tự theo hệ thống (sinh bằng tools/gen_dark_theme.py), stamp lại sw.js.
+- Thêm docs/design/chuan-giao-dien-hoc-sinh.md và tests/test_student_ui_standard.cjs (sáng/tối × 4 khổ × 9 màn).
+- Việc mở: chế độ tối cho giáo viên; nút chọn giao diện; kiểm tra Safari/máy thật.
+XONG chuẩn giao diện học sinh / TIẾP THEO → Claude (kiểm tra bản chạy thật)
+Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
