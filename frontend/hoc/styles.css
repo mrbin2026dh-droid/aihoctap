@@ -629,6 +629,7 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 .student-app .update-wrap,.student-app #update-notice{background:transparent;border:0;padding:0;margin:0;min-height:0;max-width:none}
 .student-app #msg-title,.student-app .auth-dialog h2{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:800;letter-spacing:-.02em}
 
+.student-app .lesson-tools{justify-content:flex-start;gap:10px 12px}
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;color-scheme:dark}

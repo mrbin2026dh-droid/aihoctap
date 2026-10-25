@@ -777,3 +777,10 @@ XONG dark mode. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md r�
 - Sửa: app.js chỉ so version nếu máy chủ trả; Worker trả lại version; thêm tests/test_submit_ack.cjs.
 - Việc mở: wrangler deploy (Worker trả version, phiên 12h). Client đã sửa nên không cần deploy để hết lỗi.
 XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."
+
+## 2026-10-25 · Claude · Sửa "ack.feedback is not iterable" + hợp đồng app<->Worker
+- Nguyên nhân: app.js đọc ack.feedback nhưng Worker cố ý không trả đúng/sai từng câu (test_worker_gate chặn rò đáp án). Sửa app: chỉ hiện tổng số câu đúng.
+- Thêm tests/test_worker_student_contract.mjs chạy Worker thật: login, me, catalog, lesson, nộp bài (+nộp lại), progress, ai-quota.
+- Bỏ chữ "Giữ nguyên khi làm bài"; thanh công cụ bài học căn trái.
+- Việc mở: wrangler deploy.
+XONG. TIẾP THEO → Antigravity. Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

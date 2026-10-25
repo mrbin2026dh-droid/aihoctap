@@ -324,7 +324,7 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
   show('lesson');
   node('lesson-title').textContent = lesson.title;
   node('lesson-subject').textContent = catalog?.courses.find(course => course.id === lesson.course_id)?.title || lesson.course_id;
-  node('lesson-version').textContent = `Phiên bản ${lesson.version.slice(0, 8)} · Giữ nguyên khi làm bài`;
+  node('lesson-version').textContent = `Phiên bản ${lesson.version.slice(0, 8)}`;
   renderMarkdown(node('lesson-content'), lesson.content_markdown);
   node('result').replaceChildren(); renderQuestions(); setPractice(practice);
   if (pending?.ack) renderResult(pending.ack);
@@ -382,7 +382,7 @@ function updateAnswerCount() {
 function renderResult(ack) {
   const target = node('result'); target.replaceChildren();
   const rh = el('h2', '', 'result-title'); rh.append(icon('check'), el('span', 'Kết quả bài làm')); target.append(rh, el('p', `${ack.correct}/${ack.total} câu đúng${ack.needs_review ? ' · Tự luận chờ giáo viên xem.' : '.'}`, 'success'));
-  for (const feedback of ack.feedback) {
+  for (const feedback of (Array.isArray(ack.feedback) ? ack.feedback : [])) {
     const question = active?.questions.find(item => item.id === feedback.id);
     const row = el('div', '', 'feedback-row'); row.append(el('strong', question?.prompt || feedback.id), el('p', feedback.correct === null ? 'Chờ giáo viên xem câu tự luận.' : (feedback.correct ? 'Em đã trả lời đúng.' : 'Chưa đúng. Em hãy xem lại bài.')));
     if (feedback.correct === false && feedback.hint) row.append(el('p', feedback.hint, 'hint'));
