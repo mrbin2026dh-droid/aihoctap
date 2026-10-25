@@ -1,7 +1,7 @@
 // @ts-check
 import { api, ApiError, verifyPackage, isLocalhostBackend } from './api.js';
 import * as db from './db.js';
-import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox } from './dom.js';
+import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
 /** @typedef {import('./contracts').Draft} Draft */
@@ -163,16 +163,18 @@ function show(name) {
 /** @param {string} text */
 function fold(text) {return text.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');}
 /** @param {HTMLElement} target @param {string} title @param {string} detail */
-function empty(target, title, detail) {const card = el('div', '', 'empty-state'); card.append(el('h2', title), el('p', detail)); target.append(card); return card;}
+function empty(target, title, detail, name = 'inbox') {const card = el('div', '', 'empty-state'); const badge = el('span', '', 'empty-icon'); badge.append(icon(name)); card.append(badge, el('h2', title), el('p', detail)); target.append(card); return card;}
 function gradeCourses() {return catalog?.courses.filter(course => course.grade === Number(/** @type {HTMLSelectElement} */ (node('grade')).value)) || [];}
 function updateResume() {node('resume-card').hidden = !active || !session || !draft || locked; node('resume-title').textContent = active?.title || '';}
 /** @param {import('./contracts').Course} course @param {import('./contracts').LessonSummary} summary @param {boolean} [exerciseOnly] */
 function lessonRow(course, summary, exerciseOnly = false) {
   const row = el('article', '', 'lesson-card'); const description = el('div', '', 'lesson-description');
-  description.append(el('p', `${course.subject_name} · Lớp ${course.grade}`, 'meta'), el('h3', summary.title), el('p', `${summary.question_count} câu luyện tập`, 'meta'));
-  const entry = button(exerciseOnly ? 'Luyện tập' : 'Mở bài', () => loadLesson(course.id, summary.id, summary.version, exerciseOnly), 'lesson-open');
+  const tile = el('span', '', 'tile'); tile.append(icon(exerciseOnly ? 'pencil' : 'book'));
+  const chip = el('span', '', 'chip'); chip.append(icon('list', 'ic ic-sm'), el('span', `${summary.question_count} câu luyện tập`));
+  description.append(el('p', `${course.subject_name} · Lớp ${course.grade}`, 'meta'), el('h3', summary.title), chip);
+  const entry = withIcon(button(exerciseOnly ? 'Luyện tập' : 'Mở bài', () => loadLesson(course.id, summary.id, summary.version, exerciseOnly), 'lesson-open'), 'arrow', true);
   entry.dataset.lessonId = summary.id; entry.dataset.courseId = course.id;
-  row.append(description, entry); return row;
+  row.append(tile, description, entry); return row;
 }
 function renderCatalog() {
   updateResume();
@@ -196,13 +198,13 @@ function renderCatalog() {
   node('catalog-summary').textContent = `${filtered.length} môn học · ${count} bài học`;
   if (!filtered.some(course => course.id === selectedCourse)) selectedCourse = '';
   for (const course of filtered) {
-    const card = el('article', '', 'course-card'); card.append(el('p', `${course.lessons.length} bài học`, 'meta'), el('h2', course.subject_name));
+    const card = el('article', '', 'course-card'); const ctile = el('span', '', 'tile'); ctile.append(icon('folder')); card.append(ctile, el('p', `${course.lessons.length} bài học`, 'meta'), el('h2', course.subject_name));
     const open = button(`Học ${course.subject_name}`, async () => {
       viewGeneration++;
       await saveDraft();
       selectedCourse = course.id; renderCatalog();
     });
-    open.setAttribute('aria-pressed', String(selectedCourse === course.id));
+    withIcon(open, 'arrow', true); open.setAttribute('aria-pressed', String(selectedCourse === course.id));
     open.dataset.courseId = course.id; card.append(open); courses.append(card);
   }
   const list = node('lesson-list');
@@ -353,24 +355,25 @@ function updateAnswerCount() {
   const answers = locked && draft ? draft.answers : Object.fromEntries(new FormData(form('question-form')).entries());
   const answered = Object.values(answers).filter(value => String(value).trim()).length;
   node('answer-count').textContent = `${answered}/${active?.questions.length || 0} câu đã trả lời`;
+  node('answer-count').parentElement?.style.setProperty('--p', String(active?.questions.length ? Math.round(100 * answered / active.questions.length) : 0) + '%');
 }
 /** @param {Ack} ack */
 function renderResult(ack) {
   const target = node('result'); target.replaceChildren();
-  target.append(el('h2', 'Kết quả bài làm'), el('p', `${ack.correct}/${ack.total} câu đúng${ack.needs_review ? ' · Tự luận chờ giáo viên xem.' : '.'}`, 'success'));
+  const rh = el('h2', '', 'result-title'); rh.append(icon('check'), el('span', 'Kết quả bài làm')); target.append(rh, el('p', `${ack.correct}/${ack.total} câu đúng${ack.needs_review ? ' · Tự luận chờ giáo viên xem.' : '.'}`, 'success'));
   for (const feedback of ack.feedback) {
     const question = active?.questions.find(item => item.id === feedback.id);
     const row = el('div', '', 'feedback-row'); row.append(el('strong', question?.prompt || feedback.id), el('p', feedback.correct === null ? 'Chờ giáo viên xem câu tự luận.' : (feedback.correct ? 'Em đã trả lời đúng.' : 'Chưa đúng. Em hãy xem lại bài.')));
     if (feedback.correct === false && feedback.hint) row.append(el('p', feedback.hint, 'hint'));
     target.append(row);
   }
-  target.append(button('Làm lại', async () => {
+  target.append(withIcon(button('Làm lại', async () => {
     if (!draft || !active) return;
     const owner = session; const lesson = active; const generation = ++viewGeneration;
     await db.remove('drafts', draft.key);
     if (owner !== session || generation !== viewGeneration) return;
     draft = null; await openLesson(lesson, null, generation, owner, true); await saveDraft();
-  }, 'primary'));
+  }, 'primary'), 'refresh'));
 }
 function saveDraft() {
   if (!session || !active || !draft || locked) return saveChain;

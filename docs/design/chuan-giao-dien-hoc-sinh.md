@@ -30,3 +30,11 @@ Nguồn tham chiếu: WCAG 2.2 (tương phản 4.5:1, vùng chạm, co giãn ch�
 - Ô nhập cao 56px, biểu tượng đầu dòng (người dùng, ổ khóa), nút mắt hiện/ẩn mã PIN; nhãn nằm trên ô; lỗi nằm dưới và báo bằng `role=alert`.
 - Thanh trên chỉ dùng biểu tượng 44px có tên truy cập: kết nối mạng, cài ứng dụng, sáng/tối, cài đặt, tài khoản (chữ cái đầu tên), góc giáo viên. Không còn nút chữ "Hiện", "Đóng", "Cài ứng dụng".
 - Nút sáng/tối lưu lựa chọn trên thiết bị (`aisgk-theme`); mặc định theo hệ thống.
+
+## Trang sau đăng nhập (đã áp dụng)
+- Tiêu đề trang dùng cùng kiểu chữ đậm không chân với màn đăng nhập; chỉ logo dùng chữ có chân.
+- Bài học và môn học là thẻ bo góc 16px: ô biểu tượng (sách, bút, thư mục), tiêu đề 18px, nhãn số câu, nút có mũi tên. Trên điện thoại nút trải hết chiều ngang.
+- Điều hướng dưới có biểu tượng trên nhãn (60px cao); thanh bên trên máy tính có biểu tượng bên trái nhãn; mục đang chọn nổi bằng nền mềm và biểu tượng xanh.
+- Trạng thái rỗng có biểu tượng tròn, tiêu đề và một hành động tiếp theo.
+- Bài tập có thanh tiến độ theo số câu đã trả lời; kết quả có biểu tượng hoàn thành.
+- Nút chính màu đen (trắng ở chế độ tối); nút phụ viền; mọi nút thao tác có biểu tượng đi kèm chữ.

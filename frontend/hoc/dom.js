@@ -7,6 +7,53 @@ export function button(text, action, className = '') {
   node.addEventListener('click', () => { Promise.resolve(action()).catch(error => notify(error.message, true)); });
   return node;
 }
+const ICON_PATHS = {
+  cap: 'M22 10 12 5 2 10l10 5 10-5z M6 12v5c3 2 9 2 12 0v-5',
+  board: 'M3 4h18v11H3z M12 15v5 M8 20h8',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21a8 8 0 0 1 16 0',
+  lock: 'M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3',
+  eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z',
+  eyeoff: 'M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1',
+  arrow: 'M5 12h14 M13 6l6 6-6 6',
+  x: 'M6 6l12 12 M18 6L6 18',
+  download: 'M12 4v11 M7 11l5 5 5-5 M5 20h14',
+  gear: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
+  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
+  moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
+  wifi: 'M5 12.5a10 10 0 0 1 14 0 M8.5 16a5 5 0 0 1 7 0 M12 20h.01',
+  wifioff: 'M5 12.5a10 10 0 0 1 14 0 M8.5 16a5 5 0 0 1 7 0 M12 20h.01 M3 3l18 18',
+  book: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z M4 21V5 M9 7h6',
+  list: 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01',
+  pencil: 'M4 20h4L19 9l-4-4L4 16v4z M14 6l4 4',
+  back: 'M19 12H5 M11 6l-6 6 6 6',
+  spark: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z',
+  refresh: 'M4 12a8 8 0 0 1 14-5.3L20 9 M20 4v5h-5 M20 12a8 8 0 0 1-14 5.3L4 15 M4 20v-5h5',
+  inbox: 'M4 13l2-8h12l2 8 M4 13v6h16v-6 M4 13h5a3 3 0 0 0 6 0h5',
+  check: 'M5 12.5l4.5 4.5L19 7',
+  chart: 'M5 20V10 M12 20V4 M19 20v-7',
+  folder: 'M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  file: 'M6 3h8l5 5v13H6z M14 3v5h5 M9 13h6 M9 17h6',
+  send: 'M21 3L10 14 M21 3l-7 18-4-7-7-4z',
+  clock: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M12 8v4l3 2',
+  search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4-4',
+  play: 'M8 5v14l11-7z'
+};
+/** Biểu tượng nét 24×24 (trang trí, ẩn khỏi trình đọc màn hình). @param {string} name @param {string} [cls] */
+export function icon(name, cls = 'ic') {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('class', cls); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+  const path = document.createElementNS(ns, 'path'); path.setAttribute('d', ICON_PATHS[/** @type {keyof typeof ICON_PATHS} */ (name)] || ''); svg.append(path);
+  return svg;
+}
+/** Thêm biểu tượng vào nút/liên kết; chữ được bọc trong span để căn hàng. @template {HTMLElement} T @param {T} node @param {string} name @param {boolean} [end] @returns {T} */
+export function withIcon(node, name, end = false) {
+  const text = node.textContent || ''; node.textContent = '';
+  const label = document.createElement('span'); label.textContent = text;
+  const svg = icon(name, end ? 'ic ic-end' : 'ic');
+  if (end) node.append(label, svg); else node.append(svg, label);
+  return node;
+}
 /** @param {string} text @param {boolean} [error] */
 export function notify(text, error = false) { const node = document.getElementById('status'); if (node) {node.textContent = text; node.classList.toggle('error', error);} }
 /** Safe restricted markdown: never parses raw HTML, links, embeds or event handlers.

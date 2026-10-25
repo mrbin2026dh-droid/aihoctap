@@ -5,8 +5,12 @@ Quy tắc: nền sáng -> nền tối nâng nhẹ; chữ tối -> chữ sáng; m
 import re, colorsys, pathlib
 P = pathlib.Path(__file__).resolve().parents[1] / 'frontend/hoc/styles.css'
 BEGIN, END = '/* DARK-THEME:BEGIN */', '/* DARK-THEME:END */'
-TOK_VARS = '--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;color-scheme:dark'
-EXTRA = ('.student-app .auth-btn:hover,.student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}'
+TOK_VARS = '--ink:#fafafa;--muted:#a1a1aa;--paper:#09090b;--blue:#2d7a6c;--line:#27272a;--surface:#111113;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#fafafa;--auth-btn-fg:#09090b;--control:#71717a;--soft:#1c1c1f;color-scheme:dark'
+EXTRA = ('.student-app .lesson-open,.student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}'
+         '.student-app button.primary:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}'
+         '.student-app .lesson-open:hover{background:#fafafa;color:#09090b;border-color:#fafafa}'
+         '.student-app .result-title .ic{color:#4ade80}'
+         '.student-app .auth-btn:hover,.student-app .btn-login:hover{background:#e4e4e7;color:#09090b;border-color:#e4e4e7}'
          '.student-app .auth-btn-alt:hover{background:#1c1c1f;color:var(--ink);border-color:var(--ink)}'
          '.student-app .connection{color:#4ade80}.student-app .connection.is-offline{color:#fbbf24}')
 COLOR = re.compile(r'#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\([^)]*\)')

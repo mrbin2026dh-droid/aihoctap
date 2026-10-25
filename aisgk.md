@@ -738,3 +738,10 @@ Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md r�
 - Việc mở: chế độ tối cho giáo viên; kiểm tra bản chạy thật và máy thật.
 XONG đăng nhập theo mẫu / TIẾP THEO → Claude
 Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
+
+## 2026-10-25 — Claude: áp phong cách mẫu cho toàn bộ trang học sinh
+- Thẻ bài học/môn học có biểu tượng, nhãn, nút mũi tên; điều hướng dưới và thanh bên có biểu tượng; trạng thái rỗng có biểu tượng; thanh tiến độ trong bài tập; tiêu đề cùng kiểu chữ với đăng nhập; nút chính đen/trắng. dom.js thêm icon()/withIcon(); stamp lại sw.js.
+- Kiểm thử: toàn bộ tests/test_* đạt, gồm test_student_ui_standard (sáng/tối × 4 khổ × 10 màn).
+- Việc mở: kiểm tra bản chạy thật/điện thoại thật; chế độ tối cho giáo viên; màn Cài đặt học sinh chưa rà riêng.
+XONG trang học sinh theo mẫu / TIẾP THEO → Claude
+Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
