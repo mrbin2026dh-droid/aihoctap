@@ -759,3 +759,10 @@ Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md r�
 - Việc mở: làm mới token tự động (refresh token trên Worker) để học sinh không phải đăng nhập lại mỗi giờ.
 XONG / TIẾP THEO → Claude
 Dán cho họ: "Đọc AGENTS.md và docs/design/chuan-giao-dien-hoc-sinh.md rồi làm theo."
+
+## 2026-10-25 — Claude: giảm phiền do hết phiên, rà soát độ phức tạp
+- Worker: token học sinh thật 12 giờ (giáo viên vẫn 1 giờ); tham số ttlSeconds mặc định 3600. Đã chạy toàn bộ tests, đạt.
+- docs/audits/2026-10-25-don-gian-hoa-kien-truc.md: giải thích vai trò Worker, danh sách tệp thừa (chưa xóa).
+- Việc mở: Antigravity chạy `wrangler deploy` trên máy người dùng để Worker nhận thay đổi; dọn tệp thừa sau khi người dùng đồng ý.
+XONG / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md rồi git pull, chạy wrangler deploy cho worker/index.js, báo kết quả."

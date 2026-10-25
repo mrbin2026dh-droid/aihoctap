@@ -326,7 +326,7 @@ export async function getOrFetchGoogleOAuthToken(env = {}, privateKey = null) {
 /**
  * Generate real RS256 Firebase Custom Token conforming to official Google IdentityToolkit specification (G2)
  */
-export async function createFirebaseCustomToken(studentId, claims = {}, privateKey, clientEmail, keyId) {
+export async function createFirebaseCustomToken(studentId, claims = {}, privateKey, clientEmail, keyId, ttlSeconds = 3600) {
   if (!privateKey) {
     throw new Error('Thiếu Service Account Private Key để ký Firebase Custom Token.');
   }
@@ -346,7 +346,7 @@ export async function createFirebaseCustomToken(studentId, claims = {}, privateK
     sub: email,
     aud: 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit',
     iat: now,
-    exp: now + 3600, // Maximum expiration: 1 hour
+    exp: now + ttlSeconds, // Mặc định 1 giờ (giáo viên); học sinh truyền 12 giờ vì chỉ Worker xác thực token này
     uid: studentId,
     claims: claims
   };
@@ -2023,7 +2023,8 @@ export default {
         },
         signingKeys.privateKey,
         env.FIREBASE_CLIENT_EMAIL,
-        env.FIREBASE_PRIVATE_KEY_ID
+        env.FIREBASE_PRIVATE_KEY_ID,
+        12 * 3600
       );
 
       return new Response(JSON.stringify({
