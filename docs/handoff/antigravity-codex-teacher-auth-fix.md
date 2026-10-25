@@ -16,7 +16,7 @@ Thẩm định độc lập bản vá lỗi đăng nhập giáo viên bị kẹt
 - `tests/test_accounts.mjs`: PASS 10/10 (gồm kiểm tra 5 lần sai -> 429, nhập đúng secret khởi tạo -> mở khóa thành công HTTP 200).
 - `tests/test_login_ui.mjs`: PASS 13/13 (gồm kiểm tra bắt chính xác 429 và chuỗi đếm ngược).
 - Toàn bộ 17 test suites .mjs và package_student_pwa.py --check: PASS 100%.
-- Kiểm tra live Worker `POST /api/teacher/auth` với PIN `20262026`: HTTP 200 OK (`success: true, must_change: true`).
+- Kiểm tra live Worker `POST /api/teacher/auth` với PIN `[mã khởi tạo, đã xóa khỏi tài liệu]`: HTTP 200 OK (`success: true, must_change: true`).
 
 ## Ràng buộc / không được làm
 - Không làm suy yếu bảo mật chống dò mã (Brute Force): các lần thử sai vẫn bị khóa lũy tiến 429.

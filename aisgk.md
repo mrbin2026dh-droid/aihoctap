@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity đã vá lỗi kẹt 429 khóa đăng nhập giáo viên và mapping thông báo lỗi hiển thị; đã deploy Worker live (POST /api/teacher/auth trả về HTTP 200 OK với must_change: true) và đóng dấu SW; bàn giao Codex/Claude thẩm định theo docs/handoff/antigravity-codex-teacher-auth-fix.md.
+- Yêu cầu mới nhất: Claude ACCEPT bản vá kẹt 429 đăng nhập giáo viên (docs/audits/2026-10-25-teacher-auth-fix.md). Antigravity đẩy bản làm sạch tài liệu (xóa mã PIN khởi tạo); hướng dẫn Người dùng đổi PIN giáo viên ngay trên giao diện và đặt TEACHER_ADMIN_SECRET mới ngẫu nhiên qua wrangler.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -376,7 +376,8 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 ### 24/10/2026 — Antigravity — Triển khai & Kiểm chứng Trực tiếp Thành công 100% Hệ thống Zero-Server trên Cloudflare & GitHub Pages
 
 - Đã làm: Triển khai Cloudflare Worker ihoctap-gate với SQLite Durable Object, nạp 6 biến secrets, bổ sung các route PWA (/pwa/catalog, /pwa/lessons, /student/lan-login, /pwa/me, /pwa/attempts, /pwa/tutor); nạp danh mục và 13 bài học công khai lên Firebase RTDB; cấu hình Gemini 3.5 Flash; cập nhật frontend và đẩy lên GitHub Pages.
-- Tệp đổi: worker/index.js, wrangler.toml, rontend/hoc/api.js, scratch/aihoctap-clean/*, isgk.md.
+- Tệp đổi: worker/index.js, wrangler.toml, 
+rontend/hoc/api.js, scratch/aihoctap-clean/*, isgk.md.
 - Kiểm thử thực tế: Curl test /api/pwa/catalog (200 OK), /api/student/lan-login (200 OK cấp RS256 token), /api/pwa/attempts (200 OK chấm 4/4 đúng = 10đ), /api/pwa/tutor (200 OK nhận phản hồi từ Gemini 3.5 Flash thật); Playwright test trên URL GitHub Pages thật đạt 0 lỗi Console F12, render 10 bài học.
 - Việc dở: Không còn việc dở. Hệ thống đã hoàn tất và sẵn sàng phục vụ học sinh trên trình duyệt máy tính và điện thoại.
 
@@ -685,9 +686,12 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 - Kiểm thử thực tế: test_login_gate.cjs PASS 7/7; toàn bộ 17 test suites PASS 100%; GitHub Actions Pages deploy xanh 100%.
 - Việc dở: Bàn giao Người dùng kiểm tay theo docs/handoff/claude-antigravity-release-4-gate.md.
 
-
-### 25/10/2026 – Antigravity – Sửa lỗi kẹt 429 khóa đăng nhập giáo viên & mapping thông báo lỗi
-- Đã làm: Sửa `mapErrorMessage` trong `dom.js` giữ nguyên thông báo đếm ngược 429; sửa `worker/index.js` nhận diện đúng RTDB trả về 200 `null` và cho phép master secret khởi tạo mở khóa ngay DO; đóng dấu SW `9ae50b994b734446e798427f`; deploy Worker live.
-- Tệp đổi: frontend/hoc/dom.js, frontend/hoc/sw.js, worker/index.js, tests/test_accounts.mjs, tests/test_login_ui.mjs, aisgk.md, docs/handoff/antigravity-codex-teacher-auth-fix.md.
-- Kiểm thử thực tế: 17/17 test suites .mjs PASS; live POST /api/teacher/auth với PIN 20262026 trả về HTTP 200 OK (`must_change: true`); package_student_pwa.py --check PASS; oxlint 0/0.
-- Việc dở: Chuyển Codex/Claude thẩm định độc lập theo docs/handoff/antigravity-codex-teacher-auth-fix.md.
+### 2026-10-25 · Claude · Kiểm tra PWA đã cài chưa nhận bản mới (đợt 4)
+- Đo trên Pages thật: sw.js live = dấu `bf2a34e5…`, index/app/styles trong cache mới có cổng đăng nhập; trình duyệt cũ nhận bản chờ (waiting), banner hiện, bấm cập nhật → cổng đăng nhập hiện, cache cũ bị xóa. Hạ tầng cập nhật ĐÚNG; máy người dùng cần đóng hẳn/mở lại (CDN Pages có độ trễ tới ~10 phút) rồi bấm banner hoặc xóa dữ liệu ứng dụng nếu bản cài quá cũ.
+- Đề xuất đợt sau: tự áp dụng bản chờ khi mở lạnh ứng dụng và không có bài đang làm (ghi ở docs/bugs-mo.md).
+
+### 25/10/2026 – Antigravity – Đẩy bản làm sạch tài liệu & hướng dẫn bảo mật PIN giáo viên
+- Đã làm: Đọc `docs/audits/2026-10-25-teacher-auth-fix.md` (Claude ACCEPT); xác minh và loại bỏ hoàn toàn mã PIN khởi tạo khỏi toàn bộ tài liệu và báo cáo kiểm thử; hướng dẫn Người dùng đổi PIN giáo viên ngay lập tức để vô hiệu hóa mã cũ và cấu hình TEACHER_ADMIN_SECRET mới ngẫu nhiên.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-codex-teacher-auth-fix.md, docs/audits/2026-10-25-teacher-auth-fix.md.
+- Kiểm thử thực tế: git grep xác nhận 0 ký tự mã PIN trong toàn bộ repository; toàn bộ 17 test suites .mjs và package_student_pwa.py --check PASS; oxlint 0/0.
+- Việc dở: Người dùng đăng nhập giao diện đổi PIN giáo viên riêng và chạy lệnh đặt secret mới.
