@@ -803,6 +803,90 @@ a.teacher-link:hover{border-color:var(--blue);color:var(--blue);background:#eff6
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill{-webkit-text-fill-color:var(--ink);caret-color:var(--ink);box-shadow:0 0 0 1000px var(--surface) inset;transition:background-color 9999s}
 /* UI-TEAL:END */
+/* EXAM:BEGIN - tab Thi và màn hình làm bài */
+.student-app .exam-list{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.student-app .exam-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.student-app .exam-card.is-real{border-color:#9fd3c7}
+.student-app .exam-card-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.student-app .exam-badge{font-size:14px;font-weight:800;padding:2px 10px;border-radius:999px;background:var(--amber-bg);color:var(--amber-fg)}
+.student-app .exam-badge.real{background:var(--green-bg);color:var(--green-fg)}
+.student-app .exam-kind{font-size:14px;color:var(--muted);font-weight:700}
+.student-app .exam-title{font-size:18px;margin:0}
+.student-app .exam-meta,.student-app .exam-best{margin:0;font-size:15px;color:var(--muted)}
+.student-app .exam-card-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.student-app .exam-state{font-size:14px;font-weight:700;color:var(--muted)}
+.student-app .exam-state.state-open,.student-app .exam-state.state-progress{color:var(--brand-text)}
+.student-app .exam-go{min-height:48px;padding:0 18px}
+.student-app .exam-go:disabled{opacity:.55;cursor:not-allowed}
+.exam-screen{position:fixed;inset:0;z-index:60;background:var(--paper);color:var(--ink);display:flex;flex-direction:column}
+.exam-screen[hidden]{display:none}
+body.exam-open{overflow:hidden}
+.exam-screen .ex-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
+.exam-screen .ex-title{display:flex;flex-direction:column;min-width:0;flex:1 1 180px}
+.exam-screen .ex-title strong{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exam-screen .ex-title span{font-size:14px;color:var(--muted)}
+.exam-screen .ex-clock{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;padding:4px 14px;border-radius:12px;background:var(--soft);min-width:96px;text-align:center}
+.exam-screen .ex-clock.warn{background:#fff3d6;color:#7a4a00}
+.exam-screen .ex-clock.danger{background:#fde2de;color:#9b1c10}
+.exam-screen button{min-height:48px;border-radius:12px;font-size:16px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 16px;cursor:pointer}
+.exam-screen button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.exam-screen button:disabled{opacity:.5;cursor:not-allowed}
+.exam-screen .ex-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 280px;min-height:0}
+.exam-screen .ex-stage{overflow:auto;padding:18px;outline:none}
+.exam-screen .ex-card{max-width:820px;margin:0 auto}
+.exam-screen .ex-q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.exam-screen .ex-q-num{font-size:20px;margin:0}
+.exam-screen .ex-q-pts{font-size:14px;font-weight:800;color:var(--brand-text)}
+.exam-screen .ex-prompt{font-size:18px;line-height:1.6;margin-bottom:16px}
+.exam-screen .ex-options{display:grid;gap:10px}
+.exam-screen .ex-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;min-height:56px;padding:12px 14px;border-width:2px;font-weight:600;width:100%}
+.exam-screen .ex-opt-key{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--soft);font-weight:900}
+.exam-screen .ex-opt-text{font-size:17px;line-height:1.5;padding-top:3px}
+.exam-screen .ex-opt.is-on{border-color:var(--blue);background:var(--teal-bg)}
+.exam-screen .ex-opt.is-on .ex-opt-key{background:var(--blue);color:#fff}
+.exam-screen .ex-text{width:100%;font:inherit;font-size:17px;line-height:1.5;padding:12px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);resize:vertical}
+.exam-screen .ex-count{display:block;text-align:right;font-size:14px;color:var(--muted)}
+.exam-screen .ex-side{border-left:1px solid var(--line);padding:16px;overflow:auto;background:var(--surface)}
+.exam-screen .ex-side-title{font-size:16px;margin:0 0 10px}
+.exam-screen .ex-palette{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.exam-screen .ex-pn{padding:0;min-width:48px}
+.exam-screen .ex-pn.is-done{background:var(--teal-bg);border-color:var(--blue)}
+.exam-screen .ex-pn.is-flag{border-color:#d97706;box-shadow:inset 0 -4px 0 #d97706}
+.exam-screen .ex-pn.is-current{outline:3px solid var(--ink);outline-offset:1px}
+.exam-screen .ex-legend{font-size:14px;color:var(--muted);line-height:2}
+.exam-screen .lg{display:inline-block;width:14px;height:14px;border-radius:4px;margin:0 6px 0 8px;vertical-align:-2px;border:1px solid var(--line)}
+.exam-screen .lg-done{background:var(--teal-bg);border-color:var(--blue)}.exam-screen .lg-flag{border-color:#d97706;box-shadow:inset 0 -3px 0 #d97706}
+.exam-screen .ex-counts{font-size:15px;font-weight:700}
+.exam-screen .ex-foot{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
+.exam-screen .ex-save{flex:1 1 200px;font-size:14px;color:var(--muted)}
+.exam-screen .ex-save.bad{color:#9b1c10;font-weight:700}
+.exam-screen .ex-pal-toggle{display:none}
+.exam-screen .ex-result{max-width:820px;margin:0 auto;padding:20px;overflow:auto;flex:1;width:100%}
+.exam-screen .ex-result-hero{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+.exam-screen .ex-result-ic{width:40px;height:40px;color:var(--brand-text)}
+.exam-screen .ex-score{font-size:56px;font-weight:900;color:var(--brand-text)}
+.exam-screen .ex-score span{font-size:22px;color:var(--muted)}
+.exam-screen .ex-result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.exam-screen .ex-tile{background:var(--soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.exam-screen .ex-tile span{font-size:14px;color:var(--muted)}.exam-screen .ex-tile strong{font-size:20px}
+.exam-screen .ex-note{font-size:15px;color:var(--muted);margin:12px 0 0}.exam-screen .ex-note.warn{color:#7a4a00;font-weight:700}
+.exam-screen .ex-review{margin-top:18px;display:grid;gap:10px}
+.exam-screen .ex-review-row{background:var(--surface);border:1px solid var(--line);border-left-width:6px;border-radius:12px;padding:12px}
+.exam-screen .ex-review-row.is-ok{border-left-color:#16a34a}.exam-screen .ex-review-row.is-bad{border-left-color:#dc2626}.exam-screen .ex-review-row.is-text{border-left-color:#d97706}
+.exam-screen .ex-review-prompt{font-size:16px;margin:4px 0}
+.exam-screen .ex-mine,.exam-screen .ex-right{margin:4px 0;font-size:16px}.exam-screen .ex-right{font-weight:800;color:var(--brand-text)}
+.exam-screen .ex-result-actions{display:flex;gap:10px;margin:18px 0 24px;flex-wrap:wrap}
+@media(max-width:760px){
+.exam-screen .ex-body{grid-template-columns:1fr}
+.exam-screen .ex-side{position:fixed;left:0;right:0;bottom:0;max-height:55vh;transform:translateY(100%);transition:transform .2s;z-index:3;border-left:0;border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(0,0,0,.18);visibility:hidden}
+.exam-screen .ex-side.is-open{transform:none;visibility:visible}
+.exam-screen .ex-pal-toggle{display:inline-block}
+.exam-screen .ex-clock{font-size:22px;min-width:84px}
+.exam-screen .ex-prompt{font-size:17px}
+.exam-screen .ex-foot button{flex:1 1 auto}
+.exam-screen .ex-result-grid{grid-template-columns:1fr}
+}
+/* EXAM:END */
 
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
@@ -923,8 +1007,19 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 :where(:root:not([data-theme=light])) .student-app .course-card,:where(:root:not([data-theme=light])) .student-app .lesson-card,:where(:root:not([data-theme=light])) .student-app .panel,:where(:root:not([data-theme=light])) .student-app .stat-tile,:where(:root:not([data-theme=light])) .student-app .dash-ring-card,:where(:root:not([data-theme=light])) .student-app .question,:where(:root:not([data-theme=light])) .student-app .progress-card,:where(:root:not([data-theme=light])) .student-app .download-card{box-shadow:0 1px 2px rgba(0,0,0,.55),0 8px 24px rgba(0,0,0,.55)}
 :where(:root:not([data-theme=light])) .student-app .bar>*,:where(:root:not([data-theme=light])) .student-app .bar span{background:linear-gradient(90deg,#228b80,#228179)}
 :where(:root:not([data-theme=light])) .student-app .dash-hero{background:linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%);border-color:#364f4a;background-image:var(--hero-art),linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%)}
+:where(:root:not([data-theme=light])) .student-app .exam-card.is-real{border-color:#3c5851}
+:where(:root:not([data-theme=light])) .exam-screen .ex-clock.warn{background:#322f28;color:#f7d5a1}
+:where(:root:not([data-theme=light])) .exam-screen .ex-clock.danger{background:#312928;color:#eb9c94}
+:where(:root:not([data-theme=light])) .exam-screen .ex-pn.is-flag{border-color:#7d582d;box-shadow:inset 0 -4px 0 #f0b776}
+:where(:root:not([data-theme=light])) .exam-screen .lg-flag{border-color:#7d582d;box-shadow:inset 0 -3px 0 #f0b776}
+:where(:root:not([data-theme=light])) .exam-screen .ex-save.bad{color:#eb9c94}
+:where(:root:not([data-theme=light])) .exam-screen .ex-note.warn{color:#f7d5a1}
+:where(:root:not([data-theme=light])) .exam-screen .ex-review-row.is-ok{border-left-color:#33724a}
+:where(:root:not([data-theme=light])) .exam-screen .ex-review-row.is-bad{border-left-color:#763737}
+:where(:root:not([data-theme=light])) .exam-screen .ex-review-row.is-text{border-left-color:#7d582d}
 @media (max-width:760px){
 :where(:root:not([data-theme=light])) .student-app .dash-hero{background-image:linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%)}
+:where(:root:not([data-theme=light])) .exam-screen .ex-side{box-shadow:0 -8px 24px rgba(0,0,0,.55)}
 }
 :where(:root:not([data-theme=light])) .student-app .topbar{background:rgba(38,38,36,.88)}
 :where(:root:not([data-theme=light])) .student-app button.primary,:where(:root:not([data-theme=light])) .student-app .auth-btn:not(.auth-btn-alt){background:#2d7a6c;color:#fff;border-color:#2d7a6c;box-shadow:none}
@@ -1056,8 +1151,19 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 :where(:root[data-theme=dark]) .student-app .course-card,:where(:root[data-theme=dark]) .student-app .lesson-card,:where(:root[data-theme=dark]) .student-app .panel,:where(:root[data-theme=dark]) .student-app .stat-tile,:where(:root[data-theme=dark]) .student-app .dash-ring-card,:where(:root[data-theme=dark]) .student-app .question,:where(:root[data-theme=dark]) .student-app .progress-card,:where(:root[data-theme=dark]) .student-app .download-card{box-shadow:0 1px 2px rgba(0,0,0,.55),0 8px 24px rgba(0,0,0,.55)}
 :where(:root[data-theme=dark]) .student-app .bar>*,:where(:root[data-theme=dark]) .student-app .bar span{background:linear-gradient(90deg,#228b80,#228179)}
 :where(:root[data-theme=dark]) .student-app .dash-hero{background:linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%);border-color:#364f4a;background-image:var(--hero-art),linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%)}
+:where(:root[data-theme=dark]) .student-app .exam-card.is-real{border-color:#3c5851}
+:where(:root[data-theme=dark]) .exam-screen .ex-clock.warn{background:#322f28;color:#f7d5a1}
+:where(:root[data-theme=dark]) .exam-screen .ex-clock.danger{background:#312928;color:#eb9c94}
+:where(:root[data-theme=dark]) .exam-screen .ex-pn.is-flag{border-color:#7d582d;box-shadow:inset 0 -4px 0 #f0b776}
+:where(:root[data-theme=dark]) .exam-screen .lg-flag{border-color:#7d582d;box-shadow:inset 0 -3px 0 #f0b776}
+:where(:root[data-theme=dark]) .exam-screen .ex-save.bad{color:#eb9c94}
+:where(:root[data-theme=dark]) .exam-screen .ex-note.warn{color:#f7d5a1}
+:where(:root[data-theme=dark]) .exam-screen .ex-review-row.is-ok{border-left-color:#33724a}
+:where(:root[data-theme=dark]) .exam-screen .ex-review-row.is-bad{border-left-color:#763737}
+:where(:root[data-theme=dark]) .exam-screen .ex-review-row.is-text{border-left-color:#7d582d}
 @media (max-width:760px){
 :where(:root[data-theme=dark]) .student-app .dash-hero{background-image:linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%)}
+:where(:root[data-theme=dark]) .exam-screen .ex-side{box-shadow:0 -8px 24px rgba(0,0,0,.55)}
 }
 :where(:root[data-theme=dark]) .student-app .topbar{background:rgba(38,38,36,.88)}
 :where(:root[data-theme=dark]) .student-app button.primary,:where(:root[data-theme=dark]) .student-app .auth-btn:not(.auth-btn-alt){background:#2d7a6c;color:#fff;border-color:#2d7a6c;box-shadow:none}

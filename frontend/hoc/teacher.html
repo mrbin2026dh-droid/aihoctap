@@ -202,158 +202,19 @@
 </form>
 </section>
 <section id="detail-exams-monitor" hidden class="t-detail"><button type="button" id="act-exams-monitor-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
-<div class="t-heading">
-<div>
-<h2>Theo dõi bài làm</h2>
-</div>
-</div>
-<table class="t-table ">
-<caption>Tiến độ làm bài</caption>
-<thead>
-<tr>
-<th scope="col">Học sinh</th>
-<th scope="col">Lớp</th>
-<th scope="col">Trạng thái</th>
-<th scope="col" class="t-number">Còn lại</th>
-<th scope="col">Thao tác</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-label="Học sinh">Học sinh Thử 01 [THỬ]</td>
-<td data-label="Lớp">9A</td>
-<td data-label="Trạng thái">Chưa vào</td>
-<td class="t-number" data-label="Còn lại">—</td>
-<td data-label="Thao tác">
-<div class="t-icon-actions" role="group" aria-label="Thao tác"><button type="button" id="act-exams-extend-exam" class="t-icon-btn" data-icon="clock" aria-label="Gia hạn thời gian" title="Gia hạn thời gian" data-action="extend-exam" disabled aria-disabled="true" data-id="sample-01"></button><button type="button" id="act-exams-retry-exam" class="t-icon-btn" data-icon="retry" aria-label="Cho làm lại" title="Cho làm lại" data-action="retry-exam" disabled aria-disabled="true" data-id="sample-01"></button></div>
-</td>
-</tr>
-<tr>
-<td data-label="Học sinh">Học sinh Thử 02 [THỬ]</td>
-<td data-label="Lớp">9A</td>
-<td data-label="Trạng thái">Đang làm</td>
-<td class="t-number" data-label="Còn lại">12 phút</td>
-<td data-label="Thao tác">—</td>
-</tr>
-<tr>
-<td data-label="Học sinh">Học sinh Thử 03 [THỬ]</td>
-<td data-label="Lớp">9A</td>
-<td data-label="Trạng thái">Đã nộp</td>
-<td class="t-number" data-label="Còn lại">—</td>
-<td data-label="Thao tác">—</td>
-</tr>
-</tbody>
-</table>
+<div class="t-heading"><div><h2 id="exam-mon-title">Theo dõi bài làm</h2><p class="t-muted" id="exam-mon-sub">Chọn một đề trong danh sách để theo dõi.</p></div><button type="button" id="exam-mon-refresh" class="t-button">Làm mới</button></div>
+<dl class="t-metrics" id="exam-mon-metrics"></dl>
+<table class="t-table" id="exam-mon-table"><caption>Tiến độ làm bài</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Trạng thái</th><th scope="col" class="t-number">Còn lại</th><th scope="col" class="t-number">Rời tab</th><th scope="col" class="t-number">Điểm</th><th scope="col">Thao tác</th></tr></thead><tbody id="exam-mon-body"><tr><td colspan="7" class="t-muted">Chưa có dữ liệu.</td></tr></tbody></table>
 </section>
 <section id="detail-exams-stats" hidden class="t-detail"><button type="button" id="act-exams-stats-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
-<div class="t-heading">
-<div>
-<h2>Thống kê và xếp hạng</h2>
-<p class="t-muted">Dữ liệu minh họa [THỬ]</p>
-</div><button type="button" id="act-exams-export" class="t-button" data-action="export-exam" disabled aria-disabled="true" >Xuất Excel</button>
-</div>
-<dl class="t-metrics">
-<div>
-<dt>Điểm trung bình</dt>
-<dd>6,5</dd>
-</div>
-<div>
-<dt>Cao nhất</dt>
-<dd>9</dd>
-</div>
-<div>
-<dt>Thấp nhất</dt>
-<dd>4</dd>
-</div>
-<div>
-<dt>Đã nộp / Tổng</dt>
-<dd>4 / 4</dd>
-</div>
-</dl>
-<figure class="t-chart"><figcaption>Phân bố điểm [THỬ]</figcaption>
-<svg viewBox="0 0 400 160" role="img" aria-labelledby="chart-title chart-desc"><title id="chart-title">Phân bố điểm mẫu</title><desc id="chart-desc">Dưới 5 điểm: 1; từ 5 đến dưới 8: 2; từ 8 đến 10: 1.</desc><path class="t-chart-axis" d="M20 140H380"/><rect class="t-chart-bar" x="50" y="90" width="60" height="50"/><rect class="t-chart-bar" x="170" y="40" width="60" height="100"/><rect class="t-chart-bar" x="290" y="90" width="60" height="50"/>
-</svg>
-</figure>
-<table class="t-table ">
-<caption>Số liệu biểu đồ</caption>
-<thead>
-<tr>
-<th scope="col">Khoảng điểm</th>
-<th scope="col" class="t-number">Số học sinh</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-label="Khoảng điểm">Dưới 5</td>
-<td class="t-number" data-label="Số học sinh">1</td>
-</tr>
-<tr>
-<td data-label="Khoảng điểm">5 đến dưới 8</td>
-<td class="t-number" data-label="Số học sinh">2</td>
-</tr>
-<tr>
-<td data-label="Khoảng điểm">8 đến 10</td>
-<td class="t-number" data-label="Số học sinh">1</td>
-</tr>
-</tbody>
-</table>
-<div class="t-heading">
-<div>
-<h2>Tỉ lệ đúng từng câu</h2>
-</div>
-</div>
-<table class="t-table ">
-<caption>Tỉ lệ đúng</caption>
-<thead>
-<tr>
-<th scope="col">Câu</th>
-<th scope="col" class="t-number">Tỉ lệ</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-label="Câu">Câu 1</td>
-<td class="t-number" data-label="Tỉ lệ">75%</td>
-</tr>
-<tr>
-<td data-label="Câu">Câu 2</td>
-<td class="t-number" data-label="Tỉ lệ">50%</td>
-</tr>
-</tbody>
-</table>
-<div class="t-heading">
-<div>
-<h2>Bảng xếp hạng</h2>
-</div>
-</div>
-<table class="t-table ">
-<caption>Bảng xếp hạng mẫu</caption>
-<thead>
-<tr>
-<th scope="col" class="t-number">Hạng</th>
-<th scope="col">Học sinh</th>
-<th scope="col">Lớp</th>
-<th scope="col" class="t-number">Điểm</th>
-<th scope="col" class="t-number">Thời gian</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="t-number" data-label="Hạng">1</td>
-<td data-label="Học sinh">Học sinh Thử 01 [THỬ]</td>
-<td data-label="Lớp">9A</td>
-<td class="t-number" data-label="Điểm">9</td>
-<td class="t-number" data-label="Thời gian">30 phút</td>
-</tr>
-<tr>
-<td class="t-number" data-label="Hạng">2</td>
-<td data-label="Học sinh">Học sinh Thử 02 [THỬ]</td>
-<td data-label="Lớp">9A</td>
-<td class="t-number" data-label="Điểm">7</td>
-<td class="t-number" data-label="Thời gian">35 phút</td>
-</tr>
-</tbody>
-</table>
+<div class="t-heading"><div><h2 id="exam-stats-title">Thống kê và xếp hạng</h2><p class="t-muted" id="exam-stats-sub">Chọn một đề trong danh sách để xem thống kê.</p></div><button type="button" id="act-exams-export" class="t-button" data-action="export-exam" disabled aria-disabled="true">Xuất Excel</button></div>
+<dl class="t-metrics" id="exam-stats-metrics"></dl>
+<figure class="t-chart"><figcaption>Phân bố điểm</figcaption><div id="exam-stats-chart"></div></figure>
+<table class="t-table"><caption>Số liệu biểu đồ</caption><thead><tr><th scope="col">Khoảng điểm</th><th scope="col" class="t-number">Số học sinh</th></tr></thead><tbody id="exam-stats-dist"></tbody></table>
+<div class="t-heading"><div><h2>Tỉ lệ đúng từng câu</h2></div></div>
+<table class="t-table"><caption>Tỉ lệ đúng</caption><thead><tr><th scope="col">Câu</th><th scope="col">Chủ đề</th><th scope="col" class="t-number">Tỉ lệ đúng</th><th scope="col">Đáp án sai nhiều nhất</th></tr></thead><tbody id="exam-stats-questions"></tbody></table>
+<div class="t-heading"><div><h2>Bảng xếp hạng</h2></div></div>
+<table class="t-table"><caption>Bảng xếp hạng</caption><thead><tr><th scope="col" class="t-number">Hạng</th><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col" class="t-number">Điểm</th></tr></thead><tbody id="exam-stats-rank"></tbody></table>
 </section>
 </section>
 <section id="view-materials" hidden aria-label="Tài liệu">

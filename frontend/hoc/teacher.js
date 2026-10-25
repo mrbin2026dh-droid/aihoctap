@@ -278,10 +278,103 @@ async function loadExams() {
     const n = cell('Bài nộp', String(e.submissions)); n.className = 't-number';
     const actions = el('div', '', 't-actions-inline');
     actions.append(button('Sửa', () => editExam(e.exam_id).catch(fail), 't-button'));
+    if (e.mode === 'real') actions.append(button('Theo dõi', () => openExamMonitor(e.exam_id).catch(fail), 't-button'));
+    actions.append(button('Thống kê', () => openExamStats(e.exam_id).catch(fail), 't-button'));
     const toggle = e.status === 'open' ? ['Đóng đề', 'closed'] : ['Mở đề', 'open'];
     actions.append(button(toggle[0], () => setExamStatus(e.exam_id, toggle[1]).catch(fail), 't-button'));
     cell('Thao tác', actions); body.append(tr);
   }
+}
+/** @type {any} */ let examView = null; let monitorTimer = 0;
+const EXAM_ROW_STATUS = {in_progress: 'Đang làm', not_started: 'Chưa vào', submitted: 'Đã nộp'};
+/** @param {string} id */
+async function fetchExamResults(id) { return api(`/pwa/teacher/exams/${id}/results`, {token}); }
+/** @param {number|null} ms */
+function remainText(ms) { if (ms === null || ms === undefined) return '—'; const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000); return `${m}:${String(s).padStart(2, '0')}`; }
+/** @param {string} id @param {string[][]} items */
+function fillMetrics(id, items) { const dl = node(id); dl.replaceChildren(); for (const [k, v] of items) { const d = el('div'); d.append(el('dt', k), el('dd', v)); dl.append(d); } }
+/** @param {number|null|undefined} v */
+const num = v => (v === null || v === undefined ? '—' : String(v).replace('.', ','));
+/** @param {string} id */
+async function openExamMonitor(id) {
+  await ui.showSub('detail-exams-monitor');
+  clearInterval(monitorTimer);
+  const refresh = async () => {
+    const data = await fetchExamResults(id); examView = {id, data};
+    node('exam-mon-title').textContent = data.exam.title;
+    node('exam-mon-sub').textContent = `Lớp ${data.exam.grade}${data.exam.class_codes?.length ? ' · ' + data.exam.class_codes.join(', ') : ''} · ${data.exam.minutes} phút · cập nhật ${new Date(data.server_now).toLocaleTimeString('vi-VN')}`;
+    const s = data.stats;
+    fillMetrics('exam-mon-metrics', [['Tổng học sinh', String(s.total)], ['Đang làm', String(s.in_progress)], ['Đã nộp', String(s.submitted)], ['Chưa vào', String(s.not_started)]]);
+    const body = node('exam-mon-body'); body.replaceChildren();
+    if (!data.rows.length) { const tr = el('tr'); const td = el('td', 'Chưa có học sinh thuộc đề này.', 't-muted'); td.colSpan = 7; tr.append(td); body.append(tr); }
+    for (const r of data.rows) {
+      const tr = el('tr'); /** @param {string} label @param {Node|string} c @param {string} [cls] */
+      const cell = (label, c, cls = '') => { const td = el('td'); td.dataset.label = label; if (cls) td.className = cls; td.append(c); tr.append(td); return td; };
+      cell('Học sinh', r.name); cell('Lớp', r.class_code || '—');
+      cell('Trạng thái', el('span', `${EXAM_ROW_STATUS[/** @type {keyof typeof EXAM_ROW_STATUS} */ (r.status)]}${r.late ? ' (nộp muộn)' : ''}`, `t-badge${r.status === 'in_progress' ? '' : r.status === 'not_started' ? ' t-badge-error' : ''}`));
+      cell('Còn lại', r.status === 'in_progress' ? remainText(r.remaining_ms) : '—', 't-number');
+      cell('Rời tab', r.leaves ? String(r.leaves) : '0', `t-number${r.leaves >= 3 ? ' t-warn' : ''}`);
+      cell('Điểm', r.status === 'submitted' ? `${num(r.best_score)}${r.needs_review ? ' *' : ''}` : '—', 't-number');
+      const act = el('div', '', 't-actions-inline');
+      if (r.status === 'in_progress' && data.exam.mode === 'real') act.append(button('Gia hạn', () => extendStudent(id, r, refresh), 't-button'));
+      cell('Thao tác', act.childElementCount ? act : '—');
+      body.append(tr);
+    }
+  };
+  await refresh();
+  monitorTimer = window.setInterval(() => { if (document.getElementById('detail-exams-monitor')?.hidden) { clearInterval(monitorTimer); return; } refresh().catch(() => {}); }, 15000);
+  node('exam-mon-refresh').onclick = () => { refresh().catch(fail); };
+}
+/** @param {string} id @param {any} row @param {()=>Promise<void>} refresh */
+async function extendStudent(id, row, refresh) {
+  const res = await dialogBox({kind: 'prompt', title: `Gia hạn cho ${row.name}`, body: 'Nhập số phút cộng thêm (1–120). Chỉ áp dụng cho bài đang làm.', okText: 'Gia hạn',
+    fields: [{name: 'minutes', label: 'Số phút', value: '5', validate: v => (/^\d{1,3}$/.test(v) && +v >= 1 && +v <= 120) ? '' : 'Nhập số từ 1 đến 120.'}]});
+  if (!res || typeof res !== 'object') return;
+  await api(`/pwa/teacher/exams/${id}/extend`, {method: 'POST', token, body: {uid: row.uid, minutes: parseInt(res.minutes, 10)}});
+  notify(`Đã gia hạn ${res.minutes} phút cho ${row.name}.`); await refresh();
+}
+const BUCKETS = ['0–1', '1–2', '2–3', '3–4', '4–5', '5–6', '6–7', '7–8', '8–9', '9–10'];
+/** @param {string} id */
+async function openExamStats(id) {
+  await ui.showSub('detail-exams-stats');
+  const data = await fetchExamResults(id); examView = {id, data};
+  node('exam-stats-title').textContent = `Thống kê: ${data.exam.title}`;
+  node('exam-stats-sub').textContent = `${data.stats.submitted}/${data.stats.total} học sinh đã nộp · * là còn câu tự luận chờ chấm`;
+  const s = data.stats;
+  fillMetrics('exam-stats-metrics', [['Điểm trung bình', num(s.avg)], ['Cao nhất', num(s.max)], ['Thấp nhất', num(s.min)], ['Đã nộp / Tổng', `${s.submitted} / ${s.total}`]]);
+  const dist = s.distribution; const top = Math.max(1, ...dist);
+  const NS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 400 170'); svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Phân bố điểm: ${dist.map((n, i) => `${BUCKETS[i]}: ${n}`).join('; ')}`);
+  const axis = document.createElementNS(NS, 'path'); axis.setAttribute('class', 't-chart-axis'); axis.setAttribute('d', 'M10 140H390'); svg.append(axis);
+  dist.forEach((n, i) => {
+    const h = Math.round((n / top) * 110); const x = 14 + i * 38;
+    const r = document.createElementNS(NS, 'rect'); r.setAttribute('class', 't-chart-bar'); r.setAttribute('x', String(x)); r.setAttribute('y', String(140 - h)); r.setAttribute('width', '30'); r.setAttribute('height', String(h)); svg.append(r);
+    const t = document.createElementNS(NS, 'text'); t.setAttribute('x', String(x + 15)); t.setAttribute('y', '156'); t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-size', '10'); t.setAttribute('fill', 'currentColor'); t.textContent = String(i + 1); svg.append(t);
+    if (n) { const v = document.createElementNS(NS, 'text'); v.setAttribute('x', String(x + 15)); v.setAttribute('y', String(136 - h)); v.setAttribute('text-anchor', 'middle'); v.setAttribute('font-size', '11'); v.setAttribute('fill', 'currentColor'); v.textContent = String(n); svg.append(v); }
+  });
+  node('exam-stats-chart').replaceChildren(svg);
+  const fillBody = (/** @type {string} */ bid, /** @type {(string|number)[][]} */ rows, /** @type {number} */ cols) => {
+    const b = node(bid); b.replaceChildren();
+    if (!rows.length) { const tr = el('tr'); const td = el('td', 'Chưa có dữ liệu.', 't-muted'); td.colSpan = cols; tr.append(td); b.append(tr); return; }
+    for (const r of rows) { const tr = el('tr'); r.forEach((v, i) => { const td = el('td', String(v)); if (typeof v === 'number' || /^\d+%$/.test(String(v))) td.className = 't-number'; td.dataset.label = i === 0 ? 'Mục' : ''; tr.append(td); }); b.append(tr); }
+  };
+  fillBody('exam-stats-dist', dist.map((n, i) => [`${BUCKETS[i]} điểm`, n]), 2);
+  fillBody('exam-stats-questions', (data.questions || []).map((/** @type {any} */ q) => [`Câu ${q.number}`, q.topic || '—', q.percent === null ? '—' : `${q.percent}%`, q.top_wrong ? `${q.top_wrong.key}. ${q.top_wrong.text} (${q.top_wrong.count})` : '—']), 4);
+  fillBody('exam-stats-rank', data.ranking.map((/** @type {any} */ r) => [r.rank, r.name + (r.needs_review ? ' *' : ''), r.class_code || '—', num(r.score)]), 4);
+  const exp = /** @type {HTMLButtonElement} */ (node('act-exams-export')); exp.disabled = false; exp.removeAttribute('aria-disabled'); exp.onclick = () => { exportExamResults().catch(fail); };
+}
+async function exportExamResults() {
+  if (!examView) return; const {data} = examView;
+  await loadScript('./vendor/write-excel-file.min.js');
+  /** @param {unknown} v @param {boolean} [bold] */
+  const cell = (v, bold = false) => typeof v === 'number' ? {value: v, type: Number, ...(bold ? {fontWeight: 'bold'} : {})} : {value: String(v ?? ''), ...(bold ? {fontWeight: 'bold'} : {})};
+  const head = ['Hạng', 'Họ và tên', 'Lớp', 'Trạng thái', 'Số lượt', 'Điểm cao nhất', 'Rời tab', 'Nộp muộn', 'Chờ chấm tự luận'].map(v => cell(v, true));
+  const rankOf = new Map(data.ranking.map((/** @type {any} */ r) => [r.uid, r.rank]));
+  const rows = data.rows.map((/** @type {any} */ r) => [rankOf.get(r.uid) ?? '', r.name, r.class_code, EXAM_ROW_STATUS[/** @type {keyof typeof EXAM_ROW_STATUS} */ (r.status)], r.attempts_used, r.best_score ?? '', r.leaves, r.late ? 'Có' : '', r.needs_review ? 'Có' : ''].map(v => cell(v)));
+  const safe = String(data.exam.title).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'bai_kiem_tra';
+  // @ts-ignore thư viện nạp bằng thẻ script
+  await globalThis.writeXlsxFile([{data: [head, ...rows], sheet: 'Kết quả', columns: [6, 28, 8, 14, 9, 14, 9, 11, 18].map(width => ({width})), stickyRowsCount: 1}]).toFile(`ket_qua_${safe}.xlsx`);
+  notify('Đã xuất file Excel kết quả.');
 }
 /** @param {string} id @param {string} status */
 async function setExamStatus(id, status) {

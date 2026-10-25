@@ -167,3 +167,50 @@ export function canRevealAnswers(exam, now, hasSubmitted) {
   if (exam.reveal === 'after-close') return exam.mode === 'real' ? now > exam.closes_at : exam.status === 'closed';
   return false;
 }
+
+/** Số điểm thang 10 -> khoảng phân bố 0-1, 1-2, ... 9-10. */
+function bucketOf(score) { return Math.min(9, Math.max(0, Math.floor(score))); }
+
+/**
+ * Tổng hợp kết quả một đề cho giáo viên: danh sách học sinh theo trạng thái, thống kê, xếp hạng.
+ * @param {object} exam
+ * @param {{uid:string,name:string,grade:number,class_code:string,disabled?:boolean}[]} roster
+ * @param {any[]} records bài nộp của đề này (có uid)
+ * @param {Record<string, any>} sessions uid -> phiên hiện tại
+ */
+export function buildExamResults(exam, roster, records, sessions, now) {
+  const byUid = new Map();
+  for (const r of records) { const list = byUid.get(r.uid) || []; list.push(r); byUid.set(r.uid, list); }
+  const people = new Map();
+  for (const st of roster) if (!st.disabled && examTargetsStudent(exam, st.grade, st.class_code)) people.set(st.uid, st);
+  for (const uid of byUid.keys()) if (!people.has(uid)) { const r = byUid.get(uid)[0]; people.set(uid, {uid, name: r.student_name || uid, grade: r.grade, class_code: r.class_code || ''}); }
+  const rows = [];
+  for (const st of people.values()) {
+    const list = (byUid.get(st.uid) || []).slice().sort((a, b) => (a.submitted_at || 0) - (b.submitted_at || 0));
+    const last = list[list.length - 1]; const ses = sessions?.[st.uid];
+    const running = Boolean(ses && !ses.submitted_at && (exam.mode === 'trial' || now <= ses.deadline + GRACE_MS));
+    const best = list.reduce((m, r) => (typeof r.score === 'number' && (m === null || r.score > m.score) ? r : m), null);
+    rows.push({
+      uid: st.uid, name: st.name, class_code: st.class_code || '', status: running ? 'in_progress' : list.length ? 'submitted' : 'not_started',
+      attempts_used: list.length, best_score: best ? best.score : null, last_score: last ? last.score : null, last_submitted_at: last ? last.submitted_at : null,
+      needs_review: list.some(r => r.needs_review), late: list.some(r => r.late), leaves: ses?.leaves || 0,
+      deadline: running ? ses.deadline : null, remaining_ms: running && ses.deadline ? Math.max(0, ses.deadline - now) : null
+    });
+  }
+  const order = {in_progress: 0, not_started: 1, submitted: 2};
+  rows.sort((a, b) => order[a.status] - order[b.status] || a.class_code.localeCompare(b.class_code) || a.name.localeCompare(b.name));
+  const scored = rows.filter(r => r.best_score !== null);
+  const scores = scored.map(r => r.best_score);
+  const sum = scores.reduce((a, b) => a + b, 0);
+  const distribution = Array.from({length: 10}, () => 0); scores.forEach(v => { distribution[bucketOf(v)] += 1; });
+  const stats = {
+    total: rows.length, submitted: scored.length, in_progress: rows.filter(r => r.status === 'in_progress').length, not_started: rows.filter(r => r.status === 'not_started').length,
+    avg: scores.length ? Math.round((sum / scores.length) * 100) / 100 : null, max: scores.length ? Math.max(...scores) : null, min: scores.length ? Math.min(...scores) : null,
+    pass_rate: scores.length ? Math.round((100 * scores.filter(v => v >= 5).length) / scores.length) : null, distribution
+  };
+  const ranking = scored.slice().sort((a, b) => b.best_score - a.best_score || (a.last_submitted_at || 0) - (b.last_submitted_at || 0)).map((r, i, arr) => ({
+    rank: i > 0 && arr[i - 1].best_score === r.best_score ? null : i + 1, uid: r.uid, name: r.name, class_code: r.class_code, score: r.best_score, needs_review: r.needs_review
+  }));
+  let lastRank = 0; for (const r of ranking) { if (r.rank === null) r.rank = lastRank; else lastRank = r.rank; }
+  return {rows, stats, ranking};
+}

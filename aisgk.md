@@ -843,3 +843,10 @@ Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
 - Việc mở: màn hình thi của học sinh (bước 3); `wrangler deploy` + deploy rules (Antigravity).
 XONG bước 2 kiểm tra / TIẾP THEO → Antigravity
 Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."
+
+## 2026-10-25 - Claude - Bước 3 và 4 kiểm tra: màn hình thi + theo dõi/thống kê
+- Làm: `frontend/hoc/exam.js` (màn hình thi học sinh, thêm vào sw.js và package_student_pwa.py), CSS khối EXAM, tab Thi hiện danh sách đề; giáo viên: Theo dõi/Gia hạn, Thống kê/Xếp hạng/Xuất Excel thay dữ liệu mẫu.
+- Test: tests/test_exam_student_ui.cjs, tests/test_exam_teacher_monitor.cjs, test_exam_backend.mjs; toàn bộ test khác vẫn đạt.
+- Việc mở: Antigravity chạy `wrangler deploy` + deploy `database.rules.json` (nếu chưa thì tab Thi báo lỗi 404); thi thử với một lớp thật (bước 5); chưa thử trên điện thoại thật/Safari.
+XONG bước 3,4 kiểm tra / TIẾP THEO → Antigravity
+Dán cho họ: "Đọc AGENTS.md và docs/handoff/<tên>.md rồi làm theo."

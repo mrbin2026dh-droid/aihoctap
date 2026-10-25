@@ -17,7 +17,7 @@ import {
   SecurityConfigContract,
   TutorContract
 } from './contracts.js';
-import {validateExamInput, examState, examTargetsStudent, studentExamView, questionOrder, sessionDeadline, cleanAnswers, gradeExam, canRevealAnswers, isExamId, GRACE_MS} from './exams.js';
+import {validateExamInput, examState, examTargetsStudent, studentExamView, questionOrder, sessionDeadline, cleanAnswers, gradeExam, canRevealAnswers, isExamId, buildExamResults, GRACE_MS} from './exams.js';
 
 // Base64URL encoding / decoding (RFC 7515)
 export function base64UrlEncode(bufferOrStr) {
@@ -1510,6 +1510,15 @@ async function finalizeExamAttempt({ env, signingKeys, gateStub, uid, claims, ex
   return { status: 200, body: { ...record, answers_key: canRevealAnswers(exam, now, true) ? secret.answers : undefined } };
 }
 
+/** Danh sách học sinh (Firebase students_auth, hoặc bộ nhớ khi chạy thử). */
+async function loadRoster(env, signingKeys) {
+  if (env.FIREBASE_DATABASE_URL) {
+    const data = (await dbGet(env, signingKeys, 'students_auth')) || {};
+    return Object.entries(data).map(([uid, s]) => ({ uid, name: s?.name || uid, grade: Number(s?.grade) || 6, class_code: s?.class_code || '', disabled: Boolean(s?.disabled) }));
+  }
+  return [...defaultStudentsAuth.entries()].map(([uid, s]) => ({ uid, name: s.name, grade: Number(s.grade) || 6, class_code: s.class_code || '', disabled: Boolean(s.disabled) }));
+}
+
 /** Các đường dẫn /api/pwa/exams/* (học sinh) và /api/pwa/teacher/exams* (giáo viên). Trả null nếu không phải. */
 async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, gateStub }) {
   const path = url.pathname;
@@ -1542,13 +1551,39 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
           .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
         return respond({ exams: list });
       }
-      const m = sub.match(/^([^/]+)(?:\/(status))?$/);
+      const m = sub.match(/^([^/]+)(?:\/(status|results|extend))?$/);
       if (m && isExamId(m[1])) {
         const exam = await dbGet(env, signingKeys, `exams/${m[1]}`);
         if (!exam) return respond({ detail: 'Không tìm thấy đề kiểm tra.' }, 404);
         if (!m[2] && request.method === 'GET') {
           const secret = (await dbGet(env, signingKeys, `exams_private/${m[1]}`)) || { answers: {} };
           return respond({ ...exam, questions: exam.questions.map(q => ({ ...q, correct_answer: secret.answers?.[q.id] || '' })) });
+        }
+        if (m[2] === 'results' && request.method === 'GET') {
+          const roster = await loadRoster(env, signingKeys);
+          const all = (await dbGet(env, signingKeys, 'attempts')) || {};
+          const records = [];
+          for (const [uid, byUser] of Object.entries(all)) for (const a of Object.values(byUser || {})) if (a?.exam_id === m[1]) records.push({ uid, ...a });
+          const sessionsByUid = {};
+          const allSessions = (await dbGet(env, signingKeys, 'exam_sessions')) || {};
+          for (const [uid, byExam] of Object.entries(allSessions)) if (byExam?.[m[1]]) sessionsByUid[uid] = byExam[m[1]];
+          const results = buildExamResults(exam, roster, records, sessionsByUid, now);
+          const details = (await dbGet(env, signingKeys, 'attempt_details')) || {};
+          const withDetail = records.map(r => (details[r.uid]?.[r.attempt_id]?.per_question ? { ...r, per_question: details[r.uid][r.attempt_id].per_question } : r));
+          const mockDetail = !env.FIREBASE_DATABASE_URL ? (env.TEST_ALL_RESULTS || []).filter(r => r.exam_id === m[1]) : null;
+          const analysis = analyzeAttempts(mockDetail || withDetail, { [`exam:${m[1]}`]: exam });
+          return respond({ exam: { exam_id: exam.exam_id, title: exam.title, mode: exam.mode, grade: exam.grade, class_codes: exam.class_codes, minutes: exam.minutes, total_points: exam.total_points, question_count: exam.question_count, state: examState(exam, now), status: exam.status, opens_at: exam.opens_at, closes_at: exam.closes_at }, ...results, questions: analysis.lessons[0]?.questions || [], server_now: now });
+        }
+        if (m[2] === 'extend' && request.method === 'POST') {
+          const body = await request.json().catch(() => ({}));
+          const minutes = parseInt(body.minutes, 10);
+          if (exam.mode !== 'real') return respond({ detail: 'Đề Thử không có giới hạn giờ.' }, 400);
+          if (!(minutes >= 1 && minutes <= 120) || !IdValidationContract.isValidId(String(body.uid || ''))) return respond({ detail: 'Thời gian gia hạn từ 1 đến 120 phút.' }, 400);
+          const ses = await dbGet(env, signingKeys, `exam_sessions/${body.uid}/${m[1]}`);
+          if (!ses || ses.submitted_at) return respond({ detail: 'Học sinh này không có bài đang làm.' }, 409);
+          if (now > ses.deadline + GRACE_MS) return respond({ detail: 'Phiên làm bài đã quá hạn, không gia hạn được.' }, 409);
+          await dbPut(env, signingKeys, `exam_sessions/${body.uid}/${m[1]}`, { ...ses, deadline: ses.deadline + minutes * 60_000, extended_minutes: (ses.extended_minutes || 0) + minutes });
+          return respond({ uid: body.uid, deadline: ses.deadline + minutes * 60_000 });
         }
         if (m[2] === 'status' && request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
@@ -1623,7 +1658,7 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
     if (sub === 'save' && request.method === 'PUT') {
       if (!session || session.submitted_at || session.attempt_id !== body.attempt_id) return respond({ detail: 'Không có phiên làm bài đang mở.' }, 409);
       if (expired(session)) return respond({ detail: 'Đã hết giờ làm bài.' }, 403);
-      session = { ...session, answers: cleanAnswers(exam, body.answers), saved_at: now };
+      session = { ...session, answers: cleanAnswers(exam, body.answers), saved_at: now, leaves: Math.max(session.leaves || 0, Math.min(999, Math.max(0, parseInt(body.leaves, 10) || 0))) };
       await dbPut(env, signingKeys, sessionPath, session);
       return respond({ saved_at: now, server_now: now, deadline: session.deadline });
     }

@@ -133,5 +133,29 @@ try {
   }
   assert.equal((await call('GET', `/pwa/exams/review?exam_id=${trial.body.exam_id}`, null, ta)).status, 403);
   const tl = (await call('GET', '/pwa/exams', null, ta)).body.exams.find(e => e.exam_id === trial.body.exam_id); assert.deepEqual([tl.attempts_used, tl.attempts_left, tl.best_score], [4, null, 10]);
+
+  // Bước 4: theo dõi, gia hạn, thống kê, xếp hạng
+  const res = await call('GET', `/pwa/teacher/exams/${id}/results`, null, admin); assert.equal(res.status, 200, JSON.stringify(res.body));
+  assert.equal((await call('GET', `/pwa/teacher/exams/${id}/results`, null, ta)).status, 403, 'học sinh không xem được kết quả cả lớp');
+  const names = res.body.rows.map(r => r.name).sort(); assert.deepEqual(names, ['Học sinh A', 'Học sinh B'], 'chỉ lớp 9A; lớp 9B và khối 8 không có');
+  const rowA = res.body.rows.find(r => r.uid === 'ha'); assert.deepEqual([rowA.status, rowA.attempts_used, rowA.best_score], ['submitted', 2, 8]);
+  assert.equal(res.body.stats.submitted, 2); assert.equal(res.body.stats.total, 2); assert.equal(res.body.stats.max, 8);
+  assert.equal(res.body.stats.distribution.reduce((a, b) => a + b, 0), 2); assert.equal(res.body.stats.distribution[8], 1, 'điểm 8 vào khoảng 8-9');
+  assert.equal(res.body.ranking[0].rank, 1); assert.equal(res.body.ranking[0].name, 'Học sinh A');
+  assert.ok(res.body.questions.length >= 8 && res.body.questions.every(q => q.percent !== undefined), 'tỉ lệ đúng từng câu');
+  const ext = await call('POST', '/pwa/teacher/exams', {...base({questions: [mkQ(1), mkQ(2)], opens_at: T0 - 60_000, closes_at: T0 + 7_200_000, minutes: 30, status: 'open'}), exam_id: 'exam_ext'}, admin); assert.equal(ext.status, 200);
+  const sx = await call('POST', '/pwa/exams/start', {exam_id: 'exam_ext'}, ta);
+  await call('PUT', '/pwa/exams/save', {exam_id: 'exam_ext', attempt_id: sx.body.attempt_id, answers: {q1: 'A'}, leaves: 3}, ta);
+  const run = (await call('GET', '/pwa/teacher/exams/exam_ext/results', null, admin)).body;
+  const rx = run.rows.find(r => r.uid === 'ha'); assert.deepEqual([rx.status, rx.leaves], ['in_progress', 3]); assert.ok(rx.remaining_ms > 29 * 60_000 && rx.remaining_ms <= 30 * 60_000);
+  assert.equal(run.rows[0].status, 'in_progress', 'đang làm xếp đầu');
+  const ex1 = await call('POST', '/pwa/teacher/exams/exam_ext/extend', {uid: 'ha', minutes: 10}, admin); assert.equal(ex1.status, 200); assert.equal(ex1.body.deadline, sx.body.deadline + 10 * 60_000);
+  assert.equal((await call('POST', '/pwa/teacher/exams/exam_ext/extend', {uid: 'ha', minutes: 0}, admin)).status, 400);
+  assert.equal((await call('POST', '/pwa/teacher/exams/exam_ext/extend', {uid: 'ha', minutes: 5}, ta)).status, 403);
+  assert.equal((await call('POST', '/pwa/teacher/exams/exam_ext/extend', {uid: 'hb', minutes: 5}, admin)).status, 409, 'học sinh chưa vào thi');
+  const resumeX = await call('POST', '/pwa/exams/start', {exam_id: 'exam_ext'}, ta); assert.equal(resumeX.body.deadline, sx.body.deadline + 10 * 60_000, 'gia hạn có hiệu lực với học sinh');
+  await call('POST', '/pwa/exams/submit', {exam_id: 'exam_ext', attempt_id: sx.body.attempt_id, answers: {q1: 'A', q2: 'A'}}, ta);
+  assert.equal((await call('POST', '/pwa/teacher/exams/exam_ext/extend', {uid: 'ha', minutes: 5}, admin)).status, 409, 'đã nộp thì không gia hạn');
+  assert.equal((await call('POST', '/pwa/teacher/exams/' + trial.body.exam_id + '/extend', {uid: 'ha', minutes: 5}, admin)).status, 400, 'đề Thử không có giờ');
 } finally { Date.now = realNow; }
 console.log('EXAM BACKEND OK');

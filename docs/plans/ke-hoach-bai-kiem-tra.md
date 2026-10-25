@@ -56,8 +56,8 @@ Chống gian lận mức hợp lý (không hứa hơn khả năng của trình d
 ## 6. Thứ tự làm
 1. (xong) Menu "Thi" học sinh, trường "Hình thức" trên form giáo viên.
 2. (xong 2026-10-25) Mô hình dữ liệu + Worker `exams/start|save|submit|list|review` + quản lý đề của giáo viên + test (hết giờ, hết lượt, ngoài giờ mở, lớp khác, nộp trùng, ân hạn). Ghi chú thực hiện: chỉ trộn thứ tự câu (không trộn đáp án); nộp quá ân hạn thì chỉ tính phần đã lưu (không từ chối, để học sinh không mất bài); phiên bỏ dở được máy chủ tự nộp khi học sinh vào lại; đề Thử dùng cùng đường start/submit, không giờ, không giới hạn lượt; bài thi tách khỏi thống kê luyện tập nhưng vào báo cáo điểm yếu của giáo viên.
-3. Màn hình thi học sinh (có test hành vi: đồng hồ, bảng câu, đánh dấu, nộp, hết giờ, mất mạng, khôi phục).
-4. Giáo viên: quản lý đề, nhập Excel, báo cáo kết quả.
+3. (xong 2026-10-25) Màn hình thi học sinh `frontend/hoc/exam.js`: danh sách đề, xác nhận trước khi thi thật, đồng hồ theo giờ máy chủ, bảng câu hỏi, đánh dấu, phím tắt, tự lưu + bản sao trên máy, đếm lần rời tab, nộp có xác nhận, tự nộp khi hết giờ, thử lại khi mất mạng, kết quả và đối chiếu đáp án. Test: tests/test_exam_student_ui.cjs.
+4. (xong 2026-10-25) Giáo viên: nhập Excel, quản lý đề, Theo dõi bài làm (trạng thái, giờ còn lại, số lần rời tab, Gia hạn), Thống kê (trung bình, phân bố, tỉ lệ đúng từng câu, xếp hạng), Xuất Excel. Test: tests/test_exam_teacher_monitor.cjs.
 5. Thi thử với một lớp, đo và sửa trước khi dùng thật.
 
 ## 7. File Excel nhập câu hỏi (đã làm, 2026-10-25)

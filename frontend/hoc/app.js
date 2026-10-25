@@ -1,6 +1,7 @@
 // @ts-check
 import { api, ApiError, verifyPackage, isLocalhostBackend } from './api.js';
 import * as db from './db.js';
+import { renderExamList, initExams } from './exam.js';
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -143,6 +144,7 @@ async function expireSession() {
     pin?.focus();
   } finally { expiring = false; }
 }
+initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', onClose: () => {}});
 window.addEventListener('aisgk:unauthorized', () => { void expireSession(); });
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }
@@ -887,10 +889,9 @@ on('download', async () => {
   notify('Đã tải đủ bài. Em có thể mở lại khi mất mạng.');
   if (navigator.storage?.persist) await navigator.storage.persist();
 });
-/** Tab Thi: bài kiểm tra thật chưa mở trên máy chủ nên chỉ báo trạng thái, không hứa hẹn. */
+/** Tab Thi: danh sách bài kiểm tra của lớp, vào làm bài ở màn hình thi riêng. */
 function exams() {
-  show('exams'); const target = node('exams'); target.replaceChildren();
-  empty(target, 'Chưa có bài kiểm tra', session ? 'Khi giáo viên mở bài kiểm tra cho lớp của em, bài sẽ hiện ở đây. Bài luyện tập vẫn nằm ở mục Luyện tập.' : 'Đăng nhập để xem bài kiểm tra của lớp.', 'exam');
+  show('exams'); void renderExamList(node('exams'), Boolean(session));
 }
 async function materials() {
   show('materials');
