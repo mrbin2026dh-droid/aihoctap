@@ -9,7 +9,7 @@ export const FB_CONFIG = {
   dbUrl: 'https://day-hoc-tuong-tac-7ee69-default-rtdb.asia-southeast1.firebasedatabase.app',
   emailDomain: 'hs.aihoc.test',
   // URL /exec của Apps Script chấm thi (apps-script/exam/Code.gs). Để trống thì học sinh thấy "Đã nhận bài, điểm sẽ có sau".
-  appsScriptUrl: ''
+  appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwMhEONVAftycV6TcJf2PUGlXi6twISMni1J9fte9eIqW1CfPvkMIBM0s5PZMpVIw_6/exec'
 };
 const STORE = 'aisgk-fb';
 const REFRESH_BEFORE_MS = 5 * 60 * 1000;
