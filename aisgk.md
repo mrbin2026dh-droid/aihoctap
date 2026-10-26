@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit 77833ca (bản mới bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332, bản cũ 22f4c063-0104-4bfd-8823-d328b6d33063); smoke test 3 endpoint 200/401 OK; kiểm định tải mẫu Excel và lưu đề đạt chuẩn; bàn giao Người dùng/Claude kiểm tay tạo đề.
+- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit 8c101cc (bản mới 1d946fca-d240-4975-992a-e6c7adf74261, bản cũ bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332); smoke test /api/health (200), import không token (403) đạt chuẩn; bàn giao Người dùng kiểm tay thêm học sinh hs-thu01 và nhập Excel.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -874,3 +874,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate), ghi ID bản cũ/m�
 - Việc mở: Antigravity chạy `npx wrangler deploy` (route import mới).
 XONG tài khoản Excel / TIẾP THEO → Antigravity
 Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nhất, smoke test POST /api/teacher/students/import không quyền → 403, ghi ID bản cũ/mới."
+
+## 2026-10-26 · Antigravity · Triển khai Worker commit 8c101cc (tài khoản học sinh Excel & mã tự đặt)
+- Làm: Kéo commit 8c101cc, kiểm tra cú pháp node --check 0 lỗi, oxlint 0 lỗi, quét bí mật sạch. Deploy Worker aihoctap-gate thành công (bản mới: 1d946fca-d240-4975-992a-e6c7adf74261, bản cũ: bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332).
+- Kiểm thử thực tế: Smoke test thật live worker GET /api/health 200, POST /api/teacher/students/import 403 Forbidden ("Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ."). Toàn bộ test suite liên quan (test_student_import_backend.mjs, test_student_import.mjs, test_student_import_browser.cjs, test_exam_backend.mjs) PASS 100%. GitHub Pages đã tải đúng bản giao diện mới.
+- Việc mở: Người dùng đăng nhập giao diện giáo viên, thêm thử học sinh "hs-thu01" và nhập file mẫu Excel [THỬ].
