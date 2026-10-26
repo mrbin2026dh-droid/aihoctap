@@ -395,14 +395,38 @@ function setup() {
   } catch (eUrl) {
     Logger.log('UrlFetch: ' + eUrl.message);
   }
-  var driveInfo = 'Chưa bật Drive';
-  try {
-    driveInfo = rootFolder_().getUrl();
-  } catch (errDrive) {
-    Logger.log('Lưu ý Drive: ' + errDrive.message);
-  }
+  var driveInfo = rootFolder_().getUrl(); // lỗi quyền Drive thì dừng ngay, không báo "thành công" giả
   Logger.log('Đã cài trigger thành công. Sổ điểm: ' + gradebook_().getUrl() + ' — Thư mục Drive: ' + driveInfo);
+  Logger.log('Bước tiếp: chạy hàm kiemTraHeThong() và dán toàn bộ nhật ký cho Antigravity.');
 }
+
+/** Tự kiểm tra một lần: cấu hình, RTDB, Drive (ghi + xóa thử), sổ điểm, trigger. Chạy sau khi dán mã và cấp quyền. */
+function kiemTraHeThong() {
+  var ok = true;
+  function step(name, fn) {
+    try { var r = fn(); Logger.log('ĐẠT  ' + name + (r ? ' — ' + r : '')); }
+    catch (e) { ok = false; Logger.log('LỖI  ' + name + ' — ' + e.message); }
+  }
+  step('Cấu hình DB_URL / FIREBASE_API_KEY', function () {
+    if (!P_('DB_URL')) throw new Error('thiếu DB_URL trong Script properties');
+    if (!P_('FIREBASE_API_KEY')) throw new Error('thiếu FIREBASE_API_KEY trong Script properties');
+    return P_('DB_SECRET') || P_('FIREBASE_DB_SECRET') ? 'đang dùng DB_SECRET dự phòng (nên chuyển sang OAuth rồi xóa)' : 'dùng OAuth chủ dự án';
+  });
+  step('Đọc Firebase RTDB', function () { var m = db_('exam_meta') || {}; return Object.keys(m).length + ' đề trong exam_meta'; });
+  step('Drive: tạo thư mục gốc, ghi và xóa file thử', function () {
+    var root = rootFolder_(), f = root.createFile('kiem-tra-quyen.txt', 'ok ' + new Date().toISOString());
+    f.setTrashed(true);
+    return root.getUrl();
+  });
+  step('Sổ điểm (Google Sheet)', function () { return gradebook_().getUrl(); });
+  step('Trigger tick + onGradebookEdit', function () {
+    var h = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+    if (h.indexOf('tick') < 0 || h.indexOf('onGradebookEdit') < 0) throw new Error('thiếu trigger — hãy chạy setup()');
+    return h.join(', ');
+  });
+  Logger.log(ok ? '=== KẾT QUẢ: ĐẠT TOÀN BỘ — có thể triển khai New version và chạy thi thử ===' : '=== KẾT QUẢ: CHƯA ĐẠT — sửa các dòng LỖI rồi chạy lại ===');
+}
+function testDrive() { Logger.log(rootFolder_().getUrl()); }
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('📝 Bài thi (Firebase)').addItem('Phát hành đề từ tab này', 'publishExamFromSheet').addToUi();
 }

@@ -1698,3 +1698,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa.py --check PASS; test_live_pilot_3_students.mjs chạy khép kín phát hiện đúng các điểm chặn Drive; sẵn sàng chạy lại nghiệm thu ngay khi người dùng deploy New version.
 - Việc tiếp: Người dùng thao tác Apps Script theo docs/handoff/antigravity-nguoidung-cong3-apps-script.md, dán kết quả để Antigravity chạy test cuối và bàn giao cho Claude.
 
+
+## 26/10/2026 — Claude: hoàn thiện Cổng 3 (apps-script/exam/Code.gs)
+- `setup()` không còn nuốt lỗi Drive (trước đây vẫn in "thành công" dù chưa có quyền).
+- Thêm `kiemTraHeThong()` (cấu hình, đọc RTDB, ghi/xóa file thử trong Drive, sổ điểm, trigger → in "ĐẠT TOÀN BỘ") và `testDrive()`.
+- Hướng dẫn `antigravity-nguoidung-cong3-apps-script.md` bước 6 đổi sang `kiemTraHeThong`.

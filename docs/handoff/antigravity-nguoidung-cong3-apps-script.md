@@ -23,9 +23,10 @@ Dán mã nguồn mới từ commit `050a7e5` vào dự án Apps Script `exam` (`
    - Chọn hàm `setup` trên thanh công cụ -> Bấm **Run ▶️**.
    - Bấm **Review permissions** -> Chọn tài khoản Google (`mrhatrongkhoi.dh@gmail.com` / `havanty84@gmail.com`) -> Bấm **Advanced** -> Bấm **Go to ... (unsafe)** -> Bấm **Allow**.
    - Xem nhật ký in ra: `Đã cài trigger thành công. Sổ điểm: ... — Thư mục Drive: ...`
-6. **Kiểm tra quyền Drive**:
-   - Chạy hàm kiểm tra (hoặc tạo hàm `function testDrive() { Logger.log(rootFolder_().getUrl()); }` -> Run ▶️).
-   - Copy đường link Google Drive thư mục bài thi in ra trong nhật ký.
+6. **Tự kiểm tra một lần**:
+   - Chọn hàm `kiemTraHeThong` -> **Run ▶️**.
+   - Phải thấy 5 dòng `ĐẠT` và dòng cuối `=== KẾT QUẢ: ĐẠT TOÀN BỘ ===`. Copy toàn bộ nhật ký.
+   - Nếu có dòng `LỖI`: thiếu `DB_URL`/`FIREBASE_API_KEY` thì thêm trong ⚙️ Project Settings -> Script properties; lỗi Drive thì chạy lại `setup` và bấm Allow.
 7. **Triển khai New version**:
    - Bấm **Deploy** -> **Manage deployments** -> Chọn bản Web App -> Bấm biểu tượng ✏️ (Edit).
    - Mục **Version**: chọn **New version** (Phiên bản mới).
