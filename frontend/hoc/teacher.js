@@ -429,45 +429,119 @@ function levelBar(percent, level) {
 }
 /** @param {string} title @param {string} [note] */
 function analyticsBlock(title, note) { const block = el('section', '', 'a-block'); block.append(el('h3', title)); if (note) block.append(el('p', note, 't-muted')); return block; }
+/** @type {{data:any, level:string, query:string}} */ const overview = {data: null, level: '', query: ''};
+/** @param {string} tag @param {string} text @param {string} [cls] */
+const h = (tag, text, cls = '') => el(tag, text, cls);
+/** @param {string} label @param {string} value @param {string} tone @param {string} [note] */
+function aTile(label, value, tone, note = '') {
+  const tile = h('div', '', `a-tile a-tone-${tone}`); tile.append(h('span', label, 'a-tile-label'), h('strong', value, 'a-tile-value'));
+  if (note) tile.append(h('span', note, 'a-tile-note')); return tile;
+}
+/** @param {number|null|undefined} ms */
+function sinceText(ms) {
+  if (!ms) return 'Chưa có bài nộp';
+  const d = Math.floor((Date.now() - ms) / 86400000);
+  return d <= 0 ? 'Nộp gần nhất: hôm nay' : d === 1 ? 'Nộp gần nhất: hôm qua' : `Nộp gần nhất: ${d} ngày trước`;
+}
+function renderOverview() {
+  const target = node('teacher-analytics'); const data = overview.data; if (!data) return;
+  target.replaceChildren();
+  const students = /** @type {any[]} */ (data.students || []); const lessons = /** @type {any[]} */ (data.lessons || []); const topics = /** @type {any[]} */ (data.topics || []);
+  node('a-head-sub').textContent = `${data.total_attempts || 0} lượt nộp · ${students.length} học sinh · ${lessons.length} bài${data.class_filter ? ` · lớp ${data.class_filter}` : ''}`;
+  if (!students.length) { target.append(h('p', 'Chưa có bài nộp nào. Báo cáo sẽ xuất hiện khi học sinh nộp bài luyện tập hoặc bài kiểm tra.', 't-muted')); return; }
+  const count = (/** @type {string} */ lv) => students.filter(s => s.level === lv).length;
+  const classAvg = Math.round(students.reduce((sum, s) => sum + (s.avg_percent || 0), 0) / students.length);
+  const weakTopics = topics.filter(x => x.level === 'weak').length;
+  const tiles = h('div', '', 'a-tiles');
+  tiles.append(aTile('Học sinh đã làm bài', String(students.length), 'teal'), aTile('Lượt nộp', String(data.total_attempts || 0), 'blue'), aTile('Điểm đúng trung bình', `${classAvg}%`, 'green'),
+    aTile('Cần hỗ trợ', String(count('weak')), 'red', 'dưới 50% đúng'), aTile('Chủ đề yếu', String(weakTopics), 'amber', 'cần củng cố'));
+  target.append(tiles);
+  // Mức nắm bài của lớp: vòng tròn + phân bố học sinh
+  const ringCard = h('section', '', 'a-card a-ring-card');
+  const ring = h('div', '', 'a-ring'); ring.style.setProperty('--p', `${classAvg}%`); ring.setAttribute('role', 'img'); ring.setAttribute('aria-label', `Điểm đúng trung bình của lớp ${classAvg} phần trăm`); ring.append(h('strong', `${classAvg}%`));
+  const split = h('div', '', 'a-split'); split.append(h('h3', 'Mức nắm bài của lớp'));
+  const dist = h('div', '', 'a-dist'); dist.setAttribute('role', 'img');
+  const parts = [['good', 'Tốt', count('good')], ['fair', 'Cần củng cố', count('fair')], ['weak', 'Yếu', count('weak')]];
+  dist.setAttribute('aria-label', parts.map(p => `${p[1]}: ${p[2]} học sinh`).join('; '));
+  for (const [lv, , n] of parts) if (n) { const seg = h('span', '', `a-seg a-${lv}`); seg.style.flexGrow = String(n); dist.append(seg); }
+  split.append(dist);
+  const legend = h('ul', '', 'a-legend'); for (const [lv, name, n] of parts) { const li = h('li', ''); li.append(h('span', '', `a-dot a-${lv}`), h('span', `${name}: ${n} học sinh`)); legend.append(li); }
+  split.append(legend, h('p', 'Tốt: từ 80% đúng · Cần củng cố: 50–79% · Yếu: dưới 50%. Điểm lấy theo lần nộp gần nhất của mỗi bài.', 't-muted'));
+  ringCard.append(ring, split); target.append(ringCard);
+  const hasDetail = lessons.some(l => l.questions.length);
+  // Chủ đề cần củng cố
+  const topicCard = h('section', '', 'a-card'); topicCard.append(h('h3', 'Chủ đề cần củng cố'), h('p', 'Gom theo "Chủ đề kiến thức" gắn cho từng câu hỏi khi soạn bài.', 't-muted'));
+  for (const item of topics.slice(0, 8)) { const row = h('div', '', 'a-item'); const top = h('div', '', 'a-item-top'); top.append(h('strong', item.topic), h('span', `${item.correct}/${item.total} lượt đúng`, 't-muted')); row.append(top, levelBar(item.percent, item.level)); topicCard.append(row); }
+  if (!topics.length) topicCard.append(h('p', hasDetail ? 'Chưa có câu hỏi nào được gắn chủ đề. Hãy điền ô "Chủ đề kiến thức" khi soạn bài.' : 'Chưa có dữ liệu từng câu. Báo cáo sẽ xuất hiện sau khi học sinh nộp bài mới.', 't-muted'));
+  // Câu hỏi nhiều bạn làm sai
+  const qCard = h('section', '', 'a-card'); qCard.append(h('h3', 'Câu hỏi nhiều bạn làm sai'));
+  /** @type {any[]} */ const flat = [];
+  for (const lesson of lessons) for (const q of lesson.questions) if (q.level !== 'good') flat.push({lesson, q});
+  flat.sort((x, y) => (x.q.percent ?? 101) - (y.q.percent ?? 101));
+  for (const {lesson, q} of flat.slice(0, 8)) {
+    const row = h('div', '', 'a-item'); const top = h('div', '', 'a-item-top'); top.append(h('strong', `${lesson.title} · Câu ${q.number}`), q.topic ? h('span', q.topic, 'a-chip') : h('span', ''));
+    row.append(top, h('span', q.prompt, 'a-prompt'), levelBar(q.percent, q.level));
+    const detail = [`${q.correct}/${q.answered} bạn đúng`]; if (q.blank) detail.push(`${q.blank} bạn bỏ trống`);
+    if (q.top_wrong) detail.push(`nhiều bạn chọn ${q.top_wrong.key}${q.top_wrong.text ? `: ${q.top_wrong.text}` : ''} (${q.top_wrong.count} bạn)`);
+    row.append(h('span', detail.join(' · '), 't-muted')); qCard.append(row);
+  }
+  if (!flat.length) qCard.append(h('p', hasDetail ? 'Chưa có câu nào cần chú ý. Cả lớp đang làm tốt.' : 'Chưa có dữ liệu từng câu.', 't-muted'));
+  const two = h('div', '', 'a-two'); two.append(topicCard, qCard); target.append(two);
+  // Học sinh: lọc theo mức và tên, mở ra xem chi tiết từng bài
+  const people = h('section', '', 'a-card'); people.append(h('h3', 'Học sinh'), h('p', 'Bấm vào tên để xem điểm từng bài và chủ đề cần ôn. Xếp từ yếu đến tốt.', 't-muted'));
+  const tools = h('div', '', 'a-tools');
+  const find = document.createElement('input'); find.type = 'search'; find.placeholder = 'Tìm học sinh theo tên'; find.value = overview.query; find.setAttribute('aria-label', 'Tìm học sinh theo tên'); find.autocomplete = 'off';
+  const chips = h('div', '', 'a-chips'); chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Lọc theo mức');
+  for (const [lv, name] of [['', 'Tất cả'], ['weak', 'Yếu'], ['fair', 'Cần củng cố'], ['good', 'Tốt']]) {
+    const b = h('button', name, 'a-chipbtn'); b.type = 'button'; b.setAttribute('aria-pressed', String(overview.level === lv));
+    b.addEventListener('click', () => { overview.level = lv; renderOverview(); }); chips.append(b);
+  }
+  tools.append(find, chips); people.append(tools);
+  const list = h('div', '', 'a-people');
+  const draw = () => {
+    list.replaceChildren(); const q = find.value.trim().toLowerCase(); overview.query = find.value;
+    const shown = students.filter(s => (!overview.level || s.level === overview.level) && (!q || `${s.name} ${s.uid}`.toLowerCase().includes(q)));
+    if (!shown.length) { list.append(h('p', 'Không có học sinh phù hợp bộ lọc.', 't-muted')); return; }
+    for (const st of shown) {
+      const d = document.createElement('details'); d.className = 'a-student';
+      const sum = document.createElement('summary'); const name = h('span', '', 'a-sname'); name.append(h('strong', st.name), h('span', [st.class_code, `${st.lessons} bài`].filter(Boolean).join(' · '), 't-muted'));
+      sum.append(name, levelBar(st.avg_percent, st.level)); d.append(sum);
+      const body = h('div', '', 'a-sbody'); body.append(h('p', sinceText(st.last_at), 't-muted'));
+      if (st.weak_topics?.length) { const wt = h('div', '', 'a-chiprow'); wt.append(h('span', 'Cần ôn:', 'a-label')); for (const w of st.weak_topics) wt.append(h('span', `${w.topic} (${w.percent}%)`, 'a-chip a-chip-weak')); body.append(wt); }
+      else body.append(h('p', 'Chưa có chủ đề nào dưới 80%.', 't-muted'));
+      const tbl = h('table', '', 't-table a-mini'); tbl.append(h('caption', `Điểm từng bài của ${st.name}`));
+      const hd = h('thead'); const hr = h('tr'); for (const c of ['Bài', 'Loại', 'Đúng']) { const th = h('th', c); th.scope = 'col'; if (c === 'Đúng') th.className = 't-number'; hr.append(th); } hd.append(hr);
+      const tb = h('tbody'); for (const it of st.items || []) { const tr = h('tr'); const c1 = h('td', it.title); c1.dataset.label = 'Bài'; const c2 = h('td', it.is_exam ? 'Kiểm tra' : 'Luyện tập'); c2.dataset.label = 'Loại'; const c3 = h('td', `${it.percent}%`, 't-number'); c3.dataset.label = 'Đúng'; tr.append(c1, c2, c3); tb.append(tr); }
+      tbl.append(hd, tb); body.append(tbl); d.append(body); list.append(d);
+    }
+  };
+  find.addEventListener('input', draw); draw(); people.append(list); target.append(people);
+  // Kết quả theo bài
+  const lessonCard = h('section', '', 'a-card'); lessonCard.append(h('h3', 'Kết quả theo bài'));
+  const lt = h('table', '', 't-table a-lessons'); lt.append(h('caption', 'Kết quả từng bài, xếp từ yếu đến tốt'));
+  const lh = h('thead'); const lr = h('tr'); for (const [c, num] of [['Bài', false], ['Loại', false], ['Học sinh', true], ['Lượt nộp', true], ['Đúng trung bình', false]]) { const th = h('th', String(c)); th.scope = 'col'; if (num) th.className = 't-number'; lr.append(th); } lh.append(lr);
+  const lb = h('tbody');
+  for (const l of lessons) { const tr = h('tr'); const cells = [[l.title, 'Bài', ''], [l.is_exam ? 'Kiểm tra' : 'Luyện tập', 'Loại', ''], [String(l.students), 'Học sinh', 't-number'], [String(l.attempts), 'Lượt nộp', 't-number']]; for (const [v, lab, cls] of cells) { const td = h('td', v, cls); td.dataset.label = lab; tr.append(td); } const td = h('td'); td.dataset.label = 'Đúng trung bình'; td.append(levelBar(l.avg_percent, l.level)); tr.append(td); lb.append(tr); }
+  lt.append(lh, lb); lessonCard.append(lt); target.append(lessonCard);
+}
 async function loadAnalytics() {
   const captured = generation;
-  const target = node('teacher-analytics'); target.replaceChildren(el('p', 'Đang tải báo cáo…', 't-muted'));
+  const target = node('teacher-analytics'); target.replaceChildren(h('p', 'Đang tải báo cáo…', 't-muted'));
+  const select = /** @type {HTMLSelectElement} */ (node('overview-class'));
+  const cls = select.value;
   /** @type {any} */ let data;
-  try { data = await api('/pwa/teacher/analytics', {token}); }
+  try { data = await api(`/pwa/teacher/analytics${cls ? `?class=${encodeURIComponent(cls)}` : ''}`, {token}); }
   catch (error) {
     if (isAuthError(error)) throw error;
-    if (captured === generation) target.replaceChildren(el('p', error instanceof ApiError && error.status === 404 ? 'Máy chủ chưa cập nhật tính năng báo cáo. Hãy triển khai bản máy chủ mới rồi tải lại.' : 'Chưa tải được báo cáo. Bấm "Tải lại báo cáo" để thử lại.', 't-muted'));
+    if (captured === generation) { node('a-head-sub').textContent = 'Chưa tải được báo cáo.'; target.replaceChildren(h('p', error instanceof ApiError && error.status === 404 ? 'Máy chủ chưa cập nhật tính năng báo cáo. Hãy triển khai bản máy chủ mới rồi tải lại.' : 'Chưa tải được báo cáo. Bấm "Tải lại báo cáo" để thử lại.', 't-muted')); }
     return;
   }
   if (captured !== generation || !token) return;
-  target.replaceChildren();
-  const hasDetail = (data.lessons || []).some(/** @param {any} l */ l => l.questions.length);
-  const studentCount = (data.students || []).length;
-  const summary = el('p', `${data.total_attempts || 0} lượt nộp · ${studentCount} học sinh · ${(data.lessons || []).length} bài. Yếu: dưới 50% đúng · Cần củng cố: 50–79% · Tốt: từ 80%.`, 't-muted'); target.append(summary);
-  if (!hasDetail) { target.append(el('p', 'Chưa có dữ liệu từng câu. Báo cáo sẽ xuất hiện sau khi học sinh nộp bài mới.', 't-muted')); return; }
-  const topics = analyticsBlock('Chủ đề cần củng cố', 'Gom theo "Chủ đề kiến thức" gắn cho từng câu hỏi khi soạn bài.');
-  for (const item of data.topics || []) { const row = el('div', '', 'a-item'); row.append(el('strong', item.topic), el('span', `${item.correct}/${item.total} lượt đúng`, 't-muted'), levelBar(item.percent, item.level)); topics.append(row); }
-  if (!(data.topics || []).length) topics.append(el('p', 'Chưa có câu hỏi nào được gắn chủ đề. Hãy điền ô "Chủ đề kiến thức" trong phần Luyện tập của bài.', 't-muted'));
-  const weakQuestions = el('section', '', 'a-block'); weakQuestions.append(el('h3', 'Câu hỏi nhiều bạn làm sai'));
-  /** @type {any[]} */ const flat = [];
-  for (const lesson of data.lessons || []) for (const q of lesson.questions) if (q.level !== 'good') flat.push({lesson, q});
-  flat.sort((a, b) => (a.q.percent ?? 101) - (b.q.percent ?? 101));
-  for (const {lesson, q} of flat.slice(0, 8)) {
-    const row = el('div', '', 'a-item'); row.append(el('strong', `${lesson.title} · Câu ${q.number}`), el('span', q.prompt, 'a-prompt'), levelBar(q.percent, q.level));
-    const detail = [`${q.correct}/${q.answered} bạn đúng`]; if (q.blank) detail.push(`${q.blank} bạn bỏ trống`);
-    if (q.top_wrong) detail.push(`nhiều bạn chọn ${q.top_wrong.key}${q.top_wrong.text ? `: ${q.top_wrong.text}` : ''} (${q.top_wrong.count} bạn)`);
-    row.append(el('span', detail.join(' · '), 't-muted')); weakQuestions.append(row);
-  }
-  if (!flat.length) weakQuestions.append(el('p', 'Chưa có câu nào cần chú ý. Cả lớp đang làm tốt.', 't-muted'));
-  const people = analyticsBlock('Học sinh cần hỗ trợ', 'Điểm là trung bình các bài, lấy lần nộp gần nhất của mỗi bài.');
-  for (const st of (data.students || []).filter(/** @param {any} x */ x => x.level !== 'good').slice(0, 10)) {
-    const row = el('div', '', 'a-item'); row.append(el('strong', [st.name, st.class_code].filter(Boolean).join(' · ')), levelBar(st.avg_percent, st.level));
-    if (st.weak_topics.length) row.append(el('span', `Cần ôn: ${st.weak_topics.map(/** @param {any} w */ w => `${w.topic} (${w.percent}%)`).join(', ')}`, 't-muted'));
-    people.append(row);
-  }
-  if (!(data.students || []).some(/** @param {any} x */ x => x.level !== 'good')) people.append(el('p', 'Chưa có học sinh nào cần hỗ trợ.', 't-muted'));
-  target.append(topics, weakQuestions, people);
+  const classes = /** @type {string[]} */ (data.classes || []);
+  if (!cls) { select.replaceChildren(); const all = h('option', 'Tất cả các lớp'); all.value = ''; select.append(all); for (const c of classes) { const o = h('option', `Lớp ${c}`); o.value = c; select.append(o); } select.value = ''; }
+  overview.data = data; renderOverview();
 }
+document.getElementById('overview-class')?.addEventListener('change', () => { loadAnalytics().catch(fail); });
 /** @param {PublishLesson} document */
 function fill(document) {
   /** @type {Array<keyof Omit<PublishLesson,'questions'>>} */

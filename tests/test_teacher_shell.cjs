@@ -29,7 +29,12 @@ assert(!(await pg.isVisible('#teacher-login-error')),T+'ô lỗi đăng nhập r
 assert.strictEqual((await pg.textContent('#status')).trim(),'',T+'không có thanh thông báo nổi');
 // đăng nhập
 await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(1200);
-assert(await pg.isVisible('#editor'),T+'editor phải hiện sau đăng nhập');assert(!(await pg.isVisible('#msg-dialog')),T+'đăng nhập thành công không bật hộp thoại');
+assert(await pg.isVisible('#workspace'),T+'khung làm việc phải hiện sau đăng nhập');assert(!(await pg.isVisible('#msg-dialog')),T+'đăng nhập thành công không bật hộp thoại');
+assert.strictEqual(await pg.textContent('#workspace-title'),'Tổng quan',T+'đăng nhập vào Tổng quan trước');
+assert.strictEqual(await pg.getAttribute('#nav-overview','aria-current'),'page');assert(await pg.isVisible('#teacher-analytics'),T+'báo cáo hiện ngay');
+assert.strictEqual(await pg.locator('.t-nav-item').first().getAttribute('id'),'nav-overview',T+'Tổng quan đứng đầu menu');
+assert.strictEqual(await pg.getAttribute('#open-settings','aria-label'),'Hồ sơ');assert(await pg.locator('#open-settings svg').count()===1&&!(await pg.textContent('#open-settings')).trim(),T+'nút Hồ sơ là biểu tượng bánh răng');
+await pg.click('#nav-lessons');await pg.waitForTimeout(200);assert(await pg.isVisible('#editor'),T+'editor hiện ở mục Soạn bài');
 assert.strictEqual(await pg.textContent('#workspace-title'),'Soạn bài');
 assert.strictEqual(await pg.getAttribute('#nav-lessons','aria-current'),'page');
 assert.strictEqual(await pg.locator('#lesson-list article').count(),2,T+'danh sách bài từ danh mục');

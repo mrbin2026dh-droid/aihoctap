@@ -1335,8 +1335,9 @@ export function analyzeAttempts(records, lessons) {
     row.students += 1;
     row.sum_percent += r.total ? (100 * r.correct) / r.total : 0;
     let st = students.get(r.uid);
-    if (!st) { st = { uid: r.uid, name: r.student_name || r.uid, class_code: r.class_code || '', lessons: 0, sum_percent: 0, topics: new Map() }; students.set(r.uid, st); }
+    if (!st) { st = { uid: r.uid, name: r.student_name || r.uid, class_code: r.class_code || '', lessons: 0, sum_percent: 0, topics: new Map(), items: [], last_at: 0 }; students.set(r.uid, st); }
     st.lessons += 1; st.sum_percent += r.total ? (100 * r.correct) / r.total : 0;
+    st.items.push({ title: lesson.title || r.lesson_id, is_exam: r.course_id === 'exam', percent: r.total ? Math.round((100 * r.correct) / r.total) : 0 }); st.last_at = Math.max(st.last_at, Number(r.submitted_at) || 0);
     if (r.student_name) st.name = r.student_name;
     const pq = r.per_question && typeof r.per_question === 'object' ? r.per_question : null;
     if (!pq) continue;
@@ -1366,13 +1367,13 @@ export function analyzeAttempts(records, lessons) {
         top_wrong: wrongTop ? { key: wrongTop[0], text: String(q.options?.[wrongTop[0]] || '').slice(0, 120), count: wrongTop[1] } : null };
     }).sort((a, b) => (a.percent ?? 101) - (b.percent ?? 101));
     const avg = row.students ? Math.round(row.sum_percent / row.students) : null;
-    return { course_id: row.course_id, lesson_id: row.lesson_id, title: row.title, students: row.students, attempts: row.attempts, avg_percent: avg, level: level(avg), questions };
+    return { course_id: row.course_id, lesson_id: row.lesson_id, is_exam: row.course_id === 'exam', title: row.title, students: row.students, attempts: row.attempts, avg_percent: avg, level: level(avg), questions };
   }).sort((a, b) => (a.avg_percent ?? 101) - (b.avg_percent ?? 101));
   const outTopics = [...topicRows.values()].map(t => ({ ...t, percent: pct(t.correct, t.total), level: level(pct(t.correct, t.total)) })).sort((a, b) => a.percent - b.percent);
   const outStudents = [...students.values()].map(st => {
     const avg = st.lessons ? Math.round(st.sum_percent / st.lessons) : null;
     const weak = [...st.topics.values()].map(t => ({ ...t, percent: pct(t.correct, t.total) })).filter(t => t.percent < OK_PERCENT).sort((a, b) => a.percent - b.percent).slice(0, 3);
-    return { uid: st.uid, name: st.name, class_code: st.class_code, lessons: st.lessons, avg_percent: avg, level: level(avg), weak_topics: weak };
+    return { uid: st.uid, name: st.name, class_code: st.class_code, lessons: st.lessons, avg_percent: avg, level: level(avg), weak_topics: weak, items: st.items.sort((a, b) => a.percent - b.percent), last_at: st.last_at || null };
   }).sort((a, b) => (a.avg_percent ?? 101) - (b.avg_percent ?? 101));
   return { generated_at: Date.now(), total_attempts: records.length, lessons: outLessons, topics: outTopics, students: outStudents };
 }
@@ -2823,8 +2824,11 @@ export default {
           if (dres.ok) records = mergeDetails(records, await dres.json());
         } catch (e) { console.error('[RTDB_DETAILS_ERROR]', e); }
       }
+      const classes = [...new Set(records.map(r => r.class_code).filter(Boolean))].sort();
+      const classFilter = (url.searchParams.get('class') || '').trim().toUpperCase();
+      if (classFilter) records = records.filter(r => String(r.class_code || '').toUpperCase() === classFilter);
       const lessons = await loadLessonsFor(env, records, signingKeys);
-      return new Response(JSON.stringify(analyzeAttempts(records, lessons)), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ...analyzeAttempts(records, lessons), classes, class_filter: classFilter || null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Teacher Publish Lesson: /api/pwa/teacher/publish (Phase 1, B2, C1)

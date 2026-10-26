@@ -2,13 +2,13 @@
 // Khung giao diện giáo viên: menu 4 phân hệ, danh sách → chi tiết, tab, Hồ sơ/Cài đặt, lịch sử trình duyệt.
 // Không gọi máy chủ. Dữ liệu và nghiệp vụ nằm ở teacher.js; tệp này chỉ điều khiển hiển thị và focus.
 
-const TITLES = {lessons: 'Soạn bài', exams: 'Kiểm tra', materials: 'Tài liệu', accounts: 'Tài khoản học sinh'};
+const TITLES = {overview: 'Tổng quan', lessons: 'Soạn bài', exams: 'Kiểm tra', materials: 'Tài liệu', accounts: 'Tài khoản học sinh'};
 const PANEL_TITLES = {pin: 'Đổi mã PIN', ai: 'Gia sư AI và hạn mức', keys: 'Khóa API'};
 
 /** @type {() => Promise<boolean>} */
 let guard = async () => true;
-let view = 'lessons';
-let sub = 'list-lessons';
+let view = 'overview';
+let sub = 'list-overview';
 let screen = 'work';           // 'work' | 'settings'
 let panel = 'pin';
 let ready = false;
@@ -122,7 +122,7 @@ export async function goBack() {
 }
 
 export function reset() {
-  view = 'lessons'; sub = 'list-lessons'; screen = 'work'; panel = 'pin';
+  view = 'overview'; sub = 'list-overview'; screen = 'work'; panel = 'pin';
   render();
 }
 
@@ -204,6 +204,7 @@ export function init(options = {}) {
 }
 
 const ICONS = {
+  gear: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
   view: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z',
   edit: 'M4 20h4L19 9l-4-4L4 16v4z M14 6l4 4',
   key: 'M8 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M11.5 11H21 M18 11v3 M15 11v2',

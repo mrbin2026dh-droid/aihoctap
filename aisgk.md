@@ -879,3 +879,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Làm: Kéo commit 8c101cc, kiểm tra cú pháp node --check 0 lỗi, oxlint 0 lỗi, quét bí mật sạch. Deploy Worker aihoctap-gate thành công (bản mới: 1d946fca-d240-4975-992a-e6c7adf74261, bản cũ: bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332).
 - Kiểm thử thực tế: Smoke test thật live worker GET /api/health 200, POST /api/teacher/students/import 403 Forbidden ("Từ chối truy cập: Yêu cầu quyền giáo viên hợp lệ."). Toàn bộ test suite liên quan (test_student_import_backend.mjs, test_student_import.mjs, test_student_import_browser.cjs, test_exam_backend.mjs) PASS 100%. GitHub Pages đã tải đúng bản giao diện mới.
 - Việc mở: Người dùng đăng nhập giao diện giáo viên, thêm thử học sinh "hs-thu01" và nhập file mẫu Excel [THỬ].
+
+## 2026-10-26 - Claude - Tổng quan giáo viên + biểu tượng bánh răng
+- Làm: mục "Tổng quan" đứng đầu menu giáo viên, mở ngay khi đăng nhập: thẻ số liệu, vòng tròn mức nắm bài, chủ đề yếu, câu hỏi hay sai, danh sách học sinh (lọc mức, tìm tên, mở xem từng bài), bảng kết quả theo bài, lọc theo lớp (máy chủ `?class=`, trả thêm `classes`, `items`, `last_at`, `is_exam`). Nút "Hồ sơ" thành biểu tượng bánh răng. Menu điện thoại 5 mục một hàng.
+- Test: tests/test_teacher_overview.cjs, test_weakness_analytics.mjs (mở rộng), test_teacher_shell.cjs (đổi màn hình mặc định).
+- Việc mở: Antigravity `npx wrangler deploy` để có lọc lớp và chi tiết học sinh (không deploy thì Tổng quan vẫn hiện nhưng không có ô chọn lớp đầy đủ).
+XONG Tổng quan giáo viên / TIẾP THEO → Antigravity
+Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nhất, smoke test GET /api/pwa/teacher/analytics không token → 401, ghi ID bản cũ/mới."
