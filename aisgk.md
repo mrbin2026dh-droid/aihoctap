@@ -1658,3 +1658,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kế hoạch v2: duyệt có điều kiện (10 MB không phải 15 MB, xác nhận .sb3, ghi rõ công bố đáp án sau closes_at).
 - Bước 0: KHÔNG ĐẠT — số đăng nhập 30/50/100 và "12/12 rules PASS" là mô phỏng (máy chủ giả localhost, bộ luật viết lại bằng JS), không phải đo Firebase thật. Đã ghi chú đầu hai file.
 - Thêm bộ kiểm luật trên Firebase Emulator thật (40 ca): spike/step0/emulator/, luật spike/step0/database.rules.v2.json. Claude không chạy được ở máy chủ của mình (Google Storage bị chặn tải emulator) — Antigravity chạy trên PC.
+
+## [Claude Opus 5.5] Phán quyết Cổng 0 — ĐẠT CÓ ĐIỀU KIỆN
+- Số thật: 100/100 đăng nhập song song p95 678 ms, không 429; 50 lần sai PIN không chặn IP; tự đăng ký bị chặn (ADMIN_ONLY_OPERATION); tạo/đổi PIN bằng OAuth chủ dự án được; luật v2 40/40 trên Emulator.
+- Điều kiện chặn: đẩy bằng chứng lên GitHub (luật v2 bản sửa Claude chưa đọc được do hard link); chạy testAdminAccounts() thật trong Apps Script (nhật ký hiện tại không khớp tên trong Code.gs); xóa 105 tài khoản thử trên dự án thật. Tệp: docs/handoff/claude-antigravity-cong0-phan-quyet.md.
