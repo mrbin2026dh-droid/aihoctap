@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit 8c101cc (bản mới 1d946fca-d240-4975-992a-e6c7adf74261, bản cũ bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332); smoke test /api/health (200), import không token (403) đạt chuẩn; bàn giao Người dùng kiểm tay thêm học sinh hs-thu01 và nhập Excel.
+- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit 5c6b4d5 (bản mới 6469df6f-0f2a-4137-a676-ba5388261964, bản cũ 1d946fca-d240-4975-992a-e6c7adf74261); smoke test /api/health (200), analytics không token (401) đạt chuẩn; bàn giao Người dùng kiểm tra trang Tổng quan giáo viên.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -886,3 +886,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc mở: Antigravity `npx wrangler deploy` để có lọc lớp và chi tiết học sinh (không deploy thì Tổng quan vẫn hiện nhưng không có ô chọn lớp đầy đủ).
 XONG Tổng quan giáo viên / TIẾP THEO → Antigravity
 Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nhất, smoke test GET /api/pwa/teacher/analytics không token → 401, ghi ID bản cũ/mới."
+
+## 2026-10-26 · Antigravity · Triển khai Worker commit 5c6b4d5 (Tổng quan giáo viên, lọc lớp, nút bánh răng)
+- Làm: Kéo commit 5c6b4d5, kiểm tra cú pháp node --check 0 lỗi, quét bí mật sạch. Deploy Worker aihoctap-gate thành công (bản mới: 6469df6f-0f2a-4137-a676-ba5388261964, bản cũ: 1d946fca-d240-4975-992a-e6c7adf74261).
+- Kiểm thử thực tế: Smoke test thật live worker GET /api/health 200, GET /api/pwa/teacher/analytics 401 Unauthorized ("Thiếu token xác thực."). Toàn bộ test suite liên quan (test_teacher_overview.cjs, test_weakness_analytics.mjs, test_teacher_shell.cjs, test_student_import_backend.mjs, test_exam_backend.mjs) PASS 100%. GitHub Pages đã tải đúng giao diện Tổng quan giáo viên.
+- Việc mở: Người dùng đăng nhập giao diện giáo viên, kiểm tra trang Tổng quan hiện ra đầu tiên, ô chọn lớp và chuyển đổi số liệu theo từng lớp.
