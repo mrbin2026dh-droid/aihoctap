@@ -176,8 +176,13 @@ Dưới đây là trích lược tóm tắt cấu trúc phân quyền:
 
 ## 5. Lộ trình Triển khai theo 6 Cổng Đo kiểm Chất lượng (Gate Pipeline)
 
-- **Cổng 0 (Gate 0 - Hiện tại)**: Thử nghiệm kỹ thuật & Đo lường thực tế (Đăng nhập 100 tài khoản thật, kiểm định Rules qua Emulator thật 40 ca, đo hiệu năng cache PBKDF2 Gemini, đo tải file đồng thời).
-- **Cổng 1 (Gate 1 - Auth & Admin Provisioning)**: Hoàn tất script Apps Script cấp phát tài khoản học sinh, tắt public sign-up, đồng bộ danh bạ.
+- **Cổng 0 (Gate 0 - Đã đạt có điều kiện)**: Thử nghiệm kỹ thuật & Đo lường thực tế (Đăng nhập 100 tài khoản thật, kiểm định Rules qua Emulator thật 40 ca, đo hiệu năng cache PBKDF2 Gemini, đo tải file đồng thời).
+  - *Lưu ý thực tế (theo phán quyết Claude 26/10)*:
+    1. Số đo 100 tài khoản song song được đo từ mạng máy Antigravity. Sẽ đo lại trên mạng phòng máy trường học trước Cổng 5 bằng script `benchmark_real_firebase.mjs`.
+    2. Kết luận "Firebase không khóa IP" đã được xác nhận với ngưỡng 50 lần thử sai liên tiếp. Vẫn duy trì cơ chế mở đăng nhập trước giờ thi 10 phút và nút Giáo viên đặt lại PIN để phòng ngừa rủi ro.
+    3. Trạng thái luật v2: Đã sẵn sàng trên file `spike/step0/database.rules.v2.json`, chưa xuất bản lên Realtime Database thật (hiện hệ thống chạy qua Worker, luật v2 sẽ xuất bản chính thức ở Cổng 2).
+    4. Bảo mật: Mọi khóa API web Firebase trong script là thông tin client công khai theo thiết kế của Firebase. Tuyệt đối không lưu khóa Service Account hay OAuth Access Token trong Git repository.
+- **Cổng 1 (Gate 1 - Đang thực hiện)**: Hoàn tất script Apps Script cấp phát tài khoản học sinh, tắt public sign-up, đồng bộ danh bạ.
 - **Cổng 2 (Gate 2 - Client Exam Flow)**: PWA tích hợp luồng thi mới (tải đề theo giờ, lưu nháp 15s, nộp bài, auto-submit từ nháp). Cờ `backend: "firebase" | "worker"` hoạt động độc lập theo từng đề.
 - **Cổng 3 (Gate 3 - Apps Script Grading & Drive Evidence)**: Hệ thống chấm tự động trắc nghiệm sau khi đóng đề, lưu trữ minh chứng vào Drive, xuất sổ điểm Google Sheet.
 - **Cổng 4 (Gate 4 - Staging Simulation)**: Kiểm tải tự động phía code (Automated Code Load Testing) với 100 học sinh ảo bằng Dual-browser context Playwright trên môi trường mạng mô phỏng để đo đạc CPU, băng thông và bẫy lỗi. **Lưu ý**: Cổng 4 là kiểm tra tải phía code, TUYỆT ĐỐI KHÔNG THAY THẾ buổi thi thử thật tại Cổng 5.

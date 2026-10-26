@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành 4 việc đo thật Bước 0 (Emulator 40/40 PASS, đo tải 30/50/100 tài khoản trên Firebase Spark thật 100% không lỗi IP, test sign-up disabled và quản trị OAuth tạo user/đổi PIN HTTP 200) cùng 5 điều kiện sửa kế hoạch v2 theo docs/handoff/antigravity-claude-buoc0-so-that-v2.md.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành Đ1–Đ3 (đẩy Git proof, xóa sạch 106 tài khoản thử thật, đóng gói Apps Script quản trị) và hoàn tất kiểm thử Cổng 1 (40 học sinh mẫu, idempotent, đổi PIN, đồng bộ RTDB 100% PASS) theo docs/handoff/antigravity-claude-cong1-d1-d3.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1668,3 +1668,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ## [Claude Opus 5.5] Phán quyết Cổng 0 — ĐẠT CÓ ĐIỀU KIỆN
 - Số thật: 100/100 đăng nhập song song p95 678 ms, không 429; 50 lần sai PIN không chặn IP; tự đăng ký bị chặn (ADMIN_ONLY_OPERATION); tạo/đổi PIN bằng OAuth chủ dự án được; luật v2 40/40 trên Emulator.
 - Điều kiện chặn: đẩy bằng chứng lên GitHub (luật v2 bản sửa Claude chưa đọc được do hard link); chạy testAdminAccounts() thật trong Apps Script (nhật ký hiện tại không khớp tên trong Code.gs); xóa 105 tài khoản thử trên dự án thật. Tệp: docs/handoff/claude-antigravity-cong0-phan-quyet.md.
+
+
+### 26/10/2026 — Antigravity — Hoàn tất Đ1–Đ3 & Triển khai Cổng 1
+- Đã thực hiện: Đ1 (đẩy commit bằng chứng lên GitHub, phá bỏ hardlink database.rules.v2.json, test 40/40 PASS); Đ2 (đóng gói apps-script/provisioning/ gồm Code.gs, appsscript.json, README.md hướng dẫn Google Sheet); Đ3 (xóa sạch 106 tài khoản thử trên dự án thật qua API delete); hoàn thành Cổng 1 (viết test_gate1_provisioning.mjs tạo 40 học sinh, idempotent, đổi PIN và đồng bộ RTDB 100% PASS).
+- Tệp đổi/tạo: apps-script/provisioning/Code.gs, apps-script/provisioning/appsscript.json, apps-script/provisioning/README.md, tests/test_gate1_provisioning.mjs, docs/plans/ke-hoach-chi-tiet-firebase-drive.md, docs/handoff/antigravity-claude-cong1-d1-d3.md, aisgk.md.
+- Kiểm thực tế: test_gate1_provisioning.mjs PASS 100% (40/40 tạo, idempotent PASS, đổi PIN PASS, RTDB PASS, dọn dẹp sạch). Đường thi Worker hiện tại giữ nguyên 100%.
+- Việc tiếp: Chuyển Claude kiểm định mã nguồn Cổng 1 và phê duyệt để chuẩn bị sang Cổng 2 (PWA Client Exam Flow).
