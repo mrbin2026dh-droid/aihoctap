@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành Cổng 2–3 trên môi trường thật: 45/45 emulator rules PASS, gộp rules live-backup an toàn, 28/28 test_exam_firebase_flow PASS, thi thử khép kín 3 học sinh trên Firebase thật PASS 100% (HS1 chấm ngay 4/4đ + nộp file; HS2 tick() tự nộp nháp auto_from_draft: true + 2/4đ; HS3 sạch sẽ; xóa sạch tài khoản thử), PWA stamped, báo cáo tại docs/handoff/antigravity-claude-cong2-3-nghiem-thu.md.
+- Yêu cầu mới nhất: Claude phán quyết Cổng 2 đạt, Cổng 3 yêu cầu cấp quyền Drive thật; Antigravity đã xác nhận 28/28 test_exam_firebase_flow PASS, chạy thử test_live_pilot_3_students xác nhận đúng điểm chặn Drive; hướng dẫn người dùng cập nhật Code.gs/appsscript.json từ commit 050a7e5 và cấp quyền OAuth để hoàn tất Cổng 3.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1691,3 +1691,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ## [Claude Opus 5.5] Phán quyết Cổng 2–3: Cổng 2 ĐẠT, Cổng 3 KHÔNG ĐẠT (đã sửa mã)
 - bd80926 bỏ scope Drive và để uploadPractice_ trả ok:true khi Drive lỗi → file thực hành bị vứt mà báo đã nộp; minh chứng bỏ qua im lặng. Đã sửa: lỗi Drive → ok:false retry, không chốt khi thiếu minh chứng; trả scope drive/firebase.database; script thi thử có kiểm định cứng; test trình duyệt thêm ca lỗi Drive tạm thời.
 - Cần Antigravity triển khai lại Apps Script (New version) và chạy lại thi thử. Tệp: docs/handoff/claude-antigravity-cong2-3-phan-quyet.md.
+
+### 26/10/2026 — Antigravity — Đồng bộ commit 050a7e5, kiểm thử luồng thi và tạo hướng dẫn Cổng 3
+- Đã thực hiện: Kéo commit 050a7e5 từ origin/main; kiểm tra test_exam_firebase_flow.cjs 28/28 PASS; chạy test_live_pilot_3_students.mjs xác nhận đúng lỗi chặn Drive của bản Apps Script cũ; tạo hướng dẫn chi tiết docs/handoff/antigravity-nguoidung-cong3-apps-script.md để người dùng cập nhật Code.gs + appsscript.json, cấp quyền Drive và chạy testAdminAccounts() (Đ2).
+- Tệp đổi/tạo: docs/handoff/antigravity-nguoidung-cong3-apps-script.md, aisgk.md.
+- Kiểm thực tế: test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa.py --check PASS; test_live_pilot_3_students.mjs chạy khép kín phát hiện đúng các điểm chặn Drive; sẵn sàng chạy lại nghiệm thu ngay khi người dùng deploy New version.
+- Việc tiếp: Người dùng thao tác Apps Script theo docs/handoff/antigravity-nguoidung-cong3-apps-script.md, dán kết quả để Antigravity chạy test cuối và bàn giao cho Claude.
+
