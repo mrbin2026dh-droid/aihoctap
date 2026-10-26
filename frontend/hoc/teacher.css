@@ -272,6 +272,7 @@
 :root:not([data-theme=light]) .teacher-app .t-input-icon:focus-within{outline-color:#93d4c366;border-color:#93d4c3}
 :root:not([data-theme=light]) .teacher-app .t-badge:not(.t-badge-error),.teacher-app .t-icon-btn{color:var(--brand-text)}
 :root:not([data-theme=light]) .teacher-app .t-icon-btn.is-danger,.teacher-app .t-icon-btn[data-danger]{color:var(--danger)}
+:root:not([data-theme=light]) .teacher-app :focus-visible,:root:not([data-theme=light]) .teacher-app .t-icon-btn:focus-visible{outline-color:var(--brand-text)}
 }
 :root[data-theme=dark]{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--surface:#30302e;--sidebar:#1f1e1d;--line:#403f3b;--brand:#2f7a6b;--brand-hover:#3a8d7c;--brand-soft:#2b3a36;--brand-text:#93d4c3;--ok:#8fd4a8;--ok-bg:#26382f;--warn:#f0c27a;--warn-bg:#3d3220;--danger:#ff9f95;--danger-bg:#43272a;--info:#93d4c3;--info-bg:#2b3a36;--control:#8a877d;--white:#fff;--backdrop:#000000a6;--shadow:0 4px 16px #00000066;color-scheme:dark}
 :root[data-theme=dark] .teacher-app{background:var(--paper);color:var(--ink)}
@@ -311,7 +312,8 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 .teacher-app .t-qe-options{display:grid;gap:8px}
 .teacher-app .t-qe-opt{display:grid;grid-template-columns:32px minmax(0,1fr) 48px;gap:8px;align-items:center}
 .teacher-app .t-qe-opt input[type=text]{min-height:48px;width:100%}
-.teacher-app .t-qe-opt input[type=radio]{width:24px;height:24px;justify-self:center;accent-color:var(--brand)}
+.teacher-app .t-qe-pick{display:flex;align-items:center;justify-content:center;width:48px;height:48px;cursor:pointer}
+.teacher-app .t-qe-opt input[type=radio]{width:24px;height:24px;margin:0;accent-color:var(--brand)}
 .teacher-app .t-qe-key{font-weight:700;text-align:center}
 .teacher-app .t-qe-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media(max-width:760px){.teacher-app .t-qe-head{grid-template-columns:minmax(0,1fr) auto}.teacher-app .t-qe-head h4{grid-column:1/-1}.teacher-app .t-qe-meta{grid-template-columns:minmax(0,1fr)}}

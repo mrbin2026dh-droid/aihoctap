@@ -1026,6 +1026,7 @@ body.exam-open{overflow:hidden}
 :where(:root:not([data-theme=light])) .student-app button.primary:hover,:where(:root:not([data-theme=light])) .student-app .auth-btn:not(.auth-btn-alt):hover{background:#36907f;color:#fff;border-color:#36907f}
 :where(:root:not([data-theme=light])) .student-app .dash-hero{background-color:#2a3331;border-color:#3a4744}
 :where(:root:not([data-theme=light])) .student-app .bottom-nav{background:#2b2b29}
+:where(:root:not([data-theme=light])) .student-app :focus-visible,:where(:root:not([data-theme=light])) .student-app .icon-btn:focus-visible,:where(:root:not([data-theme=light])) .student-app .auth-btn:focus-visible,:where(:root:not([data-theme=light])) .student-app button:focus-visible{outline-color:#93d4c3}
 :where(:root:not([data-theme=light])) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root:not([data-theme=light])) .student-app .lesson-open,:where(:root:not([data-theme=light])) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root:not([data-theme=light])) .student-app .lesson-open:hover{background:#faf9f5;color:#1f1e1d;border-color:#faf9f5}
@@ -1170,6 +1171,7 @@ body.exam-open{overflow:hidden}
 :where(:root[data-theme=dark]) .student-app button.primary:hover,:where(:root[data-theme=dark]) .student-app .auth-btn:not(.auth-btn-alt):hover{background:#36907f;color:#fff;border-color:#36907f}
 :where(:root[data-theme=dark]) .student-app .dash-hero{background-color:#2a3331;border-color:#3a4744}
 :where(:root[data-theme=dark]) .student-app .bottom-nav{background:#2b2b29}
+:where(:root[data-theme=dark]) .student-app :focus-visible,:where(:root[data-theme=dark]) .student-app .icon-btn:focus-visible,:where(:root[data-theme=dark]) .student-app .auth-btn:focus-visible,:where(:root[data-theme=dark]) .student-app button:focus-visible{outline-color:#93d4c3}
 :where(:root[data-theme=dark]) .student-app .update-btn{border-color:#4ac0a8;color:#4ac0a8}
 :where(:root[data-theme=dark]) .student-app .lesson-open,:where(:root[data-theme=dark]) .student-app .course-card button{background:var(--surface);color:var(--ink);border-color:var(--control)}
 :where(:root[data-theme=dark]) .student-app .lesson-open:hover{background:#faf9f5;color:#1f1e1d;border-color:#faf9f5}

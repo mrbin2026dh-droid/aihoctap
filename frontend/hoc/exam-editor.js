@@ -88,9 +88,10 @@ export function renderEditor(container, getList, setList) {
     for (const k of keys) {
       const row = el('div', '', 't-qe-opt'); const radio = el('input'); radio.type = 'radio'; radio.name = `correct-${q.id}`; radio.value = k; radio.checked = q.correct_answer === k;
       radio.setAttribute('aria-label', `Đáp án đúng là ${k}`); radio.addEventListener('change', () => { q.correct_answer = k; });
+      const pick = el('label', '', 't-qe-pick'); pick.title = `Chọn ${k} là đáp án đúng`; pick.append(radio);
       const text = el('input'); text.type = 'text'; text.maxLength = 2000; text.value = (q.options && q.options[k]) || ''; text.setAttribute('aria-label', `Đáp án ${k} của câu ${i + 1}`); text.placeholder = `Đáp án ${k}`;
       text.addEventListener('input', () => { q.options = {...(q.options || {}), [k]: text.value}; });
-      row.append(el('span', k, 't-qe-key'), text, radio); opts.append(row);
+      row.append(el('span', k, 't-qe-key'), text, pick); opts.append(row);
     }
     card.append(opts);
 
