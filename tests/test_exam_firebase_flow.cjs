@@ -10,7 +10,7 @@ r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'
 const DB='https://day-hoc-tuong-tac-7ee69-default-rtdb.asia-southeast1.firebasedatabase.app';
 const UID='fbuid01';const SKEW=-90000; // giờ máy chủ chậm hơn máy học sinh 90 giây → đồng hồ phải theo máy chủ
 const now=()=>Date.now()+SKEW;
-const st={gas:[],gasBusy:1,db:{},puts:[],signIns:0,refreshes:0,expireNext:false,dropAttemptResponse:true,fbDown:false};
+const st={gas:[],gasBusy:2,db:{},puts:[],signIns:0,refreshes:0,expireNext:false,dropAttemptResponse:true,fbDown:false};
 function seed(){st.db={
  students:{[UID]:{grade:9,name:'An',class_code:'9A'}},
  exam_meta:{fe1:{title:'Giữa kỳ Firebase',grade:9,minutes:45,opens_at:now()-60000,closes_at:now()+3600000,max_attempts:1,kind:'midterm',question_count:2,total_points:10,backend:'firebase'},
@@ -48,7 +48,8 @@ try{
  await pg.route('https://script.google.com/**',r=>{const b=JSON.parse(r.request().postData());st.gas.push(b);
   if(b.idToken!=='id-1'&&b.idToken!=='id-2')return r.fulfill({status:200,contentType:'application/json',body:'{"ok":false,"error":"token"}'});
   if(b.action==='grade_my_attempt')return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,score:10,earned:4,total_points:4,correct:1,total:1,needs_review:0})});
-  if(b.action==='upload_practice'){if(st.gasBusy>0){st.gasBusy--;return r.fulfill({status:200,contentType:'text/html',body:'<html>Dịch vụ đang bận</html>'})}
+  if(b.action==='upload_practice'){if(st.gasBusy===2){st.gasBusy--;return r.fulfill({status:200,contentType:'text/html',body:'<html>Dịch vụ đang bận</html>'})}
+   if(st.gasBusy===1){st.gasBusy--;return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:false,retry:true,error:'Chưa lưu được file lên Drive'})})}
    return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,file_id:'F1',bytes:b.b64.length})})}
   r.fulfill({status:200,contentType:'application/json',body:'{"ok":false}'})});
  await pg.goto('http://aihoc.test:8193/');await pg.waitForSelector('#gate:not([hidden])');
@@ -97,8 +98,8 @@ try{
  ok((await pg.innerText('.practice-status')).includes('.xlsx'),'từ chối file sai loại ngay trên máy');
  const good=path.join(os.tmpdir(),'bai-thuc-hanh.xlsx');fs2.writeFileSync(good,Buffer.alloc(2048,1));
  await pg.setInputFiles('.practice-upload input[type=file]',good);
- await pg.waitForFunction(()=>/Đã nộp/.test(document.querySelector('.practice-status').textContent),null,{timeout:15000});
- ok(st.gas.filter(g=>g.action==='upload_practice').length===2,'Apps Script trả HTML bận → tự thử lại, lần 2 thành công');
+ await pg.waitForFunction(()=>/Đã nộp/.test(document.querySelector('.practice-status').textContent),null,{timeout:25000});
+ ok(st.gas.filter(g=>g.action==='upload_practice').length===3,'HTML bận rồi lỗi Drive tạm thời (retry) → tự thử lại, lần 3 thành công');
  ok((await pg.innerText('.practice-pick')).includes('Nộp lại'),'sau khi nộp đổi thành "Nộp lại"');
  await pg.click('.ex-result-actions button');await pg.waitForSelector('.exam-card');
  put(`/results/fe2/${UID}`,{theory_score:4,total_score:4,practice_file:{name:'bai-thuc-hanh.xlsx'}});

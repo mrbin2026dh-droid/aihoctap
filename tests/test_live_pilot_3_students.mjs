@@ -283,7 +283,18 @@ async function main() {
       console.log(`- Phiếu minh chứng Drive: ${hs2Res.evidence_url || 'Đang cập nhật'}`);
     }
 
-    console.log('\n=== KỊCH BẢN THI THỬ KHÉP KÍN ĐÃ THỰC THI THÀNH CÔNG ===');
+    // Kiểm định cứng (Claude): thiếu bất kỳ mục nào → thất bại, KHÔNG in "thành công".
+    const fails = [];
+    const must = (c, m) => { if (!c) fails.push(m); };
+    must(uploadRes1?.ok && uploadRes1.file_id && !String(uploadRes1.file_id).startsWith('pending'), 'HS1: file thực hành phải có Drive file_id thật');
+    must(hs1Res?.practice_file?.url, 'HS1: results.practice_file.url (link Drive) phải có');
+    must(hs1Res?.finalized === true && hs1Res?.evidence_url, 'HS1: đã chốt và có phiếu minh chứng Drive');
+    must(hs2Res?.auto_from_draft === true && Number(hs2Res?.theory_score) === 2, 'HS2: tự nộp từ nháp, 2 điểm');
+    must(hs2Res?.finalized === true && hs2Res?.evidence_url, 'HS2: đã chốt và có phiếu minh chứng Drive');
+    must(!hs3Res, 'HS3: không có kết quả');
+    must(Boolean((await rtdb(`exam_meta/${EXAM_ID}`))?.finalized_at), 'Đề phải có finalized_at (mọi học sinh đã chốt)');
+    if (fails.length) { console.log('\n=== THI THỬ CHƯA ĐẠT ===\n- ' + fails.join('\n- ')); process.exitCode = 1; }
+    else console.log('\n=== KỊCH BẢN THI THỬ KHÉP KÍN ĐẠT TOÀN BỘ ===\nKiểm tay thêm: mở 2 file minh chứng + tab sổ điểm (2 hàng), gõ điểm thực hành HS1 → Tổng và phiếu minh chứng đổi.');
   } finally {
     // Dọn dẹp dữ liệu thử
     console.log('\n--- 9. Dọn dẹp dữ liệu thi thử và tài khoản thử ---');

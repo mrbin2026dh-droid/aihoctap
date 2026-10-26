@@ -1687,3 +1687,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: apps-script/exam/Code.gs, apps-script/exam/appsscript.json, frontend/hoc/fb.js, frontend/hoc/sw.js, spike/step0/database.rules.live-backup.json, spike/step0/database.rules.merged.json, tests/test_exam_firebase_flow.cjs, tests/test_live_pilot_3_students.mjs, docs/handoff/antigravity-claude-cong2-3-nghiem-thu.md, aisgk.md.
 - Kiểm thực tế: run_tests.ps1 45/45 PASS; test_exam_firebase_flow.cjs 28/28 PASS; test_live_pilot_3_students.mjs PASS 100%; package_student_pwa.py --check PASS. Đường thi Worker nguyên vẹn 100%.
 - Việc tiếp: Chuyển Claude (Opus 5.5) kiểm định độc lập phán quyết Cổng 2–3 theo docs/handoff/antigravity-claude-cong2-3-nghiem-thu.md.
+
+## [Claude Opus 5.5] Phán quyết Cổng 2–3: Cổng 2 ĐẠT, Cổng 3 KHÔNG ĐẠT (đã sửa mã)
+- bd80926 bỏ scope Drive và để uploadPractice_ trả ok:true khi Drive lỗi → file thực hành bị vứt mà báo đã nộp; minh chứng bỏ qua im lặng. Đã sửa: lỗi Drive → ok:false retry, không chốt khi thiếu minh chứng; trả scope drive/firebase.database; script thi thử có kiểm định cứng; test trình duyệt thêm ca lỗi Drive tạm thời.
+- Cần Antigravity triển khai lại Apps Script (New version) và chạy lại thi thử. Tệp: docs/handoff/claude-antigravity-cong2-3-phan-quyet.md.

@@ -30,6 +30,8 @@ var RUN_BUDGET_MS = 4.5 * 60 * 1000;   // Apps Script dừng cứng ở 6 phút
 function P_(k) { var v = PropertiesService.getScriptProperties().getProperty(k); return v ? String(v).trim() : ''; }
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function db_(path, method, body) {
+  // Ưu tiên OAuth chủ dự án (scope firebase.database). DB_SECRET (database secret kiểu cũ) chỉ là phương án dự phòng:
+  // quyền toàn bộ CSDL — chỉ để trong Script properties, không bao giờ commit, đổi ngay nếu lộ.
   var secret = P_('DB_SECRET') || P_('FIREBASE_DB_SECRET');
   var url = P_('DB_URL').replace(/\/$/, '') + '/' + path + '.json' + (secret ? '?auth=' + encodeURIComponent(secret) : '');
   var opt = { method: method || 'get', muteHttpExceptions: true, contentType: 'application/json' };
@@ -194,16 +196,18 @@ function uploadPractice_(uid, body) {
   var bytes = Utilities.base64Decode(String(body.b64 || ''));
   if (!bytes.length) throw new Error('File rỗng.');
   if (bytes.length > MAX_UPLOAD_BYTES) throw new Error('File lớn hơn 10 MB.');
+  // KHÔNG BAO GIỜ báo "đã nộp" khi chưa lưu được file: lỗi Drive → trả ok:false để học sinh giữ file và thử lại.
+  var folder, file, finalName = safeName_('thuc-hanh_' + examId + '.' + ext);
   try {
-    var folder = studentFolder_(uid), finalName = safeName_('thuc-hanh_' + examId + '.' + ext);
+    folder = studentFolder_(uid);
     var old = folder.getFilesByName(finalName); while (old.hasNext()) old.next().setTrashed(true); // nộp lại: bản cũ vào thùng rác (khôi phục được 30 ngày)
-    var file = folder.createFile(Utilities.newBlob(bytes, body.mime || 'application/octet-stream', finalName));
-    db_('results/' + examId + '/' + uid + '/practice_file', 'put', { file_id: file.getId(), url: file.getUrl(), name: name, bytes: bytes.length, at: { '.sv': 'timestamp' } });
-    return { ok: true, file_id: file.getId(), bytes: bytes.length };
+    file = folder.createFile(Utilities.newBlob(bytes, body.mime || 'application/octet-stream', finalName));
   } catch (errDrive) {
-    db_('results/' + examId + '/' + uid + '/practice_file', 'put', { name: name, bytes: bytes.length, note: 'Đã nhận file (Drive tạm nghỉ)', at: { '.sv': 'timestamp' } });
-    return { ok: true, file_id: 'pending_drive', bytes: bytes.length };
+    console.error('uploadPractice Drive', uid, examId, errDrive);
+    var e2 = new Error('Chưa lưu được file lên Drive (hệ thống bận hoặc chưa cấp quyền Drive). File vẫn ở máy em — hãy bấm nộp lại hoặc báo thầy cô.'); e2.retry = true; throw e2;
   }
+  db_('results/' + examId + '/' + uid + '/practice_file', 'put', { file_id: file.getId(), url: file.getUrl(), name: name, bytes: bytes.length, at: { '.sv': 'timestamp' } });
+  return { ok: true, file_id: file.getId(), bytes: bytes.length };
 }
 
 // ---------------------------------------------------------------------------- web app
@@ -244,7 +248,7 @@ function doPost(e) {
       return json_(publishExam_(body.exam || {}));
     }
     return json_({ ok: false, error: 'Hành động không hợp lệ.' });
-  } catch (err) { return json_({ ok: false, error: err.message }); }
+  } catch (err) { return json_({ ok: false, error: err.message, retry: Boolean(err.retry) }); }
 }
 
 // ---------------------------------------------------------------------------- trigger mỗi phút
@@ -298,11 +302,13 @@ function finalizeExam_(id, m, t0) {
         status: best.review || hasPractice_(m) && practice == null ? 'needs_review' : 'graded', finalized: true, graded_at: { '.sv': 'timestamp' }
       };
       // 3) Minh chứng .txt trong thư mục học sinh (Drive an toàn)
+      // Minh chứng là bắt buộc: lỗi Drive → ghi điểm nhưng KHÔNG đánh dấu finalized, lần chạy sau tạo lại; đề chưa được chốt.
       try {
         var ev = upsertText_(studentFolder_(uid), safeName_('minh-chung_' + id + '.txt'), evidenceText_(id, m, uid, a, best, practice, prev));
-        record.evidence_id = ev.getId(); record.evidence_url = ev.getUrl();
+        record.evidence_id = ev.getId(); record.evidence_url = ev.getUrl(); record.evidence_error = null;
       } catch (errDrive) {
-        console.warn('Bỏ qua minh chứng Drive: ' + errDrive.message);
+        record.finalized = false; record.evidence_error = String(errDrive.message || errDrive).slice(0, 200); done = false;
+        console.error('Minh chứng Drive lỗi', id, uid, errDrive);
       }
       db_('results/' + id + '/' + uid, 'patch', record);
       // 4) Sổ điểm

@@ -125,8 +125,8 @@ export async function uploadPractice(examId, file, onStatus = () => {}) {
     try {
       const res = await fetch(FB_URL(), { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'upload_practice', idToken: await fb.token(), exam_id: examId, name: file.name, mime: file.type, b64 }) });
       const ack = await res.json().catch(() => null);
-      if (ack && ack.ok && ack.file_id) return ack;
-      if (ack && ack.ok === false && ack.error) throw new ApiError(400, ack.error); // lỗi nghiệp vụ (quá giờ, sai loại file…): không thử lại
+      if (ack && ack.ok && ack.file_id && !String(ack.file_id).startsWith('pending')) return ack;
+      if (ack && ack.ok === false && ack.error && !ack.retry) throw new ApiError(400, ack.error); // lỗi nghiệp vụ (quá giờ, sai loại file…): không thử lại; lỗi Drive tạm thời (retry) thì thử lại
     } catch (err) { if (err instanceof ApiError && err.status === 400) throw err; }
     if (attempt >= 5) throw new ApiError(0, 'Chưa nộp được file sau nhiều lần thử. File vẫn ở máy em — hãy bấm nộp lại hoặc báo thầy cô.');
     await new Promise(r => setTimeout(r, Math.min(32000, 2000 * 2 ** attempt) + Math.random() * 1000));
