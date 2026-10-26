@@ -131,3 +131,9 @@ Mỗi bàn giao Claude → Antigravity/ChatGPT phải ghi: (1) tệp + tên hàm
 ## N. Cách ly vai trò và chữ tiếng Việt (người dùng chốt 25/10/2026)
 - Một máy chỉ giữ MỘT vai trò đăng nhập: học sinh đăng nhập thì xóa phiên giáo viên; giáo viên đăng nhập thì xóa phiên học sinh; học sinh không thấy liên kết giáo viên; trang giáo viên luôn đòi đăng nhập khi máy có phiên học sinh. Test `tests/test_role_isolation.cjs` phải xanh.
 - Cấm dùng phông thiếu dấu tiếng Việt (ví dụ Georgia). Chữ tiêu đề dùng phông tự lưu trữ có đủ U+1EA0–1EF9 (hiện là SGK Serif = Source Serif 4, giấy phép OFL), được tiền tải offline và tính vào dấu đóng gói SW. Mọi thiết kế giao diện mới phải kèm câu mẫu kiểm dấu (ế ề ể ễ ệ ố ồ ổ ỗ ộ ớ ờ ở ỡ ợ ứ ừ ử ữ ự) và `tests/test_fonts_vietnamese.cjs` xanh.
+
+## O. Tư vấn chọn model theo công việc (người dùng chốt 26/10/2026)
+- Khi nhận một yêu cầu mới, TRƯỚC khi làm, mọi AI (đặc biệt Claude) nêu ngắn 1–2 dòng: "Việc này hợp model nào" để người dùng quyết định đổi model nếu cần. Không tự dừng việc chờ trả lời nếu model hiện tại đã đủ.
+- Gợi ý mặc định (Claude): Haiku 5.5 cho việc đơn giản lặp lại (đổi chữ, tìm file, chạy test báo kết quả); Sonnet 5.5 cho sửa giao diện, thêm test, đo bố cục, commit/push, đọc bàn giao; Opus 5.5 cho thiết kế/kiểm định kiến trúc, luật bảo mật Firebase, chấm thi, di chuyển tài khoản, quay lui; Opus 5.5 hoặc Fable 5.1 cho rà soát bảo mật toàn hệ thống trước khi cho học sinh thi thật. Chưa có số liệu giá chính thức; người dùng tự đối chiếu hạn mức tài khoản.
+- Nếu việc đang làm vượt hoặc thấp hơn mức model hiện tại, nói rõ lý do và đề xuất đổi (hoặc mở phiên mới) thay vì làm tiếp lặng lẽ.
+- Tiết kiệm token: một phiên một việc; giao việc bằng đường dẫn file bàn giao; ghi và commit thẳng vào thư mục dự án chung; không để hai AI sửa cùng một tệp.
