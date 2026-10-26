@@ -1,4 +1,4 @@
-// Bộ kiểm định quy tắc bảo mật Firebase RTDB v2 (Step 0 Security Rules Gate)
+// MÔ PHỎNG luật bằng JS tự viết — KHÔNG thay Firebase Emulator. Kiểm thật: spike/step0/emulator (npm test).
 // Chạy: node tests/test_firebase_rules_step0.cjs
 
 const assert = require('assert');

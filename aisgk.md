@@ -1653,3 +1653,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: docs/plans/ke-hoach-chi-tiet-firebase-drive.md (v2), docs/plans/ke-hoach-chi-tiet-firebase-drive-v1.md, tests/test_firebase_rules_step0.cjs, tests/benchmark_auth_concurrency.cjs, docs/handoff/antigravity-claude-buoc0-so-that.md, aisgk.md.
 - Kiểm thực tế: test_firebase_rules_step0.cjs PASS 12/12; benchmark PBKDF2 PASS; benchmark_auth_concurrency PASS 100%. Chưa viết mã sản phẩm (tuân thủ chỉ đạo của Claude).
 - Việc tiếp: Chuyển Claude kiểm định phán quyết bản kế hoạch v2 và số liệu Bước 0 theo docs/handoff/antigravity-claude-buoc0-so-that.md.
+
+## [Claude Opus 5.5] Kiểm định lần 2 kế hoạch Firebase+Drive v2 và Bước 0
+- Kế hoạch v2: duyệt có điều kiện (10 MB không phải 15 MB, xác nhận .sb3, ghi rõ công bố đáp án sau closes_at).
+- Bước 0: KHÔNG ĐẠT — số đăng nhập 30/50/100 và "12/12 rules PASS" là mô phỏng (máy chủ giả localhost, bộ luật viết lại bằng JS), không phải đo Firebase thật. Đã ghi chú đầu hai file.
+- Thêm bộ kiểm luật trên Firebase Emulator thật (40 ca): spike/step0/emulator/, luật spike/step0/database.rules.v2.json. Claude không chạy được ở máy chủ của mình (Google Storage bị chặn tải emulator) — Antigravity chạy trên PC.

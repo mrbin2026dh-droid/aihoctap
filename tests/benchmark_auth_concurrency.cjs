@@ -1,4 +1,4 @@
-// Đo đạc thực tế mô phỏng 30, 50, 100 kết nối đồng thời từ cùng 1 IP (Đường mạng trường học)
+// MÔ PHỎNG (máy chủ giả trên localhost, độ trễ ngẫu nhiên) — KHÔNG phải số đo Firebase thật. Đo thật: frontend/hoc/spike-step0/ với dự án Firebase thật.
 // Chạy: node tests/benchmark_auth_concurrency.cjs
 
 const http = require('http');
