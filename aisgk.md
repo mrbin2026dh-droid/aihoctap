@@ -12,7 +12,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 ## Trạng thái hiện tại — cập nhật 24/10/2026
 
-- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit 5c6b4d5 (bản mới 6469df6f-0f2a-4137-a676-ba5388261964, bản cũ 1d946fca-d240-4975-992a-e6c7adf74261); smoke test /api/health (200), analytics không token (401) đạt chuẩn; bàn giao Người dùng kiểm tra trang Tổng quan giáo viên.
+- Yêu cầu mới nhất: Antigravity deploy Worker aihoctap-gate từ commit cf1f2b7 (bản mới b0df0cc6-5973-42ed-b8a0-e27feab0d04b, bản cũ 6469df6f-0f2a-4137-a676-ba5388261964); smoke test /api/health (200), /api/pwa/exams không token (401) đạt chuẩn; báo gói Cloudflare Workers (Free) và Firebase (Spark); bàn giao Người dùng kiểm tra tải 30–100 máy thật.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
 - Đã hoàn thiện UI local và luồng tự học hiện có: chọn/tìm bài, Bài tập riêng, nháp/tiếp tục, nộp/feedback/retry, quản lý tải offline, tiến độ và Gia sư Socrates AI khi online; sidebar desktop/bottom-nav mobile; cài đặt/hướng dẫn, mạng/lỗi/retry rõ ràng. Có 13 bài Tin6/9, không có nội dung7/8. 
@@ -898,3 +898,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Test: tests/test_class_shared_ip.mjs. Việc mở: Antigravity `npx wrangler deploy`; người dùng xác nhận gói Cloudflare Workers (CPU đăng nhập PBKDF2 ~16 ms) và chạy thử 30–100 máy thật.
 XONG đánh giá tải / TIẾP THEO → Antigravity
 Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nhất, ghi ID bản cũ/mới; báo gói Cloudflare Workers đang dùng (Free hay Paid) và gói Firebase (Spark hay Blaze)."
+
+## 2026-10-26 · Antigravity · Triển khai Worker commit cf1f2b7 (Chịu tải 100 học sinh, IP riêng, lưu nháp nhẹ)
+- Làm: Kéo commit cf1f2b7, kiểm tra cú pháp node --check 0 lỗi, quét bí mật sạch. Deploy Worker aihoctap-gate thành công (bản mới: b0df0cc6-5973-42ed-b8a0-e27feab0d04b, bản cũ: 6469df6f-0f2a-4137-a676-ba5388261964).
+- Kiểm thử thực tế: Smoke test thật live worker GET /api/health 200, GET /api/pwa/exams không token trả 401 Unauthorized ("Thiếu token xác thực."). Toàn bộ test suite liên quan (test_class_shared_ip.mjs, load_sim_exam.mjs, test_exam_backend.mjs, test_student_import_backend.mjs, test_weakness_analytics.mjs) PASS 100%. Gói dịch vụ: Cloudflare Workers tiêu chuẩn (Free plan 100k req/ngày, DO SQLite), Firebase Realtime Database (Gói Spark 0 chi phí).
+- Việc mở: Người dùng và Claude phối hợp thử nghiệm thực tế với 30–100 máy thật.
