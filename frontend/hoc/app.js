@@ -2,6 +2,7 @@
 import { api, ApiError, verifyPackage, isLocalhostBackend } from './api.js';
 import * as db from './db.js';
 import { renderExamList, initExams } from './exam.js';
+import * as fb from './fb.js';
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -134,7 +135,7 @@ async function expireSession() {
     viewGeneration++;
     await saveDraft();
     session = null; active = null; draft = null; locked = false;
-    await db.remove('meta', 'session');
+    await db.remove('meta', 'session'); fb.clear();
     identityUI(); renderCatalog(); show('catalog');
     const help = document.getElementById('login-help'); const normal = help?.textContent || '';
     if (help) { help.textContent = 'Phiên đăng nhập đã hết hạn. Bài làm vẫn được giữ. Nhập mã PIN để tiếp tục.'; const dlg = /** @type {HTMLDialogElement} */ (node('login-dialog')); dlg.addEventListener('close', () => { help.textContent = normal; }, {once: true}); }
@@ -751,7 +752,7 @@ on('logout', async () => {
     renderStudentSettings(false);
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
-  await db.remove('meta', 'session'); identityUI(); renderCatalog(); show('catalog');
+  await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   node('questions').replaceChildren(); node('result').replaceChildren(); node('progress').replaceChildren(); node('draft-status').textContent = '';
   notify('Đã đăng xuất. Nháp được giữ riêng theo tài khoản.');
@@ -795,6 +796,8 @@ form('login-form').addEventListener('submit', async event => {
       const next = {token:response.token, identity};
       await db.put('meta', 'session', next); session = next;
       clearTeacherSession();
+      // Cổng 2: đăng nhập song song hệ thống thi Firebase bằng cùng mã + PIN. Chưa có tài khoản Firebase thì bỏ qua (chỉ thấy đề Worker).
+      fb.clear(); if (!isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});
       draft = null; locked = false; identityUI(); renderCatalog();
       if (active) {
         const course = catalog?.courses.find(item => item.id === active?.course_id);

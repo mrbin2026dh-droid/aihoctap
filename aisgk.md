@@ -1675,3 +1675,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: apps-script/provisioning/Code.gs, apps-script/provisioning/appsscript.json, apps-script/provisioning/README.md, tests/test_gate1_provisioning.mjs, docs/plans/ke-hoach-chi-tiet-firebase-drive.md, docs/handoff/antigravity-claude-cong1-d1-d3.md, aisgk.md.
 - Kiểm thực tế: test_gate1_provisioning.mjs PASS 100% (40/40 tạo, idempotent PASS, đổi PIN PASS, RTDB PASS, dọn dẹp sạch). Đường thi Worker hiện tại giữ nguyên 100%.
 - Việc tiếp: Chuyển Claude kiểm định mã nguồn Cổng 1 và phê duyệt để chuẩn bị sang Cổng 2 (PWA Client Exam Flow).
+
+## [Claude Opus 5.5] Nghiệm thu Cổng 1 + viết mã Cổng 2–3 (đường thi Firebase)
+- Cổng 1 đạt; sửa PIN mặc định 123456, khối mặc định 9, chạy lại vượt 6 phút; thêm tạo giáo viên.
+- Cổng 2: fb.js, exam-fb.js, exam.js chọn backend theo đề, đăng nhập Firebase song song, nộp file thực hành. Cổng 3: apps-script/exam (chấm, tự nộp từ nháp, minh chứng Drive, sổ điểm, phát hành đề, nhận file).
+- Test: test_exam_firebase_flow 28/28 + toàn bộ test cũ xanh. Luật v2 thêm clock/leaves (emulator 45 ca, chưa chạy). Bàn giao: docs/handoff/claude-antigravity-cong1-3-ma-nguon.md.

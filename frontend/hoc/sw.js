@@ -1,6 +1,6 @@
 // Student shell only: never intercept API requests, identity or teacher pages.
-const CACHE = 'aisgk-student-shell-ada8ab1a5841158e8d3ddc09';
-const FILES = ['./', './index.html', './styles.css', './app.js', './api.js', './db.js', './dom.js', './exam.js', './manifest.webmanifest', './fonts/source-serif-4-latin-wght-normal.woff2', './fonts/source-serif-4-vietnamese-wght-normal.woff2', './fonts/nunito-latin-wght-normal.woff2', './fonts/nunito-vietnamese-wght-normal.woff2', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'];
+const CACHE = 'aisgk-student-shell-9254ecb750c1fd93fbab0281';
+const FILES = ['./', './index.html', './styles.css', './app.js', './api.js', './db.js', './dom.js', './exam.js', './fb.js', './exam-fb.js', './manifest.webmanifest', './fonts/source-serif-4-latin-wght-normal.woff2', './fonts/source-serif-4-vietnamese-wght-normal.woff2', './fonts/nunito-latin-wght-normal.woff2', './fonts/nunito-vietnamese-wght-normal.woff2', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'];
 const ALLOWED = new Set(FILES.map(path => new URL(path, self.registration.scope).href));
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => Promise.all(FILES.map(async path => {

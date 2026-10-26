@@ -40,6 +40,14 @@ function getEmailOf_(studentId) {
   return studentId.toLowerCase().replace(/[^a-z0-9_-]/g, '') + '@' + getEmailDomain_();
 }
 
+/** PIN 6 chữ số ngẫu nhiên (không trùng mẫu dễ đoán như 123456, 000000). */
+function randomPin_() {
+  for (;;) {
+    var p = String(100000 + Math.floor(Math.random() * 900000));
+    if (!/^(\d)\1{5}$/.test(p) && p !== '123456' && p !== '654321') return p;
+  }
+}
+
 function getAuthHeader_() {
   return {
     'Authorization': 'Bearer ' + ScriptApp.getOAuthToken(),
@@ -56,6 +64,7 @@ function onOpen() {
     .addItem('1. Cấp phát tài khoản (Toàn bộ danh sách)', 'provisionAllStudentsFromSheet')
     .addItem('2. Đặt lại mã PIN cho dòng đang chọn', 'resetPinSelectedRow')
     .addItem('3. Đồng bộ lại danh bạ students/ sang RTDB', 'syncRosterToRtdbFromSheet')
+    .addItem('5. Tạo/cấp quyền tài khoản giáo viên', 'provisionTeacherPrompt')
     .addSeparator()
     .addItem('4. Kiểm thử Cổng 1 (40 học sinh thử & Tự động dọn)', 'runGate1Verification40')
     .addToUi();
@@ -205,18 +214,27 @@ function provisionAllStudentsFromSheet() {
     return;
   }
 
-  var countNew = 0, countSynced = 0, errors = [];
+  var countNew = 0, countSynced = 0, countSkipped = 0, errors = [];
+  var startedAt = Date.now(), stoppedAt = 0;
 
   for (var r = 1; r < data.length; r++) {
+    // Apps Script dừng cứng ở 6 phút: dừng an toàn ở 5 phút, chạy lại sẽ làm tiếp (dòng đã có UID được bỏ qua).
+    if (Date.now() - startedAt > 5 * 60 * 1000) { stoppedAt = r + 1; break; }
     var row = data[r];
     var studentId = String(row[0] || '').trim();
     var fullName  = String(row[1] || '').trim();
     var classCode = String(row[2] || '').trim();
-    var grade     = Number(row[3]) || 9;
-    var pin       = String(row[4] || '123456').trim();
+    var grade     = Number(row[3]);
+    var pin       = String(row[4] || '').trim();
     var curUid    = String(row[6] || '').trim();
+    var curStatus = String(row[7] || '');
 
     if (!studentId || !fullName) continue;
+    // Đã cấp phát thành công trước đó: bỏ qua (muốn ghi lại hồ sơ thì dùng mục 3 "Đồng bộ lại danh bạ").
+    if (curUid && curStatus.indexOf('LỖI') !== 0) { countSkipped++; continue; }
+    if (!(grade >= 6 && grade <= 9)) { sheet.getRange(r + 1, 8).setValue('LỖI: cột Khối phải là 6, 7, 8 hoặc 9'); errors.push(studentId + ': thiếu khối'); continue; }
+    // Không bao giờ dùng PIN mặc định chung: thiếu PIN thì sinh ngẫu nhiên 6 chữ số và ghi lại vào cột E để phát cho học sinh.
+    if (pin.length < 6) { pin = randomPin_(); sheet.getRange(r + 1, 5).setNumberFormat('@').setValue(pin); }
 
     try {
       var res = provisionStudent(studentId, fullName, classCode, grade, pin);
@@ -233,7 +251,7 @@ function provisionAllStudentsFromSheet() {
     }
   }
 
-  var msg = 'Đã xử lý xong danh sách:\n- Tạo mới: ' + countNew + '\n- Đã có (đồng bộ): ' + countSynced;
+  var msg = (stoppedAt ? 'Đã chạy gần 5 phút, dừng ở dòng ' + stoppedAt + '. Bấm chạy lại để làm tiếp.\n' : 'Đã xử lý xong danh sách:\n') + '- Tạo mới: ' + countNew + '\n- Đã có (đồng bộ): ' + countSynced + '\n- Bỏ qua (đã có UID): ' + countSkipped;
   if (errors.length) msg += '\n- Lỗi (' + errors.length + '): ' + errors.slice(0, 3).join('; ');
   SpreadsheetApp.getUi().alert(msg);
 }
@@ -290,10 +308,10 @@ function syncRosterToRtdbFromSheet() {
     var studentId = String(data[r][0] || '').trim();
     var fullName  = String(data[r][1] || '').trim();
     var classCode = String(data[r][2] || '').trim();
-    var grade     = Number(data[r][3]) || 9;
+    var grade     = Number(data[r][3]);
     var uid       = String(data[r][6] || '').trim();
 
-    if (!uid || !fullName) continue;
+    if (!uid || !fullName || !(grade >= 6 && grade <= 9)) continue;
 
     var rtdbUrl = getDatabaseUrl_() + '/students/' + uid + '.json';
     UrlFetchApp.fetch(rtdbUrl, {
@@ -337,7 +355,7 @@ function runGate1Verification40() {
       var sid = 'hs_test_' + (i < 10 ? '0' : '') + i;
       var name = 'Học sinh Thử nghiệm ' + i;
       var cls = (i <= 20) ? '9A' : '9B';
-      var res = provisionStudent(sid, name, cls, 9, '123456');
+      var res = provisionStudent(sid, name, cls, 9, randomPin_());
       testUids.push(res.uid);
     }
     Logger.log('-> Đã tạo xong 40 tài khoản. UID đầu: ' + testUids[0] + ', UID cuối: ' + testUids[39]);
@@ -347,7 +365,7 @@ function runGate1Verification40() {
     var idempotentPass = true;
     for (var j = 1; j <= 5; j++) {
       var sid2 = 'hs_test_0' + j;
-      var res2 = provisionStudent(sid2, 'Học sinh Thử nghiệm ' + j, '9A', 9, '123456');
+      var res2 = provisionStudent(sid2, 'Học sinh Thử nghiệm ' + j, '9A', 9, randomPin_());
       if (res2.uid !== testUids[j - 1]) idempotentPass = false;
     }
     Logger.log('-> Idempotent check: ' + (idempotentPass ? 'PASS (UID giữ nguyên)' : 'FAIL'));
@@ -417,4 +435,44 @@ function testAdminAccounts() {
     deleteStudentAccount(uid);
     Logger.log('Dọn dẹp: Đã xóa tài khoản thử ' + testEmail);
   }
+}
+
+
+/**
+ * Tạo tài khoản giáo viên Firebase (email gv_{mã}@{EMAIL_DOMAIN}) với PIN >= 8 ký tự và ghi teachers/{uid} = true.
+ * Chạy lại với cùng mã: giữ UID, đặt lại PIN theo giá trị mới.
+ */
+function provisionTeacher(teacherCode, pin) {
+  var code = String(teacherCode || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!code) throw new Error('Mã giáo viên chỉ gồm chữ không dấu, số, _ hoặc -.');
+  if (String(pin).length < 8) throw new Error('PIN giáo viên phải có ít nhất 8 ký tự.');
+  var proj = getProjectId_(), headers = getAuthHeader_();
+  var email = 'gv_' + code + '@' + getEmailDomain_();
+  var r = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/projects/' + proj + '/accounts', {
+    method: 'post', headers: headers, muteHttpExceptions: true,
+    payload: JSON.stringify({ email: email, password: String(pin), emailVerified: true })
+  });
+  var b = JSON.parse(r.getContentText() || '{}'), uid = b.localId;
+  if (!uid) {
+    if (!(b.error && String(b.error.message).indexOf('EMAIL_EXISTS') !== -1)) throw new Error('Lỗi tạo giáo viên: ' + r.getContentText());
+    var lk = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup', {
+      method: 'post', headers: headers, muteHttpExceptions: true, payload: JSON.stringify({ email: [email], targetProjectId: proj })
+    });
+    var u = (JSON.parse(lk.getContentText() || '{}').users || [])[0];
+    if (!u) throw new Error('Không tra được UID giáo viên ' + email);
+    uid = u.localId; resetStudentPin(uid, pin);
+  }
+  var w = UrlFetchApp.fetch(getDatabaseUrl_() + '/teachers/' + uid + '.json', { method: 'put', headers: headers, payload: 'true', muteHttpExceptions: true });
+  if (w.getResponseCode() !== 200) throw new Error('Lỗi ghi teachers/' + uid + ': ' + w.getContentText());
+  return { ok: true, uid: uid, email: email };
+}
+
+function provisionTeacherPrompt() {
+  var ui = SpreadsheetApp.getUi();
+  var a = ui.prompt('Tài khoản giáo viên', 'Nhập mã giáo viên (ví dụ: khoi):', ui.ButtonSet.OK_CANCEL);
+  if (a.getSelectedButton() !== ui.Button.OK) return;
+  var b = ui.prompt('Tài khoản giáo viên', 'Nhập PIN (ít nhất 8 ký tự):', ui.ButtonSet.OK_CANCEL);
+  if (b.getSelectedButton() !== ui.Button.OK) return;
+  try { var res = provisionTeacher(a.getResponseText().trim(), b.getResponseText().trim()); ui.alert('Đã tạo/cấp quyền: ' + res.email); }
+  catch (err) { ui.alert('Lỗi: ' + err.message); }
 }

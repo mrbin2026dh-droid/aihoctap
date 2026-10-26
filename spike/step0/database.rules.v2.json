@@ -45,7 +45,8 @@
      },
      "$other": {
       ".validate": false
-     }
+     },
+     ".validate": "newData.hasChildren(['started_at', 'extra_ms'])"
     }
    }
   },
@@ -64,6 +65,9 @@
      },
      "$other": {
       ".validate": false
+     },
+     "leaves": {
+      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
      }
     }
    }
@@ -98,6 +102,13 @@
      ".read": "auth.uid === $uid"
     },
     ".write": false
+   }
+  },
+  "clock": {
+   "$uid": {
+    ".read": "auth.uid === $uid",
+    ".write": "auth.uid === $uid",
+    ".validate": "newData.val() === now"
    }
   }
  }

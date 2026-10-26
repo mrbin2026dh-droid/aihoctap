@@ -2,8 +2,10 @@
 // Tab Thi của học sinh: danh sách đề, màn hình làm bài (đồng hồ theo máy chủ, bảng câu hỏi, tự lưu), nộp bài và kết quả.
 import { api, ApiError } from './api.js';
 import { el, icon, confirmBox, renderMarkdown } from './dom.js';
+import * as examFb from './exam-fb.js';
+import * as fb from './fb.js';
 
-/** @typedef {{exam_id:string,title:string,mode:'trial'|'real',kind:string,minutes:number|null,opens_at:number|null,closes_at:number|null,state:string,question_count:number,total_points:number,attempts_used:number,attempts_left:number|null,best_score:number|null,in_progress:boolean}} ExamItem */
+/** @typedef {{exam_id:string,title:string,mode:'trial'|'real',kind:string,minutes:number|null,opens_at:number|null,closes_at:number|null,state:string,question_count:number,total_points:number,attempts_used:number,attempts_left:number|null,best_score:number|null,in_progress:boolean,backend?:'firebase'|'worker',has_practice?:boolean,practice_file?:string|null,upload_open?:boolean}} ExamItem */
 /** @typedef {{id:string,kind:string,prompt:string,options?:Record<string,string>,hint?:string,topic?:string,points:number}} ExamQuestion */
 
 const KIND_LABEL = { '15m': 'Kiểm tra 15 phút', period: 'Kiểm tra 1 tiết', midterm: 'Giữa kỳ', final: 'Cuối kỳ' };
@@ -41,12 +43,24 @@ export async function renderExamList(target, loggedIn) {
   const note = (/** @type {string} */ title, /** @type {string} */ body) => {
     const box = el('div', '', 'empty'); box.append(icon('exam', 'ic empty-ic'), el('h2', title), el('p', body)); target.append(box);
   };
-  if (!loggedIn || !host?.getToken()) { note('Đăng nhập để xem bài kiểm tra', 'Bài kiểm tra do giáo viên mở cho lớp của em sẽ hiện ở đây.'); return; }
+  await fb.ready();
+  if (!loggedIn || (!host?.getToken() && !fb.hasSession())) { note('Đăng nhập để xem bài kiểm tra', 'Bài kiểm tra do giáo viên mở cho lớp của em sẽ hiện ở đây.'); return; }
   target.append(el('p', 'Đang tải danh sách bài kiểm tra…', 'muted'));
-  /** @type {{exams:ExamItem[]}} */ let data;
-  try { data = await api('/pwa/exams', { token: host.getToken() || '' }); }
-  catch (error) { target.replaceChildren(); note('Chưa tải được bài kiểm tra', error instanceof Error ? error.message : 'Hãy thử lại sau.'); return; }
+  // Hai nguồn đề chạy song song: Worker (cũ) và Firebase (đề có backend 'firebase'). Một nguồn lỗi vẫn hiện nguồn còn lại.
+  const token = host?.getToken() || '';
+  const [w, f] = await Promise.allSettled([
+    token ? api('/pwa/exams', { token }) : Promise.resolve({ exams: [] }),
+    examFb.list()
+  ]);
+  if (w.status === 'rejected' && (f.status === 'rejected' || !fb.hasSession())) {
+    target.replaceChildren(); const error = w.reason; note('Chưa tải được bài kiểm tra', error instanceof Error ? error.message : 'Hãy thử lại sau.'); return;
+  }
+  /** @type {{exams:ExamItem[]}} */ const data = { exams: [
+    ...(f.status === 'fulfilled' ? f.value : []),
+    ...(w.status === 'fulfilled' ? /** @type {{exams:ExamItem[]}} */ (w.value).exams.map(e => ({ ...e, backend: /** @type {'worker'} */ ('worker') })) : [])
+  ] };
   target.replaceChildren();
+  if (w.status === 'rejected') target.append(el('p', 'Một số bài kiểm tra chưa tải được. Hãy mở lại mục này sau.', 'muted'));
   if (!data.exams.length) { note('Chưa có bài kiểm tra', 'Khi giáo viên mở bài kiểm tra cho lớp của em, bài sẽ hiện ở đây. Bài luyện tập vẫn nằm ở mục Luyện tập.'); return; }
   const list = el('div', '', 'exam-list');
   for (const e of data.exams) list.append(examCard(e, target));
@@ -73,19 +87,24 @@ function examCard(e, target) {
   card.append(head, el('h2', e.title, 'exam-title'), el('p', meta.join(' · '), 'exam-meta'));
   if (best) card.append(el('p', best, 'exam-best'));
   card.append(foot);
+  if (e.backend === 'firebase' && e.has_practice && (e.upload_open || e.practice_file)) {
+    card.append(el('p', e.practice_file ? `Đã nộp file thực hành: ${e.practice_file}` : 'Chưa nộp file thực hành.', e.practice_file ? 'exam-best' : 'exam-meta'));
+    if (e.upload_open) card.append(practiceUploader(e.exam_id, Boolean(e.practice_file)));
+  }
   return card;
 }
 
 /** @param {ExamItem} e @param {HTMLElement} target */
 async function startExam(e, target) {
-  const token = host?.getToken(); if (!token) return;
+  const token = host?.getToken(); const viaFb = e.backend === 'firebase';
+  if (!token && !viaFb) return;
   if (!e.in_progress && e.mode === 'real') {
     const lines = [`Bài có ${e.question_count} câu, ${e.total_points} điểm.`, e.minutes ? `Thời gian làm bài ${e.minutes} phút, đồng hồ chạy ngay khi em bấm Bắt đầu và không dừng lại được.` : '', e.attempts_left !== null ? `Em còn ${e.attempts_left} lượt làm bài. Lượt này được tính khi em bắt đầu.` : '', 'Nếu mất mạng, bài vẫn được lưu trên máy và em có thể vào lại để làm tiếp trong thời gian còn lại.'].filter(Boolean);
     const ok = await confirmBox({ title: `Bắt đầu "${e.title}"?`, body: lines.join('\n'), okText: 'Bắt đầu thi', cancelText: 'Để sau' });
     if (!ok) return;
   }
   try {
-    const data = await api('/pwa/exams/start', { method: 'POST', token, body: { exam_id: e.exam_id } });
+    const data = viaFb ? await examFb.start(e) : await api('/pwa/exams/start', { method: 'POST', token: token || '', body: { exam_id: e.exam_id } });
     openSession(/** @type {any} */ (data), () => { void renderExamList(target, true); });
   } catch (error) {
     await confirmBox({ title: 'Chưa vào được bài kiểm tra', body: error instanceof Error ? error.message : 'Hãy thử lại.', okText: 'Đã hiểu', kind: 'notice' });
@@ -95,7 +114,7 @@ async function startExam(e, target) {
 
 /**
  * Phiên làm bài đang mở. Toàn bộ trạng thái nằm ở đây để màn hình chỉ việc vẽ lại.
- * @typedef {{exam_id:string,title:string,mode:'trial'|'real',minutes:number|null,total_points:number,questions:ExamQuestion[],attempt_id:string,attempt_no:number,deadline:number|null,answers:Record<string,string>,server_now:number}} Start
+ * @typedef {{exam_id:string,title:string,mode:'trial'|'real',minutes:number|null,total_points:number,questions:ExamQuestion[],attempt_id:string,attempt_no:number,deadline:number|null,answers:Record<string,string>,server_now:number,backend?:'firebase'|'worker',has_practice?:boolean}} Start
  */
 /** @param {Start} data @param {()=>void} afterClose */
 function openSession(data, afterClose) {
@@ -158,7 +177,8 @@ function openSession(data, afterClose) {
     persistLocal();
     saving = true; setStatus('Đang lưu…');
     try {
-      await api('/pwa/exams/save', { method: 'PUT', token: host?.getToken() || '', body: { exam_id: data.exam_id, attempt_id: data.attempt_id, answers, leaves } });
+      if (data.backend === 'firebase') await examFb.save(data, answers, leaves);
+      else await api('/pwa/exams/save', { method: 'PUT', token: host?.getToken() || '', body: { exam_id: data.exam_id, attempt_id: data.attempt_id, answers, leaves } });
       dirty = false; saveFailed = false; lastSaved = Date.now();
       setStatus(`Đã lưu ${new Date(lastSaved).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
     } catch (error) {
@@ -273,7 +293,8 @@ function openSession(data, afterClose) {
     for (;;) {
       setStatus(auto ? 'Hết giờ, đang nộp bài…' : 'Đang nộp bài…');
       try {
-        const ack = await api('/pwa/exams/submit', { method: 'POST', token: host?.getToken() || '', body: { exam_id: data.exam_id, attempt_id: data.attempt_id, answers } });
+        const ack = data.backend === 'firebase' ? await examFb.submit(data, answers)
+          : await api('/pwa/exams/submit', { method: 'POST', token: host?.getToken() || '', body: { exam_id: data.exam_id, attempt_id: data.attempt_id, answers } });
         finished = true; try { localStorage.removeItem(localKey); } catch { /* bỏ qua */ }
         cleanup(); showResult(/** @type {any} */ (ack)); return;
       } catch (error) {
@@ -287,12 +308,20 @@ function openSession(data, afterClose) {
     }
   }
 
-  /** @param {{score:number,earned:number,total_points:number,correct:number,total:number,needs_review?:number,late?:boolean,message?:string,answers_key?:Record<string,string>}} ack */
+  /** @param {{score:number,earned:number,total_points:number,correct:number,total:number,needs_review?:number,late?:boolean,message?:string,answers_key?:Record<string,string>,pending?:boolean}} ack */
   function showResult(ack) {
     root.replaceChildren();
     const wrap = el('section', '', 'ex-result'); wrap.id = 'ex-result'; wrap.setAttribute('aria-label', 'Kết quả bài làm');
     const hero = el('section', '', 'ex-result-hero');
     hero.append(icon('exam', 'ic ex-result-ic'), el('h1', 'Em đã nộp bài'), el('p', data.title, 'ex-result-title'));
+    if (ack.pending) {
+      // Đường Firebase: bài đã lưu chắc chắn; điểm do Apps Script chấm sau (hoặc khi đóng đề).
+      hero.append(el('p', ack.message || 'Đã nhận bài. Điểm sẽ có sau khi hệ thống chấm.', 'ex-note'), el('p', `Đã trả lời ${answered()}/${questions.length} câu.`, 'ex-note'));
+      wrap.append(hero);
+      if (data.has_practice) wrap.append(practiceSection(data.exam_id));
+      const actions0 = el('div', '', 'ex-result-actions'); const back0 = el('button', 'Về danh sách bài thi', data.has_practice ? '' : 'primary'); back0.type = 'button'; back0.addEventListener('click', close);
+      actions0.append(back0); wrap.append(actions0); root.append(wrap); (data.has_practice ? /** @type {HTMLElement} */ (wrap.querySelector('.practice-pick')) : back0)?.focus(); return;
+    }
     const big = el('div', '', 'ex-score'); big.append(el('strong', String(ack.score)), el('span', '/10'));
     const grid = el('div', '', 'ex-result-grid');
     const tile = (/** @type {string} */ label, /** @type {string} */ value) => { const t = el('div', '', 'ex-tile'); t.append(el('span', label), el('strong', value)); return t; };
@@ -301,6 +330,7 @@ function openSession(data, afterClose) {
     if (ack.needs_review) hero.append(el('p', `Có ${ack.needs_review} câu tự luận chờ thầy cô chấm. Điểm có thể tăng sau khi chấm.`, 'ex-note'));
     if (ack.late) hero.append(el('p', ack.message || 'Bài được nộp sau giờ; chỉ tính phần đã lưu trước khi hết giờ.', 'ex-note warn'));
     wrap.append(hero);
+    if (data.backend === 'firebase' && data.has_practice) wrap.append(practiceSection(data.exam_id));
     if (ack.answers_key) {
       const key = ack.answers_key;
       const review = el('section', '', 'ex-review'); review.append(el('h2', 'Đối chiếu đáp án'));
@@ -344,4 +374,33 @@ function openSession(data, afterClose) {
   heartbeat = window.setInterval(() => { if (dirty || saveFailed) void save(); }, HEARTBEAT_MS);
   (stage.querySelector('.ex-opt, textarea') instanceof HTMLElement ? /** @type {HTMLElement} */ (stage.querySelector('.ex-opt, textarea')) : stage).focus?.();
   if (dirty) void save();
+}
+
+/** Khối nộp file thực hành trong màn kết quả. @param {string} examId */
+function practiceSection(examId) {
+  const box = el('section', '', 'practice-box'); box.setAttribute('aria-labelledby', `practice-${examId}`);
+  const h = el('h2', 'Phần thực hành'); h.id = `practice-${examId}`;
+  box.append(h, el('p', 'Làm bài trên Excel, PowerPoint hoặc Word ở máy, lưu file rồi bấm "Chọn file và nộp". Nhận .xlsx, .pptx, .docx, .pdf, tối đa 10 MB. Nộp lại sẽ thay file cũ.', 'muted'), practiceUploader(examId, false));
+  return box;
+}
+/** Nút chọn file + trạng thái. @param {string} examId @param {boolean} already */
+function practiceUploader(examId, already) {
+  const wrap = el('div', '', 'practice-upload');
+  const input = /** @type {HTMLInputElement} */ (el('input')); input.type = 'file'; input.accept = examFb.ALLOWED_EXT.map(x => '.' + x).join(','); input.hidden = true;
+  const pick = el('button', already ? 'Nộp lại file thực hành' : 'Chọn file và nộp', 'primary practice-pick'); pick.type = 'button';
+  const status = el('p', '', 'practice-status'); status.setAttribute('role', 'status');
+  pick.addEventListener('click', () => input.click());
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0]; if (!file) return;
+    pick.disabled = true; status.classList.remove('bad');
+    try {
+      await examFb.uploadPractice(examId, file, msg => { status.textContent = msg; });
+      status.textContent = `Đã nộp "${file.name}" (${Math.ceil(file.size / 1024)} KB). Thầy cô sẽ chấm phần thực hành.`;
+      pick.textContent = 'Nộp lại file thực hành';
+    } catch (err) {
+      status.textContent = err instanceof Error ? err.message : 'Chưa nộp được file.'; status.classList.add('bad');
+    } finally { pick.disabled = false; input.value = ''; }
+  });
+  wrap.append(pick, input, status);
+  return wrap;
 }

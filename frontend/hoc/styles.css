@@ -902,6 +902,15 @@ body.exam-open{overflow:hidden}
 .student-app dialog{overscroll-behavior:contain}
 .student-app h1,.student-app h2,.student-app h3{text-wrap:balance}
 
+
+/* PRACTICE-UPLOAD (nộp file thực hành, đường thi Firebase) */
+.practice-box{margin:16px 0 0;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.practice-box h2{margin:0 0 6px;font-size:18px}
+.practice-upload{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px}
+.practice-upload .practice-pick{min-height:48px;padding:0 18px;border-radius:10px}
+.practice-status{flex:1 1 100%;margin:0;font-size:15px;color:var(--muted)}
+.practice-status.bad{color:var(--danger,#b42318);font-weight:600}
+
 /* DARK-THEME:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]),:root:not([data-theme=light]) .student-app{--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--blue:#2d7a6c;--line:#403f3b;--surface:#30302e;--danger:#ff9f95;--brand-text:#93d4c3;--auth-btn-bg:#ece9df;--auth-btn-fg:#1f1e1d;--control:#8a877d;--soft:#2b2b29;--teal-bg:#1f3a37;--teal-fg:#5eead4;--blue-bg:#1e2f4a;--blue-fg:#93c5fd;--amber-bg:#3b3220;--amber-fg:#fcd34d;--violet-bg:#2f2a4a;--violet-fg:#c4b5fd;--green-bg:#1f3a2a;--green-fg:#86efac;color-scheme:dark}
@@ -1032,6 +1041,7 @@ body.exam-open{overflow:hidden}
 :where(:root:not([data-theme=light])) .exam-screen .ex-review-row.is-bad{border-left-color:#763737}
 :where(:root:not([data-theme=light])) .exam-screen .ex-review-row.is-text{border-left-color:#7d582d}
 :where(:root:not([data-theme=light])) .role-switch a:hover{background:rgba(90,90,90,0.15)}
+:where(:root:not([data-theme=light])) .practice-status.bad{color:var(--danger,#e69089)}
 @media (max-width:760px){
 :where(:root:not([data-theme=light])) .student-app .dash-hero{background-image:linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%)}
 :where(:root:not([data-theme=light])) .exam-screen .ex-side{box-shadow:0 -8px 24px rgba(0,0,0,.55)}
@@ -1179,6 +1189,7 @@ body.exam-open{overflow:hidden}
 :where(:root[data-theme=dark]) .exam-screen .ex-review-row.is-bad{border-left-color:#763737}
 :where(:root[data-theme=dark]) .exam-screen .ex-review-row.is-text{border-left-color:#7d582d}
 :where(:root[data-theme=dark]) .role-switch a:hover{background:rgba(90,90,90,0.15)}
+:where(:root[data-theme=dark]) .practice-status.bad{color:var(--danger,#e69089)}
 @media (max-width:760px){
 :where(:root[data-theme=dark]) .student-app .dash-hero{background-image:linear-gradient(135deg,#2a2f2e 0%,#2f2c25 60%)}
 :where(:root[data-theme=dark]) .exam-screen .ex-side{box-shadow:0 -8px 24px rgba(0,0,0,.55)}

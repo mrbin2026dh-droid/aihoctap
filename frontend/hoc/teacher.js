@@ -602,6 +602,7 @@ node('teacher-login').addEventListener('submit', async event => {
       sessionStorage.setItem('aisgk-pwa-teacher-must-change', String(mustChangePin));
       generation++;
       await db.remove('meta', 'session').catch(() => {});   // đăng nhập giáo viên thì đăng xuất học sinh trên máy này
+      try { localStorage.removeItem('aisgk-fb'); } catch { /* bỏ qua */ }   // và cả phiên thi Firebase của học sinh
       sessionStorage.setItem('aisgk-pwa-teacher', token);
       loginForm.reset();
       updateAuth();
