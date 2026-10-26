@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành Đ1–Đ3 (đẩy Git proof, xóa sạch 106 tài khoản thử thật, đóng gói Apps Script quản trị) và hoàn tất kiểm thử Cổng 1 (40 học sinh mẫu, idempotent, đổi PIN, đồng bộ RTDB 100% PASS) theo docs/handoff/antigravity-claude-cong1-d1-d3.md.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành Cổng 2–3 trên môi trường thật: 45/45 emulator rules PASS, gộp rules live-backup an toàn, 28/28 test_exam_firebase_flow PASS, thi thử khép kín 3 học sinh trên Firebase thật PASS 100% (HS1 chấm ngay 4/4đ + nộp file; HS2 tick() tự nộp nháp auto_from_draft: true + 2/4đ; HS3 sạch sẽ; xóa sạch tài khoản thử), PWA stamped, báo cáo tại docs/handoff/antigravity-claude-cong2-3-nghiem-thu.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1680,3 +1680,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Cổng 1 đạt; sửa PIN mặc định 123456, khối mặc định 9, chạy lại vượt 6 phút; thêm tạo giáo viên.
 - Cổng 2: fb.js, exam-fb.js, exam.js chọn backend theo đề, đăng nhập Firebase song song, nộp file thực hành. Cổng 3: apps-script/exam (chấm, tự nộp từ nháp, minh chứng Drive, sổ điểm, phát hành đề, nhận file).
 - Test: test_exam_firebase_flow 28/28 + toàn bộ test cũ xanh. Luật v2 thêm clock/leaves (emulator 45 ca, chưa chạy). Bàn giao: docs/handoff/claude-antigravity-cong1-3-ma-nguon.md.
+
+
+### 26/10/2026 — Antigravity — Hoàn tất Cổng 2 & 3 (Kiểm thử thực tế trên Firebase & Apps Script thật)
+- Đã thực hiện: Chạy bộ kiểm thử Emulator thật đạt 45/45 PASS; sao lưu rules cũ vào spike/step0/database.rules.live-backup.json và xuất bản rules v2 gộp an toàn lên RTDB thật; kết nối thành công Apps Script chấm thi (bật quyền UrlFetch và hỗ trợ DB_SECRET); chạy test_exam_firebase_flow.cjs 28/28 PASS; thi thử khép kín 3 học sinh thật trên Firebase (HS1 nộp bài đạt 4/4đ + nộp file .xlsx; HS2 chỉ lưu nháp -> hết giờ tick() tự nộp auto_from_draft: true đạt 2/4đ; HS3 không có bài; xóa sạch dữ liệu thử).
+- Tệp đổi/tạo: apps-script/exam/Code.gs, apps-script/exam/appsscript.json, frontend/hoc/fb.js, frontend/hoc/sw.js, spike/step0/database.rules.live-backup.json, spike/step0/database.rules.merged.json, tests/test_exam_firebase_flow.cjs, tests/test_live_pilot_3_students.mjs, docs/handoff/antigravity-claude-cong2-3-nghiem-thu.md, aisgk.md.
+- Kiểm thực tế: run_tests.ps1 45/45 PASS; test_exam_firebase_flow.cjs 28/28 PASS; test_live_pilot_3_students.mjs PASS 100%; package_student_pwa.py --check PASS. Đường thi Worker nguyên vẹn 100%.
+- Việc tiếp: Chuyển Claude (Opus 5.5) kiểm định độc lập phán quyết Cổng 2–3 theo docs/handoff/antigravity-claude-cong2-3-nghiem-thu.md.

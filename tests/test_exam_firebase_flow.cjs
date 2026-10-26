@@ -18,7 +18,7 @@ function seed(){st.db={
             fe2:{title:'Tin 9 lý thuyết + thực hành',grade:9,minutes:45,opens_at:now()-60000,closes_at:now()+3600000,max_attempts:1,question_count:1,total_points:4,backend:'firebase',parts:[{key:'theory',max:4},{key:'practice',max:6}]},
             old:{title:'Đề không gắn firebase',grade:9,minutes:45,opens_at:now()-60000,closes_at:now()+3600000,max_attempts:1}},
  exam_questions:{fe2:{q1:{order:1,kind:'choice',prompt:'Hàm tính tổng?',options:{A:'SUM',B:'AVG'},points:4}},fe1:{q2:{order:2,kind:'choice',prompt:'Câu thứ hai?',options:{A:'x',B:'y'},points:5},q1:{order:1,kind:'choice',prompt:'Câu thứ nhất?',options:{A:'CPU',B:'RAM'},points:5}}}}}
-const get=p=>p.split('/').filter(Boolean).reduce((o,k)=>o==null?null:o[k]??null,st.db);
+const get=p=>p.split('/').filter(Boolean).reduce((o,k)=>o===null||o===undefined?null:o[k]??null,st.db);
 const put=(p,v)=>{const ks=p.split('/').filter(Boolean);let o=st.db;for(const k of ks.slice(0,-1))o=o[k]??=({});if(v===null)delete o[ks.at(-1)];else o[ks.at(-1)]=v};
 const sv=v=>{if(v&&typeof v==='object'){if(v['.sv']==='timestamp')return now();return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,sv(x)]))}return v};
 (async()=>{const b=await chromium.launch({args:['--host-resolver-rules=MAP aihoc.test 127.0.0.1']});let n=0;const ok=(c,m)=>{assert(c,m);n++};
@@ -52,12 +52,13 @@ try{
    return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,file_id:'F1',bytes:b.b64.length})})}
   r.fulfill({status:200,contentType:'application/json',body:'{"ok":false}'})});
  await pg.goto('http://aihoc.test:8193/');await pg.waitForSelector('#gate:not([hidden])');
+ await pg.evaluate(async()=>{(await import('./fb.js')).FB_CONFIG.appsScriptUrl=''});
  await pg.click('#gate-student');await pg.fill('#student-code','HS01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');
  await pg.waitForFunction(()=>!document.getElementById('login-dialog').open);
  await pg.waitForFunction(()=>Boolean(localStorage.getItem('aisgk-fb')),null,{timeout:8000});ok(true,'đăng nhập song song Firebase, lưu phiên');
  ok(JSON.parse(await pg.evaluate(()=>localStorage.getItem('aisgk-fb'))).uid===UID,'uid Firebase đúng');
  await pg.click('button[data-tab=exams]');await pg.waitForSelector('.exam-card');
- const titles=await pg.$$eval('.exam-title',e=>e.map(x=>x.textContent));
+ const titles=await pg.locator('.exam-title').allTextContents();
  ok(titles.includes('Giữa kỳ Firebase')&&titles.includes('Đề Worker cũ'),'danh sách gộp Worker + Firebase: '+titles);
  ok(!titles.includes('Đề khối 8')&&!titles.includes('Đề không gắn firebase'),'chỉ đề đúng khối và có backend firebase');
  // vào thi Firebase
@@ -106,7 +107,7 @@ try{
  ok(c3.includes('Đã nộp file thực hành: bai-thuc-hanh.xlsx')&&c3.includes('Nộp lại file thực hành'),'thẻ đề hiện đã nộp file + cho nộp lại trong giờ');
  // Firebase sập: đề Worker vẫn hiện
  st.fbDown=true;await pg.click('button[data-tab=catalog]').catch(()=>{});await pg.click('button[data-tab=exams]');await pg.waitForSelector('.exam-card');
- const t2=await pg.$$eval('.exam-title',e=>e.map(x=>x.textContent));ok(t2.includes('Đề Worker cũ'),'Firebase lỗi vẫn thấy đề Worker');
+ const t2=await pg.locator('.exam-title').allTextContents();ok(t2.includes('Đề Worker cũ'),'Firebase lỗi vẫn thấy đề Worker');
  st.fbDown=false;
  // đăng xuất xóa phiên Firebase
  await pg.evaluate(()=>document.getElementById('logout').click());await pg.waitForTimeout(500);

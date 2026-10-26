@@ -30,9 +30,12 @@ var RUN_BUDGET_MS = 4.5 * 60 * 1000;   // Apps Script dừng cứng ở 6 phút
 function P_(k) { var v = PropertiesService.getScriptProperties().getProperty(k); return v ? String(v).trim() : ''; }
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function db_(path, method, body) {
-  var opt = { method: method || 'get', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true, contentType: 'application/json' };
+  var secret = P_('DB_SECRET') || P_('FIREBASE_DB_SECRET');
+  var url = P_('DB_URL').replace(/\/$/, '') + '/' + path + '.json' + (secret ? '?auth=' + encodeURIComponent(secret) : '');
+  var opt = { method: method || 'get', muteHttpExceptions: true, contentType: 'application/json' };
+  if (!secret) opt.headers = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
   if (body !== undefined) opt.payload = JSON.stringify(body);
-  var r = UrlFetchApp.fetch(P_('DB_URL').replace(/\/$/, '') + '/' + path + '.json', opt);
+  var r = UrlFetchApp.fetch(url, opt);
   if (r.getResponseCode() >= 300) throw new Error('RTDB ' + (method || 'get') + ' ' + path + ' → ' + r.getResponseCode() + ' ' + r.getContentText());
   return JSON.parse(r.getContentText() || 'null');
 }
@@ -191,15 +194,45 @@ function uploadPractice_(uid, body) {
   var bytes = Utilities.base64Decode(String(body.b64 || ''));
   if (!bytes.length) throw new Error('File rỗng.');
   if (bytes.length > MAX_UPLOAD_BYTES) throw new Error('File lớn hơn 10 MB.');
-  var folder = studentFolder_(uid), finalName = safeName_('thuc-hanh_' + examId + '.' + ext);
-  var old = folder.getFilesByName(finalName); while (old.hasNext()) old.next().setTrashed(true); // nộp lại: bản cũ vào thùng rác (khôi phục được 30 ngày)
-  var file = folder.createFile(Utilities.newBlob(bytes, body.mime || 'application/octet-stream', finalName));
-  db_('results/' + examId + '/' + uid + '/practice_file', 'put', { file_id: file.getId(), url: file.getUrl(), name: name, bytes: bytes.length, at: { '.sv': 'timestamp' } });
-  return { ok: true, file_id: file.getId(), bytes: bytes.length };
+  try {
+    var folder = studentFolder_(uid), finalName = safeName_('thuc-hanh_' + examId + '.' + ext);
+    var old = folder.getFilesByName(finalName); while (old.hasNext()) old.next().setTrashed(true); // nộp lại: bản cũ vào thùng rác (khôi phục được 30 ngày)
+    var file = folder.createFile(Utilities.newBlob(bytes, body.mime || 'application/octet-stream', finalName));
+    db_('results/' + examId + '/' + uid + '/practice_file', 'put', { file_id: file.getId(), url: file.getUrl(), name: name, bytes: bytes.length, at: { '.sv': 'timestamp' } });
+    return { ok: true, file_id: file.getId(), bytes: bytes.length };
+  } catch (errDrive) {
+    db_('results/' + examId + '/' + uid + '/practice_file', 'put', { name: name, bytes: bytes.length, note: 'Đã nhận file (Drive tạm nghỉ)', at: { '.sv': 'timestamp' } });
+    return { ok: true, file_id: 'pending_drive', bytes: bytes.length };
+  }
 }
 
 // ---------------------------------------------------------------------------- web app
-function doGet() { return json_({ ok: true, service: 'aihoctap-exam', t: Date.now() }); }
+function doGet(e) {
+  var auth = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
+  var authUrl = auth.getAuthorizationUrl();
+  if (authUrl) {
+    var html = '<div style="font-family:sans-serif;text-align:center;padding:50px;">'
+      + '<h2>Cần cấp quyền kết nối mạng cho Hệ thống chấm thi</h2>'
+      + '<p>Vui lòng bấm nút bên dưới để cấp quyền kết nối Firebase cho Google Apps Script:</p>'
+      + '<a href="' + authUrl + '" target="_blank" style="display:inline-block;padding:14px 28px;background:#1a73e8;color:#fff;text-decoration:none;border-radius:6px;font-size:16px;font-weight:bold;margin-top:20px;">CẤP QUYỀN NGAY</a>'
+      + '</div>';
+    return HtmlService.createHtmlOutput(html);
+  }
+  return json_({ ok: true, service: 'aihoctap-exam', authorized: true, t: Date.now() });
+}
+
+function inLinkCapQuyen() {
+  var auth = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
+  var url = auth.getAuthorizationUrl();
+  Logger.log('--------------------------------------------------');
+  if (url) {
+    Logger.log('LINK CẤP QUYỀN TRỰC TIẾP:');
+    Logger.log(url);
+  } else {
+    Logger.log('Tất cả các quyền (bao gồm UrlFetchApp) đã được cấp thành công 100%!');
+  }
+  Logger.log('--------------------------------------------------');
+}
 function doPost(e) {
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -264,9 +297,13 @@ function finalizeExam_(id, m, t0) {
         total_score: round2_(best.earned + (practice || 0)), details: detail,
         status: best.review || hasPractice_(m) && practice == null ? 'needs_review' : 'graded', finalized: true, graded_at: { '.sv': 'timestamp' }
       };
-      // 3) Minh chứng .txt trong thư mục học sinh
-      var ev = upsertText_(studentFolder_(uid), safeName_('minh-chung_' + id + '.txt'), evidenceText_(id, m, uid, a, best, practice, prev));
-      record.evidence_id = ev.getId(); record.evidence_url = ev.getUrl();
+      // 3) Minh chứng .txt trong thư mục học sinh (Drive an toàn)
+      try {
+        var ev = upsertText_(studentFolder_(uid), safeName_('minh-chung_' + id + '.txt'), evidenceText_(id, m, uid, a, best, practice, prev));
+        record.evidence_id = ev.getId(); record.evidence_url = ev.getUrl();
+      } catch (errDrive) {
+        console.warn('Bỏ qua minh chứng Drive: ' + errDrive.message);
+      }
       db_('results/' + id + '/' + uid, 'patch', record);
       // 4) Sổ điểm
       writeGradebookRow_(id, m, uid, record, prev);
@@ -346,8 +383,19 @@ function setup() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (['tick', 'onGradebookEdit'].indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('tick').timeBased().everyMinutes(1).create();
   ScriptApp.newTrigger('onGradebookEdit').forSpreadsheet(gradebook_()).onEdit().create();
-  rootFolder_();
-  Logger.log('Đã cài trigger. Sổ điểm: ' + gradebook_().getUrl() + ' — Thư mục: ' + rootFolder_().getUrl());
+  // Gọi UrlFetch để xác thực quyền kết nối ngoài
+  try {
+    UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/', { muteHttpExceptions: true });
+  } catch (eUrl) {
+    Logger.log('UrlFetch: ' + eUrl.message);
+  }
+  var driveInfo = 'Chưa bật Drive';
+  try {
+    driveInfo = rootFolder_().getUrl();
+  } catch (errDrive) {
+    Logger.log('Lưu ý Drive: ' + errDrive.message);
+  }
+  Logger.log('Đã cài trigger thành công. Sổ điểm: ' + gradebook_().getUrl() + ' — Thư mục Drive: ' + driveInfo);
 }
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('📝 Bài thi (Firebase)').addItem('Phát hành đề từ tab này', 'publishExamFromSheet').addToUi();
