@@ -404,6 +404,16 @@ document.getElementById('form-exams')?.addEventListener('submit', async event =>
   setFieldError(title, '');
   if (!importedExam.questions.length) { status.textContent = 'Chưa có câu hỏi. Hãy tải file Excel câu hỏi hợp lệ lên trước.'; return; }
   const ms = (/** @type {string} */ id) => { const v = examField(id).value; return v ? new Date(v).getTime() : NaN; };
+  if (real) {
+    const o = ms('exam_open'); const c = ms('exam_close'); const m = Number(examField('exam_minutes').value);
+    const bad = (/** @type {string} */ id, /** @type {string} */ msg) => { const f = examField(id); setFieldError(f, msg); f.focus(); status.textContent = msg; };
+    for (const id of ['exam_minutes', 'exam_open', 'exam_close']) setFieldError(examField(id), '');
+    if (!(m >= 1 && m <= 300)) { bad('exam_minutes', 'Thời gian làm bài phải từ 1 đến 300 phút.'); return; }
+    if (!Number.isFinite(o)) { bad('exam_open', 'Chọn giờ mở bài thi.'); return; }
+    if (!Number.isFinite(c)) { bad('exam_close', 'Chọn giờ đóng bài thi.'); return; }
+    if (c <= o) { bad('exam_close', 'Giờ đóng phải sau giờ mở. Hãy chọn lại giờ đóng (ví dụ cùng ngày, muộn hơn giờ mở).'); return; }
+    if (c - o < m * 60000) { bad('exam_close', `Từ giờ mở đến giờ đóng chỉ có ${Math.floor((c - o) / 60000)} phút, ngắn hơn thời gian làm bài ${m} phút. Hãy lùi giờ đóng.`); return; }
+  }
   const payload = {
     exam_id: editingExamId || undefined, title: title.value.trim(), grade: Number(examField('exam_grade').value), subject_id: examField('exam_subject').value, mode: examField('exam_mode').value,
     kind: examField('exam_kind').value, minutes: real ? Number(examField('exam_minutes').value) : undefined, opens_at: real ? ms('exam_open') : undefined, closes_at: real ? ms('exam_close') : undefined,
@@ -890,7 +900,17 @@ on('refresh-analytics', loadAnalytics);
     if (hint) hint.textContent = real ? 'Thật: học sinh vào màn hình thi riêng, có giờ mở/đóng, đồng hồ và nộp một lần theo số lần cho phép.' : 'Thử: học sinh làm như bài luyện tập, làm được nhiều lần, không giới hạn giờ.';
     if (attempts) { attempts.disabled = !real; if (!real) attempts.value = '1'; }
   };
-  if (mode) { mode.addEventListener('change', apply); apply(); }
+  if (mode) { mode.addEventListener('change', () => { apply(); if (/** @type {HTMLSelectElement} */ (mode).value === 'real') fillExamTimes(false); }); apply(); }
+  for (const id of ['exam_open', 'exam_minutes']) document.getElementById(`field-${id}`)?.addEventListener('change', () => fillExamTimes(false));
+}
+/** Gợi ý giờ mở/đóng cho đề Thật: mở từ giờ tròn kế tiếp, đóng sau 1 ngày. Chỉ sửa giờ đóng khi đang trống hoặc không sau giờ mở. @param {boolean} force */
+function fillExamTimes(force) {
+  const open = examField('exam_open'); const close = examField('exam_close'); const minutes = Number(examField('exam_minutes').value) || 45;
+  if (!examField('exam_minutes').value) examField('exam_minutes').value = String(minutes);
+  if (force || !open.value) { const d = new Date(); d.setMinutes(Math.ceil((d.getMinutes() + 1) / 15) * 15, 0, 0); open.value = localInput(d.getTime()); }
+  const o = new Date(open.value).getTime();
+  if (Number.isFinite(o) && (force || !close.value || new Date(close.value).getTime() <= o + minutes * 60000)) close.value = localInput(o + 24 * 3600000);
+  setFieldError(open, ''); setFieldError(close, '');
 }
 /** @type {Array<any>} */
 let allStudents = [];

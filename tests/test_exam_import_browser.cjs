@@ -3,7 +3,7 @@ const {chromium}=require('playwright');const http=require('http'),fs=require('fs
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
 r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8183);
-(async()=>{const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:1100,height:900},serviceWorkers:'block',acceptDownloads:true});const pg=await ctx.newPage();let saved=null;const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+(async()=>{const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:1100,height:900},serviceWorkers:'block',acceptDownloads:true});const pg=await ctx.newPage();let saved=null,savedBefore=null;const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body={};if(u.endsWith('/teacher/auth'))body={token:'tt',must_change:false};else if(u.endsWith('/pwa/catalog'))body={schema_version:1,revision:'r',courses:[]};else if(u.endsWith('/teacher/analytics')){return r.fulfill({status:404,contentType:'application/json',body:JSON.stringify({detail:'Endpoint không tồn tại.'})})}else if(u.includes('/gemini-keys'))body={keys:[]};else if(u.endsWith('/ai-stats'))body={stats:[]};else if(u.endsWith('/ai-settings'))body={settings:{}};else if(u.endsWith('/teacher/students'))body=[];else if(u.includes('/pwa/teacher/results'))body=[];
  if(u.endsWith('/pwa/teacher/exams')){if(r.request().method()==='POST'){saved=JSON.parse(r.request().postData());body={exam_id:'exam_t1',status:'draft'}}else body={exams:saved?[{exam_id:'exam_t1',title:saved.title,grade:saved.grade,class_codes:[],mode:saved.mode,minutes:saved.minutes,opens_at:saved.opens_at,closes_at:saved.closes_at,status:'draft',state:'draft',question_count:saved.questions.length,total_points:3,submissions:0}]:[]}}
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
@@ -23,7 +23,13 @@ assert(/Tải lên thành công: 2 câu \(1 trắc nghiệm, 1 tự luận\), t�
 assert(/Không phải 10|không phải 10/.test(txt),'cảnh báo tổng điểm khác 10: '+txt);
 assert((txt.match(/Hợp lệ/g)||[]).length===2,txt);
 // 2b. Lưu đề thật: gửi đúng cấu hình và điểm từng câu
-await pg.selectOption('#field-exam_mode','real');await pg.fill('#field-exam_minutes','15');await pg.fill('#field-exam_open','2026-11-01T08:00');await pg.fill('#field-exam_close','2026-11-01T09:00');await pg.fill('#field-exam_attempts','1');
+await pg.selectOption('#field-exam_mode','real');
+assert(await pg.inputValue('#field-exam_open')&&await pg.inputValue('#field-exam_close')&&await pg.inputValue('#field-exam_minutes'),'chọn Thật tự gợi ý giờ mở/đóng và số phút');
+assert(new Date(await pg.inputValue('#field-exam_close'))>new Date(await pg.inputValue('#field-exam_open')),'giờ đóng gợi ý sau giờ mở');
+await pg.fill('#field-exam_minutes','15');await pg.fill('#field-exam_open','2026-11-01T09:00');await pg.fill('#field-exam_close','2026-11-01T08:00');savedBefore=saved;
+await pg.click('#save-exam');await pg.waitForFunction(()=>/Giờ đóng phải sau giờ mở/.test(document.getElementById('exam-save-status').innerText));assert.strictEqual(saved,savedBefore,'giờ sai không gửi lên máy chủ');
+await pg.fill('#field-exam_open','2026-11-01T08:00');await pg.fill('#field-exam_close','2026-11-01T08:10');await pg.click('#save-exam');await pg.waitForFunction(()=>/ngắn hơn thời gian làm bài 15 phút/.test(document.getElementById('exam-save-status').innerText));
+await pg.fill('#field-exam_minutes','15');await pg.fill('#field-exam_open','2026-11-01T08:00');await pg.fill('#field-exam_close','2026-11-01T09:00');await pg.fill('#field-exam_attempts','1');
 await pg.click('#save-exam');await pg.waitForSelector('dialog[open]');assert(/Đã lưu đề/.test(await pg.innerText('dialog[open]')));await pg.click('dialog[open] #msg-ok');
 assert(saved&&saved.mode==='real'&&saved.minutes===15&&saved.max_attempts===1&&saved.title==='Kiểm tra giữa kỳ'&&saved.status==='draft',JSON.stringify(saved));
 assert.deepStrictEqual(saved.questions.map(q=>[q.kind,q.points,q.correct_answer]),[['choice',1,'A'],['text',2,'']]);
