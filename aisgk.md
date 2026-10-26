@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude phán quyết Cổng 2 đạt, Cổng 3 yêu cầu cấp quyền Drive thật; Antigravity đã xác nhận 28/28 test_exam_firebase_flow PASS, chạy thử test_live_pilot_3_students xác nhận đúng điểm chặn Drive; hướng dẫn người dùng cập nhật Code.gs/appsscript.json từ commit 050a7e5 và cấp quyền OAuth để hoàn tất Cổng 3.
+- Yêu cầu mới nhất: Điểm nghẽn liên kết GCP project 628267818434 trong Apps Script do phân quyền tài khoản trình duyệt; Antigravity lập báo cáo kỹ thuật và đề xuất giải pháp mã nguồn tại docs/handoff/antigravity-claude-gcp-drive-blocker.md chuyển Claude xử lý.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1703,3 +1703,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - `setup()` không còn nuốt lỗi Drive (trước đây vẫn in "thành công" dù chưa có quyền).
 - Thêm `kiemTraHeThong()` (cấu hình, đọc RTDB, ghi/xóa file thử trong Drive, sổ điểm, trigger → in "ĐẠT TOÀN BỘ") và `testDrive()`.
 - Hướng dẫn `antigravity-nguoidung-cong3-apps-script.md` bước 6 đổi sang `kiemTraHeThong`.
+
+### 26/10/2026 — Antigravity — Báo cáo điểm nghẽn GCP Project và tạo hồ sơ bàn giao Claude
+- Đã thực hiện: Bắt được lỗi thực tế của Google Cloud khi người dùng đổi GCP project `628267818434` (bị từ chối do phân quyền tài khoản Google trên trình duyệt); phân tích nguyên nhân gốc rễ do `oauthScopes` trong `appsscript.json`; tạo hồ sơ bàn giao và đề xuất giải pháp mã nguồn tại docs/handoff/antigravity-claude-gcp-drive-blocker.md.
+- Tệp đổi/tạo: docs/handoff/antigravity-claude-gcp-drive-blocker.md, aisgk.md.
+- Kiểm thực tế: Xác minh IAM project `628267818434`; xác minh Web App URL phản hồi 200; nhận diện rõ lỗi permission denied của Apps Script.
+- Việc tiếp: Chuyển Claude xem xét phương án mã nguồn theo docs/handoff/antigravity-claude-gcp-drive-blocker.md.
