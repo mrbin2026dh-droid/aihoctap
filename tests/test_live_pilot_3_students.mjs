@@ -18,7 +18,7 @@ const adminToken = config.tokens?.access_token;
 const PROJ = 'day-hoc-tuong-tac-7ee69';
 const DB_URL = `https://${PROJ}-default-rtdb.asia-southeast1.firebasedatabase.app`;
 const API_KEY = 'AIzaSyCC2tCURXYAMpdN687kcjY537K7zUhh_Fg';
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-bNti_nTpFESXHykLsX2HpOVa0TPilIjdUmzUe_8vzdd3q7QPCRhHiaUQ23GgjLp_/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIvXSXTOKDFlAoHtJ-6wdFrN0k_KupNtPQOoYatZKmaHNWD40g0UcCOV_XE8rHgKd4/exec';
 
 const adminHeaders = {
   'Authorization': `Bearer ${adminToken}`,
@@ -245,7 +245,8 @@ async function main() {
       const resResults = await rtdb(`results/${EXAM_ID}`);
       
       const hs2Result = resResults?.[s2.uid];
-      if (hs2Result && hs2Result.auto_from_draft) {
+      const hs1Result = resResults?.[s1.uid];
+      if (resMeta?.finalized_at || (hs1Result?.finalized && hs2Result?.finalized)) {
         console.log('\n✔ ĐÃ PHÁT HIỆN KẾT QUẢ TỰ ĐỘNG CHỐT TỪ APPS SCRIPT!');
         finalized = true;
         break;

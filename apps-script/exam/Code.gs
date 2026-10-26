@@ -292,10 +292,10 @@ function finalizeExam_(id, m, t0) {
       }
       // 2) Chấm lượt tốt nhất, ghi chi tiết + đáp án (đã qua giờ đóng nên công bố được)
       var best = null, bestNo = '1';
-      Object.keys(atts[uid]).forEach(function (n) { var g = grade_(id, atts[uid][n].answers); if (!best || g.earned > best.earned) { best = g; bestNo = n; } });
+      Object.keys(atts[uid]).forEach(function (n) { if (!atts[uid][n] || !atts[uid][n].answers) return; var g = grade_(id, atts[uid][n].answers); if (!best || g.earned > best.earned) { best = g; bestNo = n; } });
       var prev = res[uid] || {}, practice = prev.practice_score != null ? Number(prev.practice_score) : null;
       var detail = {}; best.rows.forEach(function (r) { detail[r.id] = { mine: r.mine, right: r.right, ok: r.ok, pts: r.pts, max: r.max }; });
-      var a = atts[uid][bestNo];
+      var a = (atts[uid] && atts[uid][bestNo]) || {};
       var record = {
         theory_score: best.earned, theory_max: best.total, attempt: bestNo, auto_from_draft: Boolean(a.auto_from_draft),
         total_score: round2_(best.earned + (practice || 0)), details: detail,
