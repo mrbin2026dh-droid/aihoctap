@@ -20,8 +20,8 @@ await pg.goto('http://localhost:8187/teacher.html');await pg.fill('#teacher-logi
 await pg.click('#nav-exams');await pg.waitForSelector('#exams-tbody tr td');
 await pg.getByRole('button',{name:'Theo dõi'}).click();await pg.waitForSelector('#exam-mon-body tr td');
 let t=await pg.innerText('#detail-exams-monitor');assert(t.includes('Giữa kỳ Tin 9')&&t.includes('Đang làm')&&t.includes('12:34')&&t.includes('nộp muộn')&&!t.includes('[THỬ]'),t);
-assert(/Rời tab[\s\S]*4/.test(t));assert.strictEqual(await pg.locator('#exam-mon-body button:has-text("Gia hạn")').count(),1,'chỉ bài đang làm có nút Gia hạn');
-await pg.click('#exam-mon-body button:has-text("Gia hạn")');await pg.waitForSelector('dialog[open]');await pg.fill('dialog[open] input[name=minutes]','0');await pg.click('#msg-ok');
+assert(/Rời tab[\s\S]*4/.test(t));assert.strictEqual(await pg.locator('#exam-mon-body button[aria-label^="Gia hạn"]').count(),1,'chỉ bài đang làm có nút Gia hạn');
+await pg.click('#exam-mon-body button[aria-label^="Gia hạn"]');await pg.waitForSelector('dialog[open]');await pg.fill('dialog[open] input[name=minutes]','0');await pg.click('#msg-ok');
 assert((await pg.innerText('dialog[open]')).includes('1 đến 120'),'chặn số phút sai');await pg.fill('dialog[open] input[name=minutes]','10');await pg.click('#msg-ok');
 await pg.waitForFunction(()=>true);await pg.waitForTimeout(300);assert(ext&&ext.uid==='hs02'&&ext.minutes===10,JSON.stringify(ext));
 if(await pg.locator('dialog[open]').count())await pg.click('dialog[open] #msg-ok');await pg.click('#act-exams-monitor-back');await pg.waitForSelector('#exams-tbody tr td');
@@ -30,6 +30,11 @@ t=await pg.innerText('#detail-exams-stats');assert(t.includes('6,5')&&t.includes
 assert.strictEqual(await pg.locator('#exam-stats-chart rect').count(),10);assert(/4–5: 1/.test(await pg.getAttribute('#exam-stats-chart svg','aria-label')));
 const [dl]=await Promise.all([pg.waitForEvent('download'),pg.click('#act-exams-export')]);assert(/^ket_qua_.*\.xlsx$/.test(dl.suggestedFilename()),dl.suggestedFilename());
 const f=path.join(os.tmpdir(),'kq.xlsx');await dl.saveAs(f);assert(fs.statSync(f).size>1000);
+if(await pg.locator('dialog[open]').count())await pg.click('dialog[open] #msg-ok');assert.strictEqual(await pg.locator('#act-exams-clear').isEnabled(),true,'nút xóa thống kê bật sau khi tải');assert(await pg.locator('#act-exams-clear svg').count()===1,'xóa thống kê là icon');
+const box1=await pg.locator('#act-exams-clear').boundingBox(),box2=await pg.locator('#act-exams-export').boundingBox();assert(box1.x<box2.x,'icon xóa nằm bên trái Xuất Excel');
+let delCalls=0;await pg.route('**/results',r=>{if(r.request().method()==='DELETE'){delCalls++;return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({exam_id:'exam_t1',deleted_attempts:2})})}r.fallback()});
+await pg.click('#act-exams-clear');await pg.waitForSelector('dialog[open]');assert((await pg.innerText('dialog[open]')).includes('Xóa toàn bộ thống kê'));await pg.click('#msg-cancel');assert.strictEqual(delCalls,0,'hủy thì không xóa');
+await pg.click('#act-exams-clear');await pg.waitForSelector('dialog[open]');await pg.click('#msg-ok');await pg.waitForTimeout(500);assert.strictEqual(delCalls,1,'xác nhận thì gọi DELETE');
 if(await pg.locator('dialog[open]').count())await pg.click('dialog[open] #msg-ok');await pg.setViewportSize({width:390,height:844});await pg.click('#act-exams-stats-back');assert(!(await pg.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),'tràn ngang');
 assert.strictEqual(errs.length,0,errs.join(';'));
 console.log('EXAM TEACHER MONITOR OK');await b.close();srv.close()})().catch(e=>{console.error(e);process.exit(1)});

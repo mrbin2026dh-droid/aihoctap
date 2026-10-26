@@ -214,6 +214,8 @@ const ICONS = {
   monitor: 'M3 12h4l3-8 4 16 3-8h4',
   stats: 'M5 20V10 M12 20V4 M19 20v-7',
   clock: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M12 8v4l3 2',
+  plus: 'M12 5v14 M5 12h14',
+  play: 'M8 5v14l11-7z',
   retry: 'M4 12a8 8 0 1 1 3 6.3 M4 19v-5h5'
 };
 /** Vẽ biểu tượng (SVG đường nét) vào nút có data-icon; chữ thay thế nằm ở aria-label và title.

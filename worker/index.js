@@ -573,6 +573,16 @@ export class GateDurableObject {
       });
     }
 
+    // 5b. Xóa bộ đếm lượt nộp và khóa idempotency của một đề (khi giáo viên xóa thống kê)
+    if (action === '/reset-exam-submissions') {
+      const { keys } = await request.json();
+      let deleted = 0;
+      for (const k of Array.isArray(keys) ? keys.slice(0, 5000) : []) {
+        if (typeof k === 'string' && (k.startsWith('count:') || k.startsWith('sub:'))) { await this.storage.delete(k); deleted += 1; }
+      }
+      return new Response(JSON.stringify({ deleted }), { headers: { 'Content-Type': 'application/json' } });
+    }
+
     // 6. Gemini Daily Quota Limit check (Legacy / Direct callers)
     if (action === '/check-gemini-limit') {
       let body = {};
@@ -1605,6 +1615,24 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
           const mockDetail = !env.FIREBASE_DATABASE_URL ? (env.TEST_ALL_RESULTS || []).filter(r => r.exam_id === m[1]) : null;
           const analysis = analyzeAttempts(mockDetail || withDetail, { [`exam:${m[1]}`]: exam });
           return respond({ exam: { exam_id: exam.exam_id, title: exam.title, mode: exam.mode, grade: exam.grade, class_codes: exam.class_codes, minutes: exam.minutes, total_points: exam.total_points, question_count: exam.question_count, state: examState(exam, now), status: exam.status, opens_at: exam.opens_at, closes_at: exam.closes_at }, ...results, questions: analysis.lessons[0]?.questions || [], server_now: now });
+        }
+        if (m[2] === 'results' && request.method === 'DELETE') {
+          const all = (await dbGet(env, signingKeys, 'attempts')) || {};
+          const sessions = (await dbGet(env, signingKeys, 'exam_sessions')) || {};
+          const doKeys = []; let removed = 0; const uids = new Set();
+          for (const [uid, byUser] of Object.entries(all)) for (const [aid, a] of Object.entries(byUser || {})) if (a?.exam_id === m[1]) {
+            await dbPut(env, signingKeys, `attempts/${uid}/${aid}`, null);
+            await dbPut(env, signingKeys, `attempt_details/${uid}/${aid}`, null);
+            doKeys.push(`sub:${uid}:${aid}`); uids.add(uid); removed += 1;
+          }
+          for (const [uid, byExam] of Object.entries(sessions)) if (byExam?.[m[1]]) {
+            if (byExam[m[1]].attempt_id) doKeys.push(`sub:${uid}:${byExam[m[1]].attempt_id}`);
+            await dbPut(env, signingKeys, `exam_sessions/${uid}/${m[1]}`, null); uids.add(uid);
+          }
+          for (const uid of uids) doKeys.push(`count:${uid}:exam:${m[1]}`);
+          if (doKeys.length && gateStub) await gateStub.fetch('http://do/reset-exam-submissions', { method: 'POST', body: JSON.stringify({ keys: doKeys }) });
+          if (!env.FIREBASE_DATABASE_URL && env.TEST_ALL_RESULTS) env.TEST_ALL_RESULTS = env.TEST_ALL_RESULTS.filter(r => r.exam_id !== m[1]);
+          return respond({ exam_id: m[1], deleted_attempts: removed });
         }
         if (m[2] === 'extend' && request.method === 'POST') {
           const body = await request.json().catch(() => ({}));

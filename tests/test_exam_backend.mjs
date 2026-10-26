@@ -157,5 +157,13 @@ try {
   await call('POST', '/pwa/exams/submit', {exam_id: 'exam_ext', attempt_id: sx.body.attempt_id, answers: {q1: 'A', q2: 'A'}}, ta);
   assert.equal((await call('POST', '/pwa/teacher/exams/exam_ext/extend', {uid: 'ha', minutes: 5}, admin)).status, 409, 'đã nộp thì không gia hạn');
   assert.equal((await call('POST', '/pwa/teacher/exams/' + trial.body.exam_id + '/extend', {uid: 'ha', minutes: 5}, admin)).status, 400, 'đề Thử không có giờ');
+  // Xóa toàn bộ thống kê của một đề
+  const beforeDel = (await call('GET', `/pwa/teacher/exams/${id}/results`, null, admin)).body.stats.submitted; assert.ok(beforeDel >= 1, 'có bài nộp trước khi xóa');
+  assert.equal((await call('DELETE', `/pwa/teacher/exams/${id}/results`, null, ta)).status, 403, 'học sinh không xóa được thống kê');
+  assert.equal((await call('DELETE', '/pwa/teacher/exams/exam_000000000000/results', null, admin)).status, 404);
+  const del = await call('DELETE', `/pwa/teacher/exams/${id}/results`, null, admin); assert.equal(del.status, 200, JSON.stringify(del.body)); assert.ok(del.body.deleted_attempts >= 1);
+  assert.equal((await call('GET', `/pwa/teacher/exams/${id}/results`, null, admin)).body.stats.submitted, 0, 'thống kê trống sau khi xóa');
+  assert.equal((await call('GET', '/pwa/teacher/exams', null, admin)).body.exams.find(e => e.exam_id === id).submissions, 0);
+  assert.equal((await call('GET', '/pwa/exams', null, ta)).body.exams.find(e => e.exam_id === id)?.attempts_used ?? 0, 0, 'học sinh làm lại được');
 } finally { Date.now = realNow; }
 console.log('EXAM BACKEND OK');

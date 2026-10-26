@@ -903,3 +903,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Làm: Kéo commit cf1f2b7, kiểm tra cú pháp node --check 0 lỗi, quét bí mật sạch. Deploy Worker aihoctap-gate thành công (bản mới: b0df0cc6-5973-42ed-b8a0-e27feab0d04b, bản cũ: 6469df6f-0f2a-4137-a676-ba5388261964).
 - Kiểm thử thực tế: Smoke test thật live worker GET /api/health 200, GET /api/pwa/exams không token trả 401 Unauthorized ("Thiếu token xác thực."). Toàn bộ test suite liên quan (test_class_shared_ip.mjs, load_sim_exam.mjs, test_exam_backend.mjs, test_student_import_backend.mjs, test_weakness_analytics.mjs) PASS 100%. Gói dịch vụ: Cloudflare Workers tiêu chuẩn (Free plan 100k req/ngày, DO SQLite), Firebase Realtime Database (Gói Spark 0 chi phí).
 - Việc mở: Người dùng và Claude phối hợp thử nghiệm thực tế với 30–100 máy thật.
+## [Claude] Icon thao tác, xóa thống kê đề, trình sửa câu hỏi
+- Nút thao tác danh sách đề / Gia hạn / bài học / khóa API / AI chuyển sang icon 48px (toIcon). Thêm icon plus, play.
+- Thống kê đề: icon thùng rác (xóa toàn bộ thống kê) bên trái "Xuất Excel"; Worker `DELETE /api/pwa/teacher/exams/{id}/results` + DO `/reset-exam-submissions`. Bỏ banner "dữ liệu minh họa".
+- Form đề: trình sửa câu hỏi dạng thẻ (`exam-editor.js`), sửa/thêm/xóa/lưu; căn lại các ô form. `dom.el` nhận thêm tham số children (sửa lỗi cột thao tác khóa API/AI không hiện nút).
+- Test: test_exam_backend.mjs, test_exam_editor_browser.cjs (mới), test_exam_teacher_monitor.cjs cập nhật. Cần Antigravity deploy Worker: docs/handoff/antigravity-user-exam-editor.md

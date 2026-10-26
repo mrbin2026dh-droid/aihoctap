@@ -35,7 +35,7 @@ assert(saved&&saved.mode==='real'&&saved.minutes===15&&saved.max_attempts===1&&s
 assert.deepStrictEqual(saved.questions.map(q=>[q.kind,q.points,q.correct_answer]),[['choice',1,'A'],['text',2,'']]);
 assert(new Date(saved.closes_at)-new Date(saved.opens_at)===3600000,'giờ mở/đóng đổi đúng sang mili giây');
 await pg.waitForFunction(()=>/Kiểm tra giữa kỳ/.test(document.getElementById('exams-tbody').innerText));
-const row=await pg.innerText('#exams-tbody');assert(/Thật · 15 phút/.test(row)&&/Nháp/.test(row)&&/Mở đề/.test(row),row);
+const row=await pg.innerText('#exams-tbody');assert(/Thật · 15 phút/.test(row)&&/Nháp/.test(row)&&(await pg.locator('#exams-tbody button[aria-label^="Mở đề"]').count())===1,row);
 await pg.click('#act-exams-new');await pg.waitForTimeout(200);
 // 3. File sai: dựng bằng thư viện trong trang
 await pg.addScriptTag({url:'/vendor/write-excel-file.min.js'});

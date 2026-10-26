@@ -1,6 +1,6 @@
 // @ts-check
-/** @template {keyof HTMLElementTagNameMap} K @param {K} tag @param {string} [text] @param {string} [className] */
-export function el(tag, text = '', className = '') { const node = document.createElement(tag); node.textContent = text; node.className = className; return node; }
+/** @template {keyof HTMLElementTagNameMap} K @param {K} tag @param {string} [text] @param {string} [className] @param {Node[]} [children] */
+export function el(tag, text = '', className = '', children = []) { const node = document.createElement(tag); node.textContent = text; node.className = className; if (children.length) node.append(...children); return node; }
 /** @param {string} text @param {()=>void|Promise<void>} action @param {string} [className] */
 export function button(text, action, className = '') {
   const node = el('button', text, className); node.type = 'button';

@@ -290,3 +290,28 @@
 /* AUTOFILL */
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill{-webkit-text-fill-color:var(--ink);caret-color:var(--ink);box-shadow:0 0 0 1000px var(--surface) inset;transition:background-color 9999s}
+/* ICON-ACTIONS: nút biểu tượng trong ô bảng và thanh tiêu đề */
+.teacher-app .t-table td>.t-icon-btn+.t-icon-btn{margin-left:8px}
+.teacher-app .t-heading-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.teacher-app .t-list-item>.t-icon-btn{justify-self:start;align-self:center}
+@media(min-width:1051px){.teacher-app #exams-tbody td:last-child{width:248px;min-width:248px}}
+/* EXAM-EDITOR: sửa câu hỏi trực tiếp */
+.teacher-app #form-exams .t-form-grid{align-items:start}
+.teacher-app #form-exams .t-field select,.teacher-app #form-exams .t-field input{width:100%;min-height:48px}
+.teacher-app .t-qe-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.teacher-app .t-qe-total{margin:0;font-weight:700}
+.teacher-app .t-qe-add{display:flex;flex-wrap:wrap;gap:8px}
+.teacher-app .t-qe-card{display:grid;gap:12px;margin-bottom:16px;border:1px solid var(--line)}
+.teacher-app .t-qe-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center}
+.teacher-app .t-qe-head h4{margin:0}
+.teacher-app .t-qe-head select{min-height:48px;min-width:0}
+.teacher-app .t-qe-pts{display:flex;align-items:center;gap:8px;font-weight:600}
+.teacher-app .t-qe-points{width:96px;min-height:48px}
+.teacher-app .t-qe-card textarea{width:100%;min-height:72px}
+.teacher-app .t-qe-options{display:grid;gap:8px}
+.teacher-app .t-qe-opt{display:grid;grid-template-columns:32px minmax(0,1fr) 48px;gap:8px;align-items:center}
+.teacher-app .t-qe-opt input[type=text]{min-height:48px;width:100%}
+.teacher-app .t-qe-opt input[type=radio]{width:24px;height:24px;justify-self:center;accent-color:var(--brand)}
+.teacher-app .t-qe-key{font-weight:700;text-align:center}
+.teacher-app .t-qe-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:760px){.teacher-app .t-qe-head{grid-template-columns:minmax(0,1fr) auto}.teacher-app .t-qe-head h4{grid-column:1/-1}.teacher-app .t-qe-meta{grid-template-columns:minmax(0,1fr)}}

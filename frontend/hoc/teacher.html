@@ -152,7 +152,6 @@
 </section>
 </section>
 <section id="view-exams" hidden aria-label="Kiểm tra">
-<p class="notice t-warning" role="note" id="exams-preview-note">Đề kiểm tra đã lưu được trên máy chủ. Màn hình làm bài của học sinh đang được xây dựng; hai mục Theo dõi và Thống kê bên dưới vẫn là dữ liệu minh họa.</p>
 <section id="list-exams" class="t-list">
 <h2 class="visually-hidden">Đề kiểm tra</h2>
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-exams-new" class="t-button t-primary" data-action="new-exams" >Thêm đề kiểm tra</button></div>
@@ -204,6 +203,10 @@
 <h3>Câu hỏi từ file Excel</h3>
 <div id="exam-import-preview"><p class="t-muted">Chưa tải file. Bấm "Tải mẫu Excel đề", điền câu hỏi và điểm từng câu rồi tải lên.</p></div>
 </section>
+<section class="t-card" id="exam-editor-card">
+<h3>Danh sách câu hỏi (sửa trực tiếp)</h3>
+<div id="exam-question-editor"></div>
+</section>
 <div class="t-actions"><button type="submit" class="t-button t-primary" data-action="save-exam" id="save-exam">Lưu đề</button><p class="t-hint" id="exam-save-status" role="status"></p>
 </div>
 </form>
@@ -214,7 +217,7 @@
 <table class="t-table" id="exam-mon-table"><caption>Tiến độ làm bài</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Trạng thái</th><th scope="col" class="t-number">Còn lại</th><th scope="col" class="t-number">Rời tab</th><th scope="col" class="t-number">Điểm</th><th scope="col">Thao tác</th></tr></thead><tbody id="exam-mon-body"><tr><td colspan="7" class="t-muted">Chưa có dữ liệu.</td></tr></tbody></table>
 </section>
 <section id="detail-exams-stats" hidden class="t-detail"><button type="button" id="act-exams-stats-back" class="t-button" data-action="back-exams" data-target="list-exams">Quay lại danh sách</button>
-<div class="t-heading"><div><h2 id="exam-stats-title">Thống kê và xếp hạng</h2><p class="t-muted" id="exam-stats-sub">Chọn một đề trong danh sách để xem thống kê.</p></div><button type="button" id="act-exams-export" class="t-button" data-action="export-exam" disabled aria-disabled="true">Xuất Excel</button></div>
+<div class="t-heading"><div><h2 id="exam-stats-title">Thống kê và xếp hạng</h2><p class="t-muted" id="exam-stats-sub">Chọn một đề trong danh sách để xem thống kê.</p></div><div class="t-heading-actions"><button type="button" id="act-exams-clear" class="t-icon-btn t-danger" data-icon="trash" aria-label="Xóa toàn bộ thống kê của bài kiểm tra này" title="Xóa toàn bộ thống kê" disabled aria-disabled="true"></button><button type="button" id="act-exams-export" class="t-button" data-action="export-exam" disabled aria-disabled="true">Xuất Excel</button></div></div>
 <dl class="t-metrics" id="exam-stats-metrics"></dl>
 <figure class="t-chart"><figcaption>Phân bố điểm</figcaption><div id="exam-stats-chart"></div></figure>
 <table class="t-table"><caption>Số liệu biểu đồ</caption><thead><tr><th scope="col">Khoảng điểm</th><th scope="col" class="t-number">Số học sinh</th></tr></thead><tbody id="exam-stats-dist"></tbody></table>

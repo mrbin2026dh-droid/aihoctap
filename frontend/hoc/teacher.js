@@ -2,6 +2,7 @@
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
 import * as ui from './teacher-ui.js';
+import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
@@ -80,7 +81,7 @@ function addQuestion(question) {
   /** @type {HTMLTextAreaElement} */ (hint.querySelector('textarea')).maxLength = 1000;
   const topic = inputLabel('Chủ đề kiến thức (giúp báo cáo điểm yếu)', 'topic', question?.topic || '');
   const topicInput = /** @type {HTMLInputElement} */ (topic.querySelector('input')); topicInput.required = false; topicInput.maxLength = 60; topicInput.placeholder = 'Ví dụ: Phần cứng máy tính';
-  section.append(topic, hint, button('Xóa câu hỏi', () => section.remove(), 'danger'));
+  section.append(topic, hint, ui.toIcon(/** @type {HTMLButtonElement} */ (button('Xóa câu hỏi', () => section.remove())), 'trash', 'Xóa câu hỏi này', true));
   const toggle = () => {options.hidden = kind.value === 'text'; for (const input of options.querySelectorAll('input,select')) /** @type {HTMLInputElement} */ (input).disabled = options.hidden;};
   kind.addEventListener('change', toggle); toggle(); container.append(section);
 }
@@ -147,7 +148,7 @@ function renderLessonList() {
         } catch (error) { fail(error instanceof Error ? error : new Error('Chưa mở được bài học.')); }
       });
     });
-    open.setAttribute('aria-label', `Mở bài ${l.title}`);
+    ui.toIcon(open, 'view', `Mở bài ${l.title}`);
     card.append(info, open); box.append(card);
   }
 }
@@ -182,6 +183,11 @@ function loadScript(src) {
 }
 /** @type {{questions:import('./exam-import.js').ImportedQuestion[], total_points:number}} */
 let importedExam = {questions: [], total_points: 0};
+/** Vẽ lại trình sửa câu hỏi theo importedExam. */
+function showQuestionEditor() {
+  const box = document.getElementById('exam-question-editor'); if (!box) return;
+  renderEditor(box, () => /** @type {any} */ (importedExam.questions), list => { importedExam.questions = list; importedExam.total_points = totalPoints(/** @type {any} */ (list)); });
+}
 async function downloadExamTemplate() {
   await loadScript('./vendor/write-excel-file.min.js');
   const sample = templateRows();
@@ -216,7 +222,7 @@ async function importExamFile(file) {
   if (parsed.fatal) { target.append(el('p', parsed.fatal, 'notice error')); if (!parsed.reports.length) return; }
   const bad = parsed.reports.filter(r => !r.ok).length;
   if (parsed.valid) {
-    importedExam = {questions: parsed.questions, total_points: parsed.total_points};
+    importedExam = {questions: parsed.questions, total_points: parsed.total_points}; showQuestionEditor();
     const kinds = {choice: parsed.questions.filter(q => q.kind === 'choice').length, text: parsed.questions.filter(q => q.kind === 'text').length};
     target.append(el('p', `Tải lên thành công: ${parsed.questions.length} câu (${kinds.choice} trắc nghiệm, ${kinds.text} tự luận), tổng ${String(parsed.total_points).replace('.', ',')} điểm.`, 'notice success'));
     if (parsed.total_points !== 10) target.append(el('p', `Tổng điểm là ${String(parsed.total_points).replace('.', ',')}, không phải 10. Điểm của học sinh sẽ quy về thang 10.`, 't-muted'));
@@ -252,7 +258,7 @@ function resetExamForm() {
   /** @type {HTMLFormElement} */ (node('form-exams')).reset();
   node('exam-import-preview').replaceChildren(el('p', 'Chưa tải file. Bấm "Tải mẫu Excel đề", điền câu hỏi và điểm từng câu rồi tải lên.', 't-muted'));
   node('exam-save-status').textContent = '';
-  examField('exam_mode').dispatchEvent(new Event('change'));
+  examField('exam_mode').dispatchEvent(new Event('change')); showQuestionEditor();
 }
 async function loadExams() {
   const captured = generation;
@@ -277,12 +283,13 @@ async function loadExams() {
     cell('Mở – Đóng', e.mode === 'real' ? `${dateText(e.opens_at)} – ${dateText(e.closes_at)}` : '—');
     cell('Trạng thái', el('span', EXAM_STATE_TEXT[/** @type {keyof typeof EXAM_STATE_TEXT} */ (e.state)] || e.state, `t-badge${e.state === 'closed' ? ' t-badge-error' : ''}`));
     const n = cell('Bài nộp', String(e.submissions)); n.className = 't-number';
-    const actions = el('div', '', 't-actions-inline');
-    actions.append(button('Sửa', () => editExam(e.exam_id).catch(fail), 't-button'));
-    if (e.mode === 'real') actions.append(button('Theo dõi', () => openExamMonitor(e.exam_id).catch(fail), 't-button'));
-    actions.append(button('Thống kê', () => openExamStats(e.exam_id).catch(fail), 't-button'));
-    const toggle = e.status === 'open' ? ['Đóng đề', 'closed'] : ['Mở đề', 'open'];
-    actions.append(button(toggle[0], () => setExamStatus(e.exam_id, toggle[1]).catch(fail), 't-button'));
+    const actions = el('div', '', 't-icon-actions'); actions.setAttribute('role', 'group'); actions.setAttribute('aria-label', `Thao tác với đề ${e.title}`);
+    const icon = (/** @type {string} */ label, /** @type {any} */ ic, /** @type {() => void} */ fn) => ui.toIcon(/** @type {HTMLButtonElement} */ (button(label, fn)), ic, `${label}: ${e.title}`);
+    actions.append(icon('Sửa', 'edit', () => editExam(e.exam_id).catch(fail)));
+    if (e.mode === 'real') actions.append(icon('Theo dõi', 'monitor', () => openExamMonitor(e.exam_id).catch(fail)));
+    actions.append(icon('Thống kê', 'stats', () => openExamStats(e.exam_id).catch(fail)));
+    const isOpen = e.status === 'open';
+    actions.append(icon(isOpen ? 'Đóng đề' : 'Mở đề', isOpen ? 'lock' : 'play', () => setExamStatus(e.exam_id, isOpen ? 'closed' : 'open').catch(fail)));
     cell('Thao tác', actions); body.append(tr);
   }
 }
@@ -316,8 +323,8 @@ async function openExamMonitor(id) {
       cell('Còn lại', r.status === 'in_progress' ? remainText(r.remaining_ms) : '—', 't-number');
       cell('Rời tab', r.leaves ? String(r.leaves) : '0', `t-number${r.leaves >= 3 ? ' t-warn' : ''}`);
       cell('Điểm', r.status === 'submitted' ? `${num(r.best_score)}${r.needs_review ? ' *' : ''}` : '—', 't-number');
-      const act = el('div', '', 't-actions-inline');
-      if (r.status === 'in_progress' && data.exam.mode === 'real') act.append(button('Gia hạn', () => extendStudent(id, r, refresh), 't-button'));
+      const act = el('div', '', 't-icon-actions');
+      if (r.status === 'in_progress' && data.exam.mode === 'real') act.append(ui.toIcon(/** @type {HTMLButtonElement} */ (button('Gia hạn', () => extendStudent(id, r, refresh))), 'clock', `Gia hạn cho ${r.name}`));
       cell('Thao tác', act.childElementCount ? act : '—');
       body.append(tr);
     }
@@ -363,6 +370,16 @@ async function openExamStats(id) {
   fillBody('exam-stats-questions', (data.questions || []).map((/** @type {any} */ q) => [`Câu ${q.number}`, q.topic || '—', q.percent === null ? '—' : `${q.percent}%`, q.top_wrong ? `${q.top_wrong.key}. ${q.top_wrong.text} (${q.top_wrong.count})` : '—']), 4);
   fillBody('exam-stats-rank', data.ranking.map((/** @type {any} */ r) => [r.rank, r.name + (r.needs_review ? ' *' : ''), r.class_code || '—', num(r.score)]), 4);
   const exp = /** @type {HTMLButtonElement} */ (node('act-exams-export')); exp.disabled = false; exp.removeAttribute('aria-disabled'); exp.onclick = () => { exportExamResults().catch(fail); };
+  const clr = /** @type {HTMLButtonElement} */ (node('act-exams-clear')); clr.disabled = false; clr.removeAttribute('aria-disabled');
+  clr.onclick = () => { clearExamStats(id, data.exam.title).catch(fail); };
+}
+/** @param {string} id @param {string} title */
+async function clearExamStats(id, title) {
+  const n = examView?.data?.stats?.submitted ?? 0;
+  if (!await confirmBox({title: 'Xóa toàn bộ thống kê?', body: `Xóa mọi bài nộp và tiến độ làm bài của đề "${title}" (${n} bài nộp). Học sinh sẽ được làm lại từ đầu. Không thể hoàn tác; hãy xuất Excel trước nếu cần lưu.`, okText: 'Xóa thống kê', danger: true})) return;
+  const res = await api(`/pwa/teacher/exams/${id}/results`, {method: 'DELETE', token});
+  notify(`Đã xóa ${res.deleted_attempts ?? 0} bài nộp của đề này.`);
+  await openExamStats(id); await loadExams();
 }
 async function exportExamResults() {
   if (!examView) return; const {data} = examView;
@@ -391,8 +408,8 @@ async function editExam(id) {
   examField('exam_mode').dispatchEvent(new Event('change'));
   examField('exam_minutes').value = exam.minutes ?? ''; examField('exam_open').value = localInput(exam.opens_at); examField('exam_close').value = localInput(exam.closes_at);
   examField('exam_attempts').value = String(exam.max_attempts ?? 1); examField('exam_answers').value = exam.reveal; examField('exam-shuffle').checked = Boolean(exam.shuffle);
-  importedExam = {questions: exam.questions.map(/** @param {any} q @param {number} i */ (q, i) => ({row: i + 2, kind: q.kind, prompt: q.prompt, options: q.options, correct_answer: q.correct_answer, points: q.points, topic: q.topic || '', hint: q.hint || ''})), total_points: exam.total_points};
-  node('exam-import-preview').replaceChildren(el('p', `Đề đang có ${exam.questions.length} câu, tổng ${String(exam.total_points).replace('.', ',')} điểm. Tải file Excel mới nếu muốn thay toàn bộ câu hỏi.`, 'notice success'));
+  importedExam = {questions: exam.questions.map(/** @param {any} q @param {number} i */ (q, i) => ({id: q.id, row: i + 2, kind: q.kind, prompt: q.prompt, options: q.options, correct_answer: q.correct_answer, points: q.points, topic: q.topic || '', hint: q.hint || ''})), total_points: exam.total_points};
+  node('exam-import-preview').replaceChildren(el('p', `Đề đang có ${exam.questions.length} câu, tổng ${String(exam.total_points).replace('.', ',')} điểm. Sửa trực tiếp ở danh sách câu hỏi bên dưới rồi bấm "Lưu đề"; tải file Excel mới nếu muốn thay toàn bộ câu hỏi.`, 'notice success')); showQuestionEditor();
   await ui.showSub('detail-exams');
 }
 document.getElementById('act-exams-new')?.addEventListener('click', resetExamForm);
@@ -402,7 +419,7 @@ document.getElementById('form-exams')?.addEventListener('submit', async event =>
   const title = examField('exam_title');
   if (!title.value.trim()) { setFieldError(title, 'Nhập tiêu đề đề kiểm tra.'); title.focus(); return; }
   setFieldError(title, '');
-  if (!importedExam.questions.length) { status.textContent = 'Chưa có câu hỏi. Hãy tải file Excel câu hỏi hợp lệ lên trước.'; return; }
+  { const problem = validateQuestions(/** @type {any} */ (importedExam.questions)); if (problem) { status.textContent = problem; document.getElementById('exam-question-editor')?.scrollIntoView({block: 'nearest'}); return; } }
   const ms = (/** @type {string} */ id) => { const v = examField(id).value; return v ? new Date(v).getTime() : NaN; };
   if (real) {
     const o = ms('exam_open'); const c = ms('exam_close'); const m = Number(examField('exam_minutes').value);
@@ -418,7 +435,7 @@ document.getElementById('form-exams')?.addEventListener('submit', async event =>
     exam_id: editingExamId || undefined, title: title.value.trim(), grade: Number(examField('exam_grade').value), subject_id: examField('exam_subject').value, mode: examField('exam_mode').value,
     kind: examField('exam_kind').value, minutes: real ? Number(examField('exam_minutes').value) : undefined, opens_at: real ? ms('exam_open') : undefined, closes_at: real ? ms('exam_close') : undefined,
     max_attempts: real ? Number(examField('exam_attempts').value) : undefined, shuffle: examField('exam-shuffle').checked, reveal: examField('exam_answers').value, status: 'draft',
-    questions: importedExam.questions.map(({kind, prompt, options, correct_answer, points, topic, hint}) => ({kind, prompt, options, correct_answer, points, topic, hint}))
+    questions: toPayload(/** @type {any} */ (importedExam.questions))
   };
   const submit = /** @type {HTMLButtonElement} */ (node('save-exam'));
   await withBusy(submit, 'Đang lưu…', async () => {
@@ -646,7 +663,7 @@ async function loadGeminiKeys() {
         el('td', '', '', [el('span', statusText, statusClass)]),
         el('td', `${key.daily_count || 0} / ${key.daily_limit || 1500}`),
         el('td', '', '', [
-          button('Xóa', async () => {
+          ui.toIcon(/** @type {HTMLButtonElement} */ (button('Xóa', async () => {
             if (!await confirmBox({
               title: 'Xóa khóa API?',
               body: `Xóa khóa …${key.key_suffix}? Khóa này sẽ không còn dùng cho kết nối AI. Không thể hoàn tác.`,
@@ -660,7 +677,7 @@ async function loadGeminiKeys() {
             } catch (err) {
               fail(err instanceof Error ? err : new Error('Chưa xóa được khóa.'));
             }
-          }, 'danger')
+          })), 'trash', `Xóa khóa …${key.key_suffix}`, true)
         ])
       );
       tbody.append(tr);
@@ -778,7 +795,7 @@ async function loadAiUsage() {
         el('td', item.grant ? `+${item.grant}` : '0'),
         el('td', '', '', [el('span', statusText, statusClass)]),
         el('td', '', '', [
-          button(isLocked ? 'Mở khóa' : 'Khóa', async () => {
+          ui.toIcon(/** @type {HTMLButtonElement} */ (button(isLocked ? 'Mở khóa' : 'Khóa', async () => {
             await api('/teacher/ai-lock', {
               method: 'POST',
               token,
@@ -786,8 +803,8 @@ async function loadAiUsage() {
             });
             await loadAiUsage();
             notify(isLocked ? `Đã mở khóa gia sư cho ${item.student_id}.` : `Đã tạm khóa gia sư với ${item.student_id}.`);
-          }),
-          button('+5 lượt', async () => {
+          })), isLocked ? 'unlock' : 'lock', `${isLocked ? 'Mở khóa' : 'Khóa'} gia sư của ${item.student_id}`),
+          ui.toIcon(/** @type {HTMLButtonElement} */ (button('+5 lượt', async () => {
             await api('/teacher/ai-grant', {
               method: 'POST',
               token,
@@ -795,7 +812,7 @@ async function loadAiUsage() {
             });
             await loadAiUsage();
             notify(`Đã cộng 5 lượt hỏi gia sư cho ${item.student_id}.`);
-          }, 'primary')
+          })), 'plus', `Cộng 5 lượt hỏi cho ${item.student_id}`)
         ])
       );
       tbody.append(tr);
