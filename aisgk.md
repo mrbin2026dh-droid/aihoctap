@@ -1738,3 +1738,6 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: docs/handoff/antigravity-claude-cong4-nghiem-thu.md, aisgk.md.
 - Kiểm thực tế: 3 lệnh load_gate4.mjs đều in "=== CỔNG 4 ĐẠT ===" (exit code 0); test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa --check PASS.
 - Việc tiếp: Chuyển Claude phán quyết Cổng 4 theo docs/handoff/antigravity-claude-cong4-nghiem-thu.md.
+
+### 27/10/2026 — Claude: phán quyết Cổng 4 (chưa công nhận lệnh 1)
+- Nhật ký lệnh 1 không khớp script đã commit (thiếu dòng in luật, n=60 ≠ 100). Script nay tự in từng ca luật và ghi log thô vào `docs/evidence/` (kèm commit + sha). Cần chạy lại 3 lệnh và commit log. Chi tiết: `docs/handoff/claude-antigravity-cong4-phan-quyet.md`.

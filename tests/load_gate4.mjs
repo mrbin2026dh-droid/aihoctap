@@ -4,9 +4,18 @@
 //   node tests/load_gate4.mjs --n=100 --mb=0     # 100 học sinh cùng vào thi + lưu nháp + nộp bài (không nộp file)
 // Kết quả in số thật (p50/p95/max, số thành công, số lần thử lại). Thoát mã 1 nếu không đạt. Dọn tài khoản/dữ liệu RTDB khi xong;
 // file Drive thử nằm trong thư mục lớp "9LOAD" — xóa tay sau khi xem.
-import { readFileSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
+import { readFileSync, mkdirSync, appendFileSync } from 'node:fs';
+import { randomBytes, createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
 import process from 'node:process';
+
+// Tự ghi nhật ký thô vào docs/evidence/ (kèm mã commit và mã băm của chính script) để kết quả kiểm chứng lại được.
+const LOG = `docs/evidence/gate4-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+try { mkdirSync('docs/evidence', { recursive: true }); } catch { /* bỏ qua */ }
+const _log = console.log.bind(console);
+console.log = (...a) => { _log(...a); try { appendFileSync(LOG, a.join(' ') + '\n'); } catch { /* bỏ qua */ } };
+let HEAD = '?'; try { HEAD = execSync('git rev-parse --short HEAD').toString().trim() + (execSync('git status --porcelain tests/load_gate4.mjs').toString().trim() ? ' (script ĐÃ SỬA, chưa commit)' : ''); } catch { /* bỏ qua */ }
+console.log(`# commit ${HEAD}; sha256(script)=${createHash('sha256').update(readFileSync(new URL(import.meta.url))).digest('hex').slice(0, 16)}; args=${process.argv.slice(2).join(' ')}`);
 
 const arg = (k, d) => { const a = process.argv.find(x => x.startsWith(`--${k}=`)); return a ? Number(a.split('=')[1]) : d; };
 const N = arg('n', 30), MB = arg('mb', 10), UPLOAD_WINDOW_S = arg('window', 60), CONC_PROVISION = 10;
@@ -88,8 +97,9 @@ async function main() {
   must(pct(signMs, 95) < 3000, 'đăng nhập p95 phải < 3000 ms');
 
   // 2) Kiểm luật bằng token học sinh thật
+  console.log('Kiểm luật bằng token học sinh…');
   const a = students[0], b = students[1];
-  const neg = async (label, p) => { const r = await p; must(r.status === 401 || r.status === 403, `luật: ${label} phải bị chặn (nhận ${r.status})`); };
+  const neg = async (label, p) => { const r = await p; const blocked = r.status === 401 || r.status === 403; console.log(`${blocked ? '✔' : '✘'} luật: ${label} → HTTP ${r.status}${blocked ? ' (bị chặn)' : ' (KHÔNG bị chặn!)'}`); must(blocked, `luật: ${label} phải bị chặn (nhận ${r.status})`); };
   await neg('HS đọc exam_secrets', asStudent(a, `exam_secrets/${EXAM}`));
   await neg('HS ghi results', asStudent(a, `results/${EXAM}/${a.uid}`, 'PUT', { total_score: 10 }));
   await neg('HS ghi nháp của bạn khác', asStudent(a, `drafts/${EXAM}/${b.uid}`, 'PUT', { updated_at: { '.sv': 'timestamp' }, answers: { q1: 'A' }, leaves: 0 }));
@@ -113,7 +123,7 @@ async function main() {
   stat('Vào thi (đồng hồ + phiên + tải đề)', enter); stat('Lưu nháp', draft); stat('Nộp bài (ghi attempts)', submit);
   const bad = failsEnter.filter(Boolean); must(bad.length === 0, `${bad.length} học sinh lỗi ở bước vào/nháp/nộp: ${bad.slice(0, 5).join(', ')}`);
   const again = await asStudent(a, `attempts/${EXAM}/${a.uid}/1`, 'PUT', { submitted_at: { '.sv': 'timestamp' }, answers: { q1: 'B' } });
-  must(again.status === 401 || again.status === 403, 'nộp đè lượt 1 phải bị chặn');
+  console.log(`${again.status === 401 || again.status === 403 ? '✔' : '✘'} luật: nộp đè attempts/1 → HTTP ${again.status}`); must(again.status === 401 || again.status === 403, 'nộp đè lượt 1 phải bị chặn');
 
   // 4) Chấm ngay đồng loạt (grade_my_attempt) — đo độ bận của Apps Script
   const gradeMs = []; let gradeOk = 0;
