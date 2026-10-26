@@ -891,3 +891,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Làm: Kéo commit 5c6b4d5, kiểm tra cú pháp node --check 0 lỗi, quét bí mật sạch. Deploy Worker aihoctap-gate thành công (bản mới: 6469df6f-0f2a-4137-a676-ba5388261964, bản cũ: 1d946fca-d240-4975-992a-e6c7adf74261).
 - Kiểm thử thực tế: Smoke test thật live worker GET /api/health 200, GET /api/pwa/teacher/analytics 401 Unauthorized ("Thiếu token xác thực."). Toàn bộ test suite liên quan (test_teacher_overview.cjs, test_weakness_analytics.mjs, test_teacher_shell.cjs, test_student_import_backend.mjs, test_exam_backend.mjs) PASS 100%. GitHub Pages đã tải đúng giao diện Tổng quan giáo viên.
 - Việc mở: Người dùng đăng nhập giao diện giáo viên, kiểm tra trang Tổng quan hiện ra đầu tiên, ô chọn lớp và chuyển đổi số liệu theo từng lớp.
+
+## 2026-10-26 - Claude - Kiểm tra tải 100 học sinh
+- Mô phỏng: `node tools/load_sim_exam.mjs 100 20` (100 HS đăng nhập, vào thi, 20 lần lưu, nộp) và 300 HS: không lỗi logic. Không đo được độ trễ mạng thật.
+- Sửa: (1) khóa IP đăng nhập sai của HS: trước 50 lần/5 phút CHUNG cả IP và cả giáo viên → cả lớp dùng chung mạng trường bị khóa 10 phút; nay khóa riêng `ipflood_s:` giới hạn 500, từng tài khoản vẫn khóa riêng 5/10 lần sai. (2) Lưu nháp bỏ 2 lần đọc Firebase (lượt làm bài, đáp án).
+- Test: tests/test_class_shared_ip.mjs. Việc mở: Antigravity `npx wrangler deploy`; người dùng xác nhận gói Cloudflare Workers (CPU đăng nhập PBKDF2 ~16 ms) và chạy thử 30–100 máy thật.
+XONG đánh giá tải / TIẾP THEO → Antigravity
+Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nhất, ghi ID bản cũ/mới; báo gói Cloudflare Workers đang dùng (Free hay Paid) và gói Firebase (Spark hay Blaze)."

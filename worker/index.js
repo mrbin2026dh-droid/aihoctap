@@ -415,6 +415,8 @@ export async function verifyJwtToken(token, publicKey) {
 /**
  * Cloudflare Durable Object for Distributed State & Rate Limiting (F2, G4, H5, I4)
  */
+/** Số lần đăng nhập sai tối đa từ một địa chỉ mạng trong 5 phút (học sinh). Mỗi tài khoản vẫn bị khóa riêng sau 5/10 lần sai. */
+const STUDENT_IP_FLOOD_LIMIT = 500;
 export class GateDurableObject {
   constructor(state, _env) {
     this.state = state;
@@ -451,7 +453,7 @@ export class GateDurableObject {
 
     // 2. Record failed login attempt with exponential backoff (M1, M3)
     if (action === '/record-failed-login') {
-      const { pairKey, ipKey, studentGlobalKey } = await request.json();
+      const { pairKey, ipKey, studentGlobalKey, ipLimit } = await request.json();
       const now = Date.now();
 
       const record = (await this.storage.get(pairKey)) || { count: 0, lockedUntil: 0, backoffLevel: 0 };
@@ -496,7 +498,7 @@ export class GateDurableObject {
         } else {
           ipRec.count += 1;
         }
-        if (ipRec.count >= 50) {
+        if (ipRec.count >= (Number(ipLimit) > 0 ? Number(ipLimit) : 50)) {
           ipRec.lockedUntil = now + (10 * 60 * 1000); // 10 min IP lockout
           ipFloodLocked = true;
         }
@@ -1632,8 +1634,8 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
     if (!verified.valid) return respond({ detail: verified.error }, 401);
     const uid = verified.payload.uid; const claims = verified.payload.claims || {};
     if (!uid || !IdValidationContract.isValidId(uid) || claims.grade === undefined) return respond({ detail: 'Tài khoản học sinh không hợp lệ.' }, 403);
-    const myAttempts = (await dbGet(env, signingKeys, `attempts/${uid}`)) || {};
-    const stats = examAttemptStats(myAttempts);
+    // Lưu nháp là yêu cầu thường xuyên nhất: không cần thống kê lượt làm và đáp án nên bỏ hai lần đọc Firebase.
+    const stats = sub === 'save' ? {} : examAttemptStats((await dbGet(env, signingKeys, `attempts/${uid}`)) || {});
     const loadExam = async id => {
       if (!isExamId(id)) return null;
       const exam = await dbGet(env, signingKeys, `exam_defs/${id}`);
@@ -1658,7 +1660,7 @@ async function handleExamRoutes({ request, url, env, signingKeys, corsHeaders, g
     const examId = body.exam_id || url.searchParams.get('exam_id');
     const exam = await loadExam(examId);
     if (!exam) return respond({ detail: 'Không tìm thấy bài kiểm tra của lớp em.' }, 404);
-    const secret = (await dbGet(env, signingKeys, `exam_secrets/${exam.exam_id}`)) || { answers: {}, points: {} };
+    const secret = sub === 'save' ? { answers: {}, points: {} } : ((await dbGet(env, signingKeys, `exam_secrets/${exam.exam_id}`)) || { answers: {}, points: {} });
     const sessionPath = `exam_sessions/${uid}/${exam.exam_id}`;
     let session = await dbGet(env, signingKeys, sessionPath);
     const expired = s => exam.mode === 'real' && now > s.deadline + GRACE_MS;
@@ -2288,7 +2290,7 @@ export default {
 
       const safeStudentId = encodeURIComponent(student_id);
       const pairKey = DurableObjectContract.getLockKey(safeStudentId, clientIp);
-      const ipKey = `ipflood:${clientIp}`;
+      const ipKey = `ipflood_s:${clientIp}`; // riêng cho học sinh: cả lớp có thể dùng chung một địa chỉ mạng của trường, và không khóa nhầm giáo viên
       const studentGlobalKey = `lock:${safeStudentId}:__global__`;
 
       // M3: Check global student lockout across rotating IPs
@@ -2383,7 +2385,7 @@ export default {
         // N6: Chỉ ghi IP flood và pair, KHÔNG tạo studentGlobalKey cho ID không tồn tại
         await gateStub.fetch('http://do/record-failed-login', {
           method: 'POST',
-          body: JSON.stringify({ pairKey, ipKey })
+          body: JSON.stringify({ pairKey, ipKey, ipLimit: STUDENT_IP_FLOOD_LIMIT })
         });
         return new Response(JSON.stringify({ detail: 'Mã học sinh hoặc PIN không chính xác.' }), {
           status: 401,
@@ -2396,7 +2398,7 @@ export default {
       if (computedHash !== studentCred.pin_hash) {
         const failReq = new Request('http://do/record-failed-login', {
           method: 'POST',
-          body: JSON.stringify({ pairKey, ipKey, studentGlobalKey })
+          body: JSON.stringify({ pairKey, ipKey, studentGlobalKey, ipLimit: STUDENT_IP_FLOOD_LIMIT })
         });
         const failRes = await gateStub.fetch(failReq);
         const failData = await failRes.json();
@@ -3593,7 +3595,7 @@ export default {
       if (oldHash !== stud.pin_hash) {
         const failReq = new Request('http://do/record-failed-login', {
           method: 'POST',
-          body: JSON.stringify({ pairKey: studentPairKey, ipKey: `ipflood:${clientIp}` })
+          body: JSON.stringify({ pairKey: studentPairKey, ipKey: `ipflood_s:${clientIp}`, ipLimit: STUDENT_IP_FLOOD_LIMIT })
         });
         const failRes = await gateStub.fetch(failReq);
         const failData = await failRes.json();
