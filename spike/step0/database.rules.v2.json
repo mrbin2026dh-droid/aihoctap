@@ -37,9 +37,11 @@
     "$uid": {
      ".read": "auth.uid === $uid",
      ".write": "auth.uid === $uid && !data.exists() && now >= root.child('exam_meta/' + $e + '/opens_at').val() && now <= root.child('exam_meta/' + $e + '/closes_at').val() && root.child('students/' + auth.uid + '/grade').val() === root.child('exam_meta/' + $e + '/grade').val()",
-     ".validate": "newData.child('started_at').val() === now && newData.child('extra_ms').isNumber()",
+     "started_at": {
+      ".validate": "data.exists() ? newData.val() === data.val() : newData.val() === now"
+     },
      "extra_ms": {
-      ".validate": "newData.val() >= 0 && newData.val() <= 1800000"
+      ".validate": "newData.isNumber() && (root.child('teachers/' + auth.uid).exists() ? (newData.val() >= 0 && newData.val() <= 1800000) : (newData.val() === 0))"
      },
      "$other": {
       ".validate": false

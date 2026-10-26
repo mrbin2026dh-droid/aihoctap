@@ -92,3 +92,53 @@ function onGradebookEdit(e) {
 }
 /** Chạy tay sau khi sửa ô D2 trong Sheet: xem độ trễ trigger. */
 function showLastEdit() { Logger.log('Lần sửa gần nhất: ' + new Date(Number(prop_('LAST_EDIT_AT') || 0))); }
+
+
+/**
+ * Thử nghiệm quản trị tài khoản Firebase bằng OAuth token của chủ dự án:
+ * 1) Tạo 5 tài khoản hs_spike01..05 qua projects/{projectId}/accounts
+ * 2) Đổi PIN tài khoản hs_spike01 qua accounts:update với targetProjectId
+ */
+function testAdminAccounts() {
+  var projectId = prop_('FIREBASE_PROJECT_ID') || 'day-hoc-tuong-tac-7ee69';
+  var token = ScriptApp.getOAuthToken();
+  var headers = {
+    'Authorization': 'Bearer ' + token,
+    'Content-Type': 'application/json'
+  };
+
+  // 1. Tạo 5 tài khoản
+  var created = [];
+  for (var i = 1; i <= 5; i++) {
+    var email = 'hs_gas_test_' + i + '@hs.aihoc.test';
+    var payload = {
+      email: email,
+      password: 'pin_initial_' + i,
+      emailVerified: true
+    };
+    var r = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/projects/' + projectId + '/accounts', {
+      method: 'post',
+      headers: headers,
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    Logger.log('Tạo ' + email + ': HTTP ' + r.getResponseCode() + ' -> ' + r.getContentText().slice(0, 150));
+    var resData = JSON.parse(r.getContentText() || '{}');
+    created.push({ email: email, localId: resData.localId });
+  }
+
+  // 2. Đổi PIN 1 tài khoản (bắt buộc truyền targetProjectId khi dùng OAuth token)
+  var updatePayload = {
+    targetProjectId: projectId,
+    localId: created[0].localId,
+    password: 'pin_updated_999999',
+    returnSecureToken: false
+  };
+  var rUp = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:update', {
+    method: 'post',
+    headers: headers,
+    payload: JSON.stringify(updatePayload),
+    muteHttpExceptions: true
+  });
+  Logger.log('Đổi PIN: HTTP ' + rUp.getResponseCode() + ' -> ' + rUp.getContentText().slice(0, 150));
+}

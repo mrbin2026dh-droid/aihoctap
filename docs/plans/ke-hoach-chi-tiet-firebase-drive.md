@@ -72,10 +72,10 @@
 ### B4. Chống Lộ Đáp án khi Nộp Bài Sớm (Anti-Collusion Early Submission Protection)
 - **Lỗ hổng v1**: Chấm điểm xong trả ngay chi tiết đúng/sai, học sinh nộp sớm có thể chia sẻ đáp án cho bạn đang thi.
 - **Giải pháp v2**:
-  1. **Phân kỳ kết quả thi**:
-     - Trong khoảng thời gian đề còn mở ($\text{now} < \text{closes\_at}$): Client chỉ nhận được thông báo "Đã nhận bài thành công" và Điểm tổng sơ bộ (ví dụ: `8.5/10`).
-     - Sau khi đề đóng hoàn toàn ($\text{now} \ge \text{closes\_at}$): Hệ thống mới công bố bảng đối chiếu chi tiết đúng/sai từng câu hỏi trong `results/$exam_id/$uid`.
-  2. **Cách ly thư mục lưu trữ**: Thư mục Google Drive và file minh chứng thực hành chỉ cấp quyền đọc/ghi cho Apps Script và Giáo viên, học sinh không được chia sẻ link hay quyền truy cập folder.
+  1. **Phân kỳ kết quả thi và ranh giới ghi dữ liệu**:
+     - Trong khoảng thời gian đề còn mở ($\text{now} < \text{closes\_at}$): Client nộp bài xong chỉ nhận được thông báo "Đã nhận bài" và Điểm tổng sơ bộ (ví dụ: `8.5/10`).
+     - Ghi chi tiết đúng/sai vào `results/$exam_id/$uid`: **Chỉ do Apps Script (hoặc Giáo viên)** thực hiện bằng OAuth/quyền quản trị bỏ qua rules, và **chỉ được ghi sau khi đề đóng hoàn toàn** ($\text{now} \ge \text{closes\_at}$). Client học sinh hoàn toàn bị cấm ghi vào `results` (`.write: false`).
+     - Thư mục Google Drive và file minh chứng thực hành chỉ cấp quyền đọc/ghi cho Apps Script và Giáo viên, học sinh không được chia sẻ link hay quyền truy cập folder.
 
 ### B5. Chống Mất Bài Sát Giờ Thi (Zero-Loss Submission & Auto-Draft Recovery)
 - **Lỗ hổng v1**: Khóa nộp bài cứng ở phút $\text{started\_at} + \text{minutes} + 30\text{s}$, nếu mạng chập chờn ở giây thứ 29 học sinh bị mất toàn bộ bài thi.
@@ -145,7 +145,7 @@
    - Client kiểm tra phản hồi từ Apps Script: bắt buộc là đối tượng JSON có thuộc tính `{ ok: true, file_id: "..." }`. Mọi phản hồi trả về HTML (trang đăng nhập Google, trang báo lỗi quá tải 500/503) đều bị coi là lỗi và kích hoạt cơ chế retry backoff tự động.
 9. **Chuẩn hóa Đường dẫn & Định dạng File Nộp Thực hành**:
    - Thư mục học sinh trên Google Drive được đặt tên theo định dạng chuẩn: `[Lớp] - [Họ và tên] - [Mã HS]` (lấy trực tiếp từ database máy chủ, không tin cậy dữ liệu client gửi).
-   - Kiểm tra định dạng cho phép: `.xlsx`, `.docx`, `.pptx`, `.pdf`, `.sb3` (Scratch Tin học 8/9). Giới hạn dung lượng file tối đa $\le 15\text{MB}$.
+   - Kiểm tra định dạng cho phép: `.xlsx`, `.docx`, `.pptx`, `.pdf` (theo danh sách người dùng đã chốt) và `.sb3` (Scratch Tin học 8/9 — chờ Người dùng xác nhận trước khi kích hoạt). Giới hạn dung lượng file tối đa $\le 10\text{MB}$ (người dùng đã chốt; Base64 10MB là ~13.3MB payload, an toàn cho Apps Script so với 15MB).
 10. **Tự động Làm mới Token khi Thi Quá 1 Giờ (Token Auto-Refresh)**:
     - Client cấu hình bộ đếm làm mới token tự động sau mỗi 50 phút bằng API `https://securetoken.googleapis.com/v1/token?key={API_KEY}` sử dụng `refresh_token`, đảm bảo các phiên làm bài kéo dài và thời gian nộp file không bị gián đoạn do hết hạn JWT (1 giờ).
 11. **Phạm vi Toàn diện của Tài khoản Học sinh & Chuyển giao Báo cáo Phân tích**:
@@ -158,115 +158,28 @@
 
 ## 4. Đặc tả Quy tắc Bảo mật Realtime Database Đầy đủ (Security Rules v2)
 
-```json
-{
-  "rules": {
-    "teachers": {
-      ".read": false,
-      ".write": false
-    },
-    "students": {
-      "$uid": {
-        ".read": "auth.uid === $uid || root.child('teachers/' + auth.uid).exists()",
-        ".write": "root.child('teachers/' + auth.uid).exists()"
-      }
-    },
-    "exam_meta": {
-      ".read": "auth != null",
-      "$e": {
-        ".write": "root.child('teachers/' + auth.uid).exists()"
-      }
-    },
-    "exam_questions": {
-      "$e": {
-        ".read": "auth != null && (root.child('teachers/' + auth.uid).exists() || (now >= root.child('exam_meta/' + $e + '/opens_at').val() && now <= root.child('exam_meta/' + $e + '/closes_at').val() && root.child('students/' + auth.uid + '/grade').val() === root.child('exam_meta/' + $e + '/grade').val()))",
-        ".write": "root.child('teachers/' + auth.uid).exists()"
-      }
-    },
-    "exam_secrets": {
-      ".read": false,
-      ".write": false
-    },
-    "sessions": {
-      "$e": {
-        ".read": "root.child('teachers/' + auth.uid).exists()",
-        ".write": "root.child('teachers/' + auth.uid).exists()",
-        "$uid": {
-          ".read": "auth.uid === $uid",
-          ".write": "auth.uid === $uid && !data.exists() && now >= root.child('exam_meta/' + $e + '/opens_at').val() && now <= root.child('exam_meta/' + $e + '/closes_at').val() && root.child('students/' + auth.uid + '/grade').val() === root.child('exam_meta/' + $e + '/grade').val()",
-          ".validate": "newData.child('started_at').val() === now && newData.child('extra_ms').isNumber()",
-          "extra_ms": {
-            ".validate": "newData.val() >= 0 && newData.val() <= 1800000"
-          },
-          "$other": {
-            ".validate": false
-          }
-        }
-      }
-    },
-    "drafts": {
-      "$e": {
-        "$uid": {
-          ".read": "auth.uid === $uid || root.child('teachers/' + auth.uid).exists()",
-          ".write": "auth.uid === $uid && now <= root.child('sessions/' + $e + '/' + $uid + '/started_at').val() + root.child('exam_meta/' + $e + '/minutes').val() * 60000 + root.child('sessions/' + $e + '/' + $uid + '/extra_ms').val() + 30000",
-          "answers": {
-            "$q": {
-              ".validate": "newData.isString() && newData.val().length <= 2000"
-            }
-          },
-          "updated_at": {
-            ".validate": "newData.val() === now"
-          },
-          "$other": {
-            ".validate": false
-          }
-        }
-      }
-    },
-    "attempts": {
-      "$e": {
-        ".read": "root.child('teachers/' + auth.uid).exists()",
-        ".write": "root.child('teachers/' + auth.uid).exists()",
-        "$uid": {
-          "$n": {
-            ".read": "auth.uid === $uid",
-            ".write": "auth.uid === $uid && !data.exists() && ($n === '1' || ($n === '2' && root.child('exam_meta/' + $e + '/max_attempts').val() >= 2 && data.parent().child('1').exists())) && now <= root.child('sessions/' + $e + '/' + $uid + '/started_at').val() + root.child('exam_meta/' + $e + '/minutes').val() * 60000 + root.child('sessions/' + $e + '/' + $uid + '/extra_ms').val() + 30000",
-            "submitted_at": {
-              ".validate": "newData.val() === now"
-            },
-            "answers": {
-              "$q": {
-                ".validate": "newData.isString() && newData.val().length <= 2000"
-              }
-            },
-            "$other": {
-              ".validate": false
-            }
-          }
-        }
-      }
-    },
-    "results": {
-      "$e": {
-        ".read": "root.child('teachers/' + auth.uid).exists()",
-        "$uid": {
-          ".read": "auth.uid === $uid"
-        },
-        ".write": false
-      }
-    }
-  }
-}
-```
+> [!IMPORTANT]
+> **Nguồn duy nhất (Single Source of Truth)**: Toàn bộ quy tắc bảo mật RTDB v2 được lưu trữ và quản lý tập trung tại tệp [`spike/step0/database.rules.v2.json`](file:///c:/Users/HPZBook/Desktop/AI%20AGENT%20SGK/spike/step0/database.rules.v2.json). Tệp này đã bổ sung quyền cho giáo viên đọc danh sách `students`, giáo viên tự kiểm quyền `teachers/{uid}`, và được kiểm định tự động bằng 40 ca test trên Firebase Emulator thật (`spike/step0/emulator/rules.test.mjs`). Mọi chỉnh sửa quy tắc phải thực hiện trực tiếp trên tệp này để tránh hiện tượng lệch pha mã nguồn.
+
+Dưới đây là trích lược tóm tắt cấu trúc phân quyền:
+- `teachers`: `.read: false, .write: false` (chỉ kiểm tra sự tồn tại qua `root.child('teachers/' + auth.uid).exists()`).
+- `students`: Học sinh chỉ đọc được thông tin của chính mình; Giáo viên được đọc toàn bộ danh sách `students` để giám sát; chỉ Giáo viên được ghi.
+- `exam_meta`: Cho phép mọi tài khoản đã xác thực đọc metadata (tiêu đề, số phút, giờ mở/đóng); chỉ Giáo viên được ghi đề.
+- `exam_questions`: Chỉ cho phép đọc trong khung giờ thi (`now >= opens_at && now <= closes_at`) VÀ đúng khối lớp của học sinh; Giáo viên đọc được mọi lúc.
+- `exam_secrets`: Khóa tuyệt đối `.read: false, .write: false` với cả học sinh và giáo viên (chỉ Apps Script / Backend dùng quyền Admin truy cập).
+- `sessions`: Học sinh chỉ được ghi 1 lần duy nhất khi bắt đầu thi trong khung giờ hợp lệ, bắt buộc có `started_at === now` và `extra_ms: 0`. Giáo viên có quyền cập nhật `extra_ms` hoặc xóa phiên để đặt lại lượt.
+- `drafts`: Học sinh lưu nháp định kỳ trong thời gian làm bài ($\text{started\_at} + \text{minutes} + \text{extra\_ms} + 30\text{s}$); câu trả lời giới hạn $\le 2000$ ký tự.
+- `attempts`: Bài nộp chính thức, khóa sau khi nộp (không thể nộp đè); kiểm tra số lượt nộp theo `max_attempts`.
+- `results`: Khóa ghi với mọi client (`.write: false`); chỉ Apps Script ghi kết quả sau khi đề đóng; học sinh chỉ đọc kết quả của chính mình.
 
 ---
 
 ## 5. Lộ trình Triển khai theo 6 Cổng Đo kiểm Chất lượng (Gate Pipeline)
 
-- **Cổng 0 (Gate 0 - Hiện tại)**: Thử nghiệm kỹ thuật & Đo lường thực tế (Đăng nhập 100 tài khoản, kiểm định Rules qua Emulator, đo hiệu năng cache PBKDF2 Gemini, đo tải file đồng thời).
+- **Cổng 0 (Gate 0 - Hiện tại)**: Thử nghiệm kỹ thuật & Đo lường thực tế (Đăng nhập 100 tài khoản thật, kiểm định Rules qua Emulator thật 40 ca, đo hiệu năng cache PBKDF2 Gemini, đo tải file đồng thời).
 - **Cổng 1 (Gate 1 - Auth & Admin Provisioning)**: Hoàn tất script Apps Script cấp phát tài khoản học sinh, tắt public sign-up, đồng bộ danh bạ.
 - **Cổng 2 (Gate 2 - Client Exam Flow)**: PWA tích hợp luồng thi mới (tải đề theo giờ, lưu nháp 15s, nộp bài, auto-submit từ nháp). Cờ `backend: "firebase" | "worker"` hoạt động độc lập theo từng đề.
 - **Cổng 3 (Gate 3 - Apps Script Grading & Drive Evidence)**: Hệ thống chấm tự động trắc nghiệm sau khi đóng đề, lưu trữ minh chứng vào Drive, xuất sổ điểm Google Sheet.
-- **Cổng 4 (Gate 4 - Staging Simulation)**: Giả lập thi thử 100 học sinh ảo trên mạng trường mô phỏng (Dual-browser context Playwright) đo đạc CPU, băng thông, tỷ lệ lỗi 0%.
-- **Cổng 5 (Gate 5 - Production Pilot 1 & 2)**: Vận hành thử nghiệm kỳ thi thật số 1 và số 2 có giáo viên và học sinh thật; cờ rollback sẵn sàng.
+- **Cổng 4 (Gate 4 - Staging Simulation)**: Kiểm tải tự động phía code (Automated Code Load Testing) với 100 học sinh ảo bằng Dual-browser context Playwright trên môi trường mạng mô phỏng để đo đạc CPU, băng thông và bẫy lỗi. **Lưu ý**: Cổng 4 là kiểm tra tải phía code, TUYỆT ĐỐI KHÔNG THAY THẾ buổi thi thử thật tại Cổng 5.
+- **Cổng 5 (Gate 5 - Production Pilot 1 & 2)**: Vận hành thử nghiệm kỳ thi thật số 1 và số 2 có giáo viên và học sinh thật trên thiết bị trường học; cờ rollback sẵn sàng.
 - **Cổng 6 (Gate 6 - Final Deprecation)**: Đóng gói tài liệu, tinh gọn mã nguồn Worker chỉ sau khi có văn bản nghiệm thu chính thức từ Người dùng và Claude.

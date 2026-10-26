@@ -5,7 +5,7 @@ import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebas
 import { ref, get, set, update, serverTimestamp } from 'firebase/database';
 
 const env = await initializeTestEnvironment({ projectId: 'demo-aihoctap',
-  database: { host: '127.0.0.1', port: 9000, rules: readFileSync(new URL('../database.rules.v2.json', import.meta.url), 'utf8') } });
+  database: { host: '127.0.0.1', port: 9099, rules: readFileSync(new URL('../database.rules.v2.json', import.meta.url), 'utf8') } });
 const T = 'gv01', A = 'hs01', B = 'hs02', C8 = 'hs8';
 const now = Date.now(), MIN = 60000;
 async function seed(meta) {
