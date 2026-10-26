@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng chốt hướng Firebase + Apps Script + Drive, Worker chỉ giữ khóa Gemini; Antigravity chạy Bước 0 (docs/handoff/claude-antigravity-buoc0-firebase-drive.md) rồi lập kế hoạch chi tiết.
+- Yêu cầu mới nhất: Bước A đăng nhập đã được Claude kiểm định ACCEPT CÓ ĐIỀU KIỆN (commit 72d1d3e) và GitHub Pages đã deploy live; toàn bộ test xanh (test_role_switch 235 checks, test_role_switch_step_a 5 tiêu chí, test_role_isolation 4/4, test_teacher_shell); đồng bộ tài liệu docs/handoff và chờ người dùng kiểm thử trên thiết bị thật.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1637,3 +1637,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp: index.html, teacher.html, styles.css, teacher.css, dom.js, exam.js, teacher.js, sw.js (tem cache), tools/gen_dark_theme.py, tests/test_role_switch.cjs (235 kiểm tra: 4 khung × sáng/tối, vùng chạm, tương phản ≥4.5, Back, cách ly, không tràn ngang).
 - Kiểm thực tế: toàn bộ 24 test .cjs trong tests/ xanh (gồm test_role_isolation, test_login_gate, test_*_ui_standard 0 vi phạm, focus-contrast); test_exam_backend.mjs OK. Chưa kiểm: Safari/iOS, bàn phím ảo thật, screen reader thật.
 - Chưa làm: Bước B (cổng học sinh hiện thẳng thẻ đăng nhập thay `#gate` + dialog) — chờ người dùng chốt sau khi Bước A chạy thật. Việc deploy GitHub Pages do Antigravity.
+
+### 26/10/2026 — Antigravity — Đồng bộ 72d1d3e, kiểm thử toàn bộ test xanh và đồng bộ tài liệu
+- Đã thực hiện: Kéo commit 72d1d3e từ origin/main; chạy toàn bộ test_role_switch (235 checks PASS), test_role_switch_step_a (5 tiêu chí PASS), test_role_isolation (4/4 PASS), test_teacher_shell (PASS); package_student_pwa.py --check PASS; xác nhận GitHub Pages deploy live thành công.
+- Tệp đổi: aisgk.md, docs/ (đồng bộ các file handoff, thiết kế và kế hoạch còn thiếu lên kho Git theo yêu cầu của Claude).
+- Kiểm thực tế: 4 kịch bản test trên trình duyệt thật đều PASS 100%; GitHub Pages run 40301494630 thành công.
+- Việc tiếp: Người dùng kiểm thử trên điện thoại thật (Android + iPhone Safari) theo docs/handoff/antigravity-claude-kiem-tra-live-step-a.md; chờ chốt trước khi làm Bước B.

@@ -1,0 +1,45 @@
+{
+  "teacher": [
+    {
+      "client": 320,
+      "h": 568,
+      "pageHeight": 568,
+      "role": "teacher",
+      "scrollWidth": 320,
+      "submit": {
+        "bottom": 488.1000061035156,
+        "top": 432.1000061035156
+      },
+      "w": 320
+    },
+    {
+      "client": 390,
+      "h": 844,
+      "pageHeight": 844,
+      "role": "teacher",
+      "scrollWidth": 390,
+      "submit": {
+        "bottom": 488.1000061035156,
+        "top": 432.1000061035156
+      },
+      "w": 390
+    },
+    {
+      "client": 360,
+      "h": 360,
+      "pageHeight": 360,
+      "role": "teacher",
+      "scrollWidth": 360,
+      "submit": {
+        "bottom": 488.1000061035156,
+        "top": 432.1000061035156
+      },
+      "w": 360
+    }
+  ],
+  "studentShortFocus": {
+    "active": "Hiện mã PIN",
+    "dialogScroll": 249.6000061035156
+  },
+  "notes": "Read-only layout review; no authentication submitted; phone viewports are emulated."
+}
