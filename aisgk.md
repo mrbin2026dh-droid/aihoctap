@@ -1643,3 +1643,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/ (đồng bộ các file handoff, thiết kế và kế hoạch còn thiếu lên kho Git theo yêu cầu của Claude).
 - Kiểm thực tế: 4 kịch bản test trên trình duyệt thật đều PASS 100%; GitHub Pages run 40301494630 thành công.
 - Việc tiếp: Người dùng kiểm thử trên điện thoại thật (Android + iPhone Safari) theo docs/handoff/antigravity-claude-kiem-tra-live-step-a.md; chờ chốt trước khi làm Bước B.
+
+## [Claude Opus 5.5] Kiểm định kế hoạch chi tiết Firebase + Drive — CHƯA DUYỆT
+- 7 lỗi chặn: học sinh tự đăng ký → mạo danh; chưa có cách tạo/đặt lại PIN hàng loạt; đề đọc được trước giờ; lộ đáp án khi nộp sớm; nộp trượt sát giờ mất bài (cần tự nộp từ nháp); quay lui không thật sau khi xóa route Worker; "xóa PBKDF2" làm hỏng kho khóa Gemini (và giải mã 50k vòng mỗi lần gọi gia sư vẫn vượt 10 ms CPU).
+- Kèm 12 mục bắt buộc, khung rules đã sửa (chưa chạy Emulator), cổng Bước 0 cần số thật. Tệp: docs/handoff/claude-antigravity-kiem-dinh-ke-hoach-firebase-drive.md.
