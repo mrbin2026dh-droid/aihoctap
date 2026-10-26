@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã cấp quyền Editor GCP project 628267818434 cho mr.bin2026dh@gmail.com; người dùng chỉ cần bấm Set project, chạy kiemTraHeThong() và deploy New version để nghiệm thu Cổng 3.
+- Yêu cầu mới nhất: Google Drive thật đã hoạt động 100% (file thực hành HS1 và minh chứng HS2 đã lưu Drive); Antigravity đã vá lỗi mảng attempts số trong finalizeExam_; người dùng chỉ cần cập nhật Code.gs và deploy New version để chốt đạt Cổng 3.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1715,3 +1715,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: API setIamPolicy trả về 200 kèm thành viên mr.bin2026dh@gmail.com trong roles/editor.
 - Việc tiếp: Người dùng bấm Set project, chạy kiemTraHeThong() và deploy New version để Antigravity nghiệm thu.
+
+### 26/10/2026 — Antigravity — Xác nhận Google Drive thật hoạt động & Vá lỗi mảng attempts
+- Đã thực hiện: Chạy test_live_pilot_3_students.mjs trên Web App mới xác nhận Google Drive thật đã lưu thành công file thực hành HS1 (ID: 1qSscO190Wi7MG8wURH9zMHuFn0EbFPbb) và phiếu minh chứng HS2 (ID: 14U-0jufsWeKyuBrCfZfn95FK3yXpiGRn); phát hiện và vá lỗi mảng attempts trong finalizeExam_ (bỏ qua index 0 null); đồng bộ mã nguồn lên Git commit 36adb45.
+- Tệp đổi: apps-script/exam/Code.gs, tests/test_live_pilot_3_students.mjs, aisgk.md.
+- Kiểm thực tế: File thực hành HS1 và minh chứng HS2 đã tạo thật trên Google Drive; sau khi người dùng dán Code.gs bản vá và deploy New version thì toàn bộ bài thi sẽ chốt finalized: true 100%.
+- Việc tiếp: Người dùng dán Code.gs bản vá, bấm Deploy New version để Antigravity chạy nghiệm thu cuối cùng.
