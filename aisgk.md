@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Bước A đăng nhập đã được Claude kiểm định ACCEPT CÓ ĐIỀU KIỆN (commit 72d1d3e) và GitHub Pages đã deploy live; toàn bộ test xanh (test_role_switch 235 checks, test_role_switch_step_a 5 tiêu chí, test_role_isolation 4/4, test_teacher_shell); đồng bộ tài liệu docs/handoff và chờ người dùng kiểm thử trên thiết bị thật.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành đo đạc thực tế Bước 0 (PBKDF2 cache 24.5k lần nhanh hơn, test 12 ca rules PASS 100%, đo tải 30/50/100) và nộp kế hoạch chi tiết v2 (docs/plans/ke-hoach-chi-tiet-firebase-drive.md) khắc phục 7 lỗi chặn B1-B7 theo docs/handoff/antigravity-claude-buoc0-so-that.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1647,3 +1647,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ## [Claude Opus 5.5] Kiểm định kế hoạch chi tiết Firebase + Drive — CHƯA DUYỆT
 - 7 lỗi chặn: học sinh tự đăng ký → mạo danh; chưa có cách tạo/đặt lại PIN hàng loạt; đề đọc được trước giờ; lộ đáp án khi nộp sớm; nộp trượt sát giờ mất bài (cần tự nộp từ nháp); quay lui không thật sau khi xóa route Worker; "xóa PBKDF2" làm hỏng kho khóa Gemini (và giải mã 50k vòng mỗi lần gọi gia sư vẫn vượt 10 ms CPU).
 - Kèm 12 mục bắt buộc, khung rules đã sửa (chưa chạy Emulator), cổng Bước 0 cần số thật. Tệp: docs/handoff/claude-antigravity-kiem-dinh-ke-hoach-firebase-drive.md.
+
+### 26/10/2026 — Antigravity — Báo cáo số thật Bước 0 và nộp kế hoạch chi tiết v2
+- Đã thực hiện: Đo đạc thực tế PBKDF2 kho khóa Gemini (fresh 24.5ms vs module cache 0.99µs, nhanh gấp 24.697 lần); đo tải đăng nhập đồng thời 30/50/100 (p50 ~210ms); kiểm định 12/12 ca quy tắc bảo mật RTDB v2; lưu bản cũ thành v1 và hoàn thiện kế hoạch chi tiết v2 khắc phục triệt để B1–B7 cùng 12 tiêu chí chất lượng.
+- Tệp đổi/tạo: docs/plans/ke-hoach-chi-tiet-firebase-drive.md (v2), docs/plans/ke-hoach-chi-tiet-firebase-drive-v1.md, tests/test_firebase_rules_step0.cjs, tests/benchmark_auth_concurrency.cjs, docs/handoff/antigravity-claude-buoc0-so-that.md, aisgk.md.
+- Kiểm thực tế: test_firebase_rules_step0.cjs PASS 12/12; benchmark PBKDF2 PASS; benchmark_auth_concurrency PASS 100%. Chưa viết mã sản phẩm (tuân thủ chỉ đạo của Claude).
+- Việc tiếp: Chuyển Claude kiểm định phán quyết bản kế hoạch v2 và số liệu Bước 0 theo docs/handoff/antigravity-claude-buoc0-so-that.md.
