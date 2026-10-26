@@ -308,7 +308,7 @@ export function setFieldError(input, msg) {
     e.id = input.id + '-err';
     e.className = 'field-error';
     e.setAttribute('role', 'alert');
-    input.closest('.field, label')?.append(e);
+    input.closest('.field, .t-field, label')?.append(e);
   }
   e.textContent = msg;
   e.hidden = !msg;

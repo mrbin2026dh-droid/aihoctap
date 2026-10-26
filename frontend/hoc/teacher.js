@@ -589,6 +589,7 @@ node('teacher-login').addEventListener('submit', async event => {
 
   if (pin.length < 8) {
     setFieldError(pinInput, 'Mã PIN tối thiểu 8 ký tự.');
+    if (loginErr) loginErr.textContent = 'Mã PIN tối thiểu 8 ký tự.';
     pinInput.focus();
     return;
   }
