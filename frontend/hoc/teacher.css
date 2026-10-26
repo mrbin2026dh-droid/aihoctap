@@ -212,8 +212,11 @@
 .teacher-app .t-hint{margin:6px 0 0;font-size:var(--t-small)}
 .teacher-app .t-excel-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-8px 0 16px}
 .teacher-app .t-excel-bar p{margin:0}
+.teacher-app .t-excel-actions{display:flex;gap:10px;flex-wrap:wrap}
+.teacher-app .t-excel-actions .t-button{display:inline-flex;align-items:center;gap:8px}
+.teacher-app .t-btn-ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .teacher-app .t-student-result .t-badge{white-space:normal}
-@media(max-width:760px){.teacher-app .t-excel-bar .t-actions-inline{width:100%}.teacher-app .t-excel-bar .t-button{flex:1 1 auto}}
+@media(max-width:760px){.teacher-app .t-excel-actions{width:100%}.teacher-app .t-excel-actions .t-button{flex:1 1 100%;justify-content:center}}
 /* TEACHER-DARK:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]){--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--surface:#30302e;--sidebar:#1f1e1d;--line:#403f3b;--brand:#2f7a6b;--brand-hover:#3a8d7c;--brand-soft:#2b3a36;--brand-text:#93d4c3;--ok:#8fd4a8;--ok-bg:#26382f;--warn:#f0c27a;--warn-bg:#3d3220;--danger:#ff9f95;--danger-bg:#43272a;--info:#93d4c3;--info-bg:#2b3a36;--control:#8a877d;--white:#fff;--backdrop:#000000a6;--shadow:0 4px 16px #00000066;color-scheme:dark}
