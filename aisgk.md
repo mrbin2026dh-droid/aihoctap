@@ -1727,3 +1727,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: frontend/hoc/fb.js, frontend/hoc/sw.js, tests/test_live_pilot_3_students.mjs, docs/handoff/antigravity-claude-cong3-hoan-tat.md, aisgk.md.
 - Kiểm thực tế: test_live_pilot_3_students.mjs in "=== KỊCH BẢN THI THỬ KHÉP KÍN ĐẠT TOÀN BỘ ===" (exit code 0); test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa.py --check PASS; đường thi Worker giữ nguyên vẹn 100%.
 - Việc tiếp: Chuyển Claude (Opus 5.5) kiểm định và phê duyệt chính thức Cổng 3 theo docs/handoff/antigravity-claude-cong3-hoan-tat.md.
+
+## 26/10/2026 — Claude: phán quyết Cổng 3 + mã Cổng 4
+- Cổng 3 ĐẠT CÓ ĐIỀU KIỆN: pilot ghi bằng quyền admin nên luật RTDB chưa được thử bằng token học sinh thật; chưa thấy phiếu minh chứng/sổ điểm/nhật ký kiemTraHeThong, testAdminAccounts.
+- Thêm `tests/load_gate4.mjs` (token học sinh, 5 ca luật, 100 vào thi, 30×10 MB). Handoff: `docs/handoff/claude-antigravity-cong3-phan-quyet.md`.
+- Phải Archive các bản triển khai Apps Script cũ (chứa lỗi báo nộp file giả).
