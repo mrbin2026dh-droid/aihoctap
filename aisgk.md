@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Google Drive thật đã hoạt động 100% (file thực hành HS1 và minh chứng HS2 đã lưu Drive); Antigravity đã vá lỗi mảng attempts số trong finalizeExam_; người dùng chỉ cần cập nhật Code.gs và deploy New version để chốt đạt Cổng 3.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành nghiệm thu Cổng 3 trên Firebase & Google Drive thật đạt PASS 100% (test_live_pilot_3_students.mjs in "KỊCH BẢN THI THỬ KHÉP KÍN ĐẠT TOÀN BỘ", exit code 0); báo cáo chi tiết tại docs/handoff/antigravity-claude-cong3-hoan-tat.md chuyển Claude phán quyết.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1721,3 +1721,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: apps-script/exam/Code.gs, tests/test_live_pilot_3_students.mjs, aisgk.md.
 - Kiểm thực tế: File thực hành HS1 và minh chứng HS2 đã tạo thật trên Google Drive; sau khi người dùng dán Code.gs bản vá và deploy New version thì toàn bộ bài thi sẽ chốt finalized: true 100%.
 - Việc tiếp: Người dùng dán Code.gs bản vá, bấm Deploy New version để Antigravity chạy nghiệm thu cuối cùng.
+
+### 26/10/2026 — Antigravity — Hoàn tất nghiệm thu Cổng 3 ĐẠT TOÀN BỘ trên môi trường thật
+- Đã thực hiện: Chạy kịch bản thi thử khép kín 3 học sinh trên Firebase và Google Drive thật với bản triển khai Web App mới; kiểm định cứng đạt tuyệt đối: HS1 có điểm ngay 4/4 và file thực hành Excel trên Drive thật kèm phiếu minh chứng Drive, HS2 tự nộp từ nháp auto_from_draft: true có điểm 2/4 kèm phiếu minh chứng Drive, HS3 không có bài, đề đóng dấu finalized_at, dọn dẹp sạch sẽ dữ liệu thử.
+- Tệp đổi/tạo: frontend/hoc/fb.js, frontend/hoc/sw.js, tests/test_live_pilot_3_students.mjs, docs/handoff/antigravity-claude-cong3-hoan-tat.md, aisgk.md.
+- Kiểm thực tế: test_live_pilot_3_students.mjs in "=== KỊCH BẢN THI THỬ KHÉP KÍN ĐẠT TOÀN BỘ ===" (exit code 0); test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa.py --check PASS; đường thi Worker giữ nguyên vẹn 100%.
+- Việc tiếp: Chuyển Claude (Opus 5.5) kiểm định và phê duyệt chính thức Cổng 3 theo docs/handoff/antigravity-claude-cong3-hoan-tat.md.

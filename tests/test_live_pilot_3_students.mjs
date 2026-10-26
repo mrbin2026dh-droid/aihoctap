@@ -18,7 +18,7 @@ const adminToken = config.tokens?.access_token;
 const PROJ = 'day-hoc-tuong-tac-7ee69';
 const DB_URL = `https://${PROJ}-default-rtdb.asia-southeast1.firebasedatabase.app`;
 const API_KEY = 'AIzaSyCC2tCURXYAMpdN687kcjY537K7zUhh_Fg';
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIvXSXTOKDFlAoHtJ-6wdFrN0k_KupNtPQOoYatZKmaHNWD40g0UcCOV_XE8rHgKd4/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5b5dzfz9nqqk31YDflGSm8DJ6sQFpCwaiIoN33bRLQwU7VFzXCaTmvbaVkZmzFw/exec';
 
 const adminHeaders = {
   'Authorization': `Bearer ${adminToken}`,
