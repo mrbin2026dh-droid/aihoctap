@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Điểm nghẽn liên kết GCP project 628267818434 trong Apps Script do phân quyền tài khoản trình duyệt; Antigravity lập báo cáo kỹ thuật và đề xuất giải pháp mã nguồn tại docs/handoff/antigravity-claude-gcp-drive-blocker.md chuyển Claude xử lý.
+- Yêu cầu mới nhất: Antigravity đã cấp quyền Editor GCP project 628267818434 cho mr.bin2026dh@gmail.com; người dùng chỉ cần bấm Set project, chạy kiemTraHeThong() và deploy New version để nghiệm thu Cổng 3.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1709,3 +1709,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: docs/handoff/antigravity-claude-gcp-drive-blocker.md, aisgk.md.
 - Kiểm thực tế: Xác minh IAM project `628267818434`; xác minh Web App URL phản hồi 200; nhận diện rõ lỗi permission denied của Apps Script.
 - Việc tiếp: Chuyển Claude xem xét phương án mã nguồn theo docs/handoff/antigravity-claude-gcp-drive-blocker.md.
+
+### 26/10/2026 — Antigravity — Cấp quyền Editor GCP 628267818434 cho mr.bin2026dh@gmail.com
+- Đã thực hiện: Thêm user:mr.bin2026dh@gmail.com vào roles/editor của GCP Project 628267818434 qua Cloud Resource Manager API; giải tỏa thành công điểm nghẽn phân quyền trong Google Apps Script.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: API setIamPolicy trả về 200 kèm thành viên mr.bin2026dh@gmail.com trong roles/editor.
+- Việc tiếp: Người dùng bấm Set project, chạy kiemTraHeThong() và deploy New version để Antigravity nghiệm thu.
