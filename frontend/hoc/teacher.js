@@ -3,6 +3,7 @@ import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
 import * as ui from './teacher-ui.js';
 import {parseExamRows, templateRows} from './exam-import.js';
+import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
 /** @typedef {import('./contracts').PrivateQuestion} PrivateQuestion */
@@ -910,13 +911,20 @@ async function showStudentPinBanner(id, pin, name) {
   } catch { notify('Chưa sao chép được. Hãy ghi lại thông tin trong lần hiện trước.', true); }
 }
 
+/** Danh sách đang hiển thị (theo lớp và ô tìm kiếm). */
+function filteredStudents() {
+  const filterVal = /** @type {HTMLSelectElement} */ (node('students-class-filter')).value;
+  const query = String(/** @type {HTMLInputElement|null} */ (document.getElementById('field-student_search'))?.value || '').trim().toLowerCase();
+  return allStudents.filter(s => (!filterVal || s.class_code === filterVal) && (!query || `${s.name} ${s.id}`.toLowerCase().includes(query)));
+}
 function renderStudentsTable() {
   node('students-table')?.removeAttribute('aria-busy');
   const tbody = /** @type {HTMLTableSectionElement} */ (node('students-tbody'));
   tbody.replaceChildren();
   const filterVal = /** @type {HTMLSelectElement} */ (node('students-class-filter')).value;
   const query = String(/** @type {HTMLInputElement|null} */ (document.getElementById('field-student_search'))?.value || '').trim().toLowerCase();
-  const filtered = allStudents.filter(s => (!filterVal || s.class_code === filterVal) && (!query || `${s.name} ${s.id}`.toLowerCase().includes(query)));
+  const filtered = filteredStudents();
+  const count = document.getElementById('students-count'); if (count) count.textContent = filtered.length === allStudents.length ? `${allStudents.length} học sinh` : `Hiện ${filtered.length}/${allStudents.length} học sinh`;
   for (const id of [...selectedStudents]) if (!allStudents.some(s => s.id === id)) selectedStudents.delete(id);
 
   if (filtered.length === 0) {
@@ -1112,13 +1120,14 @@ node('add-student-form')?.addEventListener('submit', async event => {
   const grade = Number(data.get('grade')) || 6;
   const classCode = String(data.get('class_code') || '').trim();
   const pin = String(data.get('pin') || '').trim();
+  const studentId = String(data.get('student_id') || '').trim();
 
   await withBusy(submit, 'Đang tạo học sinh…', async () => {
     try {
       const res = await api('/teacher/students', {
         method: 'POST',
         token,
-        body: { name, grade, class_code: classCode, pin: pin || undefined }
+        body: { student_id: studentId || undefined, name, grade, class_code: classCode, pin: pin || undefined }
       });
       formEl.reset();
       void showStudentPinBanner(res.id, res.pin, res.name);
@@ -1129,6 +1138,114 @@ node('add-student-form')?.addEventListener('submit', async event => {
     }
   });
 });
+
+
+/* ---------- Excel tài khoản học sinh ---------- */
+/** @param {unknown} v @param {boolean} [bold] */
+const xcell = (v, bold = false) => typeof v === 'number' ? {value: v, type: Number, ...(bold ? {fontWeight: 'bold'} : {})} : {value: String(v ?? ''), ...(bold ? {fontWeight: 'bold'} : {})};
+/** @param {string} s */
+const asciiName = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'tat_ca';
+async function downloadStudentTemplate() {
+  await loadScript('./vendor/write-excel-file.min.js');
+  const sample = studentTemplateRows();
+  // @ts-ignore thư viện nạp bằng thẻ script
+  await globalThis.writeXlsxFile([
+    {data: sample.students.map((row, i) => row.map(v => xcell(v, i === 0))), sheet: 'Học sinh', columns: [16, 28, 8, 10, 14].map(width => ({width})), stickyRowsCount: 1},
+    {data: sample.guide.map((row, i) => row.map(v => xcell(v, i === 0))), sheet: 'Hướng dẫn', columns: [[110]].flat().map(width => ({width}))}
+  ]).toFile('mau-hoc-sinh.xlsx');
+}
+async function exportStudents() {
+  const list = filteredStudents();
+  if (!list.length) { notify('Chưa có học sinh nào để xuất.', true); return; }
+  await loadScript('./vendor/write-excel-file.min.js');
+  const head = ['Mã học sinh', 'Họ và tên', 'Khối', 'Lớp', 'Trạng thái'].map(v => xcell(v, true));
+  const rows = list.map(s => [s.id, s.name, s.grade, s.class_code, s.disabled ? 'Bị khóa' : 'Hoạt động'].map(v => xcell(v)));
+  const cls = /** @type {HTMLSelectElement} */ (node('students-class-filter')).value;
+  // @ts-ignore thư viện nạp bằng thẻ script
+  await globalThis.writeXlsxFile([{data: [head, ...rows], sheet: 'Học sinh', columns: [16, 28, 8, 10, 14].map(width => ({width})), stickyRowsCount: 1}]).toFile(`hoc_sinh_${asciiName(cls || 'tat_ca')}.xlsx`);
+  notify(`Đã xuất ${list.length} học sinh. File không có mã PIN vì PIN được lưu dạng mã hóa; cần PIN mới thì dùng "Đặt lại PIN".`);
+}
+/** @type {import('./student-import.js').StudentRow[]} */ let studentImportRows = [];
+/** @type {{id:string,name:string,class_code:string,pin:string}[]} */ let createdAccounts = [];
+/** @param {File} file */
+async function readStudentFile(file) {
+  const target = node('student-import-preview'); const run = /** @type {HTMLButtonElement} */ (node('student-import-run'));
+  const dl = /** @type {HTMLButtonElement} */ (node('student-import-download'));
+  studentImportRows = []; createdAccounts = []; run.disabled = true; dl.hidden = true; run.textContent = 'Tạo tài khoản';
+  target.replaceChildren(el('p', 'Đang kiểm tra file…', 't-muted'));
+  if (!/\.xlsx$/i.test(file.name)) { target.replaceChildren(el('p', 'Chỉ nhận file .xlsx. Hãy dùng file tải từ "Tải mẫu Excel".', 'notice error')); return; }
+  if (file.size > 2 * 1024 * 1024) { target.replaceChildren(el('p', 'File lớn hơn 2 MB. Hãy tách thành nhiều file.', 'notice error')); return; }
+  /** @type {unknown[][]} */ let rows;
+  try {
+    await loadScript('./vendor/read-excel-file.min.js');
+    // @ts-ignore thư viện nạp bằng thẻ script
+    const result = await globalThis.readXlsxFile(file);
+    rows = Array.isArray(result) && result.length && result[0] && !Array.isArray(result[0]) && result[0].data ? result[0].data : result;
+  } catch (e) {
+    target.replaceChildren(el('p', e instanceof Error && /Không tải được/.test(e.message) ? e.message : 'Không đọc được file. Hãy dùng file .xlsx tải từ mẫu, không đổi định dạng.', 'notice error')); return;
+  }
+  const parsed = parseStudentRows(rows);
+  target.replaceChildren();
+  if (parsed.fatal) { target.append(el('p', parsed.fatal, 'notice error')); if (!parsed.rows.length || parsed.rows.length > 300) return; }
+  const bad = parsed.rows.length - parsed.ok;
+  studentImportRows = parsed.rows;
+  target.append(el('p', `Đọc được ${parsed.rows.length} dòng: ${parsed.ok} hợp lệ${bad ? `, ${bad} chưa đúng (sẽ bị bỏ qua, sửa trong file rồi tải lại nếu cần)` : ''}.`, bad ? 'notice error' : 'notice success'));
+  target.append(studentPreviewTable(parsed.rows, null));
+  run.disabled = parsed.ok === 0; run.textContent = parsed.ok ? `Tạo ${parsed.ok} tài khoản` : 'Tạo tài khoản';
+}
+/** @param {import('./student-import.js').StudentRow[]} rows @param {Map<number,{ok:boolean,error?:string,id?:string}>|null} outcome */
+function studentPreviewTable(rows, outcome) {
+  const table = el('table', '', 't-table t-student-result'); table.append(el('caption', 'Kết quả kiểm tra từng dòng'));
+  const head = el('thead'); const hr = el('tr'); for (const name of ['Dòng', 'Mã học sinh', 'Họ và tên', 'Lớp', 'Kết quả']) { const th = el('th', name); th.scope = 'col'; hr.append(th); } head.append(hr);
+  const body = el('tbody');
+  rows.forEach((r, i) => {
+    const tr = el('tr'); const out = outcome?.get(i);
+    const cells = [[String(r.row), 'Dòng'], [out?.id || r.student_id || 'Tự sinh', 'Mã học sinh'], [r.name, 'Họ và tên'], [`${r.class_code} (khối ${Number.isFinite(r.grade) ? r.grade : '?'})`, 'Lớp']];
+    for (const [value, label] of cells) { const td = el('td', value); td.dataset.label = label; tr.append(td); }
+    const res = el('td'); res.dataset.label = 'Kết quả';
+    const errors = r.errors.length ? r.errors : out && !out.ok ? [out.error || 'Chưa tạo được'] : [];
+    res.append(errors.length ? el('span', errors.join('; '), 't-badge t-badge-error') : el('span', out ? 'Đã tạo' : 'Hợp lệ', 't-badge'));
+    tr.append(res); body.append(tr);
+  });
+  table.append(head, body); return table;
+}
+async function runStudentImport() {
+  const valid = studentImportRows.filter(r => !r.errors.length);
+  if (!valid.length) return;
+  const run = /** @type {HTMLButtonElement} */ (node('student-import-run'));
+  await withBusy(run, 'Đang tạo tài khoản…', async () => {
+    const res = await api('/teacher/students/import', {method: 'POST', token, body: {students: valid.map(r => ({student_id: r.student_id || undefined, name: r.name, grade: r.grade, class_code: r.class_code, pin: r.pin || undefined}))}});
+    /** @type {Map<number,{ok:boolean,error?:string,id?:string}>} */ const outcome = new Map();
+    createdAccounts = [];
+    for (const item of res.results || []) {
+      const row = valid[item.index]; const at = studentImportRows.indexOf(row);
+      outcome.set(at, {ok: item.ok, error: item.error, id: item.id});
+      if (item.ok) createdAccounts.push({id: item.id, name: item.name, class_code: item.class_code, pin: item.pin});
+    }
+    const target = node('student-import-preview'); target.replaceChildren();
+    target.append(el('p', `Đã tạo ${res.created} tài khoản${res.failed ? `, ${res.failed} dòng chưa tạo được (xem cột Kết quả)` : ''}. Hãy tải danh sách có PIN ngay: PIN chỉ hiện một lần.`, res.failed ? 'notice error' : 'notice success'));
+    target.append(studentPreviewTable(studentImportRows, outcome));
+    run.disabled = true; studentImportRows = [];
+    const dl = /** @type {HTMLButtonElement} */ (node('student-import-download')); dl.hidden = !createdAccounts.length;
+    await loadStudents();
+  });
+}
+async function downloadCreatedAccounts() {
+  if (!createdAccounts.length) return;
+  await loadScript('./vendor/write-excel-file.min.js');
+  const head = ['Mã học sinh', 'Họ và tên', 'Lớp', 'Mã PIN'].map(v => xcell(v, true));
+  const rows = createdAccounts.map(a => [a.id, a.name, a.class_code, a.pin].map(v => xcell(v)));
+  // @ts-ignore thư viện nạp bằng thẻ script
+  await globalThis.writeXlsxFile([{data: [head, ...rows], sheet: 'Tài khoản', columns: [16, 28, 10, 14].map(width => ({width})), stickyRowsCount: 1}]).toFile('tai-khoan-vua-tao.xlsx');
+  notify('Đã tải danh sách tài khoản kèm PIN. Hãy giữ file này an toàn và chỉ phát cho đúng học sinh.');
+}
+/** @param {string} id @param {()=>Promise<void>} fn */
+const wire = (id, fn) => document.getElementById(id)?.addEventListener('click', () => { fn().catch(e => notify(e instanceof Error ? e.message : 'Chưa thực hiện được.', true)); });
+wire('act-accounts-template', downloadStudentTemplate); wire('act-accounts-template-2', downloadStudentTemplate);
+wire('act-accounts-export', exportStudents); wire('student-import-run', runStudentImport); wire('student-import-download', downloadCreatedAccounts);
+const studentFileInput = /** @type {HTMLInputElement|null} */ (document.getElementById('field-student-file'));
+studentFileInput?.addEventListener('change', () => { const f = studentFileInput.files?.[0]; if (f) readStudentFile(f).catch(e => notify(e instanceof Error ? e.message : 'Chưa đọc được file.', true)); });
+document.getElementById('act-accounts-import')?.addEventListener('click', () => { if (studentFileInput) studentFileInput.value = ''; studentImportRows = []; createdAccounts = []; node('student-import-preview').replaceChildren(el('p', 'Chưa tải file.', 't-muted')); /** @type {HTMLButtonElement} */ (node('student-import-run')).disabled = true; node('student-import-download').hidden = true; });
 
 node('students-class-filter')?.addEventListener('change', renderStudentsTable);
 on('refresh-students', loadStudents);

@@ -17,6 +17,7 @@ import {
   SecurityConfigContract,
   TutorContract
 } from './contracts.js';
+import {validateStudentInput, MAX_IMPORT_STUDENTS} from './students.js';
 import {validateExamInput, examState, examTargetsStudent, studentExamView, questionOrder, sessionDeadline, cleanAnswers, gradeExam, canRevealAnswers, isExamId, buildExamResults, GRACE_MS} from './exams.js';
 
 // Base64URL encoding / decoding (RFC 7515)
@@ -1508,6 +1509,34 @@ async function finalizeExamAttempt({ env, signingKeys, gateStub, uid, claims, ex
   const finished = { ...session, submitted_at: now, ack: record, answers: cleanAnswers(exam, answers) };
   await dbPut(env, signingKeys, `exam_sessions/${uid}/${exam.exam_id}`, finished);
   return { status: 200, body: { ...record, answers_key: canRevealAnswers(exam, now, true) ? secret.answers : undefined } };
+}
+
+/** Tạo một tài khoản học sinh. Mã do giáo viên đặt thì không được trùng; không đặt thì tự sinh. */
+async function studentExists(env, signingKeys, id) {
+  const r = await rtdb(env, signingKeys, 'GET', `students_auth/${id}`);
+  if (r.status === 404) return false;
+  if (!r.ok) throw new Error(`rtdb ${r.status}`);
+  return (await r.json()) !== null;
+}
+async function createStudentAccount(env, signingKeys, input) {
+  let studentId = input.id;
+  try {
+    if (studentId) {
+      if (await studentExists(env, signingKeys, studentId)) return { error: `Mã học sinh "${studentId}" đã tồn tại.`, status: 409 };
+    } else {
+      for (let attempt = 0; attempt < 8 && !studentId; attempt++) {
+        const rand = [...crypto.getRandomValues(new Uint8Array(4))].map(b => b.toString(36)).join('').slice(0, 6).toLowerCase();
+        if (!(await studentExists(env, signingKeys, `hs${rand}`))) studentId = `hs${rand}`;
+      }
+      if (!studentId) return { error: 'Chưa tạo được mã học sinh mới. Hãy thử lại.', status: 502 };
+    }
+  } catch { return { error: 'Chưa đọc được danh sách học sinh từ Firebase. Hãy thử lại.', status: 502 }; }
+  const pin = input.pin || autoPin();
+  const salt = newSalt();
+  const record = { name: input.name, grade: input.grade, class_code: input.class_code, salt, pin_hash: await hashPinPbkdf2(pin, salt), disabled: false, must_change_pin: true, created_at: new Date().toISOString() };
+  const put = await rtdb(env, signingKeys, 'PUT', `students_auth/${studentId}`, record);
+  if (!put.ok) return { error: `Lỗi ghi học sinh vào Firebase RTDB (HTTP ${put.status}).`, status: 502 };
+  return { id: studentId, record, pin };
 }
 
 /** Danh sách học sinh (Firebase students_auth, hoặc bộ nhớ khi chạy thử). */
@@ -3643,88 +3672,36 @@ export default {
     if (url.pathname === '/api/teacher/students' && request.method === 'POST') {
       const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
       if (!auth.authorized) return auth.response;
-
+      const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const body = await request.json().catch(() => ({}));
-      const { name, grade, class_code, pin } = body;
+      const checked = validateStudentInput(body);
+      if ('error' in checked) return json({ detail: checked.error }, 400);
+      const made = await createStudentAccount(env, signingKeys, checked.student);
+      if (made.error) return json({ detail: made.error }, made.status);
+      return json({ id: made.id, name: made.record.name, grade: made.record.grade, class_code: made.record.class_code, pin: made.pin });
+    }
 
-      if (!name || typeof name !== 'string' || !name.trim() || name.trim().length > 60) {
-        return new Response(JSON.stringify({ detail: 'Họ và tên học sinh phải từ 1 đến 60 ký tự.' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+    // Nhập hàng loạt từ Excel: POST /api/teacher/students/import  { students: [{student_id?, name, grade, class_code, pin?}] }
+    if (url.pathname === '/api/teacher/students/import' && request.method === 'POST') {
+      const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+      if (!auth.authorized) return auth.response;
+      const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const body = await request.json().catch(() => ({}));
+      const list = Array.isArray(body.students) ? body.students : null;
+      if (!list || !list.length) return json({ detail: 'Chưa có học sinh nào để nhập.' }, 400);
+      if (list.length > MAX_IMPORT_STUDENTS) return json({ detail: `Mỗi lần nhập tối đa ${MAX_IMPORT_STUDENTS} học sinh. Hãy tách file.` }, 400);
+      const results = [];
+      const seen = new Set();
+      for (let i = 0; i < list.length; i++) {
+        const checked = validateStudentInput(list[i]);
+        if ('error' in checked) { results.push({ index: i, ok: false, error: checked.error }); continue; }
+        if (checked.student.id && seen.has(checked.student.id)) { results.push({ index: i, ok: false, error: `Mã "${checked.student.id}" bị trùng trong file.` }); continue; }
+        const made = await createStudentAccount(env, signingKeys, checked.student);
+        if (made.error) { results.push({ index: i, ok: false, error: made.error }); if (made.status >= 500) break; continue; }
+        seen.add(made.id);
+        results.push({ index: i, ok: true, id: made.id, name: made.record.name, grade: made.record.grade, class_code: made.record.class_code, pin: made.pin });
       }
-      const gradeNum = Number(grade);
-      if (!Number.isInteger(gradeNum) || gradeNum < 6 || gradeNum > 12) {
-        return new Response(JSON.stringify({ detail: 'Khối lớp không hợp lệ (phải từ 6 đến 12).' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      if (!class_code || typeof class_code !== 'string' || !/^[A-Za-z0-9_-]{1,10}$/.test(class_code.trim())) {
-        return new Response(JSON.stringify({ detail: 'Mã lớp không hợp lệ (1-10 ký tự chữ, số hoặc gạch nối).' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      let pinToUse = '';
-      if (pin !== undefined && pin !== null && String(pin).trim() !== '') {
-        const pinStr = String(pin).trim();
-        if (pinStr.length < 6) {
-          return new Response(JSON.stringify({ detail: 'Mã PIN học sinh phải có độ dài tối thiểu 6 ký tự.' }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-        pinToUse = pinStr;
-      } else {
-        pinToUse = autoPin();
-      }
-
-      let studentId = '';
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const rand = [...crypto.getRandomValues(new Uint8Array(4))].map(b => b.toString(36)).join('').slice(0, 6).toLowerCase();
-        const candidateId = `hs${rand}`;
-        const checkRes = await rtdb(env, signingKeys, 'GET', `students_auth/${candidateId}`);
-        if (checkRes.status === 404) {
-          studentId = candidateId;
-          break;
-        }
-      }
-      if (!studentId) {
-        studentId = `hs${Date.now().toString(36).slice(-6)}`;
-      }
-
-      const salt = newSalt();
-      const pinHash = await hashPinPbkdf2(pinToUse, salt);
-      const studentRecord = {
-        name: name.trim(),
-        grade: gradeNum,
-        class_code: class_code.trim().toUpperCase(),
-        salt,
-        pin_hash: pinHash,
-        disabled: false,
-        must_change_pin: true,
-        created_at: new Date().toISOString()
-      };
-
-      const putRes = await rtdb(env, signingKeys, 'PUT', `students_auth/${studentId}`, studentRecord);
-      if (!putRes.ok) {
-        return new Response(JSON.stringify({ detail: `Lỗi ghi học sinh vào Firebase RTDB (HTTP ${putRes.status}).` }), {
-          status: 502,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      return new Response(JSON.stringify({
-        id: studentId,
-        name: studentRecord.name,
-        grade: studentRecord.grade,
-        class_code: studentRecord.class_code,
-        pin: pinToUse
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return json({ created: results.filter(r => r.ok).length, failed: results.filter(r => !r.ok).length, results });
     }
 
     // Teacher Student Management: POST /api/teacher/students/{id}/reset-pin

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {parseStudentRows, templateRows, STUDENT_COLUMNS, MAX_STUDENTS} from '../frontend/hoc/student-import.js';
+const H = STUDENT_COLUMNS.slice();
+const tpl = parseStudentRows(templateRows().students); assert.equal(tpl.fatal, ''); assert.equal(tpl.ok, 2); assert.equal(tpl.rows[0].student_id, 'hs9a01');
+assert.match(parseStudentRows([]).fatal, /File trống/); assert.match(parseStudentRows([['a']]).fatal, /cột 1 phải là "Mã học sinh"/); assert.match(parseStudentRows([H]).fatal, /chưa có học sinh/);
+assert.ok(parseStudentRows([H.map(x => ' ' + x.toUpperCase() + ' '), ['', 'An', 9, '9A', '']]).ok === 1, 'tiêu đề không phân biệt hoa thường');
+const errs = row => parseStudentRows([H, row]).rows[0].errors.join('|');
+assert.match(errs(['Nguyễn', 'An', 9, '9A', '']), /Mã học sinh/); assert.match(errs(['', '', 9, '9A', '']), /Thiếu họ và tên/);
+assert.match(errs(['', 'An', 5, '9A', '']), /Khối/); assert.match(errs(['', 'An', 'abc', '9A', '']), /Khối/); assert.match(errs(['', 'An', 9, '', '']), /Lớp/);
+assert.match(errs(['', 'An', 9, 'lớp 9', '']), /Lớp/); assert.match(errs(['', 'An', 9, '9A', '123']), /PIN/);
+assert.equal(errs(['HS01A', 'An', 'Lớp 9', '9A', 123456]), '', 'chữ hoa, "Lớp 9", PIN số đều được nhận');
+const dup = parseStudentRows([H, ['hs01', 'A', 9, '9A', ''], ['', ''], ['HS01', 'B', 9, '9A', '']]); assert.equal(dup.rows.length, 2); assert.match(dup.rows[1].errors[0], /trùng với dòng 2/); assert.equal(dup.rows[1].row, 4);
+assert.match(parseStudentRows([H, ...Array.from({length: MAX_STUDENTS + 1}, (_, i) => ['', 'A' + i, 9, '9A', ''])]).fatal, /tách file/);
+console.log('STUDENT IMPORT OK');

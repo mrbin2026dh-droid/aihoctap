@@ -148,6 +148,7 @@ export function init(options = {}) {
     if (action === 'stats-exam') { void showSub('detail-exams-stats'); return; }
     if (action === 'new-materials') { void showSub('detail-materials'); return; }
     if (action === 'new-accounts') { void showSub('detail-accounts'); return; }
+    if (action === 'import-accounts') { void showSub('detail-accounts-import'); return; }
     if (action === 'close-settings') { void closeSettings(); return; }
     if (action.startsWith('profile-')) {
       const menu = /** @type {HTMLElement & {hidePopover?: () => void}|null} */ (byId('nav-profile'));

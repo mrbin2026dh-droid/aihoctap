@@ -206,6 +206,14 @@
 .teacher-app .a-block{margin:20px 0 0}.teacher-app .a-block h3{margin:0 0 8px;font-size:var(--t-medium)}.teacher-app .a-item{display:grid;gap:4px;padding:12px 0;border-top:1px solid var(--line)}.teacher-app .a-prompt{color:var(--ink)}.teacher-app .a-bar-row{display:grid;grid-template-columns:minmax(80px,1fr) auto auto;align-items:center;gap:12px}.teacher-app .a-bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden}.teacher-app .a-fill{display:block;height:100%;border-radius:99px;background:var(--brand)}.teacher-app .a-fill.a-weak{background:var(--danger)}.teacher-app .a-fill.a-fair{background:var(--warn)}.teacher-app .a-pct{font-weight:700;min-width:3.5ch;text-align:right}.teacher-app .a-tag{font-size:var(--t-small);font-weight:700;color:var(--brand-text,var(--brand))}.teacher-app .a-tag.a-weak{color:var(--danger)}.teacher-app .a-tag.a-fair{color:var(--warn)}
 .teacher-app .t-actions-inline{display:flex;flex-wrap:wrap;gap:8px}
 .teacher-app .t-number.t-warn{color:var(--warn);font-weight:700}
+.teacher-app .t-search{position:relative}
+.teacher-app .t-search input{width:100%;padding-left:44px}
+.teacher-app .t-search-ic{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.teacher-app .t-hint{margin:6px 0 0;font-size:var(--t-small)}
+.teacher-app .t-excel-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-8px 0 16px}
+.teacher-app .t-excel-bar p{margin:0}
+.teacher-app .t-student-result .t-badge{white-space:normal}
+@media(max-width:760px){.teacher-app .t-excel-bar .t-actions-inline{width:100%}.teacher-app .t-excel-bar .t-button{flex:1 1 auto}}
 /* TEACHER-DARK:BEGIN */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme=light]){--ink:#faf9f5;--muted:#b8b5aa;--paper:#262624;--surface:#30302e;--sidebar:#1f1e1d;--line:#403f3b;--brand:#2f7a6b;--brand-hover:#3a8d7c;--brand-soft:#2b3a36;--brand-text:#93d4c3;--ok:#8fd4a8;--ok-bg:#26382f;--warn:#f0c27a;--warn-bg:#3d3220;--danger:#ff9f95;--danger-bg:#43272a;--info:#93d4c3;--info-bg:#2b3a36;--control:#8a877d;--white:#fff;--backdrop:#000000a6;--shadow:0 4px 16px #00000066;color-scheme:dark}

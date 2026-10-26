@@ -249,11 +249,15 @@
 <section id="list-accounts" class="t-list">
 <h2 class="visually-hidden">Danh sách học sinh</h2>
 <div class="t-toolbar t-toolbar-students">
-<div class="t-field"><label for="field-student_search">Tìm theo tên hoặc mã</label><input id="field-student_search" name="student_search" type="search" >
+<div class="t-field"><label for="field-student_search">Tìm theo tên hoặc mã</label><div class="t-search"><svg class="ic t-search-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="field-student_search" name="student_search" type="search" placeholder="Nhập tên hoặc mã học sinh" autocomplete="off"></div>
 </div>
 <div class="t-field"><label for="students-class-filter">Lớp</label><select id="students-class-filter"><option value="">Tất cả các lớp</option></select>
 </div>
 <button type="button" id="refresh-students" class="t-icon-btn" data-icon="retry" data-action="refresh-students" aria-label="Tải lại danh sách học sinh" title="Tải lại danh sách học sinh"></button><button type="button" id="act-accounts-new" class="t-button t-primary" data-action="new-accounts" >Thêm học sinh</button>
+</div>
+<div class="t-excel-bar" role="group" aria-label="Excel">
+<p id="students-count" class="t-muted" role="status">Đang tải…</p>
+<div class="t-actions-inline"><button type="button" id="act-accounts-import" class="t-button" data-action="import-accounts">Nhập từ Excel</button><button type="button" id="act-accounts-template" class="t-button">Tải mẫu Excel</button><button type="button" id="act-accounts-export" class="t-button">Xuất danh sách Excel</button></div>
 </div>
 <div class="t-bulk" data-bulk hidden>
 <p>Đã chọn <span data-selection-count>0</span> học sinh</p><button type="button" id="act-accounts-bulk-lock" class="t-button" data-action="bulk-lock" >Khóa</button><button type="button" id="act-accounts-bulk-unlock" class="t-button" data-action="bulk-unlock" >Mở khóa</button><button type="button" id="act-accounts-bulk-delete" class="t-button t-danger" data-action="bulk-delete">Xóa</button>
@@ -273,11 +277,23 @@
 <tbody id="students-tbody"><tr><td colspan="6">Đang tải danh sách học sinh…</td></tr></tbody>
 </table>
 </section>
+<section id="detail-accounts-import" hidden class="t-detail"><button type="button" id="act-accounts-import-back" class="t-button" data-action="back-accounts" data-target="list-accounts">Quay lại danh sách</button>
+<h2 class="t-detail-title">Nhập học sinh từ Excel</h2>
+<div class="t-card t-form">
+<p class="t-muted">Tải file mẫu, điền mỗi học sinh một dòng (mã học sinh và mã PIN có thể để trống để hệ thống tự sinh), rồi tải file lên. Hệ thống kiểm tra từng dòng trước khi tạo tài khoản.</p>
+<div class="t-actions-inline"><button type="button" id="act-accounts-template-2" class="t-button">Tải mẫu Excel</button></div>
+<div class="t-field"><label for="field-student-file">Chọn file Excel (.xlsx)</label><input id="field-student-file" type="file" accept=".xlsx"></div>
+<div id="student-import-preview" aria-live="polite"><p class="t-muted">Chưa tải file.</p></div>
+<div class="t-actions-inline"><button type="button" id="student-import-run" class="t-button t-primary" disabled>Tạo tài khoản</button><button type="button" id="student-import-download" class="t-button" hidden>Tải danh sách tài khoản vừa tạo (có PIN)</button></div>
+</div>
+</section>
 <section id="detail-accounts" hidden class="t-detail"><button type="button" id="act-accounts-back" class="t-button" data-action="back-accounts" data-target="list-accounts">Quay lại danh sách</button>
 <h2 class="t-detail-title">Thêm học sinh</h2>
 <form id="add-student-form" class="t-form t-card">
 <h3>Thông tin học sinh</h3>
 <div class="t-form-grid">
+<div class="t-field"><label for="field-add-student-form-student_id">Mã học sinh (để trống để tự sinh)</label><input name="student_id" maxlength="20" id="field-add-student-form-student_id" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ví dụ: hs9a01" aria-describedby="student-id-hint"><p id="student-id-hint" class="t-muted t-hint">3–20 ký tự: chữ thường không dấu, số, gạch nối (-) hoặc gạch dưới (_). Dùng để học sinh đăng nhập.</p>
+</div>
 <div class="t-field"><label for="field-add-student-form-name">Họ và tên</label><input name="name" required maxlength="60" id="field-add-student-form-name">
 </div>
 <div class="t-field"><label for="field-add-student-form-grade">Khối</label><select name="grade" id="field-add-student-form-grade"><option value="6">Lớp 6</option><option value="7">Lớp 7</option><option value="8">Lớp 8</option><option value="9">Lớp 9</option><option value="10">Lớp 10</option><option value="11">Lớp 11</option><option value="12">Lớp 12</option></select>

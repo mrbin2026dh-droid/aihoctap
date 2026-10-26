@@ -866,3 +866,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate), ghi ID bản cũ/m�
 - Làm: Kéo commit 77833ca, kiểm tra cú pháp node --check 0 lỗi. Chạy wrangler deploy thành công (bản mới: bdb4dd8b-56d2-40a4-9fb4-98cfb48bf332, bản cũ: 22f4c063-0104-4bfd-8823-d328b6d33063).
 - Kiểm thử thực tế: Smoke test thật live worker /api/health (200 OK), /api/pwa/exams (401), /api/pwa/teacher/exams (401). Test backend test_exam_backend.mjs và browser test_exam_import_browser.cjs PASS 100%. GitHub Pages đã đồng bộ bản sửa lỗi 400.
 - Việc mở: Người dùng đăng nhập giao diện giáo viên, tải file mẫu Excel, lưu thử 1 đề [THỬ] và xác nhận kết quả.
+
+## 2026-10-26 - Claude - Tài khoản học sinh: mã tự đặt, nhập/xuất Excel, thanh tìm kiếm
+- Làm: ô "Mã học sinh" tự nhập (3–20 ký tự, tự chuẩn hóa chữ thường, trùng mã → 409, để trống thì tự sinh; sửa luôn lỗi kiểm tra trùng mã tự sinh vì RTDB trả 200 + null); `POST /api/teacher/students/import` (tối đa 300, báo từng dòng); `worker/students.js`; `frontend/hoc/student-import.js`; nút Nhập từ Excel / Tải mẫu / Xuất danh sách; tải file tài khoản vừa tạo kèm PIN; thanh tìm kiếm có biểu tượng + gợi ý.
+- Test: test_student_import_backend.mjs, test_student_import.mjs, test_student_import_browser.cjs; toàn bộ test khác vẫn đạt.
+- Lưu ý: file xuất không có PIN (PIN lưu dạng băm).
+- Việc mở: Antigravity chạy `npx wrangler deploy` (route import mới).
+XONG tài khoản Excel / TIẾP THEO → Antigravity
+Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nhất, smoke test POST /api/teacher/students/import không quyền → 403, ghi ID bản cũ/mới."
