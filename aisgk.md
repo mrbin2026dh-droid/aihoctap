@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng yêu cầu nghiên cứu cuộc thi AI giáo viên sáng tạo 2026, đối chiếu app và đề xuất tính mới; ChatGPT/Codex đã lập docs/NGHIEN_CUU_CUOC_THI_AI_2026.md, tạm theo giải thưởng Bộ GDĐT–RMIT vì chưa xác nhận đơn vị; xem docs/handoff/chatgpt-nguoidung-dinh-huong-du-thi-ai-2026.md.
+- Yêu cầu mới nhất: Người dùng chốt hướng Firebase + Apps Script + Drive, Worker chỉ giữ khóa Gemini; Antigravity chạy Bước 0 (docs/handoff/claude-antigravity-buoc0-firebase-drive.md) rồi lập kế hoạch chi tiết.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1625,3 +1625,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/NGHIEN_CUU_CUOC_THI_AI_2026.md, docs/handoff/chatgpt-nguoidung-dinh-huong-du-thi-ai-2026.md, aisgk.md; không sửa mã hoặc bảng nghiệm thu.
 - Kiểm thực tế: đọc nguồn web và tài liệu đã nêu; chưa đọc được PDF thể lệ qua Drive, chưa kiểm app/test/đo tác động thật, không ghi PASS.
 - Việc tiếp: người dùng xác nhận đúng giải, điều kiện tác giả và hướng trọng tâm; ChatGPT chuẩn bị học liệu/phiếu đo sau khi chốt. Mọi triển khai chuyển Antigravity và Claude kiểm định; không commit/push.
+
+## [Claude] Bước 0 Firebase + Drive (bộ đo) và điều chỉnh kế hoạch
+- Phân tích kiến trúc bỏ Worker khỏi đường thi (docs/plans/kien-truc-firebase-drive.md, mục 8: luyện tập không cần Worker, chấm trắc nghiệm bằng Apps Script, GV chấm thực hành trong Sổ điểm Google Sheet, file minh chứng .txt trong thư mục học sinh; cấu trúc điểm GV tự cài đặt).
+- Thêm bộ đo tạm: frontend/hoc/spike-step0/, spike/step0/ (rules, Apps Script). Chưa chạy được (cần tài khoản Firebase/Google thật) — chưa kiểm chứng.
+- Việc dở: Antigravity chạy Bước 0 và viết kế hoạch chi tiết (docs/handoff/claude-antigravity-buoc0-firebase-drive.md). Đo CPU Worker hiện tại: auth 23 ms, analytics 32–45 ms (mô phỏng 100 HS) > trần Free 10 ms.

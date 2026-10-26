@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Bước 0 – kiểm tra kỹ thuật (tạm thời)</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:16px;color:#1b2b27;background:#faf9f6}h1{font-size:22px}label{display:grid;gap:4px;margin:10px 0;font-weight:600}input{font:inherit;padding:10px;min-height:44px;border:1px solid #8a9a95;border-radius:8px}button{font:inherit;min-height:48px;padding:0 16px;border-radius:8px;border:0;background:#17403a;color:#fff;margin:4px 4px 4px 0;cursor:pointer}button.alt{background:#fff;color:#17403a;border:1px solid #17403a}pre{white-space:pre-wrap;background:#fff;border:1px solid #cdd6d2;border-radius:8px;padding:12px;min-height:200px}.note{background:#fff7e0;border:1px solid #e3c870;padding:8px 12px;border-radius:8px}</style></head>
+<body><h1>Bước 0: kiểm tra Firebase + Apps Script</h1>
+<p class="note">Trang tạm thời để Antigravity đo số liệu. Không dùng cho học sinh thật. Sẽ xóa sau Bước 0.</p>
+<form id="cfg" onsubmit="return false">
+<label>Firebase Web API key<input id="apiKey" autocomplete="off"></label>
+<label>Database URL (https://…firebasedatabase.app hoặc …firebaseio.com)<input id="dbUrl" autocomplete="off"></label>
+<label>Apps Script web app URL (…/exec)<input id="gasUrl" autocomplete="off"></label>
+<label>Mã học sinh thử (ví dụ spike001)<input id="sid" value="spike001" autocomplete="off"></label>
+<label>PIN thử (6 ký tự trở lên)<input id="pin" value="123456" autocomplete="off"></label>
+<label>Số tài khoản chạy song song (kiểm tra giới hạn đăng nhập cùng IP)<input id="n" type="number" min="1" max="100" value="30"></label>
+</form>
+<button id="one">1) Chạy đủ chuỗi kiểm tra (một học sinh)</button>
+<button id="many" class="alt">2) Đăng nhập song song N tài khoản</button>
+<button id="gas" class="alt">3) Chỉ thử Apps Script</button>
+<pre id="out" aria-live="polite">Điền ô cấu hình rồi bấm nút 1.</pre>
+<script type="module" src="./spike.js"></script></body></html>

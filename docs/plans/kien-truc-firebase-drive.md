@@ -111,8 +111,8 @@ Cloudflare Worker (giữ lại, chỉ phần hiếm/nhẹ)
 ## 7. Điều cần chủ dự án quyết định
 
 1. Chấp nhận điểm hiện sau tối đa khoảng 1 phút (vì chấm do trigger) — hay muốn học sinh thấy điểm ngay (phải giữ Worker chấm)?
-2. Chấp nhận cách học sinh làm lại: bản cũ và bản mới đều được giữ?
-3. Cho phép làm Bước 0 trước để kiểm chứng đăng nhập Firebase từ mạng trường?
+2. (Đã chốt) giữ cả bản cũ và bản mới; sổ điểm bằng Google Sheet.
+3. (Đã chốt) làm Bước 0 trước để kiểm chứng đăng nhập Firebase từ mạng trường?
 4. Tài khoản Google nào làm chủ Apps Script và Drive (Gmail cá nhân hay Workspace trường)?
 
 ## 8. Điều chỉnh theo góp ý ngày 26/10 15:34 (thay thế các mục 3.2 và câu hỏi 1, 2 ở trên)
@@ -134,8 +134,8 @@ Cloudflare Worker (giữ lại, chỉ phần hiếm/nhẹ)
 
 Vì sao dùng Google Sheet làm sổ điểm: giáo viên đã quen, không phải xây thêm màn hình; công thức tổng điểm và lọc theo lớp có sẵn. Màn hình chấm trong ứng dụng có thể làm sau nếu cần.
 
-### 8.3 Cấu trúc điểm (cần chủ dự án chốt)
-Đề có hai phần với điểm tối đa cấu hình được, ví dụ lý thuyết 4 + thực hành 6 = 10. Đề chỉ có trắc nghiệm thì thực hành = 0 và tổng chính là điểm lý thuyết.
+### 8.3 Cấu trúc điểm (giáo viên tự cài đặt cho từng đề — đã chốt 26/10 15:39)
+Form tạo đề có mục "Cấu trúc điểm": giáo viên chọn các phần của đề (Lý thuyết trắc nghiệm, Thực hành, có thể thêm Tự luận) và nhập điểm tối đa từng phần (ví dụ lý thuyết 4 + thực hành 6 = 10, hoặc 3 + 7, hoặc chỉ lý thuyết 10). Điểm tối đa của phần lý thuyết là số cố định; điểm từng câu trắc nghiệm được quy tỉ lệ để cộng lại bằng số đó. Cột điểm trong Sổ điểm tự tạo theo cấu trúc này; tổng = cộng các phần, không vượt tổng điểm đề. Dữ liệu: `exam_defs/{id}.parts = [{key:'theory', label, max, grader:'auto'}, {key:'practice', label, max, grader:'teacher'}]`.
 
 ### 8.4 Giới hạn liên quan (đã xác nhận qua tài liệu thứ cấp, nên thử thật)
 - Trigger: tối đa 20 trigger mỗi script; tổng thời gian chạy trigger **90 phút/ngày** (cá nhân), **6 giờ** (Workspace); trigger có thể trễ vài phút khi tải cao ([folderpal](https://folderpal.io/articles/google-apps-script-quotas-and-workarounds-2026-breaking-limits-on-drive-automation), [modelmonkey](https://modelmonkey.io/blog/google-apps-script-limitations)). Một trigger mỗi phút, mỗi lần dưới 1–2 giây khi không có bài mới: khoảng 12–25 phút/ngày. Tạo trigger chỉ trong giờ thi nếu cần tiết kiệm.

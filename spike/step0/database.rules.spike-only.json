@@ -1,0 +1,45 @@
+{
+  "rules": {
+    "spike": {
+      "sessions": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.child('started_at').val() === now"
+        }
+      },
+      "drafts": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['n'])"
+        }
+      },
+      "attempts": {
+        "$uid": {
+          "$n": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && ($n === '1' || $n === '2') && root.child('spike/sessions/' + $uid + '/started_at').exists() && now <= root.child('spike/sessions/' + $uid + '/started_at').val() + 2730000"
+          }
+        }
+      },
+      "results": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      },
+      "secret": {
+        ".read": false,
+        ".write": false
+      },
+      "reports": {
+        "$uid": {
+          "$k": {
+            ".read": false,
+            ".write": "auth != null && auth.uid === $uid && !data.exists()"
+          }
+        }
+      }
+    }
+  }
+}
