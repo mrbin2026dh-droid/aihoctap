@@ -114,3 +114,33 @@ Cloudflare Worker (giữ lại, chỉ phần hiếm/nhẹ)
 2. Chấp nhận cách học sinh làm lại: bản cũ và bản mới đều được giữ?
 3. Cho phép làm Bước 0 trước để kiểm chứng đăng nhập Firebase từ mạng trường?
 4. Tài khoản Google nào làm chủ Apps Script và Drive (Gmail cá nhân hay Workspace trường)?
+
+## 8. Điều chỉnh theo góp ý ngày 26/10 15:34 (thay thế các mục 3.2 và câu hỏi 1, 2 ở trên)
+
+Ý của chủ dự án: (a) **luyện tập** không cần bảo mật đáp án; (b) **bài thi** gồm lý thuyết (trắc nghiệm) + thực hành: Apps Script tự chấm trắc nghiệm, giáo viên chấm thực hành, rồi **tổng điểm** và lưu **file văn bản minh chứng** (câu hỏi + trả lời của học sinh + đáp án đúng) vào **thư mục mang tên học sinh**.
+
+### 8.1 Luyện tập: bỏ hẳn Worker
+- Bài học và đáp án là file tĩnh (GitHub Pages hoặc Firebase đọc công khai); học sinh tự đối chiếu ngay trong trình duyệt.
+- Tiến độ lưu thẳng vào Firebase (`progress/{uid}`) bằng REST với quy tắc chỉ ghi vào nhánh của chính mình, để giáo viên vẫn xem được báo cáo điểm yếu (tính trong trình duyệt giáo viên).
+- Worker chỉ còn gia sư Gemini (giữ khóa API). Có thể bỏ luôn Worker nếu chuyển gia sư sang Apps Script, nhưng không cần vội.
+
+### 8.2 Dòng chảy bài thi
+1. Học sinh đăng nhập (Firebase Authentication), làm trắc nghiệm, nộp vào Firebase `attempts/...` (quy tắc: ghi một lần, kiểm tra giờ).
+2. Chấm trắc nghiệm bằng Apps Script theo hai đường song song, chịu lỗi: (i) trình duyệt gọi nhẹ Apps Script "chấm bài của tôi" ngay sau khi nộp; (ii) trigger mỗi phút quét bài chưa chấm. Nếu (i) bị nghẽn do giới hạn 30 lần đồng thời thì (ii) vẫn chấm bù, nên không mất bài, chỉ chậm vài phút trong trường hợp xấu.
+3. Apps Script ghi `results/{đề}/{uid}` = điểm lý thuyết, trạng thái "chờ chấm thực hành"; ghi một dòng vào Google Sheet "Sổ điểm {đề}".
+4. Học sinh tải file thực hành (≤ 10 MB, `.xlsx/.pptx/.docx/.pdf`) lên Apps Script; script xác thực bằng Firebase ID token (một lần gọi `accounts:lookup`), lưu vào `Bai thi / {Lớp} / {Họ tên - mã} /`, ghi đường dẫn file vào Sổ điểm.
+5. Giáo viên mở file từ Sổ điểm, **nhập điểm thực hành vào cột Sheet**. Trigger "khi sửa" (loại cài đặt sẵn, chạy bằng tài khoản chủ) tính **Tổng điểm**, cập nhật `results` để học sinh thấy kết quả cuối, và **ghi lại file minh chứng**.
+6. File `minh-chung_{đề}.txt` nằm cùng thư mục học sinh: tiêu đề (tên, lớp, đề, giờ làm/nộp), từng câu với nội dung, học sinh chọn, đáp án đúng, đúng/sai, điểm câu; điểm lý thuyết, điểm thực hành, tổng điểm, giờ chấm. Ghi đè bằng `setContent` thì Drive tự giữ lịch sử phiên bản.
+
+Vì sao dùng Google Sheet làm sổ điểm: giáo viên đã quen, không phải xây thêm màn hình; công thức tổng điểm và lọc theo lớp có sẵn. Màn hình chấm trong ứng dụng có thể làm sau nếu cần.
+
+### 8.3 Cấu trúc điểm (cần chủ dự án chốt)
+Đề có hai phần với điểm tối đa cấu hình được, ví dụ lý thuyết 4 + thực hành 6 = 10. Đề chỉ có trắc nghiệm thì thực hành = 0 và tổng chính là điểm lý thuyết.
+
+### 8.4 Giới hạn liên quan (đã xác nhận qua tài liệu thứ cấp, nên thử thật)
+- Trigger: tối đa 20 trigger mỗi script; tổng thời gian chạy trigger **90 phút/ngày** (cá nhân), **6 giờ** (Workspace); trigger có thể trễ vài phút khi tải cao ([folderpal](https://folderpal.io/articles/google-apps-script-quotas-and-workarounds-2026-breaking-limits-on-drive-automation), [modelmonkey](https://modelmonkey.io/blog/google-apps-script-limitations)). Một trigger mỗi phút, mỗi lần dưới 1–2 giây khi không có bài mới: khoảng 12–25 phút/ngày. Tạo trigger chỉ trong giờ thi nếu cần tiết kiệm.
+- Từ 1/5/2026 hạn mức Google Drive API tính theo "đơn vị" thay vì số lần gọi (liệt kê tệp 100 đơn vị, tải xuống 200) — chỉ ảnh hưởng nếu dùng Drive API nâng cao; `DriveApp` thông thường chưa rõ, phải thử ở Bước 0.
+- Chưa xác nhận: Apps Script đọc/ghi Realtime Database bằng `ScriptApp.getOAuthToken()` (cách thường gặp nhưng cần đúng phạm vi quyền), và tạo/đặt lại tài khoản Firebase Authentication từ Apps Script bằng quyền quản trị.
+
+### 8.5 Việc thêm vào Bước 0
+Ngoài đăng nhập Firebase từ mạng trường, Bước 0 phải thử: Apps Script đọc RTDB bằng OAuth, ghi một thư mục + file văn bản vào Drive, trigger "khi sửa" cập nhật tổng điểm, và trình duyệt gọi được Apps Script bằng `fetch`.
