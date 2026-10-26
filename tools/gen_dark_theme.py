@@ -12,7 +12,8 @@ EXTRA = ('.student-app .topbar{background:rgba(38,38,36,.88)}.student-app button
          '.student-app .lesson-open:hover{background:#faf9f5;color:#1f1e1d;border-color:#faf9f5}'
          '.student-app .result-title .ic{color:#4ade80}'
          '.student-app .auth-btn-alt:hover{background:#3a3936;color:var(--ink);border-color:var(--ink)}'
-         '.student-app .connection{color:#4ade80}.student-app .connection.is-offline{color:#fbbf24}')
+         '.student-app .connection{color:#4ade80}.student-app .connection.is-offline{color:#fbbf24}'
+         '.student-app .role-switch [aria-current=page],.student-app .auth-logo{background:#2d7a6c;color:#fff}')
 COLOR = re.compile(r'#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\([^)]*\)')
 def hexrgb(h):
     h = h[1:]

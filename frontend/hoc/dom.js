@@ -351,3 +351,10 @@ export function mapErrorMessage(error) {
   return 'Chưa thực hiện được. Thử lại sau.';
 }
 
+
+// Nút Back (bfcache) có thể khôi phục ô PIN và lỗi cũ: xóa để không gửi nhầm khi đổi vai trò.
+addEventListener('pageshow', event => {
+  if (!event.persisted) return;
+  document.querySelectorAll('input[type=password]').forEach(input => { /** @type {HTMLInputElement} */ (input).value = ''; });
+  for (const id of ['login-error', 'teacher-login-error']) { const node = document.getElementById(id); if (node) node.textContent = ''; }
+});

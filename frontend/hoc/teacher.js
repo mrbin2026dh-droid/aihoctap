@@ -539,7 +539,7 @@ function renderOverview() {
       const tbl = h('table', '', 't-table a-mini'); tbl.append(h('caption', `Điểm từng bài của ${st.name}`));
       const hd = h('thead'); const hr = h('tr'); for (const c of ['Bài', 'Loại', 'Đúng']) { const th = h('th', c); th.scope = 'col'; if (c === 'Đúng') th.className = 't-number'; hr.append(th); } hd.append(hr);
       const tb = h('tbody'); for (const it of st.items || []) { const tr = h('tr'); const c1 = h('td', it.title); c1.dataset.label = 'Bài'; const c2 = h('td', it.is_exam ? 'Kiểm tra' : 'Luyện tập'); c2.dataset.label = 'Loại'; const c3 = h('td', `${it.percent}%`, 't-number'); c3.dataset.label = 'Đúng'; tr.append(c1, c2, c3); tb.append(tr); }
-      tbl.append(hd, tb); body.append(tbl); d.append(body); list.append(d);
+      if ((st.items || []).length) { tbl.append(hd, tb); body.append(tbl); } else body.append(h('p', 'Chưa có bài nào.', 't-muted')); d.append(body); list.append(d);
     }
   };
   find.addEventListener('input', draw); draw(); people.append(list); target.append(people);
@@ -549,7 +549,7 @@ function renderOverview() {
   const lh = h('thead'); const lr = h('tr'); for (const [c, num] of [['Bài', false], ['Loại', false], ['Học sinh', true], ['Lượt nộp', true], ['Đúng trung bình', false]]) { const th = h('th', String(c)); th.scope = 'col'; if (num) th.className = 't-number'; lr.append(th); } lh.append(lr);
   const lb = h('tbody');
   for (const l of lessons) { const tr = h('tr'); const cells = [[l.title, 'Bài', ''], [l.is_exam ? 'Kiểm tra' : 'Luyện tập', 'Loại', ''], [String(l.students), 'Học sinh', 't-number'], [String(l.attempts), 'Lượt nộp', 't-number']]; for (const [v, lab, cls] of cells) { const td = h('td', v, cls); td.dataset.label = lab; tr.append(td); } const td = h('td'); td.dataset.label = 'Đúng trung bình'; td.append(levelBar(l.avg_percent, l.level)); tr.append(td); lb.append(tr); }
-  lt.append(lh, lb); lessonCard.append(lt); target.append(lessonCard);
+  if (lessons.length) { lt.append(lh, lb); lessonCard.append(lt); } else lessonCard.append(h('p', 'Chưa có bài nào được làm.', 't-muted')); target.append(lessonCard);
 }
 async function loadAnalytics() {
   const captured = generation;

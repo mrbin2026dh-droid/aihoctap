@@ -1630,3 +1630,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Phân tích kiến trúc bỏ Worker khỏi đường thi (docs/plans/kien-truc-firebase-drive.md, mục 8: luyện tập không cần Worker, chấm trắc nghiệm bằng Apps Script, GV chấm thực hành trong Sổ điểm Google Sheet, file minh chứng .txt trong thư mục học sinh; cấu trúc điểm GV tự cài đặt).
 - Thêm bộ đo tạm: frontend/hoc/spike-step0/, spike/step0/ (rules, Apps Script). Chưa chạy được (cần tài khoản Firebase/Google thật) — chưa kiểm chứng.
 - Việc dở: Antigravity chạy Bước 0 và viết kế hoạch chi tiết (docs/handoff/claude-antigravity-buoc0-firebase-drive.md). Đo CPU Worker hiện tại: auth 23 ms, analytics 32–45 ms (mô phỏng 100 HS) > trần Free 10 ms.
+
+## [Claude] Rà soát giao diện bằng bộ skill mới + thanh vai trò đăng nhập (Bước A)
+- Đã làm theo docs/handoff/claude-nguoidung-login-segmented.md: thanh `Học sinh | Giáo viên` (nav + liên kết, `aria-current`) ở hộp thoại đăng nhập học sinh và trang giáo viên; bỏ "Góc học sinh" cuối form; ẩn ở màn đổi PIN lần đầu và sau đăng nhập; Back (bfcache) xóa PIN/lỗi. Giáo viên đổi nút/logo sang xanh trầm cùng học sinh (sáng + tối).
+- Nâng 44→48px: nút Hiện PIN, nút Đóng hộp thoại; câu hướng dẫn rút gọn; tiêu đề hộp thông báo không rỗng; bỏ landmark `main` lồng/trùng và `aria-label` thừa ở phòng thi và các view giáo viên; bảng rỗng ở tổng quan giáo viên hiện câu "Chưa có bài nào"; `text-wrap:balance`, `overscroll-behavior:contain`, chỉ transition thuộc tính cụ thể.
+- Tệp: index.html, teacher.html, styles.css, teacher.css, dom.js, exam.js, teacher.js, sw.js (tem cache), tools/gen_dark_theme.py, tests/test_role_switch.cjs (235 kiểm tra: 4 khung × sáng/tối, vùng chạm, tương phản ≥4.5, Back, cách ly, không tràn ngang).
+- Kiểm thực tế: toàn bộ 24 test .cjs trong tests/ xanh (gồm test_role_isolation, test_login_gate, test_*_ui_standard 0 vi phạm, focus-contrast); test_exam_backend.mjs OK. Chưa kiểm: Safari/iOS, bàn phím ảo thật, screen reader thật.
+- Chưa làm: Bước B (cổng học sinh hiện thẳng thẻ đăng nhập thay `#gate` + dialog) — chờ người dùng chốt sau khi Bước A chạy thật. Việc deploy GitHub Pages do Antigravity.

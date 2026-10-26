@@ -129,8 +129,8 @@ function openSession(data, afterClose) {
   if (!real) clock.hidden = true;
 
   const body = el('div', '', 'ex-body');
-  const stage = el('main', '', 'ex-stage'); stage.id = 'ex-stage';
-  const side = el('aside', '', 'ex-side'); side.setAttribute('aria-label', 'Bảng câu hỏi');
+  const stage = el('section', '', 'ex-stage'); stage.id = 'ex-stage'; stage.setAttribute('aria-label', 'Câu hỏi');
+  const side = el('section', '', 'ex-side'); side.setAttribute('aria-label', 'Bảng câu hỏi');
   const paletteTitle = el('h2', 'Bảng câu hỏi', 'ex-side-title');
   const palette = el('div', '', 'ex-palette');
   const legend = el('p', '', 'ex-legend');
@@ -290,7 +290,7 @@ function openSession(data, afterClose) {
   /** @param {{score:number,earned:number,total_points:number,correct:number,total:number,needs_review?:number,late?:boolean,message?:string,answers_key?:Record<string,string>}} ack */
   function showResult(ack) {
     root.replaceChildren();
-    const wrap = el('main', '', 'ex-result'); wrap.id = 'ex-result';
+    const wrap = el('section', '', 'ex-result'); wrap.id = 'ex-result'; wrap.setAttribute('aria-label', 'Kết quả bài làm');
     const hero = el('section', '', 'ex-result-hero');
     hero.append(icon('exam', 'ic ex-result-ic'), el('h1', 'Em đã nộp bài'), el('p', data.title, 'ex-result-title'));
     const big = el('div', '', 'ex-score'); big.append(el('strong', String(ack.score)), el('span', '/10'));

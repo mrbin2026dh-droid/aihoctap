@@ -20,14 +20,13 @@
 <section id="auth-section" class="t-auth" aria-labelledby="teacher-login-title">
 <span class="t-auth-logo" aria-hidden="true">sgk</span>
 <h2 id="teacher-login-title">Đăng nhập</h2>
-<p class="t-auth-lead">Góc dành cho giáo viên.</p>
+<nav class="role-switch" aria-label="Chọn vai trò đăng nhập"><a href="./">Học sinh</a><span aria-current="page">Giáo viên</span></nav>
 <form id="teacher-login" class="t-form">
 <div class="t-field"><label for="teacher-pin">Mã PIN giáo viên</label>
 <div class="t-pin t-input-icon"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện mã PIN"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
 </div>
 <p id="teacher-login-error" class="notice error status" role="alert" aria-live="polite"></p><button type="submit" class="t-button t-primary t-auth-btn"><span>Đăng nhập</span><svg class="ic ic-end" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14 M13 6l6 6-6 6"/></svg></button>
-<a class="t-auth-back" href="./" aria-label="Về góc học sinh" title="Về góc học sinh"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22 10 12 5 2 10l10 5 10-5z M6 12v5c3 2 9 2 12 0v-5"/></svg><span>Góc học sinh</span></a>
 </form>
 </section>
 <section id="teacher-must-change-section" class="t-auth" hidden aria-labelledby="first-pin-title">
@@ -67,7 +66,7 @@
 <header class="t-workspace-head">
 <h1 id="workspace-title" tabindex="-1">Tổng quan</h1>
 </header>
-<section id="view-overview" aria-label="Tổng quan">
+<section id="view-overview">
 <section id="list-overview" class="t-list">
 <h2 class="visually-hidden">Tổng quan lớp học</h2>
 <div class="a-head">
@@ -77,7 +76,7 @@
 <div id="teacher-analytics" aria-live="polite"><p class="t-muted">Chưa tải báo cáo.</p></div>
 </section>
 </section>
-<section id="view-lessons" hidden aria-label="Soạn bài">
+<section id="view-lessons" hidden>
 <section id="list-lessons" class="t-list">
 <h2 class="visually-hidden">Bài học</h2>
 <div class="t-toolbar">
@@ -151,7 +150,7 @@
 </details>
 </section>
 </section>
-<section id="view-exams" hidden aria-label="Kiểm tra">
+<section id="view-exams" hidden>
 <section id="list-exams" class="t-list">
 <h2 class="visually-hidden">Đề kiểm tra</h2>
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-exams-new" class="t-button t-primary" data-action="new-exams" >Thêm đề kiểm tra</button></div>
@@ -227,7 +226,7 @@
 <table class="t-table"><caption>Bảng xếp hạng</caption><thead><tr><th scope="col" class="t-number">Hạng</th><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col" class="t-number">Điểm</th></tr></thead><tbody id="exam-stats-rank"></tbody></table>
 </section>
 </section>
-<section id="view-materials" hidden aria-label="Tài liệu">
+<section id="view-materials" hidden>
 <section id="list-materials" class="t-list">
 <h2 class="visually-hidden">Tài liệu Google Drive</h2>
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-materials-new" class="t-button t-primary" data-action="new-materials" >Thêm tài liệu</button></div>
@@ -254,7 +253,7 @@
 </form>
 </section>
 </section>
-<section id="view-accounts" hidden aria-label="Tài khoản học sinh">
+<section id="view-accounts" hidden>
 <section id="students-section">
 <section id="list-accounts" class="t-list">
 <h2 class="visually-hidden">Danh sách học sinh</h2>

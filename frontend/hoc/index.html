@@ -140,8 +140,9 @@
       <div class="intro form-intro">
         <span class="auth-logo" aria-hidden="true">sgk</span>
         <h2 id="login-title">Đăng nhập</h2>
-        <p id="login-help" class="form-help">Dùng mã học sinh và mã PIN do giáo viên cấp.</p>
+        <p id="login-help" class="form-help">Mã học sinh và mã PIN do giáo viên cấp.</p>
       </div>
+      <nav class="role-switch" aria-label="Chọn vai trò đăng nhập"><span aria-current="page">Học sinh</span><a href="./teacher.html">Giáo viên</a></nav>
       <form id="login-form">
         <div class="field"><label for="student-code">Mã học sinh</label>
           <div class="input-icon"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21a8 8 0 0 1 16 0"/></svg><input id="student-code" name="code" autocomplete="username" pattern="[A-Za-z0-9_\-]{1,64}" type="text" autocapitalize="none" spellcheck="false" required aria-describedby="login-help"></div>
@@ -160,7 +161,7 @@
   <dialog id="tutor-dialog" class="tutor-dialog" aria-labelledby="tutor-title"><div class="tutor-header"><span class="tutor-avatar" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></span><div class="tutor-title"><h2 id="tutor-title">Gia sư AI</h2><p id="tutor-context-note" class="tutor-context-note">Đang hỗ trợ nội dung bài học</p></div><span id="tutor-quota-badge" class="tutor-quota-badge" title="Số lượt hỏi còn lại hôm nay"></span><button id="close-tutor" class="close-btn icon-btn" type="button" aria-label="Đóng" title="Đóng"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12 M18 6L6 18"/></svg></button></div><div id="tutor-messages" class="tutor-messages" role="log" aria-live="polite"></div><div id="tutor-offline-banner" class="tutor-offline-banner" hidden>Thiết bị đang offline. Kết nối mạng để trò chuyện cùng Gia sư AI.</div><form id="tutor-form" class="tutor-form"><input id="tutor-input" type="text" placeholder="Em muốn hỏi gì về bài này?" maxlength="500" required autocomplete="off" aria-label="Nội dung câu hỏi cho Gia sư AI"><button id="tutor-submit" type="submit" class="primary icon-btn" aria-label="Gửi" title="Gửi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3L10 14 M21 3l-7 18-4-7-7-4z"/></svg></button></form></dialog>
   <dialog id="msg-dialog" class="msg-dialog" aria-labelledby="msg-title" aria-describedby="msg-body">
     <form method="dialog" id="msg-form">
-      <h2 id="msg-title"></h2><p id="msg-body"></p>
+      <h2 id="msg-title">Thông báo</h2><p id="msg-body"></p>
       <div id="msg-fields"></div>
       <label id="msg-field" hidden><span id="msg-field-label"></span><input id="msg-input" type="text" autocomplete="off"></label>
       <p id="msg-error" class="field-error" role="alert" hidden></p>
