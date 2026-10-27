@@ -1835,3 +1835,4 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Mới: `apps-script/sheet-exam/Code.gs` (+README), `frontend/hoc/thi.html|thi.js|thi.css`; màn hình đầu có nút "Vào bài thi" (#gate-exam), tab Thi chỉ còn nút "Vào bài thi" (cờ `SHEET_EXAM` trong exam.js; đặt false để quay lại đường cũ). Kết quả ghi trang KetQua, Trạng thái "Đã thi", mỗi em nộp 1 lần.
 - Đường Firebase/Worker cũ giữ nguyên trong mã, không dùng nữa. Test: test_sheet_exam_gs 15 ca, test_thi_sheet_ui 31 ca (2 kích thước) OK; hồi quy xanh.
 - Chờ: người dùng triển khai web app, gửi địa chỉ /exec để dán vào `SHEET_API` trong thi.js.
+- 2026-10-27 Claude: đăng nhập cả hệ thống bằng Google Sheet (Worker SHEET_LOGIN_URL), test tests/test_worker_sheet_login.mjs. Cần wrangler deploy.

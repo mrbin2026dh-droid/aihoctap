@@ -2364,7 +2364,28 @@ export default {
 
       // H3, I1: Strict check for Real Driver vs Mock Mode & OAuth Token
       let studentCred = null;
-      if (env.FIREBASE_DATABASE_URL) {
+      let sheetVerified = false;
+      if (env.SHEET_LOGIN_URL) {
+        // [SHEET_LOGIN]: tài khoản học sinh nằm trong Google Sheet "HocSinh" (Mã học sinh + Mã PIN). Sheet là nguồn duy nhất.
+        try {
+          const sr = await fetch(env.SHEET_LOGIN_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'login', ma: String(student_id), pin: pin.trim() }) });
+          const sj = await sr.json();
+          if (sj && sj.ok && sj.student) {
+            const lop = String(sj.student.lop || '').trim();
+            const g = parseInt((lop.match(/^\d+/) || [''])[0], 10);
+            studentCred = { name: sj.student.name || student_id, class_code: lop, grade: Number.isFinite(g) ? g : 0, canonical_id: String(sj.student.ma || student_id) };
+            sheetVerified = true;
+          } else if (sj && /PIN chưa đúng|Không tìm thấy Mã học sinh/i.test(String(sj.error || ''))) {
+            studentCred = null;
+          } else {
+            console.error('[SHEET_LOGIN_ERROR]', sj && sj.error);
+            return new Response(JSON.stringify({ detail: 'Không đọc được danh sách học sinh từ Google Sheet. Hãy thử lại sau ít phút.' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        } catch (e) {
+          console.error('[SHEET_LOGIN_NETWORK_ERROR]', e);
+          return new Response(JSON.stringify({ detail: 'Không kết nối được Google Sheet. Hãy thử lại sau ít phút.' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      } else if (env.FIREBASE_DATABASE_URL) {
         // [REAL_DRIVER]: Fetch from Firebase RTDB students_auth using Authorization OAuth2 Bearer token (H4, I1)
         const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
         try {
@@ -2422,8 +2443,8 @@ export default {
       }
 
       // Verify PIN with student's unique salt via PBKDF2
-      const computedHash = await hashPinPbkdf2(pin, studentCred.salt);
-      if (computedHash !== studentCred.pin_hash) {
+      const computedHash = sheetVerified ? null : await hashPinPbkdf2(pin, studentCred.salt);
+      if (!sheetVerified && computedHash !== studentCred.pin_hash) {
         const failReq = new Request('http://do/record-failed-login', {
           method: 'POST',
           body: JSON.stringify({ pairKey, ipKey, studentGlobalKey, ipLimit: STUDENT_IP_FLOOD_LIMIT })
@@ -2475,8 +2496,9 @@ export default {
         });
       }
 
+      const uidForToken = sheetVerified ? studentCred.canonical_id : student_id;
       const token = await createFirebaseCustomToken(
-        student_id,
+        uidForToken,
         {
           role: 'student',
           grade: studentCred.grade,
@@ -2491,7 +2513,7 @@ export default {
 
       return new Response(JSON.stringify({
         token: token,
-        uid: student_id,
+        uid: uidForToken,
         name: studentCred.name,
         grade: studentCred.grade,
         class_code: studentCred.class_code,
@@ -3541,6 +3563,12 @@ export default {
 
     // Student Change PIN: POST /api/pwa/change-pin
     if (url.pathname === '/api/pwa/change-pin' && request.method === 'POST') {
+      if (env.SHEET_LOGIN_URL) {
+        return new Response(JSON.stringify({ detail: 'Mã PIN do giáo viên quản lý trong Google Sheet. Hãy nhờ giáo viên đổi giúp.' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
       const authHeader = request.headers.get('Authorization') || '';
       if (!authHeader.startsWith('Bearer ') || !signingKeys?.publicKey) {
         return new Response(JSON.stringify({ detail: 'Thiếu token xác thực học sinh.' }), {
