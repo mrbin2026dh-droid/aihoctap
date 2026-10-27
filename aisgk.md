@@ -1779,3 +1779,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: git status sạch; tệp apps-script/exam/Code.gs đã cập nhật hàm thuOAuth().
 - Việc tiếp: Người dùng chạy thuOAuth() trên Apps Script và dán nhật ký cho Claude.
+
+### 27/10/2026 — Claude: Apps Script chịu lỗi cấu hình + 3 lỗi logic
+- Người dùng lỡ xóa FIREBASE_API_KEY (thay vì DB_SECRET) → mọi lượt chấm/nộp file của học sinh sẽ hỏng. Nay DB_URL và FIREBASE_API_KEY (công khai) có mặc định trong mã; kiemTraHeThong kiểm khóa API thật và báo đang dùng OAuth hay DB_SECRET.
+- `db_` ưu tiên OAuth, chỉ dùng DB_SECRET khi OAuth bị 401/403 (thuOAuth đạt ngày 27/10 với mr.bin2026dh@gmail.com).
+- Sửa: nộp lại file mà Drive lỗi từng bỏ bản cũ vào thùng rác trước → nay chỉ bỏ sau khi bản mới lưu xong; nộp file muộn (sau chốt, trong 10 phút) nay cập nhật sổ điểm + minh chứng; grade_my_attempt gọi muộn không ghi đè trạng thái đã chốt.
+- `tests/test_apps_script_gradebook.cjs`: 21 kiểm tra OK.

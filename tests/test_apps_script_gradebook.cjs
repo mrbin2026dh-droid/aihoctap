@@ -4,12 +4,16 @@ const fs = require('fs'); const vm = require('vm'); const path = require('path')
 const src = fs.readFileSync(path.join(__dirname, '../apps-script/exam/Code.gs'), 'utf8');
 let failures = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) failures++; };
 
-function makeEnv() {
-  const db = {}; const logs = [];
+function makeEnv(opts = {}) {
+  const db = {}; const logs = []; const calls = [];
   const get = p => p.split('/').filter(Boolean).reduce((o, k) => (o == null ? undefined : o[k]), db);
   const fill = v => (Array.isArray(v) ? v.map(x => fill(x)) : v && typeof v === 'object' ? (v['.sv'] === 'timestamp' ? Date.now() : Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)]))) : v);
   const set = (p, v) => { const ks = p.split('/').filter(Boolean); let o = db; ks.slice(0, -1).forEach(k => { if (typeof o[k] !== 'object' || o[k] === null) o[k] = {}; o = o[k]; }); if (v === null || v === undefined) delete o[ks.at(-1)]; else o[ks.at(-1)] = v; };
   const UrlFetchApp = { fetch(url, opt) {
+    if (url.includes('identitytoolkit') && opt.payload && JSON.parse(opt.payload).idToken?.startsWith('tok:')) return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ users: [{ localId: JSON.parse(opt.payload).idToken.slice(4) }] }) };
+    if (url.includes('identitytoolkit')) return { getResponseCode: () => 400, getContentText: () => JSON.stringify({ error: { message: url.includes('key=AIzaSyCC2') ? 'INVALID_ID_TOKEN' : 'API key not valid' } }) };
+    const viaSecret = url.includes('auth='); calls.push(viaSecret ? 'secret' : 'oauth');
+    if (!viaSecret && opts.oauthRejected) return { getResponseCode: () => 401, getContentText: () => '{"error":"Permission denied"}' };
     const p = decodeURIComponent(new URL(url).pathname.replace(/\.json$/, '').replace(/^\//, ''));
     const m = (opt.method || 'get').toLowerCase(); const body = opt.payload ? fill(JSON.parse(opt.payload)) : undefined;
     let out = null;
@@ -40,20 +44,20 @@ function makeEnv() {
     getFoldersByName(n) { const l = this.kids.filter(k => k.name === n && !k.trashed); let i = 0; return { hasNext: () => i < l.length, next: () => l[i++] }; }
     createFolder(n) { const f = new Folder(n); this.kids.push(f); return f; }
     getFilesByName(n) { const l = this.files.filter(k => k.name === n); let i = 0; return { hasNext: () => i < l.length, next: () => l[i++] }; }
-    createFile(n, text) { const id = 'f' + (++fid); const f = { name: n, text, getId: () => id, getUrl: () => 'https://drive/' + id, setContent(t) { this.text = t; }, setTrashed() {}, getBlob() { return { getDataAsString: () => f.text }; } }; files[id] = f; this.files.push(f); return f; }
+    createFile(n, text) { if (n && typeof n === 'object') { if (opts.driveFails) throw new Error('Drive lỗi'); text = n.data; n = n.name; } const id = 'f' + (++fid); const f = { name: n, text, getId: () => id, getUrl: () => 'https://drive/' + id, setContent(t) { this.text = t; }, setTrashed() {}, getBlob() { return { getDataAsString: () => f.text }; } }; files[id] = f; this.files.push(f); return f; }
     getId() { return this.id; } getUrl() { return 'https://drive/' + this.id; } setTrashed(t) { this.trashed = t; } }
   const root = new Folder('Bai thi Tin hoc');
-  const props = { DB_URL: 'https://db.test', FIREBASE_API_KEY: 'k', GRADEBOOK_ID: 'ss1', DRIVE_ROOT_ID: root.id };
+  const props = Object.assign({ GRADEBOOK_ID: 'ss1', DRIVE_ROOT_ID: root.id }, opts.props || {});
   const cache = {};
   const ctx = {
     UrlFetchApp, Logger: { log: m => logs.push(String(m)) }, console: { error: () => {}, log: () => {} },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => { props[k] = v; } }) },
-    ScriptApp: { getOAuthToken: () => 't' }, CacheService: { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; } }) },
+    ScriptApp: { getOAuthToken: () => 't', getProjectTriggers: () => [{ getHandlerFunction: () => 'tick' }, { getHandlerFunction: () => 'onGradebookEdit' }] }, CacheService: { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; } }) },
     SpreadsheetApp: { openById: () => ss, create: () => ss }, DriveApp: { getFolderById: () => root, getFileById: id => files[id], createFolder: n => root.createFolder(n) },
-    Utilities: { formatDate: d => d.toISOString() }, MimeType: { PLAIN_TEXT: 'text/plain' }, ContentService: {}, HtmlService: {}
+    Utilities: { formatDate: d => d.toISOString(), base64Decode: b => [...Buffer.from(b, 'base64')], newBlob: (data, mime, name) => ({ data, mime, name }) }, MimeType: { PLAIN_TEXT: 'text/plain' }, ContentService: { createTextOutput: t => ({ setMimeType() { return JSON.parse(t); } }), MimeType: { JSON: 'json' } }, HtmlService: {}
   };
   vm.createContext(ctx); vm.runInContext(src, ctx);
-  return { ctx, db, logs, ss, root };
+  return { ctx, db, logs, ss, root, calls };
 }
 
 // 1) thuSoDiem() chạy trọn trên giả lập
@@ -81,6 +85,59 @@ function makeEnv() {
   const sh = ss.insertSheet('x'); sh.appendRow(['UID']); sh.appendRow(['u1']);
   ctx.onGradebookEdit({ range: sh.getRange(2, 3) });
   ok(!db.results, 'sửa cột Họ tên không ghi gì vào results');
+}
+// 4) Lỡ xóa FIREBASE_API_KEY / DB_URL trong Script properties → dùng mặc định, kiemTraHeThong vẫn ĐẠT, báo OAuth
+{
+  const { ctx, logs } = makeEnv({ props: { DB_SECRET: 'bi-mat' } });
+  ctx.kiemTraHeThong(); logs.forEach(l => console.log('   │ ' + l));
+  ok(logs.at(-1).includes('ĐẠT TOÀN BỘ'), 'thiếu cấu hình công khai → vẫn ĐẠT nhờ mặc định');
+  ok(logs.some(l => l.includes('OAuth chủ dự án') && l.includes('nên xóa')), 'OAuth chạy được thì dùng OAuth và nhắc xóa DB_SECRET');
+}
+// 5) OAuth bị từ chối + có DB_SECRET → tự chuyển sang DB_SECRET
+{
+  const { ctx, logs, calls } = makeEnv({ props: { DB_SECRET: 'bi-mat' }, oauthRejected: true });
+  ctx.kiemTraHeThong();
+  ok(logs.some(l => l.includes('DB_SECRET dự phòng')) && calls.includes('secret'), 'OAuth bị từ chối → dùng DB_SECRET dự phòng');
+}
+// 6) Khóa API sai trong Script properties → báo LỖI rõ ràng
+{
+  const { ctx, logs } = makeEnv({ props: { FIREBASE_API_KEY: 'sai' } });
+  ctx.kiemTraHeThong();
+  ok(logs.some(l => l.startsWith('LỖI') && l.includes('khóa API sai')), 'khóa API sai → LỖI kèm cách sửa');
+}
+// 7) Học sinh nộp file, nộp lại khi Drive lỗi (không mất bản cũ), nộp muộn sau khi chốt (sổ điểm + minh chứng cập nhật)
+{
+  const env = makeEnv(); const { ctx, db } = env; const t = Date.now();
+  const put = (p, v) => ctx.db_(p, 'put', v);
+  put('students/u1', { student_id: 'HS1', name: 'An', class_code: '9A', grade: 9 });
+  put('exam_meta/e1', { title: 'Đề', grade: 9, minutes: 10, opens_at: t - 30 * 60000, closes_at: t - 5 * 60000, max_attempts: 1, backend: 'firebase', parts: [{ key: 'theory', max: 4 }, { key: 'practice', max: 6 }] });
+  put('exam_questions/e1', { q1: { order: 1, kind: 'choice', prompt: 'p', options: { A: 'a', B: 'b' }, points: 4 } });
+  put('exam_secrets/e1', { q1: 'A' });
+  put('sessions/e1/u1', { started_at: t - 20 * 60000, extra_ms: 0 });
+  put('attempts/e1/u1/1', { submitted_at: t - 15 * 60000, answers: { q1: 'A' } });
+  const post = b => ctx.doPost({ postData: { contents: JSON.stringify(Object.assign({ idToken: 'tok:u1' }, b)) } });
+  ok(post({ action: 'grade_my_attempt', exam_id: 'e1', attempt: '1' }).earned === 4, 'grade_my_attempt trả 4 điểm');
+  ctx.finalizeExam_('e1', db.exam_meta.e1, Date.now());
+  ok(db.results.e1.u1.finalized === true, 'đề đã chốt (sau đóng + 2 phút)');
+  const b64 = Buffer.from('PK-noi-dung').toString('base64');
+  const up1 = post({ action: 'upload_practice', exam_id: 'e1', name: 'bai.xlsx', b64 });
+  ok(up1.ok && up1.file_id, 'nộp file muộn (trong 10 phút) được nhận');
+  const sh = env.ss.getSheetByName('e1');
+  ok(sh && sh.cell(2, 10) === db.results.e1.u1.practice_file.url, 'nộp muộn → cột "File thực hành" trong sổ điểm có link');
+  const ev = env.ctx.DriveApp.getFileById(db.results.e1.u1.evidence_id).getBlob().getDataAsString();
+  ok(ev.includes('bai.xlsx'), 'nộp muộn → phiếu minh chứng ghi tên file');
+  ok(post({ action: 'grade_my_attempt', exam_id: 'e1', attempt: '1' }).ok && db.results.e1.u1.status === 'needs_review', 'chấm lại sau khi chốt không ghi đè trạng thái');
+  ok(post({ action: 'upload_practice', exam_id: 'e1', name: 'bai.exe', b64 }).retry === false, 'sai loại file → lỗi nghiệp vụ, không thử lại');
+}
+{
+  const env = makeEnv({ driveFails: true }); const { ctx, db } = env; const t = Date.now();
+  ctx.db_('students/u1', 'put', { student_id: 'HS1', name: 'An', class_code: '9A', grade: 9 });
+  ctx.db_('exam_meta/e1', 'put', { title: 'Đề', closes_at: t + 60000, parts: [{ key: 'practice', max: 6 }] });
+  ctx.db_('sessions/e1/u1', 'put', { started_at: t });
+  const folder = ctx.studentFolder_('u1'); const oldFile = folder.createFile('thuc-hanh_e1.xlsx', 'BAN-CU'); let trashed = false; oldFile.setTrashed = () => { trashed = true; };
+  const r = ctx.doPost({ postData: { contents: JSON.stringify({ idToken: 'tok:u1', action: 'upload_practice', exam_id: 'e1', name: 'moi.xlsx', b64: Buffer.from('x').toString('base64') }) } });
+  ok(r.ok === false && r.retry === true, 'Drive lỗi → ok:false, retry:true');
+  ok(!trashed, 'Drive lỗi khi nộp lại → bản đã nộp trước KHÔNG bị bỏ vào thùng rác');
 }
 console.log(failures ? `APPS SCRIPT GRADEBOOK: ${failures} lỗi` : 'APPS SCRIPT GRADEBOOK OK');
 process.exit(failures ? 1 : 0);

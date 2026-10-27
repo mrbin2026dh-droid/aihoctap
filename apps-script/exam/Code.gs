@@ -27,17 +27,29 @@ var ALLOWED_EXT = { xlsx: 1, pptx: 1, docx: 1, pdf: 1 }; // .sb3 chờ người 
 var RUN_BUDGET_MS = 4.5 * 60 * 1000;   // Apps Script dừng cứng ở 6 phút
 
 // ---------------------------------------------------------------------------- tiện ích
-function P_(k) { var v = PropertiesService.getScriptProperties().getProperty(k); return v ? String(v).trim() : ''; }
+// Cấu hình công khai (giống frontend/hoc/fb.js) có sẵn mặc định → lỡ xóa trong Script properties hệ thống vẫn chạy.
+// Script properties (nếu có) được ưu tiên. Bí mật (DB_SECRET) KHÔNG bao giờ có mặc định.
+var DEFAULTS = {
+  DB_URL: 'https://day-hoc-tuong-tac-7ee69-default-rtdb.asia-southeast1.firebasedatabase.app',
+  FIREBASE_API_KEY: 'AIzaSyCC2tCURXYAMpdN687kcjY537K7zUhh_Fg'
+};
+function P_(k) { var v = PropertiesService.getScriptProperties().getProperty(k); return v ? String(v).trim() : (DEFAULTS[k] || ''); }
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+var dbMode_ = ''; // 'oauth' | 'secret' — chọn một lần mỗi lượt chạy
 function db_(path, method, body) {
-  // Ưu tiên OAuth chủ dự án (scope firebase.database). DB_SECRET (database secret kiểu cũ) chỉ là phương án dự phòng:
-  // quyền toàn bộ CSDL — chỉ để trong Script properties, không bao giờ commit, đổi ngay nếu lộ.
+  // Ưu tiên OAuth chủ dự án (scope firebase.database). DB_SECRET (database secret kiểu cũ, toàn quyền CSDL) chỉ dùng khi
+  // OAuth bị từ chối (401/403). Khi thuOAuth() đạt thì xóa DB_SECRET khỏi Script properties.
+  var base = P_('DB_URL').replace(/\/$/, '') + '/' + path + '.json';
   var secret = P_('DB_SECRET') || P_('FIREBASE_DB_SECRET');
-  var url = P_('DB_URL').replace(/\/$/, '') + '/' + path + '.json' + (secret ? '?auth=' + encodeURIComponent(secret) : '');
   var opt = { method: method || 'get', muteHttpExceptions: true, contentType: 'application/json' };
-  if (!secret) opt.headers = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
   if (body !== undefined) opt.payload = JSON.stringify(body);
-  var r = UrlFetchApp.fetch(url, opt);
+  var r;
+  if (dbMode_ !== 'secret') {
+    opt.headers = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
+    r = UrlFetchApp.fetch(base, opt);
+    if ((r.getResponseCode() === 401 || r.getResponseCode() === 403) && secret) dbMode_ = 'secret'; else dbMode_ = 'oauth';
+  }
+  if (dbMode_ === 'secret') { delete opt.headers; r = UrlFetchApp.fetch(base + '?auth=' + encodeURIComponent(secret), opt); }
   if (r.getResponseCode() >= 300) throw new Error('RTDB ' + (method || 'get') + ' ' + path + ' → ' + r.getResponseCode() + ' ' + r.getContentText());
   return JSON.parse(r.getContentText() || 'null');
 }
@@ -92,6 +104,8 @@ function gradeMyAttempt_(uid, examId, attemptNo) {
   if (!att) throw new Error('Chưa thấy bài nộp.');
   var g = grade_(examId, att.answers);
   var prev = db_('results/' + examId + '/' + uid) || {};
+  // Đề đã chốt (gọi muộn/thử lại): chỉ trả điểm, không ghi đè trạng thái đã chốt.
+  if (prev.finalized) return { ok: true, score: scoreOf10_(g.earned, g.total), earned: g.earned, total_points: g.total, correct: g.correct, total: g.choice, needs_review: g.review };
   var best = Math.max(Number(prev.theory_score) || 0, g.earned);
   db_('results/' + examId + '/' + uid, 'patch', {
     theory_score: best, theory_max: g.total, attempt: n, status: g.review ? 'needs_review' : (prev.practice_score != null ? 'graded' : 'theory_graded'),
@@ -200,14 +214,27 @@ function uploadPractice_(uid, body) {
   var folder, file, finalName = safeName_('thuc-hanh_' + examId + '.' + ext);
   try {
     folder = studentFolder_(uid);
-    var old = folder.getFilesByName(finalName); while (old.hasNext()) old.next().setTrashed(true); // nộp lại: bản cũ vào thùng rác (khôi phục được 30 ngày)
+    var olds = []; var it = folder.getFilesByName(finalName); while (it.hasNext()) olds.push(it.next());
     file = folder.createFile(Utilities.newBlob(bytes, body.mime || 'application/octet-stream', finalName));
+    // Nộp lại: chỉ bỏ bản cũ SAU KHI bản mới đã lưu xong (lỗi giữa chừng không làm mất bài đã nộp trước đó).
+    olds.forEach(function (f) { try { f.setTrashed(true); } catch (e) { /* bỏ qua */ } });
   } catch (errDrive) {
     console.error('uploadPractice Drive', uid, examId, errDrive);
     var e2 = new Error('Chưa lưu được file lên Drive (hệ thống bận hoặc chưa cấp quyền Drive). File vẫn ở máy em — hãy bấm nộp lại hoặc báo thầy cô.'); e2.retry = true; throw e2;
   }
   db_('results/' + examId + '/' + uid + '/practice_file', 'put', { file_id: file.getId(), url: file.getUrl(), name: name, bytes: bytes.length, at: { '.sv': 'timestamp' } });
+  // Nộp muộn (sau khi đề đã chốt lúc đóng + 2 phút, vẫn trong 10 phút cho phép): cập nhật sổ điểm + phiếu minh chứng.
+  try { refreshFinalized_(examId, meta, uid); } catch (e) { console.error('refreshFinalized_', examId, uid, e); }
   return { ok: true, file_id: file.getId(), bytes: bytes.length };
+}
+/** Đề đã chốt mà dữ liệu học sinh thay đổi (nộp file muộn) → viết lại phiếu minh chứng và hàng sổ điểm. */
+function refreshFinalized_(examId, m, uid) {
+  var res = db_('results/' + examId + '/' + uid) || {};
+  if (!res.finalized) return;
+  var atts = db_('attempts/' + examId + '/' + uid) || {}, a = atts[res.attempt || '1'] || {};
+  var practice = res.practice_score != null ? Number(res.practice_score) : null;
+  upsertText_(studentFolder_(uid), safeName_('minh-chung_' + examId + '.txt'), evidenceText_(examId, m, uid, a, grade_(examId, a.answers), practice, res));
+  writeGradebookRow_(examId, m, uid, res, res);
 }
 
 // ---------------------------------------------------------------------------- web app
@@ -480,12 +507,21 @@ function kiemTraHeThong() {
     try { var r = fn(); Logger.log('ĐẠT  ' + name + (r ? ' — ' + r : '')); }
     catch (e) { ok = false; Logger.log('LỖI  ' + name + ' — ' + e.message); }
   }
-  step('Cấu hình DB_URL / FIREBASE_API_KEY', function () {
-    if (!P_('DB_URL')) throw new Error('thiếu DB_URL trong Script properties');
-    if (!P_('FIREBASE_API_KEY')) throw new Error('thiếu FIREBASE_API_KEY trong Script properties');
-    return P_('DB_SECRET') || P_('FIREBASE_DB_SECRET') ? 'đang dùng DB_SECRET dự phòng (nên chuyển sang OAuth rồi xóa)' : 'dùng OAuth chủ dự án';
+  step('Cấu hình (DB_URL, FIREBASE_API_KEY)', function () {
+    var props = PropertiesService.getScriptProperties();
+    return ['DB_URL', 'FIREBASE_API_KEY'].map(function (k) { return k + (props.getProperty(k) ? ' từ Script properties' : ' dùng mặc định trong mã'); }).join('; ');
   });
-  step('Đọc Firebase RTDB', function () { var m = db_('exam_meta') || {}; return Object.keys(m).length + ' đề trong exam_meta'; });
+  step('Khóa API Firebase hợp lệ (dùng để xác minh học sinh)', function () {
+    var r = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + P_('FIREBASE_API_KEY'), { method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: 'kiem-tra' }), muteHttpExceptions: true });
+    var msg = ((JSON.parse(r.getContentText() || '{}').error || {}).message) || '';
+    if (/INVALID_ID_TOKEN/.test(msg)) return 'khóa đúng';
+    throw new Error('khóa API sai hoặc bị chặn: ' + (msg || r.getResponseCode()) + ' — xóa FIREBASE_API_KEY trong Script properties để dùng mặc định');
+  });
+  step('Đọc Firebase RTDB', function () {
+    var m = db_('exam_meta') || {}, hasSecret = Boolean(P_('DB_SECRET') || P_('FIREBASE_DB_SECRET'));
+    var mode = dbMode_ === 'oauth' ? 'OAuth chủ dự án' + (hasSecret ? ' (DB_SECRET còn trong Script properties nhưng KHÔNG dùng — nên xóa)' : ' — an toàn, không cần DB_SECRET') : 'DB_SECRET dự phòng (OAuth bị từ chối)';
+    return Object.keys(m).length + ' đề trong exam_meta; xác thực: ' + mode;
+  });
   step('Drive: tạo thư mục gốc, ghi và xóa file thử', function () {
     var root = rootFolder_(), f = root.createFile('kiem-tra-quyen.txt', 'ok ' + new Date().toISOString());
     f.setTrashed(true);
