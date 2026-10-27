@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng thực hiện dán Code.gs mới vào Apps Script, chạy thuSoDiem() và kiemTraHeThong(), dán nhật ký cho Claude để hoàn tất mục còn mở Cổng 4.
+- Yêu cầu mới nhất: Người dùng dán apps-script/exam/Code.gs (commit 4cc24b7) vào Apps Script, chạy thuOAuth() để kiểm tra quyền OAuth, sau đó gửi thông tin lớp/ngày thi thử phòng máy cho Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1772,3 +1772,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ### 27/10/2026 — Claude: người dùng chạy thật thuSoDiem() + kiemTraHeThong() → ĐẠT TOÀN BỘ
 - Sổ điểm, gõ điểm thực hành, chặn điểm sai, dán nhiều hàng, phiếu minh chứng cập nhật: đạt trên Google thật (nhật ký người dùng dán 27/10 07:59).
 - Còn dùng DB_SECRET → thêm `thuOAuth()`; đạt thì xóa DB_SECRET. Cổng 3 coi như đóng hoàn toàn.
+
+
+### 27/10/2026 — Antigravity — Chỉ dẫn tệp Code.gs và hướng dẫn chạy thuOAuth
+- Đã thực hiện: Kéo commit 4cc24b7; chỉ định rõ tệp apps-script/exam/Code.gs chứa hàm thuOAuth() cho Người dùng; hướng dẫn từng bước dán và chạy kiểm tra quyền OAuth trên Apps Script.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: git status sạch; tệp apps-script/exam/Code.gs đã cập nhật hàm thuOAuth().
+- Việc tiếp: Người dùng chạy thuOAuth() trên Apps Script và dán nhật ký cho Claude.
