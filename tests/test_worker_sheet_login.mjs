@@ -35,7 +35,7 @@ assert.equal(fbp.iss, 'p@day-hoc.iam.gserviceaccount.com', 'vé Firebase ký b�
   assert.ok(okSig, 'chữ ký vé Firebase khớp khóa PRESENCE'); }
 { const save = env.PRESENCE_CLIENT_EMAIL; delete env.PRESENCE_CLIENT_EMAIL;
   const r0 = await call('/login', {method:'POST', body:{student_id:'HS01', pin:'123456'}});
-  assert.equal(r0.status, 200); assert.equal(r0.body.fb_token, '', 'chưa cài khóa presence → fb_token rỗng, đăng nhập vẫn được');
+  assert.equal(r0.status, 200); assert.ok(r0.body.fb_token, 'không có PRESENCE_* → ký bằng FIREBASE_*, vẫn có vé');
   env.PRESENCE_CLIENT_EMAIL = save; }
 const me = await call('/pwa/me', {}, r.body.token); assert.equal(me.status, 200, JSON.stringify(me.body)); assert.equal(me.body.grade, 9); assert.equal(me.body.class_code, '9A');
 // viết hoa/thường: gõ hs01 vẫn vào, uid chuẩn theo Sheet
@@ -54,6 +54,12 @@ const cp = await call('/pwa/change-pin', {method:'POST', body:{old_pin:'123456',
 for (let i = 0; i < 12; i++) await call('/login', {method:'POST', body:{student_id:'hs9a02', pin:'000000'}});
 r = await call('/login', {method:'POST', body:{student_id:'hs9a02', pin:'234567'}}); assert.equal(r.status, 429, 'dò PIN nhiều lần phải bị khóa');
 assert.ok(calls.every(c => c.action === 'login'));
+// Một dự án Firebase: không cài PRESENCE_* thì ký bằng khóa FIREBASE_* của Worker
+{ const saveE = env.PRESENCE_CLIENT_EMAIL, saveK = env.PRESENCE_KEYPAIR; delete env.PRESENCE_CLIENT_EMAIL; delete env.PRESENCE_KEYPAIR;
+  const rr = await call('/login', {method:'POST', body:{student_id:'HS01', pin:'123456'}});
+  const pp = JSON.parse(Buffer.from(String(rr.body.fb_token).split('.')[1], 'base64url').toString());
+  assert.equal(pp.iss, 'x@y.iam.gserviceaccount.com', 'mặc định ký bằng FIREBASE_CLIENT_EMAIL (một dự án)'); assert.equal(pp.exp - pp.iat, 3600);
+  env.PRESENCE_CLIENT_EMAIL = saveE; env.PRESENCE_KEYPAIR = saveK; }
 // Khóa dạng PEM dán từ file JSON của Firebase (có \n dạng chữ) vẫn nạp được
 { const { presenceSigner } = await import('../worker/index.js');
   const der = Buffer.from(await crypto.subtle.exportKey('pkcs8', pkp.privateKey)).toString('base64');

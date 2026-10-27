@@ -177,13 +177,16 @@ let cachedDevKeyPair = null;
 
 /**
  * Khóa ký vé Firebase cho TRẠNG THÁI TRỰC TUYẾN (presence).
- * Presence nằm ở dự án Firebase của app (day-hoc-tuong-tac-7ee69), khác dự án của FIREBASE_PRIVATE_KEY (ai-sgk-tinhoc),
- * nên cần service account RIÊNG của dự án đó: PRESENCE_CLIENT_EMAIL, PRESENCE_PRIVATE_KEY, PRESENCE_PRIVATE_KEY_ID (wrangler secret).
- * Thiếu khóa → trả null: app vẫn học/thi bình thường, chỉ tắt bảng trực tuyến.
+ * MẶC ĐỊNH dùng chính khóa FIREBASE_* của Worker (một dự án Firebase duy nhất). Chỉ khi cài PRESENCE_CLIENT_EMAIL/PRIVATE_KEY/PRIVATE_KEY_ID
+ * (tùy chọn) thì ký bằng khóa riêng đó. Không ký được → '' : app vẫn học/thi bình thường, chỉ tắt bảng trực tuyến.
  */
 let cachedPresenceKey = null;
-export async function presenceSigner(env = {}) {
-  if (!env.PRESENCE_CLIENT_EMAIL) return null;
+export async function presenceSigner(env = {}, fallback = null) {
+  if (!env.PRESENCE_CLIENT_EMAIL) {
+    // Một dự án Firebase duy nhất: dùng luôn khóa FIREBASE_* của Worker (dự án chứa dữ liệu của hệ thống).
+    if (fallback && fallback.privateKey && env.FIREBASE_CLIENT_EMAIL) return { privateKey: fallback.privateKey, email: String(env.FIREBASE_CLIENT_EMAIL).trim(), kid: env.FIREBASE_PRIVATE_KEY_ID || '' };
+    return null;
+  }
   if (env.PRESENCE_KEYPAIR) return { privateKey: env.PRESENCE_KEYPAIR.privateKey, email: env.PRESENCE_CLIENT_EMAIL, kid: env.PRESENCE_PRIVATE_KEY_ID || '' };
   if (!env.PRESENCE_PRIVATE_KEY) return null;
   if (!cachedPresenceKey || cachedPresenceKey.src !== env.PRESENCE_PRIVATE_KEY) {
@@ -195,9 +198,9 @@ export async function presenceSigner(env = {}) {
   return { privateKey: cachedPresenceKey.key, email: env.PRESENCE_CLIENT_EMAIL, kid: env.PRESENCE_PRIVATE_KEY_ID || '' };
 }
 /** Vé Firebase 1 giờ cho presence ('' nếu chưa cài khóa hoặc lỗi). */
-export async function makePresenceToken(env, uid, claims) {
+export async function makePresenceToken(env, uid, claims, fallbackKeys = null) {
   try {
-    const sg = await presenceSigner(env);
+    const sg = await presenceSigner(env, fallbackKeys);
     return sg ? await createFirebaseCustomToken(uid, claims, sg.privateKey, sg.email, sg.kid, 3600) : '';
   } catch (e) { console.error('[PRESENCE_TOKEN_ERROR]', e); return ''; }
 }
@@ -2539,7 +2542,7 @@ export default {
       );
 
       // Vé Firebase 1 giờ (Firebase chỉ nhận custom token ≤ 1 giờ): app đổi lấy idToken để ghi trạng thái trực tuyến thẳng lên Firebase, không qua Worker.
-      const fbToken = await makePresenceToken(env, uidForToken, { role: 'student', grade: studentCred.grade, class_code: studentCred.class_code, name: studentCred.name });
+      const fbToken = await makePresenceToken(env, uidForToken, { role: 'student', grade: studentCred.grade, class_code: studentCred.class_code, name: studentCred.name }, signingKeys);
 
       return new Response(JSON.stringify({
         token: token,
@@ -2681,7 +2684,7 @@ export default {
         env.FIREBASE_CLIENT_EMAIL,
         env.FIREBASE_PRIVATE_KEY_ID
       );
-      const teacherFbToken = await makePresenceToken(env, 'teacher_admin', { role: 'teacher' });
+      const teacherFbToken = await makePresenceToken(env, 'teacher_admin', { role: 'teacher' }, signingKeys);
       return new Response(JSON.stringify({
         success: true,
         token: token,

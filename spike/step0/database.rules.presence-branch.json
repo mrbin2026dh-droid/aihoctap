@@ -1,0 +1,25 @@
+{
+  "presence": {
+    ".read": "auth != null && auth.token.role === 'teacher'",
+    ".write": "auth != null && auth.token.role === 'teacher'",
+    "$uid": {
+      ".write": "auth != null && auth.uid === $uid && auth.token.role === 'student'",
+      ".validate": "!newData.exists() || (newData.hasChildren(['state', 'at']) && newData.child('state').isString() && newData.child('state').val().length <= 20 && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000)",
+      "name": {
+        ".validate": "newData.isString() && newData.val().length <= 100"
+      },
+      "lop": {
+        ".validate": "newData.isString() && newData.val().length <= 20"
+      },
+      "state": {
+        ".validate": "newData.val().matches(/^(hoc|phong_cho|dang_thi|da_nop|offline)$/)"
+      },
+      "at": {
+        ".validate": true
+      },
+      "$other": {
+        ".validate": false
+      }
+    }
+  }
+}
