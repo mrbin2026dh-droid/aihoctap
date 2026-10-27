@@ -327,3 +327,5 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 .teacher-app .t-qe-key{font-weight:700;text-align:center}
 .teacher-app .t-qe-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media(max-width:760px){.teacher-app .t-qe-head{grid-template-columns:minmax(0,1fr) auto}.teacher-app .t-qe-head h4{grid-column:1/-1}.teacher-app .t-qe-meta{grid-template-columns:minmax(0,1fr)}}
+
+.teacher-app .thi-alert{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}.teacher-app .thi-alert[hidden]{display:none}

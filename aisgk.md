@@ -1852,3 +1852,4 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: aisgk.md, docs/handoff/antigravity-claude-presence-credential-mismatch.md.
 - Kiểm thực tế: Emulator 69/69 và 45/45 PASS; smoke test signInWithCustomToken bắt mã lỗi 400 CREDENTIAL_MISMATCH; Worker rollback 70b4a7cd thành công.
 - Việc tiếp: Chuyển Claude xử lý Service Account / Firebase Project hoặc cấu hình theo handoff.
+- 2026-10-27 Claude: sửa lỗi menu Thi với phiên giáo viên cũ (thiếu PIN, vé Firebase TOKEN_EXPIRED 400): báo đúng lý do + nút Đăng nhập lại; test_presence_ui 26 PASS.

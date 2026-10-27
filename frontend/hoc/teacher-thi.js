@@ -6,7 +6,7 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027d';
+import * as presence from './presence.js?v=20261027e';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -43,11 +43,16 @@ async function call(body) {
   }
   throw new Error(last);
 }
+/** Phiên cần đăng nhập lại (đăng nhập từ trước bản cập nhật, hoặc vé đã cũ). */
+const RELOGIN = /đăng nhập lại|chưa khớp|TOKEN_EXPIRED|INVALID_CUSTOM_TOKEN|INVALID_ID_TOKEN/i;
 /** @param {string} msg @param {'error'|'success'|''} kind */
 function status(msg, kind = '') {
-  const n = $('thi-gv-status'); n.textContent = msg; n.hidden = !msg;
-  n.className = 'notice status ' + (kind === 'error' ? 'error' : 'success');
+  const box = $('thi-gv-alert'); $('thi-gv-status').textContent = msg; box.hidden = !msg;
+  box.className = 'notice status thi-alert ' + (kind === 'error' ? 'error' : 'success');
+  button('thi-relogin').hidden = !(kind === 'error' && RELOGIN.test(msg) && !/Đặt lại mật khẩu/.test(msg));
 }
+/** Đăng nhập lại: dùng đúng nút Đăng xuất của trang giáo viên (xóa phiên cũ, hiện ô PIN). */
+const relogin = () => { const b = document.getElementById('teacher-logout'); if (b) b.click(); else location.reload(); };
 const td = (/** @type {string} */ label, /** @type {string|Node} */ v, cls = '') => { const c = document.createElement('td'); c.dataset.label = label; if (cls) c.className = cls; if (typeof v === 'string') c.textContent = v; else c.append(v); return c; };
 
 /** Danh sách lớp theo khối đang chọn (lấy từ trang HocSinh). */
@@ -129,7 +134,15 @@ function renderLive() {
 }
 async function startLive() {
   if (watching) return;
-  if (!(await ensureTeacherTicket())) { $('thi-live-status').textContent = 'Chưa kết nối Firebase. Đăng xuất rồi đăng nhập lại tài khoản giáo viên.'; return; }
+  if (!(await ensureTeacherTicket())) {
+    const why = presence.lastTeacherError();
+    $('thi-live-status').textContent = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why)
+      ? 'Firebase không nhận vé của Worker (khác dự án Firebase). Báo Antigravity kiểm tra FIREBASE_CLIENT_EMAIL. (' + why + ')'
+      : 'Phiên giáo viên đã cũ nên chưa kết nối được Firebase. Bấm Đăng nhập lại.' + (why ? ' (' + why.replace('Firebase từ chối vé: ', '') + ')' : '');
+    button('thi-live-relogin').hidden = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why);
+    return;
+  }
+  button('thi-live-relogin').hidden = true;
   watching = true;
   /** @type {Record<string,string>} */ let prev = {};
   void presence.watch(map => {
@@ -146,10 +159,15 @@ async function startLive() {
 /** Vé Firebase của giáo viên: lấy từ lần đăng nhập; nếu chưa có thì đổi token Worker (còn hạn 1 giờ) đang giữ trong phiên. */
 async function ensureTeacherTicket() {
   try { if (localStorage.getItem('aisgk-presence-gv')) return true; } catch { /* bỏ qua */ }
+  if (pendingTicket) return pendingTicket;
   let t = ''; try { t = sessionStorage.getItem('aisgk-pwa-teacher') || ''; } catch { /* bỏ qua */ }
   return t ? presence.startTeacher(t) : false;
 }
-window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; if (t) void presence.startTeacher(t); });
+/** @type {Promise<boolean>|null} */ let pendingTicket = null;
+window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; if (t) { watching = false; pendingTicket = presence.startTeacher(t).finally(() => { pendingTicket = null; }); } });
+$('thi-relogin').addEventListener('click', relogin);
+document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); watching = false; info = null; live = {}; status(''); });
+$('thi-live-relogin').addEventListener('click', relogin);
 setInterval(() => { if (watching) renderLive(); }, 30000);   // cập nhật "x phút trước" và "Mất kết nối"
 select('thi-live-lop').addEventListener('change', renderLive);
 

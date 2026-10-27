@@ -65,4 +65,23 @@ try{
   await pg.selectOption('#thi-live-lop','8A');ok((await pg.$$('#thi-live-body tr')).length===1,'lọc theo lớp');
   ok((await pg.textContent('#thi-live-status')).includes('tức thì'),'báo đang cập nhật tức thì');
   ok(errs.length===0,'không lỗi JS '+errs.join('|'));await ctx.close()}
+ // ---------- Giáo viên dùng phiên cũ (đăng nhập trước bản cập nhật): báo rõ + nút Đăng nhập lại ----------
+ {const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(()=>{if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');sessionStorage.setItem('aisgk-pwa-teacher','old-expired-token');}});
+  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'teacher-custom-1h',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
+  let ex=[];await pg.route('https://identitytoolkit.googleapis.com/**',r=>{const t=JSON.parse(r.request().postData()).token;ex.push(t);
+   if(t==='old-expired-token')return r.fulfill({status:400,contentType:'application/json',body:'{"error":{"message":"TOKEN_EXPIRED"}}'});
+   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({localId:'teacher_admin',idToken:'gv-id-tok',refreshToken:'gv-rf',expiresIn:'3600'})})});
+  await pg.route('**/*firebasedatabase.app/presence.json*',r=>r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'event: put\ndata: {"path":"/","data":null}\n\n'}));
+  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.gv?{ok:true,exam:null,bank:{9:3},classes:{},students:[]}:{ok:false,error:'Đăng xuất rồi đăng nhập lại tài khoản giáo viên để dùng menu Thi.'})})});
+  await pg.goto('http://localhost:8197/teacher.html');await pg.waitForTimeout(600);
+  if(!(await pg.isVisible('#workspace'))){ok(true,'(phiên cũ không tự vào — bỏ qua phần phiên cũ)');}
+  else{await pg.click('#nav-sheetexam');await pg.waitForTimeout(800);
+   ok((await pg.textContent('#thi-live-status')).includes('TOKEN_EXPIRED')&&await pg.isVisible('#thi-live-relogin'),'phiên cũ: báo lý do Firebase (TOKEN_EXPIRED) + nút Đăng nhập lại');
+   ok(await pg.isVisible('#thi-relogin'),'thiếu PIN của phiên cũ: nút Đăng nhập lại cạnh thông báo');
+   await pg.click('#thi-relogin');await pg.waitForSelector('#teacher-login [name=pin]',{state:'visible'});ok(true,'bấm Đăng nhập lại → về ô PIN giáo viên');
+   await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
+   await pg.click('#nav-sheetexam');await pg.waitForFunction(()=>document.getElementById('thi-live-status').textContent.includes('tức thì'),null,{timeout:8000});
+   ok(ex.at(-1)==='teacher-custom-1h'&&await pg.isHidden('#thi-gv-alert')&&await pg.isHidden('#thi-live-relogin'),'đăng nhập lại → kết nối Firebase, hết thông báo lỗi');}
+  ok(errs.length===0,'không lỗi JS '+errs.join('|'));await ctx.close()}
  console.log('PRESENCE UI OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});

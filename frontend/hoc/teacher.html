@@ -231,9 +231,9 @@
 <section id="view-sheetexam" hidden>
 <section id="list-sheetexam" class="t-list">
 <h2 class="visually-hidden">Thi từ Google Sheet</h2>
-<p class="notice error status" id="thi-gv-status" role="status" hidden></p>
+<div class="notice error status thi-alert" id="thi-gv-alert" role="status" hidden><span id="thi-gv-status"></span><button type="button" id="thi-relogin" class="t-button" hidden>Đăng nhập lại</button></div>
 <section id="thi-live" class="t-card">
-<div class="t-heading"><div><h2>Học sinh trực tuyến</h2><p class="t-muted" id="thi-live-status" role="status">Đang kết nối Firebase…</p></div><div class="t-field"><label for="thi-live-lop">Lớp</label><select id="thi-live-lop"><option value="">Tất cả lớp</option></select></div></div>
+<div class="t-heading"><div><h2>Học sinh trực tuyến</h2><p class="t-muted" id="thi-live-status" role="status">Đang kết nối Firebase…</p><button type="button" id="thi-live-relogin" class="t-button" hidden>Đăng nhập lại</button></div><div class="t-field"><label for="thi-live-lop">Lớp</label><select id="thi-live-lop"><option value="">Tất cả lớp</option></select></div></div>
 <dl class="t-metrics" id="thi-live-metrics"></dl>
 <table class="t-table" id="thi-live-table"><caption>Cập nhật tức thì từ Firebase</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Trạng thái</th><th scope="col">Lúc</th></tr></thead><tbody id="thi-live-body"><tr><td colspan="4" class="t-muted">Chưa có học sinh nào trực tuyến.</td></tr></tbody></table>
 </section>
@@ -451,6 +451,6 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261027d"></script>
+<script type="module" src="./teacher.js?v=20261027e"></script>
 </body>
 </html>

@@ -86,8 +86,12 @@ export function hasStudentSession() { return Boolean(load(KEY_HS)); }
 /* ---------------- Giáo viên ---------------- */
 /** Gọi sau khi giáo viên đăng nhập (token Worker là custom token 1 giờ). @param {string} customToken */
 export async function startTeacher(customToken) {
-  try { save(KEY_GV, await exchange(customToken)); return true; } catch { return false; }
+  try { save(KEY_GV, await exchange(customToken)); teacherError = ''; return true; }
+  catch (e) { teacherError = e instanceof Error ? e.message : String(e); return false; }
 }
+let teacherError = '';
+/** Lý do lần đổi vé giáo viên gần nhất thất bại (mã lỗi Firebase), '' nếu ổn. */
+export function lastTeacherError() { return teacherError; }
 export function stopTeacher() { save(KEY_GV, null); stopWatch(); }
 
 /** @type {EventSource|null} */ let es = null;
