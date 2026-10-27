@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng thực hiện 6 bước cập nhật Code.gs mới (commit aff5e6c), deploy New version, xóa DB_SECRET để chuyển sang 100% OAuth và dán nhật ký kiemTraHeThong cho Claude.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành đóng 7 nhánh RTDB cũ, chạy 45+42 ca emulator PASS 100%, publish database.rules.merged.json và test hồi quy load_gate4 PASS; báo cáo Claude tại docs/handoff/antigravity-claude-luat-nhanh-cu-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1796,3 +1796,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ### 27/10/2026 — Claude: kiemTraHeThong ĐẠT TOÀN BỘ bằng OAuth (đã xóa DB_SECRET); đóng 7 nhánh RTDB cũ với tài khoản thi
 - Nhật ký người dùng 08:49: OAuth chủ dự án, không còn DB_SECRET. Rủi ro "mật khẩu toàn quyền" đã đóng.
 - `spike/step0/build_merged.py` + `emulator/rules-merged.test.mjs`: 7 nhánh cũ chặn email @hs.aihoc.test. Handoff: `docs/handoff/claude-antigravity-luat-nhanh-cu.md` (chưa publish).
+
+
+### 27/10/2026 — Antigravity — Hoàn thành publish luật merged đóng 7 nhánh cũ & kiểm thử đạt 100%
+- Đã thực hiện: Kiểm tra 845 tài khoản Auth cũ (0 tài khoản dùng @hs.aihoc.test); chạy npm test (45/45 PASS) và npm run test:merged (42/42 PASS); sao lưu luật cũ vào database.rules.live-backup-2026-10-27.json; publish database.rules.merged.json lên Firebase RTDB thật; chạy lại load_gate4.mjs (n=5, mb=0) đạt PASS 100%.
+- Tệp đổi/tạo: spike/step0/database.rules.live-backup-2026-10-27.json, docs/evidence/*.log, docs/handoff/antigravity-claude-luat-nhanh-cu-xong.md, aisgk.md.
+- Kiểm thực tế: 45+42 ca emulator PASS; load_gate4.mjs in "=== CỔNG 4 ĐẠT ==="; RTDB live xác nhận có rule mới.
+- Việc tiếp: Chuyển Claude nghiệm thu theo docs/handoff/antigravity-claude-luat-nhanh-cu-xong.md.

@@ -1,0 +1,143 @@
+{
+  "rules": {
+    "rooms": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "remoteCommand": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "activeSession": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "lessons": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "sessionHistory": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "lessonPlans": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "questionBank": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "teachers": {
+      ".read": false,
+      ".write": false,
+      "$uid": {
+        ".read": "auth.uid === $uid"
+      }
+    },
+    "students": {
+      ".read": "root.child('teachers/' + auth.uid).exists()",
+      "$uid": {
+        ".read": "auth.uid === $uid || root.child('teachers/' + auth.uid).exists()",
+        ".write": "root.child('teachers/' + auth.uid).exists()"
+      }
+    },
+    "exam_meta": {
+      ".read": "auth != null",
+      "$e": {
+        ".write": "root.child('teachers/' + auth.uid).exists()"
+      }
+    },
+    "exam_questions": {
+      "$e": {
+        ".read": "auth != null && (root.child('teachers/' + auth.uid).exists() || (now >= root.child('exam_meta/' + $e + '/opens_at').val() && now <= root.child('exam_meta/' + $e + '/closes_at').val() && root.child('students/' + auth.uid + '/grade').val() === root.child('exam_meta/' + $e + '/grade').val()))",
+        ".write": "root.child('teachers/' + auth.uid).exists()"
+      }
+    },
+    "exam_secrets": {
+      ".read": false,
+      ".write": false
+    },
+    "sessions": {
+      "$e": {
+        ".read": "root.child('teachers/' + auth.uid).exists()",
+        ".write": "root.child('teachers/' + auth.uid).exists()",
+        "$uid": {
+          ".read": "auth.uid === $uid",
+          ".write": "auth.uid === $uid && !data.exists() && now >= root.child('exam_meta/' + $e + '/opens_at').val() && now <= root.child('exam_meta/' + $e + '/closes_at').val() && root.child('students/' + auth.uid + '/grade').val() === root.child('exam_meta/' + $e + '/grade').val()",
+          "started_at": {
+            ".validate": "data.exists() ? newData.val() === data.val() : newData.val() === now"
+          },
+          "extra_ms": {
+            ".validate": "newData.isNumber() && (root.child('teachers/' + auth.uid).exists() ? (newData.val() >= 0 && newData.val() <= 1800000) : (newData.val() === 0))"
+          },
+          "$other": {
+            ".validate": false
+          },
+          ".validate": "newData.hasChildren(['started_at', 'extra_ms'])"
+        }
+      }
+    },
+    "drafts": {
+      "$e": {
+        "$uid": {
+          ".read": "auth.uid === $uid || root.child('teachers/' + auth.uid).exists()",
+          ".write": "auth.uid === $uid && now <= root.child('sessions/' + $e + '/' + $uid + '/started_at').val() + root.child('exam_meta/' + $e + '/minutes').val() * 60000 + root.child('sessions/' + $e + '/' + $uid + '/extra_ms').val() + 30000",
+          "answers": {
+            "$q": {
+              ".validate": "newData.isString() && newData.val().length <= 2000"
+            }
+          },
+          "updated_at": {
+            ".validate": "newData.val() === now"
+          },
+          "$other": {
+            ".validate": false
+          },
+          "leaves": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+          }
+        }
+      }
+    },
+    "attempts": {
+      "$e": {
+        ".read": "root.child('teachers/' + auth.uid).exists()",
+        ".write": "root.child('teachers/' + auth.uid).exists()",
+        "$uid": {
+          "$n": {
+            ".read": "auth.uid === $uid",
+            ".write": "auth.uid === $uid && !data.exists() && ($n === '1' || ($n === '2' && root.child('exam_meta/' + $e + '/max_attempts').val() >= 2 && data.parent().child('1').exists())) && now <= root.child('sessions/' + $e + '/' + $uid + '/started_at').val() + root.child('exam_meta/' + $e + '/minutes').val() * 60000 + root.child('sessions/' + $e + '/' + $uid + '/extra_ms').val() + 30000",
+            "submitted_at": {
+              ".validate": "newData.val() === now"
+            },
+            "answers": {
+              "$q": {
+                ".validate": "newData.isString() && newData.val().length <= 2000"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "results": {
+      "$e": {
+        ".read": "root.child('teachers/' + auth.uid).exists()",
+        "$uid": {
+          ".read": "auth.uid === $uid"
+        },
+        ".write": false
+      }
+    },
+    "clock": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid",
+        ".validate": "newData.val() === now"
+      }
+    }
+  }
+}
