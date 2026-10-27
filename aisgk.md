@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã sửa hàm taoMau() và schema_() trong Code.gs để tự động tạo trang TaiLieu; toàn bộ 80 ca test sheet_exam_gs PASS. Hướng dẫn người dùng dán lại Code.gs và bấm menu Bài thi → Tạo mẫu.
+- Yêu cầu mới nhất: Antigravity chuẩn bị deploy Worker mới (Gia sư AI chính xác hơn, chống cụt câu, chống chặn nhầm, RAG bài dài) theo docs/handoff/claude-antigravity-deploy-worker-ai-chinh-xac.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1876,7 +1876,6 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - 2026-10-27 Claude: bài thi học sinh: thanh tiêu đề neo + bảng số câu 1…N (tô câu đã làm, bấm để nhảy), bắt buộc làm hết mới nộp (cảnh báo + tô đỏ câu sót), thẻ bài phân biệt thi thật (cam) / thi thử (xanh) + trạng thái Đang mở (chấm sáng) / Chưa mở (ổ khóa), mục Thi sáng + huy hiệu số bài đang mở (nghe Firebase ngay sau đăng nhập). Test thi_firebase_ui 86 + hồi quy học sinh OK.
 - 2026-10-27 Claude: AI báo 'Giờ thi' do giáo viên bật 'Khóa AI trong khi kiểm tra' → app tự khóa AI chỉ khi lớp có thi thật đang mở; khung chat AI neo góc (không modal), hiệu ứng gõ chữ; AI nhận xét bài thi thử (Worker mode exam_review, cần deploy); thanh neo tên bài + % đọc (Firebase doc_read) + thẻ 'Học sinh đọc bài' ở Tổng quan; tài liệu PDF ≤10MB lên Drive qua Sheet (TaiLieu, gv_doc_*), học sinh xem theo khối, bỏ chọn môn. Test: lesson_ai_docs_ui 36, thi_firebase_ui 90, teacher_shell, sheet_exam_gs, tutor_exam_review OK. Bàn giao: docs/handoff/claude-antigravity-cap-nhat-gs-ai-tailieu.md.
 
-
 ### 27/10/2026 — Antigravity — Hoàn thành Worker phân quyền giáo viên lớp giai đoạn 2 & deploy bản mới
 - Đã thực hiện: Triển khai `/api/teacher/auth` nhận giáo viên lớp qua Sheet `gv_login`, cấp JWT `scope: 'class'`; cấu trúc lại `requireTeacher` trả `user.admin` và `user.classes`; áp dụng bộ lọc lớp trên `/api/pwa/teacher/exams*`, lọc khối trên `/api/pwa/teacher/materials`, chặn 403 toàn bộ endpoint quản trị; lưu version cũ 2ca07e0b và deploy thành công version 9591eea0.
 - Tệp đổi/tạo: `worker/index.js`, `worker/exams.js`, `tests/test_worker_teacher_scope.mjs`, `aisgk.md`, `docs/handoff/antigravity-claude-giao-vien-lop-giai-doan-2.md`.
@@ -1894,3 +1893,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: apps-script/sheet-exam/Code.gs, tests/test_sheet_exam_gs.cjs, aisgk.md.
 - Kiểm thực tế: test_sheet_exam_gs.cjs PASS 80/80 ca; test_lesson_ai_docs_ui.cjs PASS 36/36 ca; test_worker_teacher_scope.mjs PASS 7/7 ca; package_student_pwa.py --check PASS.
 - Việc tiếp: Người dùng dán lại Code.gs vào Google Sheet và bấm menu Bài thi → Tạo mẫu để có ngay trang TaiLieu.
+
+## 28/10/2026 — Gia sư AI chính xác + khung chat cột phải
+- Desktop ≥1100px: mở Gia sư AI → khung chat thành cột phải, nội dung bài tự thu hẹp sang trái. Thanh % đọc bài thẳng hàng với nội dung.
+- Worker: sửa bộ lọc chặn nhầm (nguyên nhân chính AI "trả lời sai"), câu cụt (geminiText, 2048 token), bài dài (pickLessonContext), văn phong. Cần deploy: docs/handoff/claude-antigravity-deploy-worker-ai-chinh-xac.md.
+- Phân tích AI + "bộ não thứ hai": docs/phan-tich-ai-gia-su.md.

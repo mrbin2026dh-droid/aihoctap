@@ -1272,6 +1272,29 @@ export async function rtdb(env, signingKeys, method, path, body) {
  * cắt độ dài mọi trường để chống chèn lệnh; yêu cầu AI không nêu đáp án.
  * @param {any} review
  */
+/**
+ * Lấy toàn bộ chữ trả lời của Gemini: ghép MỌI phần (dòng model mới chia nhiều phần, có phần "suy nghĩ" thought:true phải bỏ).
+ * Nếu bị cắt vì hết giới hạn (finishReason MAX_TOKENS) thì cắt gọn về hết câu cuối, không để câu cụt.
+ * @param {any} data @returns {string}
+ */
+export function geminiText(data) {
+  const cand = data?.candidates?.[0];
+  let text = (cand?.content?.parts || []).filter(p => p && typeof p.text === 'string' && !p.thought).map(p => p.text).join('').trim();
+  if (text && cand?.finishReason === 'MAX_TOKENS') {
+    const cut = Math.max(text.lastIndexOf('. '), text.lastIndexOf('? '), text.lastIndexOf('! '), text.lastIndexOf('.\n'), text.lastIndexOf('?\n'), text.lastIndexOf('\n\n'));
+    if (cut > text.length * 0.4) text = text.slice(0, cut + 1).trim();
+  }
+  return text;
+}
+/** Quy tắc trình bày chung cho Gia sư (độ dài, không chào lặp, giải thích khái niệm đúng theo bài). */
+export const TUTOR_STYLE_RULES = `
+CÁCH TRẢ LỜI (bắt buộc):
+- Không chào lại ở mỗi lượt (chỉ chào ở lượt đầu nếu học sinh chào). Đi thẳng vào nội dung.
+- Trả lời 60–140 từ, câu ngắn, rõ, đúng thuật ngữ SGK Tin học; có thể dùng gạch đầu dòng và **in đậm** từ khóa.
+- Khi học sinh hỏi KHÁI NIỆM / kiến thức trong bài (không phải xin đáp án một câu hỏi bài tập hay đề thi): GIẢI THÍCH đúng và đủ theo TÀI LIỆU BÀI HỌC (định nghĩa ngắn + 1 ví dụ gần gũi), sau đó đặt 1 câu hỏi kiểm tra hiểu bài. Không được né tránh hay chỉ hỏi ngược khi học sinh hỏi khái niệm.
+- Khi học sinh hỏi về MỘT CÂU HỎI BÀI TẬP / ĐỀ THI: áp dụng đúng nguyên tắc không làm hộ ở trên — gợi ý từng bước, chỉ ra phần nào của bài cần đọc lại.
+- Luôn viết hết câu, không bỏ dở.`;
+
 export function buildExamReviewPrompt(review) {
   const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').slice(0, n);
   const items = (Array.isArray(review?.items) ? review.items : []).slice(0, 40)
@@ -1888,6 +1911,68 @@ export const LEAK_DETECTION_PATTERNS = [
   /\b(?:yes|exactly|correct)[,!.]\s*(?:option\s+)?[*_`"'([\\s]*([A-D])[*_`"')\]]*\s+is\s+correct\b/i
 ];
 
+const VI_STOP = new Set('là của và có các những một cho em thầy cô gì nào không được trong với này đó thì mà để khi bài học hãy giúp ạ nhé như thế sao vậy'.split(' '));
+/** @param {string} t */
+const viTokens = t => String(t || '').toLowerCase().normalize('NFC').split(/[^\p{L}\p{N}]+/u).filter(w => w.length > 1 && !VI_STOP.has(w));
+
+/**
+ * Chọn phần bài học liên quan nhất tới câu hỏi (RAG gọn, không cần CSDL vector).
+ * Bài ngắn → giữ nguyên. Bài dài → giữ đoạn mở đầu + các đoạn khớp từ khóa nhiều nhất, theo đúng thứ tự trong bài.
+ * @param {string} markdown @param {string} query @param {number} [limit]
+ */
+export function pickLessonContext(markdown, query, limit = 9000) {
+  const text = String(markdown || '');
+  if (text.length <= limit) return text;
+  const chunks = [];
+  for (const sec of text.split(/\n(?=#{1,4}\s)/)) {
+    if (sec.length <= 1500) { chunks.push(sec); continue; }
+    let buf = '';
+    for (const para of sec.split(/\n{2,}/)) {
+      if (buf && buf.length + para.length > 1500) { chunks.push(buf); buf = ''; }
+      buf += (buf ? '\n\n' : '') + para;
+    }
+    if (buf) chunks.push(buf);
+  }
+  const q = new Set(viTokens(query));
+  const df = new Map();
+  const toks = chunks.map(c => { const t = viTokens(c); for (const w of new Set(t)) df.set(w, (df.get(w) || 0) + 1); return t; });
+  const scores = toks.map((t, i) => {
+    if (i === 0) return Infinity;
+    let sc = 0; const seen = new Set();
+    for (const w of t) if (q.has(w) && !seen.has(w)) { seen.add(w); sc += Math.log(1 + chunks.length / (df.get(w) || 1)); }
+    return sc;
+  });
+  const order = scores.map((sc, i) => [sc, i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  const keep = new Set(); let used = 0;
+  for (const [, i] of order) {
+    if (used + chunks[i].length > limit) continue;
+    keep.add(i); used += chunks[i].length + 6;
+  }
+  return chunks.filter((_, i) => keep.has(i)).join('\n\n[…]\n\n');
+}
+
+/** Học sinh đang hỏi/đòi đáp án (khác với hỏi khái niệm). */
+export const ANSWER_SEEKING_RE = /đáp\s*án|phương\s*án|chữ\s*cái|loại\s*trừ|khoanh|chọn\s*(?:gì|câu|nào|đáp|phương|giúp|hộ)|câu\s*(?:nào|này)\s*(?:đúng|sai)|(?:đúng|sai)\s*không|có\s*phải\s*(?:là\s*)?[A-D]\b|\b(?:answer|option|choice)\b/i;
+
+/**
+ * Tìm lộ chữ cái đáp án, bỏ qua dương tính giả kiểu "chọn cách", "câu dưới", "chọn bộ nhớ":
+ * chữ cái A–D phải đứng riêng (không dính chữ cái tiếng Việt phía sau/trước) và viết HOA.
+ * @param {string} text @param {RegExp} pattern
+ */
+export function findLetterLeak(text, pattern) {
+  const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+  for (const m of text.matchAll(re)) {
+    const letter = m[1];
+    if (!letter) return m;
+    const off = m[0].lastIndexOf(letter), pos = (m.index || 0) + off;
+    const before = text[pos - 1] || '', after = text[pos + 1] || '';
+    if (letter !== letter.toUpperCase() && !/đáp\s*án|phương\s*án|answer|option/i.test(m[0])) continue;
+    if (/\p{L}|\p{N}/u.test(after) || /\p{L}|\p{N}/u.test(before)) continue;
+    return m;
+  }
+  return null;
+}
+
 export const PEDAGOGICAL_REFUSAL_TRIGGERS = [
   'không thể cung cấp', 'không thể đưa ra', 'không đưa ra', 'không thể tiết lộ',
   'không thể nói', 'không thể bật mí', 'không thể cho biết', 'không thể khẳng định', 'không trả lời hộ',
@@ -2003,9 +2088,13 @@ export function sanitizeWorkerOutput(reply, userMessage = '', context = {}) {
   const lowerReply = cleanedReply.toLowerCase();
   let needsSanitization = false;
 
+  // Câu hỏi có ngữ cảnh bài tập, hoặc học sinh đang đòi đáp án → mới áp các luật ngữ nghĩa (3.x).
+  // Câu hỏi khái niệm ("Dữ liệu số là gì?") phải được giải thích đầy đủ, không bị thay bằng câu từ chối.
+  const answerSeeking = Boolean(context?.question_id || context?.question_prompt || context?.correct_answer_text) || ANSWER_SEEKING_RE.test(userMessage || '');
+
   // 1. Direct affirmative leak regex
   for (const pattern of LEAK_DETECTION_PATTERNS) {
-    const match = cleanedReply.match(pattern);
+    const match = findLetterLeak(cleanedReply, pattern);
     if (match) {
       const matchPos = match.index || 0;
       const prefix = lowerReply.slice(Math.max(0, matchPos - 60), matchPos);
@@ -2040,21 +2129,21 @@ export function sanitizeWorkerOutput(reply, userMessage = '', context = {}) {
 
   // 3. F1: Semantic Leak Detection:
   // 3.1 Listing full answer set benefits (adv_v2_010)
-  if (!needsSanitization) {
+  if (!needsSanitization && answerSeeking) {
     if (lowerReply.includes('tiếp thu nhanh') && lowerReply.includes('ghi nhớ bền vững') && (lowerReply.includes('thuyết phục') || lowerReply.includes('hứng thú'))) {
       needsSanitization = true;
     }
   }
 
   // 3.2 Binary pairs prompting correct answer first (adv_v2_023)
-  if (!needsSanitization) {
+  if (!needsSanitization && answerSeeking) {
     if (/nhanh\s*chóng\s+hay\s+chậm\s*chạp/i.test(cleanedReply) || /bền\s*vững\s+hay\s+dễ\s*quên/i.test(cleanedReply)) {
       needsSanitization = true;
     }
   }
 
   // 3.3 Listing 4 processing steps with Thu nhận first (adv_v2_041)
-  if (!needsSanitization) {
+  if (!needsSanitization && answerSeeking) {
     if (/["'«]?thu\s*nhận["'»]?\s*,\s*["'«]?lưu\s*trữ["'»]?/i.test(cleanedReply)) {
       needsSanitization = true;
     }
@@ -4785,7 +4874,7 @@ export default {
           let systemText = WORKER_SOCRATIC_PROMPT;
           // Căn cứ: nội dung bài học lấy từ máy chủ. Gia sư chỉ được dựa vào đây, không bịa thêm.
           if (lessonForTutor?.content_markdown) {
-            systemText += `\n\nTÀI LIỆU BÀI HỌC (nguồn duy nhất để trả lời):\n"""\n${String(lessonForTutor.content_markdown).slice(0, 8000)}\n"""`;
+            systemText += `\n\nTÀI LIỆU BÀI HỌC (nguồn duy nhất để trả lời):\n"""\n${pickLessonContext(lessonForTutor.content_markdown, [message, ...(Array.isArray(history) ? history.slice(-2).map(h => h?.content || h?.text || '') : [])].join(' '), 9000)}\n"""`;
             systemText += '\n\nQUY TẮC CĂN CỨ: Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC ở trên. Nếu câu hỏi nằm ngoài tài liệu hoặc ngoài môn Tin học, hãy nói: "Phần này chưa có trong bài học, em hỏi thầy cô nhé." Không bịa số liệu, tên riêng, ví dụ hay nguồn trích dẫn ngoài tài liệu. Nếu không chắc, hãy nói rõ là chưa chắc.';
             const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId) : null;
             if (publicQuestion?.prompt) {
@@ -4806,6 +4895,7 @@ export default {
           }
 
           if (isExamReview) systemText = buildExamReviewPrompt(requestData.review);
+          else systemText += '\n' + TUTOR_STYLE_RULES;
 
           // Build multi-turn contents from history if available
           const contents = [];
@@ -4836,7 +4926,7 @@ export default {
                 systemInstruction: {
                   parts: [{ text: systemText }]
                 },
-                generationConfig: { temperature: 0.3, maxOutputTokens: 700 }
+                generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
               })
             });
 
@@ -4930,7 +5020,7 @@ export default {
           }
 
           const geminiData = await geminiRes.json();
-          const rawReply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Gia sư chưa thể phản hồi lúc này.';
+          const rawReply = geminiText(geminiData) || 'Gia sư chưa thể phản hồi lúc này.';
 
           // E2, F1, F2, F3: Output Sanitizer & Driver attribution
           let { text: cleanReply, modified } = sanitizeWorkerOutput(rawReply, message, effectiveContext);
@@ -4947,12 +5037,13 @@ export default {
                 },
                 body: JSON.stringify({
                   contents,
-                  systemInstruction: { parts: [{ text: retrySystemText }] }
+                  systemInstruction: { parts: [{ text: retrySystemText }] },
+                  generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
                 })
               });
               if (retryRes.ok) {
                 const retryData = await retryRes.json();
-                const retryRawReply = retryData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                const retryRawReply = geminiText(retryData);
                 const retrySanitized = sanitizeWorkerOutput(retryRawReply, message, effectiveContext);
                 if (!retrySanitized.modified) {
                   cleanReply = retrySanitized.text;

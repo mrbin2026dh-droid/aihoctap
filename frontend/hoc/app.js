@@ -130,14 +130,15 @@ function openTutor(questionId = null) {
   else chooseTutorLesson();
   updateTutorStatus();
   refreshTutorQuota().catch(() => {});
-  if (!dialog.open) dialog.show();   // khung chat neo góc màn hình (không che trang), như các ứng dụng nhắn tin
-  document.body.classList.add('tutor-open');
+  const tb = document.querySelector('.topbar'); document.body.style.setProperty('--tb-h', `${tb && getComputedStyle(tb).position === 'sticky' ? Math.round(tb.getBoundingClientRect().height) : 0}px`);
+  if (!dialog.open) dialog.show();   // máy tính rộng: cột chat bên phải, nội dung dịch sang trái; màn nhỏ: khung nổi / tấm trượt
+  document.body.classList.add('tutor-open'); queueMicrotask(readProgress.refresh);
   if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
 function closeTutor() {
   /** @type {HTMLDialogElement} */ (node('tutor-dialog')).close();
-  document.body.classList.remove('tutor-open');
+  document.body.classList.remove('tutor-open'); queueMicrotask(readProgress.refresh);
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && /** @type {HTMLDialogElement} */ (node('tutor-dialog')).open && !document.querySelector('dialog[open]:modal')) closeTutor(); });
 /** Gia sư AI nhận xét bài thi thử vừa nộp (Worker, tốn 1 lượt). Lỗi/không có token → '' để tab Thi hiện lời nhắn thay. */
@@ -480,7 +481,7 @@ async function showResult(ack) {
   if (ack.needs_review) text.append(el('p', 'Có câu tự luận đang chờ giáo viên xem.', 'meta'));
   hero.append(ring, text);
   const tiles = el('div', '', 'stat-grid');
-  tiles.append(statTile('Điểm', ack.score == null ? '–' : `${ack.score}/10`, 'target', 'teal'), statTile('Lần làm', String(tries), 'repeat', 'blue'), statTile('Cao nhất', `${best}/10`, 'trophy', 'amber'));
+  tiles.append(statTile('Điểm', (ack.score === null || ack.score === undefined) ? '–' : `${ack.score}/10`, 'target', 'teal'), statTile('Lần làm', String(tries), 'repeat', 'blue'), statTile('Cao nhất', `${best}/10`, 'trophy', 'amber'));
   const actions = el('div', '', 'result-actions');
   actions.append(
     withIcon(button('Làm lại', async () => {
@@ -533,7 +534,7 @@ async function sync() {
       if (session !== captured) break;
       try {
         const ack = /** @type {Ack} */ (await api('/pwa/attempts', {method:'POST', token:captured.token, body:item.body}));
-        if (ack.status !== 'submitted' || ack.attempt_id !== item.body.attempt_id || (ack.version != null && ack.version !== item.body.version)) throw new Error('Máy chủ chưa xác nhận đúng bài nộp.');
+        if (ack.status !== 'submitted' || ack.attempt_id !== item.body.attempt_id || ((ack.version !== null && ack.version !== undefined) && ack.version !== item.body.version)) throw new Error('Máy chủ chưa xác nhận đúng bài nộp.');
         await db.put('outbox', item.key, {...item, ack, error: undefined});
         if (session !== captured) continue;
         notify('Đã nộp bài. Máy chủ đã xác nhận.');

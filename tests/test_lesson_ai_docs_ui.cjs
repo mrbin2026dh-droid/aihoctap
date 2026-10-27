@@ -13,7 +13,7 @@ const CAT={schema_version:1,revision:'r1',courses:[{id:'tin-hoc-9',subject_id:'t
 try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobile=vp.width<500;
  const db={thi_bai:{},tai_lieu:{t1:{tieu_de:'Đề cương Tin 9',khoi:9,mo_ta:'Ôn HK1',file_id:'F9',ten_file:'de-cuong.pdf',size:204800,at:'2026-10-27'},t2:{tieu_de:'Tài liệu khối 8',khoi:8,file_id:'F8',ten_file:'k8.pdf',size:1000,at:'2026-10-26'}}};const writes=[];
  const ctx=await b.newContext({viewport:vp,serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));const tutorCalls=[];
- await pg.route(DB+'/**',r=>{const u=new URL(r.request().url());const parts=u.pathname.replace(/\.json$/,'').split('/').filter(Boolean);const v=parts.reduce((o,k)=>o==null?undefined:o[k],db);
+ await pg.route(DB+'/**',r=>{const u=new URL(r.request().url());const parts=u.pathname.replace(/\.json$/,'').split('/').filter(Boolean);const v=parts.reduce((o,k)=>(o === null || o === undefined) ? undefined : o[k],db);
   if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`retry: 300\nevent: put\ndata: ${JSON.stringify({path:'/',data:v??null})}\n\n`});
   if(r.request().method()!=='GET'){writes.push({path:u.pathname,v:JSON.parse(r.request().postData()||'null')});return r.fulfill({status:200,contentType:'application/json',body:'{}'})}
   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(v??null)})});
@@ -27,6 +27,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
  ok((await pg.textContent('#read-bar .read-title')).includes('Thế giới kĩ thuật số')&&(await pg.textContent('#read-bar .read-pct')).includes('Đã đọc'),'bài học: thanh neo tên bài + % đã đọc');
  await pg.evaluate(()=>scrollTo(0,900));await pg.waitForTimeout(300);
  const top=await pg.evaluate(()=>document.getElementById('read-bar').getBoundingClientRect().top);const tb=await pg.evaluate(()=>{const t=document.querySelector('.topbar');return getComputedStyle(t).position==='sticky'?t.getBoundingClientRect().height:0});
+ const al=await pg.evaluate(()=>{const b=document.getElementById('read-bar').getBoundingClientRect(),c=document.getElementById('lesson-content').getBoundingClientRect();return Math.abs(b.left-c.left)+Math.abs(b.right-c.right)});ok(al<=2,'thanh đọc bài thẳng hàng với khung nội dung');
  ok(Math.abs(top-tb)<=2,`cuộn xuống: thanh đọc bài dính ngay dưới thanh trên cùng (top ${Math.round(top)} ≈ ${Math.round(tb)})`);
  const mid=Number((await pg.textContent('#read-bar .read-pct')).match(/\d+/)?.[0]||0);ok(mid>0&&mid<100,'đang đọc giữa bài: '+mid+'%');
  await pg.evaluate(()=>scrollTo(0,document.body.scrollHeight));await pg.waitForTimeout(500);
@@ -36,7 +37,8 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
  await pg.evaluate(()=>scrollTo(0,0));await pg.click('#ask-tutor');await pg.waitForSelector('#tutor-dialog[open]');await pg.waitForTimeout(300);
  const dlg=await pg.evaluate(()=>{const d=document.getElementById('tutor-dialog');const r=d.getBoundingClientRect();return {modal:d.matches(':modal'),right:innerWidth-r.right,bottom:innerHeight-r.bottom,w:r.width,h:r.height}});
  ok(!dlg.modal,'khung chat không che trang (không phải hộp thoại chặn)');
- ok(mobile?(dlg.w>=vp.width-2&&dlg.bottom>=60):(dlg.right>=16&&dlg.right<=40&&dlg.bottom>=16&&dlg.bottom<=40&&dlg.w<=440),mobile?'điện thoại: tấm chat trượt lên, nằm trên thanh menu dưới':'máy tính: khung chat neo góc phải dưới');
+ ok(mobile?(dlg.w>=vp.width-2&&dlg.bottom>=60):(Math.abs(dlg.right)<=1&&Math.abs(dlg.bottom)<=1&&dlg.w<=421&&dlg.h>=vp.height-100),mobile?'điện thoại: tấm chat trượt lên, nằm trên thanh menu dưới':'máy tính: khung chat thành cột bên phải cao hết màn hình');
+ if(!mobile){const lay=await pg.evaluate(()=>{const c=document.getElementById('lesson-content').getBoundingClientRect(),d=document.getElementById('tutor-dialog').getBoundingClientRect();return {cr:c.right,dl:d.left}});ok(lay.cr<=lay.dl+1,`nội dung dịch sang trái, không bị khung chat che (${Math.round(lay.cr)} ≤ ${Math.round(lay.dl)})`);}
  ok(await pg.isVisible('#lesson-content'),'vẫn đọc được bài khi đang mở chat');
  await pg.fill('#tutor-input','Dữ liệu số là gì?');await pg.click('#tutor-submit');
  await pg.waitForSelector('#tutor-messages .tutor-bot .typing',{timeout:5000});ok(true,'câu trả lời hiện dần (hiệu ứng gõ chữ, có con trỏ)');

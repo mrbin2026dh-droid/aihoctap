@@ -13,7 +13,13 @@ function ensureBar() {
   if (bar) return bar;
   const content = document.getElementById('lesson-content'); if (!content) return null;
   bar = document.createElement('div'); bar.id = 'read-bar'; bar.className = 'read-bar';
-  bar.innerHTML = '<span class="read-title"></span><span class="read-track" role="progressbar" aria-label="Tiến độ đọc bài" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="read-fill"></span></span><span class="read-pct">0%</span>';
+  const tSpan = document.createElement('span'); tSpan.className = 'read-title';
+  const trk = document.createElement('span'); trk.className = 'read-track';
+  trk.setAttribute('role', 'progressbar'); trk.setAttribute('aria-label', 'Tiến độ đọc bài');
+  trk.setAttribute('aria-valuemin', '0'); trk.setAttribute('aria-valuemax', '100'); trk.setAttribute('aria-valuenow', '0');
+  const fill = document.createElement('span'); fill.className = 'read-fill'; trk.appendChild(fill);
+  const pSpan = document.createElement('span'); pSpan.className = 'read-pct'; pSpan.textContent = '0%';
+  bar.append(tSpan, trk, pSpan);
   content.before(bar);
   addEventListener('scroll', schedule, { passive: true }); addEventListener('resize', schedule);
   return bar;
@@ -30,6 +36,7 @@ function update() {
   if (!b || !cur) return;
   const on = !!view && !view.hidden && !!c && !c.hidden;
   b.hidden = !on; if (!on) return;
+  if (c) b.style.maxWidth = c.offsetWidth + 'px';   // thẳng hàng với khung nội dung bài
   const t = /** @type {HTMLElement|null} */ (document.querySelector('.topbar')), pos = t ? getComputedStyle(t).position : '';
   b.style.setProperty('--read-top', `${t && (pos === 'sticky' || pos === 'fixed') ? Math.round(t.getBoundingClientRect().height) : 0}px`);
   const p = Math.max(percent(), 0); if (p > cur.max) { cur.max = p; try { localStorage.setItem(lsKey(cur.uid, cur.key), String(p)); } catch { /* bỏ qua */ } }
