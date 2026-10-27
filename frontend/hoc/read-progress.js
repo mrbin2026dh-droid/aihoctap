@@ -30,6 +30,7 @@ function update() {
   if (!b || !cur) return;
   const on = !!view && !view.hidden && !!c && !c.hidden;
   b.hidden = !on; if (!on) return;
+  if (c) b.style.maxWidth = c.offsetWidth + 'px';   // thẳng hàng với khung nội dung bài
   const t = /** @type {HTMLElement|null} */ (document.querySelector('.topbar')), pos = t ? getComputedStyle(t).position : '';
   b.style.setProperty('--read-top', `${t && (pos === 'sticky' || pos === 'fixed') ? Math.round(t.getBoundingClientRect().height) : 0}px`);
   const p = Math.max(percent(), 0); if (p > cur.max) { cur.max = p; try { localStorage.setItem(lsKey(cur.uid, cur.key), String(p)); } catch { /* bỏ qua */ } }

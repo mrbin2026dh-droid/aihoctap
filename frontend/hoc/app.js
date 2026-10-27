@@ -130,14 +130,15 @@ function openTutor(questionId = null) {
   else chooseTutorLesson();
   updateTutorStatus();
   refreshTutorQuota().catch(() => {});
-  if (!dialog.open) dialog.show();   // khung chat neo góc màn hình (không che trang), như các ứng dụng nhắn tin
-  document.body.classList.add('tutor-open');
+  const tb = document.querySelector('.topbar'); document.body.style.setProperty('--tb-h', `${tb && getComputedStyle(tb).position === 'sticky' ? Math.round(tb.getBoundingClientRect().height) : 0}px`);
+  if (!dialog.open) dialog.show();   // máy tính rộng: cột chat bên phải, nội dung dịch sang trái; màn nhỏ: khung nổi / tấm trượt
+  document.body.classList.add('tutor-open'); queueMicrotask(readProgress.refresh);
   if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
 function closeTutor() {
   /** @type {HTMLDialogElement} */ (node('tutor-dialog')).close();
-  document.body.classList.remove('tutor-open');
+  document.body.classList.remove('tutor-open'); queueMicrotask(readProgress.refresh);
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && /** @type {HTMLDialogElement} */ (node('tutor-dialog')).open && !document.querySelector('dialog[open]:modal')) closeTutor(); });
 /** Gia sư AI nhận xét bài thi thử vừa nộp (Worker, tốn 1 lượt). Lỗi/không có token → '' để tab Thi hiện lời nhắn thay. */

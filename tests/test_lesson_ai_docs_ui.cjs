@@ -27,6 +27,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
  ok((await pg.textContent('#read-bar .read-title')).includes('Thế giới kĩ thuật số')&&(await pg.textContent('#read-bar .read-pct')).includes('Đã đọc'),'bài học: thanh neo tên bài + % đã đọc');
  await pg.evaluate(()=>scrollTo(0,900));await pg.waitForTimeout(300);
  const top=await pg.evaluate(()=>document.getElementById('read-bar').getBoundingClientRect().top);const tb=await pg.evaluate(()=>{const t=document.querySelector('.topbar');return getComputedStyle(t).position==='sticky'?t.getBoundingClientRect().height:0});
+ const al=await pg.evaluate(()=>{const b=document.getElementById('read-bar').getBoundingClientRect(),c=document.getElementById('lesson-content').getBoundingClientRect();return Math.abs(b.left-c.left)+Math.abs(b.right-c.right)});ok(al<=2,'thanh đọc bài thẳng hàng với khung nội dung');
  ok(Math.abs(top-tb)<=2,`cuộn xuống: thanh đọc bài dính ngay dưới thanh trên cùng (top ${Math.round(top)} ≈ ${Math.round(tb)})`);
  const mid=Number((await pg.textContent('#read-bar .read-pct')).match(/\d+/)?.[0]||0);ok(mid>0&&mid<100,'đang đọc giữa bài: '+mid+'%');
  await pg.evaluate(()=>scrollTo(0,document.body.scrollHeight));await pg.waitForTimeout(500);
@@ -36,7 +37,8 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
  await pg.evaluate(()=>scrollTo(0,0));await pg.click('#ask-tutor');await pg.waitForSelector('#tutor-dialog[open]');await pg.waitForTimeout(300);
  const dlg=await pg.evaluate(()=>{const d=document.getElementById('tutor-dialog');const r=d.getBoundingClientRect();return {modal:d.matches(':modal'),right:innerWidth-r.right,bottom:innerHeight-r.bottom,w:r.width,h:r.height}});
  ok(!dlg.modal,'khung chat không che trang (không phải hộp thoại chặn)');
- ok(mobile?(dlg.w>=vp.width-2&&dlg.bottom>=60):(dlg.right>=16&&dlg.right<=40&&dlg.bottom>=16&&dlg.bottom<=40&&dlg.w<=440),mobile?'điện thoại: tấm chat trượt lên, nằm trên thanh menu dưới':'máy tính: khung chat neo góc phải dưới');
+ ok(mobile?(dlg.w>=vp.width-2&&dlg.bottom>=60):(Math.abs(dlg.right)<=1&&Math.abs(dlg.bottom)<=1&&dlg.w<=421&&dlg.h>=vp.height-100),mobile?'điện thoại: tấm chat trượt lên, nằm trên thanh menu dưới':'máy tính: khung chat thành cột bên phải cao hết màn hình');
+ if(!mobile){const lay=await pg.evaluate(()=>{const c=document.getElementById('lesson-content').getBoundingClientRect(),d=document.getElementById('tutor-dialog').getBoundingClientRect();return {cr:c.right,dl:d.left}});ok(lay.cr<=lay.dl+1,`nội dung dịch sang trái, không bị khung chat che (${Math.round(lay.cr)} ≤ ${Math.round(lay.dl)})`);}
  ok(await pg.isVisible('#lesson-content'),'vẫn đọc được bài khi đang mở chat');
  await pg.fill('#tutor-input','Dữ liệu số là gì?');await pg.click('#tutor-submit');
  await pg.waitForSelector('#tutor-messages .tutor-bot .typing',{timeout:5000});ok(true,'câu trả lời hiện dần (hiệu ứng gõ chữ, có con trỏ)');

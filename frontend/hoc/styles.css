@@ -1347,7 +1347,7 @@ body.student-app dialog.tutor-dialog::backdrop{background:transparent}
 .student-app .thi-review-msg{margin-top:8px;line-height:1.65}
 .student-app .thi-typing-dots::after{content:'…';animation:tutor-caret 1s steps(1) infinite}
 /* ---------- Thanh đọc bài: tên bài + % đã đọc, dính dưới thanh trên cùng khi cuộn ---------- */
-.student-app .read-bar{position:sticky;top:var(--read-top,0px);z-index:4;display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,38%) auto;align-items:center;gap:12px;margin:12px 0 16px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(6px)}
+.student-app .read-bar{position:sticky;top:var(--read-top,0px);z-index:4;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,max-content) minmax(120px,1fr) auto;align-items:center;gap:12px;margin:12px 0 16px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(6px)}
 .student-app .read-bar[hidden]{display:none}
 .student-app .read-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
 .student-app .read-track{position:relative;height:8px;border-radius:99px;background:var(--soft,#f1f5ef);overflow:hidden}
@@ -1363,3 +1363,12 @@ body.student-app dialog.tutor-dialog::backdrop{background:transparent}
 .student-app .doc-card .actions{display:flex;gap:8px;flex-wrap:wrap;margin:0}
 .student-app .doc-card .actions button{min-height:44px}
 @media(max-width:760px){.student-app .doc-card{grid-template-columns:auto minmax(0,1fr)}.student-app .doc-card .actions{grid-column:1 / -1}.student-app .doc-card .actions button{flex:1}}
+
+/* Máy tính rộng: mở Gia sư AI → khung chat thành cột bên phải cao hết màn hình, nội dung dịch sang trái vừa khít */
+@media(min-width:1100px){
+  body.student-app.tutor-open dialog.tutor-dialog{inset:var(--tb-h,0px) 0 0 auto;width:min(420px,32vw);height:auto;border-radius:0;border-width:0 0 0 1px;box-shadow:-8px 0 24px rgba(0,0,0,.06);animation:tutor-side .2s ease-out}
+  body.student-app.tutor-open .workspace{margin-right:min(420px,32vw);transition:margin-right .2s ease-out}
+  body.student-app.tutor-open main{max-width:none}
+}
+@keyframes tutor-side{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){body.student-app.tutor-open .workspace{transition:none}}

@@ -22,3 +22,9 @@ try {
   assert.ok(!JSON.stringify(captured).includes('correct_answer'), 'không chuyển đáp án sang AI');
 } finally { globalThis.fetch = realFetch; }
 console.log('TUTOR EXAM REVIEW OK');
+// Câu trả lời Gemini nhiều phần / bị cắt vì hết giới hạn
+const { geminiText, TUTOR_STYLE_RULES } = await import('../worker/index.js');
+assert.equal(geminiText({candidates:[{content:{parts:[{text:'suy nghĩ…', thought:true},{text:'Chào em! CPU là bộ xử lí trung tâm. '},{text:'Nó điều khiển máy tính.'}]}}]}), 'Chào em! CPU là bộ xử lí trung tâm. Nó điều khiển máy tính.', 'ghép mọi phần, bỏ phần suy nghĩ');
+assert.equal(geminiText({candidates:[{finishReason:'MAX_TOKENS', content:{parts:[{text:'CPU là bộ xử lí trung tâm. Nó điều khiển mọi hoạt động. Ví dụ trong máy tính, điện tho'}]}}]}), 'CPU là bộ xử lí trung tâm. Nó điều khiển mọi hoạt động.', 'bị cắt → gọn về hết câu');
+assert.ok(TUTOR_STYLE_RULES.includes('Không chào lại') && TUTOR_STYLE_RULES.includes('GIẢI THÍCH'), 'quy tắc trình bày');
+console.log('GEMINI TEXT OK');
