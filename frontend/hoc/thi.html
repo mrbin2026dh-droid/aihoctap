@@ -17,13 +17,23 @@
       <div class="field"><label for="ma">Mã học sinh</label><input id="ma" name="ma" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
       <div class="field"><label for="pin">Mã PIN</label><input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" required></div>
       <p id="login-error" class="msg bad" role="alert"></p>
-      <button class="primary" type="submit">Lấy đề</button>
+      <button class="primary" type="submit">Đăng nhập</button>
     </form>
+
+    <section id="pick" class="card" hidden aria-labelledby="pick-title">
+      <h2 id="pick-title">Chọn bài thi</h2>
+      <p id="pick-who" class="muted"></p>
+      <ul id="exam-list" class="exam-list"></ul>
+      <p id="pick-empty" class="muted" hidden>Hiện chưa có bài thi nào dành cho lớp em. Chờ thầy cô mở thi rồi bấm "Làm mới".</p>
+      <p id="pick-error" class="msg bad" role="alert"></p>
+      <div class="actions"><button id="pick-refresh" class="primary" type="button">Làm mới</button><button id="pick-exit" class="ghost" type="button">Thoát</button></div>
+    </section>
 
     <section id="wait" class="card result" hidden aria-live="polite">
       <h2 id="wait-title">Đã vào phòng thi</h2>
       <p id="wait-text" class="muted"></p>
       <p class="muted">Trang tự vào bài khi thầy cô mở thi.</p>
+      <button id="wait-back" class="ghost" type="button">Chọn bài khác</button>
     </section>
 
     <section id="exam" hidden>
@@ -37,7 +47,7 @@
       <h2 id="result-title">Đã nộp bài</h2>
       <p id="result-score" class="score"></p>
       <p id="result-detail" class="muted"></p>
-      <button id="done" class="ghost" type="button">Xong</button>
+      <button id="done" class="ghost" type="button">Về danh sách bài thi</button>
     </section>
   </main>
 

@@ -23,7 +23,9 @@ try{
  await pg.route(API,r=>{st.calls++;const p=JSON.parse(r.request().postData());const j=x=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(x)});
   const student={name:'Nguyễn Văn An',lop:'9A',ma:'HS01',done:false};
   if(p.action==='submit')return j({ok:true,mode:'that',score:5,total:5,correct:1,count:1});
-  if(st.calls===1)return j({ok:true,waiting:true,mode:'that',title:'Giữa kỳ',student,questions:[]});
+  if(p.action==='exams')return j({ok:true,student,exams:[{ma_de:'m1',tieu_de:'Giữa kỳ',che_do:'that',trang_thai:'khoa',done:false}]});
+  st.exCalls=(st.exCalls||0)+1;
+  if(st.exCalls===1)return j({ok:true,waiting:true,mode:'that',title:'Giữa kỳ',student,questions:[]});
   return j({ok:true,mode:'that',title:'Giữa kỳ',student,questions:[{id:'r2',stt:1,text:'CPU?',options:{A:'x',B:'y'},points:5}]})});
  const last=()=>st.writes.filter(w=>w.m==='PATCH').at(-1);
  const waitState=async(s,ms=8000)=>{const t=Date.now();while(Date.now()-t<ms){if(last()?.body?.state===s)return true;await pg.waitForTimeout(100)}return false};
@@ -38,6 +40,7 @@ try{
  ok(w.body.name==='Nguyễn Văn An'&&w.body.lop==='9A'&&w.body.at['.sv']==='timestamp','kèm họ tên, lớp, giờ máy chủ Firebase');
  ok(!st.writes.some(x=>JSON.stringify(x).includes('123456')),'không gửi PIN lên Firebase');
  await pg.click('.bottom-nav [data-tab="exams"]');
+ await pg.frameLocator('iframe.thi-frame').locator('.exam-item').first().click();
  ok(await waitState('phong_cho'),'tab Thi, bài đang khóa → "Phòng chờ thi"');
  ok(await waitState('dang_thi',12000),'thầy cô mở thi → "Đang thi"');
  const fr=pg.frameLocator('iframe.thi-frame');await fr.locator('.opt').first().click();await fr.locator('#submit').click();await fr.locator('#confirm-ok').click();

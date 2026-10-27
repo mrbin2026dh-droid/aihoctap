@@ -28,3 +28,6 @@ dialog::backdrop{background:rgb(0 0 0 / .45)}dialog h2{margin-top:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .q fieldset{border:0;padding:0;margin:0;min-width:0}
 body.embedded .head{display:none}body.embedded .wrap{padding-top:8px}
+.exam-list{list-style:none;padding:0;margin:12px 0;display:flex;flex-direction:column;gap:8px}
+.exam-item{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.exam-item:hover{border-color:var(--accent);background:var(--sel)}

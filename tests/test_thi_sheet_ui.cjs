@@ -12,6 +12,7 @@ try{for(const vp of [{width:360,height:740},{width:1280,height:800}]){
  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());st.calls.push(p);const j=x=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(x)});
   if(p.pin!=='123456')return j({ok:false,error:'Mã PIN chưa đúng.'});
   const student={name:'Nguyễn Văn An',lop:'9A',ma:'hs9a01',done:st.done};
+  if(p.action==='exams')return j({ok:true,student,exams:[{ma_de:'m1',tieu_de:'Giữa kỳ 9A',che_do:'that',trang_thai:'mo',done:st.done,score:st.done?5:null,total:st.done?10:null}]});
   if(p.action==='exam')return j({ok:true,student,questions:[{id:'r2',stt:1,text:'CPU là gì?',options:{A:'Bộ xử lý',B:'Bộ nhớ'},points:5},{id:'r3',stt:2,text:'Excel là?',options:{A:'Soạn thảo',B:'Bảng tính'},points:5}]});
   if(p.action==='submit'){if(st.busyOnce){st.busyOnce=false;return r.fulfill({status:200,contentType:'text/html',body:'<html>bận</html>'})}st.done=true;return j({ok:true,score:5,total:10,correct:1,count:2})}
   j({ok:false,error:'?'})});
@@ -19,12 +20,15 @@ try{for(const vp of [{width:360,height:740},{width:1280,height:800}]){
  await pg.click('#login button[type=submit]');ok((await pg.textContent('#login-error')).includes('Nhập Mã học sinh')&&await pg.getAttribute('#ma','aria-invalid')==='true','bỏ trống mã → báo dưới trường');
  await pg.fill('#ma','hs9a01');await pg.fill('#pin','000000');await pg.click('#login button[type=submit]');
  await pg.waitForFunction(()=>document.getElementById('login-error').textContent.includes('PIN'));ok(true,'sai PIN → hiện "Mã PIN chưa đúng."');
- await pg.fill('#pin','123456');await pg.click('#login button[type=submit]');await pg.waitForSelector('#exam:not([hidden])');
+ await pg.fill('#pin','123456');await pg.click('#login button[type=submit]');await pg.waitForSelector('#pick:not([hidden])');
+ ok(await pg.locator('.exam-item').count()===1&&(await pg.textContent('.exam-item')).includes('Giữa kỳ 9A')&&(await pg.textContent('.exam-item')).includes('Thi thật'),'đăng nhập → màn hình chọn bài thi (tên bài, loại)');
+ await pg.click('.exam-item');await pg.waitForSelector('#exam:not([hidden])');
+ ok(st.calls.at(-1).ma_de==='m1','chọn bài → gửi mã bài thi');
  ok((await pg.textContent('#who')).includes('Nguyễn Văn An — Lớp 9A — 2 câu'),'lấy đề: hiện tên, lớp, số câu');
  ok(await pg.locator('.q').count()===2,'hiện 2 câu');
  await pg.click('.opt:has(input[name=r2][value=A])');
- ok((await pg.evaluate(()=>localStorage.getItem('thi-nhap-hs9a01')||'')).includes('"r2":"A"'),'chọn đáp án → nháp lưu trên máy');
- await pg.reload();await pg.fill('#ma','hs9a01');await pg.fill('#pin','123456');await pg.click('#login button[type=submit]');await pg.waitForSelector('#exam:not([hidden])');
+ ok((await pg.evaluate(()=>localStorage.getItem('thi-nhap-hs9a01-m1')||'')).includes('"r2":"A"'),'chọn đáp án → nháp lưu trên máy');
+ await pg.reload();await pg.fill('#ma','hs9a01');await pg.fill('#pin','123456');await pg.click('#login button[type=submit]');await pg.waitForSelector('.exam-item');await pg.click('.exam-item');await pg.waitForSelector('#exam:not([hidden])');
  ok(await pg.isChecked('input[name=r2][value=A]'),'tải lại trang → khôi phục bài làm dở');
  const overflow=await pg.evaluate(()=>document.documentElement.scrollWidth>innerWidth);ok(!overflow,`không tràn ngang ở ${vp.width}px`);
  const small=await pg.evaluate(()=>[...document.querySelectorAll('button:not([hidden]), .opt')].filter(e=>e.offsetParent&&e.getBoundingClientRect().height<48).length);ok(small===0,'nút và phương án cao ≥ 48px');
@@ -32,22 +36,29 @@ try{for(const vp of [{width:360,height:740},{width:1280,height:800}]){
  await pg.click('#confirm-cancel');ok(!(await pg.evaluate(()=>document.getElementById('confirm').open)),'Làm tiếp → đóng hộp thoại, chưa nộp');
  await pg.click('#submit');await pg.click('#confirm-ok');await pg.waitForSelector('#result:not([hidden])',{timeout:15000});
  ok((await pg.textContent('#result-score')).includes('5 / 10'),'Apps Script bận lần đầu → tự thử lại → hiện 5 / 10 điểm');
- const sub=st.calls.filter(c=>c.action==='submit').at(-1);ok(sub.answers.r2==='A'&&sub.ma==='hs9a01','gửi đúng bài làm');
- ok(!(await pg.evaluate(()=>localStorage.getItem('thi-nhap-hs9a01'))),'nộp xong xóa nháp');
- await pg.click('#done');await pg.fill('#ma','hs9a01');await pg.fill('#pin','123456');await pg.click('#login button[type=submit]');await pg.waitForSelector('#result:not([hidden])');
- ok((await pg.textContent('#result-title')).includes('đã nộp bài này rồi'),'đăng nhập lại sau khi nộp → báo đã nộp, không cho làm lại');
+ const sub=st.calls.filter(c=>c.action==='submit').at(-1);ok(sub.answers.r2==='A'&&sub.ma==='hs9a01'&&sub.ma_de==='m1','gửi đúng bài làm');
+ ok(!(await pg.evaluate(()=>localStorage.getItem('thi-nhap-hs9a01-m1'))),'nộp xong xóa nháp');
+ await pg.click('#done');await pg.waitForSelector('#pick:not([hidden])');
+ ok((await pg.textContent('.exam-item')).includes('Đã nộp: 5/10'),'sau khi nộp → về danh sách, bài hiện điểm đã nộp');
+ await pg.click('.exam-item');await pg.waitForSelector('#result:not([hidden])');
+ ok((await pg.textContent('#result-title')).includes('đã nộp bài này rồi'),'vào lại bài thi thật đã nộp → báo đã nộp, không cho làm lại');
  ok(errs.length===0,'không lỗi trang '+errs.join('|'));await ctx.close();}
  // Màn hình đầu không còn nút "Vào bài thi"; tab Thi nhúng thi.html?auto=1 và vào thẳng đề bằng tài khoản vừa đăng nhập
  {const c=await b.newContext({serviceWorkers:'block'});const p=await c.newPage();await p.route('**/api/**',r=>r.fulfill({status:200,contentType:'application/json',body:'{"schema_version":1,"revision":"r","courses":[]}'}));
   await p.goto('http://localhost:8195/');await p.waitForSelector('#gate:not([hidden])');ok((await p.locator('#gate-exam').count())===0,'màn hình đầu: đã bỏ nút "Vào bài thi"');await c.close()}
- {st.done=false;st.calls=[];st.busyOnce=false;const c=await b.newContext({serviceWorkers:'block'});const p=await c.newPage();
-  await p.route(API,r=>{const q=JSON.parse(r.request().postData());st.calls.push(q);const first=st.calls.length===1;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(first?{ok:true,waiting:true,mode:'thu',title:'Ôn tập 9',student:{name:'An',lop:'9A',ma:'hs9a01',done:false},questions:[]}:{ok:true,mode:'thu',title:'Ôn tập 9',student:{name:'An',lop:'9A',ma:'hs9a01',status:'Chưa thi',done:false},questions:[{id:'r2',stt:1,text:'Câu 1?',options:{A:'x',B:'y'},points:5}]})})});
+ {st.calls=[];let exCalls=0;const c=await b.newContext({serviceWorkers:'block'});const p=await c.newPage();
+  await p.route(API,r=>{const q=JSON.parse(r.request().postData());st.calls.push(q);const student={name:'An',lop:'9A',ma:'hs9a01',status:'Chưa thi',done:false};let body;
+   if(q.action==='exams')body={ok:true,student,exams:[{ma_de:'t1',tieu_de:'Ôn tập 9',che_do:'thu',trang_thai:'mo',done:false,score:null,total:null},{ma_de:'t2',tieu_de:'Kiểm tra 15 phút',che_do:'that',trang_thai:'khoa',done:false,score:null,total:null}]};
+   else{exCalls++;body=exCalls===1?{ok:true,waiting:true,mode:'that',title:'Kiểm tra 15 phút',student,questions:[]}:{ok:true,mode:'that',title:'Kiểm tra 15 phút',student,questions:[{id:'r2',stt:1,text:'Câu 1?',options:{A:'x',B:'y'},points:5}]}}
+   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
   await p.addInitScript(()=>sessionStorage.setItem('thi-cred',JSON.stringify({ma:'hs9a01',pin:'123456'})));
-  await p.goto('http://localhost:8195/thi.html?auto=1');await p.waitForSelector('#wait:not([hidden])');
-  ok((await p.textContent('#wait-text')).includes('Ôn tập 9')&&await p.isHidden('#questions'),'bài đang khóa → phòng chờ, chưa thấy câu hỏi');
-  await p.waitForSelector('#exam:not([hidden])',{timeout:12000});ok(st.calls.length>=2,'phòng chờ tự hỏi lại, thầy cô mở thi → vào bài');
-  ok(st.calls[0].action==='exam'&&st.calls[0].ma==='hs9a01'&&st.calls[0].pin==='123456','nhúng trong app: tự lấy đề bằng tài khoản vừa đăng nhập');
+  await p.goto('http://localhost:8195/thi.html?auto=1');await p.waitForSelector('#pick:not([hidden])');
+  ok(st.calls[0].action==='exams'&&st.calls[0].ma==='hs9a01'&&st.calls[0].pin==='123456','nhúng trong app: tự đăng nhập bằng tài khoản vừa vào, hiện danh sách bài');
+  ok(await p.locator('.exam-item').count()===2&&(await p.textContent('.exam-item >> nth=1')).includes('Chưa mở'),'hai bài: thi thử đang mở và thi thật chưa mở (phòng chờ)');
   ok(await p.isHidden('#login')&&await p.isHidden('.head'),'nhúng: không hiện form đăng nhập và tiêu đề phụ');
-  ok((await p.textContent('#who')).includes('THI THỬ'),'thi thử có nhãn');await c.close()}
+  await p.click('.exam-item >> nth=1');await p.waitForSelector('#wait:not([hidden])');
+  ok((await p.textContent('#wait-text')).includes('Kiểm tra 15 phút')&&await p.isHidden('#questions'),'bài đang khóa → phòng chờ, chưa thấy câu hỏi');
+  await p.waitForSelector('#exam:not([hidden])',{timeout:12000});ok(exCalls>=2&&st.calls.at(-1).ma_de==='t2','phòng chờ tự hỏi lại đúng bài, thầy cô mở thi → vào bài');
+  await p.click('#logout');await p.waitForSelector('#pick:not([hidden])');ok(true,'Thoát bài đang làm → về danh sách');await c.close()}
  console.log(`THI SHEET UI OK (${n} kiểm tra)`);
 }catch(e){console.error('FAIL',e.message);process.exitCode=1}finally{await b.close();srv.close()}})();

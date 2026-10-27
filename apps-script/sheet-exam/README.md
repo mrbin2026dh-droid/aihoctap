@@ -16,15 +16,16 @@
 - Cho em làm lại: xóa chữ "Đã thi" ở cột Trạng thái của em đó.
 - Đổi đề: sửa hoặc xóa dòng trong DeThi — không cần triển khai lại. Chỉ khi Claude gửi `Code.gs` mới mới cần: dán → Lưu → Triển khai → Quản lý triển khai → ✏️ → Phiên bản mới.
 
-## Menu "Thi" của giáo viên (bản 27/10, thay bản có mật khẩu)
+## Menu "Thi" của giáo viên — nhiều bài thi cùng lúc (bản 27/10, nhiều bài)
 Cập nhật một lần:
 1. Dán lại toàn bộ `Code.gs` → Lưu → Triển khai → Quản lý bản triển khai → Sửa → **Phiên bản mới** (giữ địa chỉ /exec).
-2. Mở Sheet → menu **Bài thi → Tạo mẫu** (đổi tiêu đề cột B của DeThi thành "Khối", thêm trang DeThiThu, bổ sung khóa trong CauHinh; không xóa dữ liệu).
-3. Nếu trang CauHinh còn ô `mat_khau_gv` cũ: menu **Bài thi → Đặt lại mật khẩu giáo viên** (lần mở menu Thi tiếp theo, Sheet ghi nhớ PIN giáo viên của app).
+2. Mở Sheet → menu **Bài thi → Tạo mẫu**: tạo thêm trang **BaiThi**, **DiemDanh**, cột "Mã bài thi" của DeThiThu và **tự chuyển bài thi đang có** (trang CauHinh) sang BaiThi. Không xóa dữ liệu. (Cột G "Vào thi gần nhất" của HocSinh không còn dùng, xóa được.)
+3. Nếu giáo viên báo "PIN chưa khớp": menu **Bài thi → Đặt lại mật khẩu giáo viên** rồi mở lại menu Thi trong app.
 
-Dùng:
-- App giáo viên → **Thi** → Tạo bài thi: Tiêu đề, Loại thi (Thi thật: đề lấy từ trang DeThi theo khối; Thi thử: tải file Excel theo mẫu của app), Khối 6–9, Lớp (cả khối hoặc một lớp, ví dụ chỉ 9A).
-- Bài mới luôn **khóa**. Học sinh đúng lớp đăng nhập app → tab Thi → vào phòng chờ; giáo viên thấy "Đã vào" (điểm danh). Lớp khác bị chặn.
-- Đủ mặt → **Mở thi**: phòng chờ tự vào bài. Bảng tự cập nhật 10 giây: Chưa vào / Đã vào / Đã nộp + điểm. "Cho thi lại" (thi thật) mở lại cho một em.
-- Cột Khối trong DeThi ghi 9 hoặc 9A đều hiểu là khối 9; để trống = dùng cho mọi khối.
-- Không dùng Firebase/Worker cho bài thi: trạng thái nằm ngay trong Sheet (cột "Vào thi gần nhất" của HocSinh và trang KetQua có cột "Mã bài thi").
+Dùng (app giáo viên → **Thi**, 2 tab):
+- **Tạo đề thi**: Tiêu đề, Loại (Thi thật: đề lấy trang DeThi theo khối; Thi thử: tải Excel theo mẫu), Khối 6–9, Lớp (cả khối hoặc một lớp). Tạo được nhiều bài cho nhiều lớp cùng lúc. Bài mới luôn **khóa**.
+- **Danh sách bài thi**: mỗi bài một thẻ (loại, đối tượng, mở/khóa, số câu, đã vào/đã nộp) với 4 nút biểu tượng: **Thống kê**, **Chỉnh sửa** (tiêu đề/khối/lớp; thi thử có thể tải Excel mới thay đề; đề thi thật sửa ở trang DeThi), **Mở/Khóa thi**, **Xóa** (ẩn bài, điểm vẫn nằm trong KetQua; có hộp thoại xác nhận).
+- **Thống kê** một bài: học sinh thuộc bài, Chưa vào / Đã vào / Đã nộp + điểm, trạng thái trực tuyến (Firebase), Mở/Khóa, **Cho thi lại** (thi thật).
+- Học sinh đăng nhập app → tab Thi → **chọn bài** trong danh sách các bài dành cho lớp mình. Thi thật đang khóa vẫn hiện: bấm vào là vào phòng chờ (giáo viên thấy "Đã vào"); thi thử đang khóa thì ẩn. Lớp khác không thấy bài.
+- Cột Khối trong DeThi ghi 9 hoặc 9A đều hiểu là khối 9; để trống = mọi khối.
+- Trang dữ liệu: BaiThi (danh sách bài), DiemDanh (ai đã vào phòng thi của bài nào), KetQua (có cột Mã bài thi), DeThiThu (cột J Mã bài thi).

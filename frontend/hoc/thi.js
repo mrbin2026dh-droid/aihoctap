@@ -5,8 +5,8 @@ import { setState as presence } from './presence.js';
 export { SHEET_API };
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
-/** @type {{ma:string,pin:string,mode?:string,title?:string,student:any,questions:any[]}|null} */ let state = null;
-const draftKey = () => 'thi-nhap-' + (state ? state.ma.toLowerCase() : '');
+/** @type {{ma:string,pin:string,ma_de?:string,mode?:string,title?:string,student:any,questions:any[]}|null} */ let state = null;
+const draftKey = () => 'thi-nhap-' + (state ? state.ma.toLowerCase() + '-' + (state.ma_de || '') : '');
 
 /** Gọi Apps Script; thử lại 3 lần khi mạng/Apps Script bận. @param {Record<string,unknown>} body */
 async function call(body) {
@@ -39,7 +39,7 @@ function answers() {
   return a;
 }
 
-function show(/** @type {'login'|'wait'|'exam'|'result'} */ v) { $('login').hidden = v !== 'login'; $('wait').hidden = v !== 'wait'; $('exam').hidden = v !== 'exam'; $('result').hidden = v !== 'result'; if (v !== 'wait') clearTimeout(waitTimer); }
+function show(/** @type {'login'|'pick'|'wait'|'exam'|'result'} */ v) { $('login').hidden = v !== 'login'; $('pick').hidden = v !== 'pick'; $('wait').hidden = v !== 'wait'; $('exam').hidden = v !== 'exam'; $('result').hidden = v !== 'result'; if (v !== 'wait') clearTimeout(waitTimer); }
 let waitTimer = 0;
 
 function renderExam() {
@@ -78,15 +78,49 @@ $('login').addEventListener('submit', async ev => {
   if (!ma.value.trim()) { ma.setAttribute('aria-invalid', 'true'); err.textContent = 'Nhập Mã học sinh.'; ma.focus(); return; }
   if (!pin.value.trim()) { pin.setAttribute('aria-invalid', 'true'); err.textContent = 'Nhập Mã PIN.'; pin.focus(); return; }
   const btn = /** @type {HTMLButtonElement} */ (ev.target instanceof HTMLFormElement ? ev.target.querySelector('button[type=submit]') : null);
-  await busy(btn, 'Đang lấy đề…', async () => {
+  await busy(btn, 'Đang đăng nhập…', async () => {
     try {
-      const data = await call({ action: 'exam', ma: ma.value.trim(), pin: pin.value.trim() });
-      state = { ma: ma.value.trim(), pin: pin.value.trim(), mode: data.mode, title: data.title, student: data.student, questions: data.questions || [] };
+      const data = await call({ action: 'exams', ma: ma.value.trim(), pin: pin.value.trim() });
+      state = { ma: ma.value.trim(), pin: pin.value.trim(), student: data.student, questions: [] };
       pin.value = '';
-      enter(data);
+      renderPick(data.exams || []);
     } catch (e) { err.textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
   });
 });
+
+/** Màn hình chọn bài thi: mỗi bài là một nút. @param {any[]} exams */
+function renderPick(exams) {
+  if (!state) return;
+  state.ma_de = ''; state.questions = [];
+  $('pick-who').textContent = `${state.student.name} — Lớp ${state.student.lop}`;
+  const ul = $('exam-list'); ul.replaceChildren();
+  exams.forEach(e => {
+    const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.className = 'exam-item'; b.dataset.maDe = e.ma_de;
+    const t = document.createElement('strong'); t.textContent = e.tieu_de;
+    const kind = e.che_do === 'that' ? 'Thi thật' : 'Thi thử';
+    const st = e.done ? `Đã nộp: ${e.score}/${e.total} điểm` : (e.trang_thai === 'mo' ? 'Đang mở — bấm để vào thi' : 'Chưa mở — bấm để vào phòng chờ');
+    const m = document.createElement('span'); m.className = 'muted'; m.textContent = `${kind} · ${st}`;
+    b.append(t, m); b.addEventListener('click', () => void openExam(e.ma_de, b)); li.append(b); ul.append(li);
+  });
+  $('pick-empty').hidden = exams.length > 0; $('pick-error').textContent = '';
+  show('pick'); void presence('hoc');
+}
+async function refreshPick() {
+  if (!state) return;
+  try { const d = await call({ action: 'exams', ma: state.ma, pin: state.pin }); state.student = d.student; renderPick(d.exams || []); }
+  catch (e) { $('pick-error').textContent = e instanceof Error ? e.message : 'Chưa tải được danh sách.'; }
+}
+/** @param {string} maDe @param {HTMLButtonElement} btn */
+async function openExam(maDe, btn) {
+  if (!state) return;
+  btn.disabled = true; $('pick-error').textContent = '';
+  try {
+    const d = await call({ action: 'exam', ma: state.ma, pin: state.pin, ma_de: maDe });
+    state.ma_de = maDe; state.mode = d.mode; state.title = d.title; state.student = d.student; state.questions = d.questions || [];
+    enter(d);
+  } catch (e) { $('pick-error').textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
+  finally { btn.disabled = false; }
+}
 
 /** Vào bài: phòng chờ (bài đang khóa, tự hỏi lại 5 giây một lần) → làm bài, hoặc báo đã nộp. @param {any} data */
 function enter(data) {
@@ -97,8 +131,8 @@ function enter(data) {
     clearTimeout(waitTimer);
     waitTimer = window.setTimeout(async () => {
       if (!state) return;
-      try { const d = await call({ action: 'exam', ma: state.ma, pin: state.pin }); state.mode = d.mode; state.title = d.title; state.student = d.student; state.questions = d.questions || []; enter(d); }
-      catch (e) { show('login'); $('login-error').textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
+      try { const d = await call({ action: 'exam', ma: state.ma, pin: state.pin, ma_de: state.ma_de }); state.mode = d.mode; state.title = d.title; state.student = d.student; state.questions = d.questions || []; enter(d); }
+      catch (e) { await refreshPick(); $('pick-error').textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
     }, 5000);
     return;
   }
@@ -119,15 +153,18 @@ $('confirm-ok').addEventListener('click', async () => {
   const btn = /** @type {HTMLButtonElement} */ ($('submit')); $('submit-error').textContent = '';
   await busy(btn, 'Đang nộp…', async () => {
     try {
-      const r = await call({ action: 'submit', ma: state?.ma, pin: state?.pin, answers: answers() });
+      const r = await call({ action: 'submit', ma: state?.ma, pin: state?.pin, ma_de: state?.ma_de, answers: answers() });
       try { localStorage.removeItem(draftKey()); } catch { /* bỏ qua */ }
       renderResult(r); void presence('da_nop');
     } catch (e) { $('submit-error').textContent = (e instanceof Error ? e.message : 'Chưa nộp được.') + ' Bài làm vẫn còn trên máy.'; }
   });
 });
+$('pick-refresh').addEventListener('click', () => void refreshPick());
+$('wait-back').addEventListener('click', () => void refreshPick());
 const reset = () => { state = null; /** @type {HTMLFormElement} */ ($('login')).reset(); $('login-error').textContent = ''; show('login'); $('ma').focus(); };
-$('logout').addEventListener('click', () => { if (document.body.classList.contains('embedded')) { void presence('hoc'); state = null; show('login'); $('login-error').textContent = 'Đã thoát bài thi. Bấm "Lấy đề" để vào lại.'; $('pin').focus(); } else reset(); });
-$('done').addEventListener('click', reset);
+$('logout').addEventListener('click', () => void refreshPick());   // "Thoát" bài đang làm → về danh sách bài thi (bài làm dở vẫn lưu nháp)
+$('pick-exit').addEventListener('click', () => { if (document.body.classList.contains('embedded')) { void presence('hoc'); state = null; show('login'); $('login-error').textContent = 'Đã thoát. Bấm "Đăng nhập" để vào lại.'; $('pin').focus(); } else reset(); });
+$('done').addEventListener('click', () => void refreshPick());
 $('result-title').setAttribute('tabindex', '-1');
 
 // Chế độ nhúng trong app (tab Thi): dùng Mã học sinh + PIN vừa đăng nhập, vào thẳng đề.

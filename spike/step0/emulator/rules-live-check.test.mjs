@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { ref, get, set } from 'firebase/database';
 const file = process.env.RULES_FILE; if (!file) { console.error('Thiếu RULES_FILE'); process.exit(2); }
+const PUBLIC_READ = (process.env.PUBLIC_READ || '').split(',').filter(Boolean);   // nhánh cố ý cho đọc công khai (ví dụ catalog,packages): vẫn kiểm không ghi được
 const text = readFileSync(file, 'utf8'), keys = Object.keys(JSON.parse(text).rules).filter(k => !k.startsWith('.') && k !== 'presence');
 const env = await initializeTestEnvironment({ projectId: 'demo-aihoctap', database: { host: '127.0.0.1', port: 9099, rules: text } });
 await env.withSecurityRulesDisabled(async c => { await set(ref(c.database()), Object.fromEntries(keys.map(k => [k, { x: { v: 1 } }]))); });
@@ -19,10 +20,12 @@ await c('presence: học sinh đọc → chặn', () => assertFails(get(ref(stu,
 await c('presence: trạng thái lạ → chặn', () => assertFails(set(ref(stu, 'presence/HS01'), { ...P, state: 'hack' })));
 await c('presence: giáo viên đọc → được', () => assertSucceeds(get(ref(gv, 'presence'))));
 for (const k of keys) {
-  await c(`${k}: học sinh (vé Worker) đọc → chặn`, () => assertFails(get(ref(stu, k))));
+  if (!PUBLIC_READ.includes(k)) await c(`${k}: học sinh (vé Worker) đọc → chặn`, () => assertFails(get(ref(stu, k))));
+  else await c(`${k}: cố ý công khai đọc → đọc được`, () => assertSucceeds(get(ref(stu, k))));
   await c(`${k}: học sinh (vé Worker) ghi → chặn`, () => assertFails(set(ref(stu, k + '/x/v'), 2)));
   await c(`${k}: giáo viên (vé Worker) ghi → chặn`, () => assertFails(set(ref(gv, k + '/x/v'), 2)));
 }
+await c('nhánh không có trong luật (students_auth, teacher_auth, packages_private, attempts) → chặn', async () => { for (const k of ['students_auth', 'teacher_auth', 'packages_private', 'attempts', 'materials']) { await assertFails(get(ref(stu, k))); await assertFails(set(ref(stu, k + '/x'), 1)); await assertFails(get(ref(gv, k))); } });
 await c('gốc: học sinh đọc toàn bộ → chặn', () => assertFails(get(ref(stu))));
 await env.cleanup();
-console.log(fail ? `${fail} CA SAI — KHÔNG ĐĂNG LUẬT NÀY` : `TẤT CẢ ${5 + keys.length * 3 + 1} CA ĐÚNG (${keys.length} nhánh khác đã kiểm)`); process.exit(fail ? 1 : 0);
+console.log(fail ? `${fail} CA SAI — KHÔNG ĐĂNG LUẬT NÀY` : `TẤT CẢ CA ĐÚNG (${keys.length} nhánh khác đã kiểm)`); process.exit(fail ? 1 : 0);
