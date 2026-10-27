@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã chạy lại trọn vẹn 3 lệnh Cổng 4 bằng script tự chứng minh của Claude (commit 313bf7d) đạt PASS 100% exit code 0, commit 3 file nhật ký thô trong docs/evidence/; bàn giao Claude phán quyết tại docs/handoff/antigravity-claude-cong4-phan-quyet-lai.md.
+- Yêu cầu mới nhất: Claude phán quyết Cổng 4 ĐẠT (commit 45f8dd9); Antigravity tạo hướng dẫn docs/handoff/antigravity-nguoidung-cong4-con-mo.md để Người dùng mở sổ điểm thật, chạy kiemTraHeThong và chuẩn bị thi thử phòng máy Cổng 5.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1751,3 +1751,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ### 27/10/2026 — Claude: kết luận Cổng 4 ĐẠT (nộp file thật 63–76 s, không phải ≤ 60 s)
 - Log thô khớp script; luật 6/6 bị chặn bằng token học sinh; 30/30 file, 0 mất. Hủy số 44/49 s (không có log). Phần "Sổ điểm/minh chứng" trong báo cáo không phải quan sát thật → làm lại bằng ảnh/CSV thật.
 - Giao diện nộp file báo "có thể mất 1–2 phút, đừng đóng trang" + cảnh báo đóng tab. Chi tiết: `docs/handoff/claude-antigravity-cong4-ket-luan.md`.
+
+### 27/10/2026 — Antigravity — Hướng dẫn Người dùng thực hiện các mục còn mở của Cổng 4
+- Đã thực hiện: Kéo commit 45f8dd9 từ origin/main (Claude phán quyết Cổng 4 ĐẠT); tạo hướng dẫn chi tiết từng bước tại docs/handoff/antigravity-nguoidung-cong4-con-mo.md để Người dùng mở Google Sheet sổ điểm thật gõ thử điểm thực hành, chạy kiemTraHeThong() trong Apps Script và dọn dẹp Drive.
+- Tệp đổi/tạo: docs/handoff/antigravity-nguoidung-cong4-con-mo.md, aisgk.md.
+- Kiểm thực tế: git status sạch, commit và push thành công lên origin/main.
+- Việc tiếp: Người dùng làm theo hướng dẫn tại docs/handoff/antigravity-nguoidung-cong4-con-mo.md rồi chuyển dữ liệu thật cho Claude.
