@@ -1859,3 +1859,4 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã thực hiện: Tạo tệp bàn giao docs/handoff/antigravity-claude-du-an-firebase-moi.md chuyển Claude tổng hợp quy trình tạo dự án Firebase mới (Region asia-southeast1, Realtime Database, Authentication), tối giản luật bảo mật (không gánh 7 nhánh cũ), và đồng bộ duy nhất 1 bộ Service Account cho cả Worker lẫn Frontend.
 - Tệp đổi/tạo: aisgk.md, docs/handoff/antigravity-claude-du-an-firebase-moi.md.
 - Việc tiếp: Chuyển Claude lên checklist chi tiết cho Người dùng và Antigravity triển khai.
+- 2026-10-27 Claude: trả lời đề xuất Firebase mới — chọn dự án mới chỉ cho presence (không gộp dữ liệu Worker). presence-config.js (trống=tắt êm), database.rules.presence.json + rules-presence.test.mjs (13 ca), docs/huong-dan-firebase-presence-moi.md. test_presence_ui 28 PASS; emulator chưa chạy.

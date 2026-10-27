@@ -4,7 +4,7 @@
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname,'../frontend/hoc');const API='https://script.google.com/macros/s/TEST/exec';
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
- let body=fs.readFileSync(f);if(p==='/sheet-config.js')body=Buffer.from(body.toString().replace(/export const SHEET_API = '[^']*';/,`export const SHEET_API = '${API}';`));
+ let body=fs.readFileSync(f);if(p==='/presence-config.js')body=Buffer.from("export const PRESENCE_CONFIG = {apiKey:'TESTKEY', dbUrl:'https://test-presence-default-rtdb.asia-southeast1.firebasedatabase.app'};");if(p==='/sheet-config.js')body=Buffer.from(body.toString().replace(/export const SHEET_API = '[^']*';/,`export const SHEET_API = '${API}';`));
  r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(body)}).listen(8197);
 (async()=>{const b=await chromium.launch();let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
 try{
@@ -84,6 +84,15 @@ try{
    await pg.click('#nav-sheetexam');await pg.waitForFunction(()=>document.getElementById('thi-live-status').textContent.includes('tức thì'),null,{timeout:8000});
    ok(ex.at(-1)==='teacher-custom-1h'&&await pg.isHidden('#thi-gv-alert')&&await pg.isHidden('#thi-live-relogin'),'đăng nhập lại → kết nối Firebase, hết thông báo lỗi');}
   ok(errs.length===0,'không lỗi JS '+errs.join('|'));await ctx.close()}
+ // ---------- Chưa điền presence-config.js: tắt êm ----------
+ {const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();let hits=0;
+  await pg.route('**/presence-config.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:"export const PRESENCE_CONFIG = {apiKey:'', dbUrl:''};"}));
+  await pg.route('https://identitytoolkit.googleapis.com/**',r=>{hits++;r.abort()});await pg.route('**/*firebasedatabase.app/**',r=>{hits++;r.abort()});
+  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'w',fb_token:'x',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
+  await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exam:null,bank:{},classes:{},students:[]})}));
+  await pg.goto('http://localhost:8197/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
+  await pg.click('#nav-sheetexam');await pg.waitForTimeout(600);
+  ok((await pg.textContent('#thi-live-status')).includes('presence-config.js')&&hits===0,'chưa điền dự án presence → báo rõ, không gọi Firebase nào');await ctx.close()}
  // ---------- Worker chưa cài khóa PRESENCE: báo rõ, không có nút đăng nhập lại vô ích ----------
  {const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();
   await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'w',fb_token:'',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});

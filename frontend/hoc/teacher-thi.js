@@ -136,6 +136,7 @@ async function startLive() {
   if (watching) return;
   if (!(await ensureTeacherTicket())) {
     const why = presence.lastTeacherError();
+    if (why === 'CHUA_CAI_DU_AN') { $('thi-live-status').textContent = 'Bảng trực tuyến chưa bật: chưa điền dự án Firebase vào presence-config.js. Học và thi vẫn chạy bình thường.'; button('thi-live-relogin').hidden = true; return; }
     if (noKey) { $('thi-live-status').textContent = 'Bảng trực tuyến chưa bật: Worker chưa cài khóa Firebase (PRESENCE_*). Học và thi vẫn chạy bình thường.'; button('thi-live-relogin').hidden = true; return; }
     $('thi-live-status').textContent = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why)
       ? 'Firebase không nhận vé của Worker (khác dự án Firebase). Báo Antigravity kiểm tra FIREBASE_CLIENT_EMAIL. (' + why + ')'

@@ -3,7 +3,8 @@
 // Worker chỉ cấp vé (custom token 1 giờ) lúc đăng nhập; app đổi vé lấy idToken + refreshToken của Firebase rồi tự làm mới.
 // Học sinh: ghi presence/{mã} = {name, lop, state, at}. Giáo viên: nghe presence bằng luồng sự kiện (cập nhật tức thì).
 // Mọi lỗi ở đây đều im lặng: trạng thái trực tuyến là phụ, không được làm hỏng việc học/thi.
-import { FB_CONFIG } from './fb.js';
+import { PRESENCE_CONFIG as FB_CONFIG } from './presence-config.js';
+const ENABLED = () => Boolean(FB_CONFIG.apiKey && FB_CONFIG.dbUrl);
 
 /** @typedef {{uid:string,idToken:string,refreshToken:string,exp:number,name?:string,lop?:string}} PSession */
 export const STATES = /** @type {const} */ ({ hoc: 'Đang học', phong_cho: 'Phòng chờ thi', dang_thi: 'Đang thi', da_nop: 'Đã nộp', offline: 'Đã thoát' });
@@ -49,6 +50,7 @@ export function currentState() { return getLast(); }
 
 /** Ghi trạng thái của học sinh đang đăng nhập. @param {keyof typeof STATES} state */
 export async function setState(state) {
+  if (!ENABLED()) return false;
   try {
     const s = await fresh(KEY_HS); if (!s) return false;
     if (state !== 'offline') { try { localStorage.setItem(KEY_ST, state); } catch { /* bỏ qua */ } }
@@ -60,7 +62,7 @@ export async function setState(state) {
 }
 /** Gọi sau khi học sinh đăng nhập: đổi vé, ghi "Đang học", bắt đầu nhịp 1 phút. @param {string} fbToken @param {{name?:string,class_code?:string}} identity */
 export async function startStudent(fbToken, identity) {
-  if (!fbToken) return false;
+  if (!fbToken || !ENABLED()) return false;
   try {
     const s = await exchange(fbToken);
     save(KEY_HS, { ...s, name: String(identity?.name || identity?.student_name || ''), lop: String(identity?.class_code || '') });
@@ -70,7 +72,7 @@ export async function startStudent(fbToken, identity) {
 }
 /** Mở lại app (phiên cũ còn) → tiếp tục nhịp. @param {keyof typeof STATES} [state] */
 export function resumeStudent(state) {
-  if (!load(KEY_HS)) return;
+  if (!ENABLED() || !load(KEY_HS)) return;
   void setState(/** @type {any} */ (state || getLast()));
   clearInterval(beat);
   beat = window.setInterval(() => { if (document.visibilityState === 'visible') void setState(/** @type {any} */ (getLast())); }, HEARTBEAT_MS);
@@ -86,6 +88,7 @@ export function hasStudentSession() { return Boolean(load(KEY_HS)); }
 /* ---------------- Giáo viên ---------------- */
 /** Gọi sau khi giáo viên đăng nhập (token Worker là custom token 1 giờ). @param {string} customToken */
 export async function startTeacher(customToken) {
+  if (!ENABLED()) { teacherError = 'CHUA_CAI_DU_AN'; return false; }
   try { save(KEY_GV, await exchange(customToken)); teacherError = ''; return true; }
   catch (e) { teacherError = e instanceof Error ? e.message : String(e); return false; }
 }
@@ -103,6 +106,7 @@ let retry = 0;
  */
 export async function watch(onChange, onStatus) {
   stopWatch();
+  if (!ENABLED()) { onStatus('off', 'Chưa cài dự án Firebase cho trạng thái trực tuyến (presence-config.js).'); return; }
   const s = await fresh(KEY_GV);
   if (!s) { onStatus('off', 'Chưa có vé Firebase của giáo viên. Đăng xuất rồi đăng nhập lại.'); return; }
   /** @type {Record<string, any>} */ let map = {};
