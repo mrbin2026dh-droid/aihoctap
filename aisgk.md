@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng đề xuất tạo mới một dự án Firebase hoàn toàn để làm sạch và đồng bộ 100% hệ thống; Antigravity bàn giao Claude tại docs/handoff/antigravity-claude-du-an-firebase-moi.md.
+- Yêu cầu mới nhất: Antigravity đã kiểm thử Emulator bộ luật ai-sgk-final đạt 100%; toàn bộ 4 bộ test UI/Sheet PASS; hướng dẫn người dùng dán luật mới và cập nhật Code.gs.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1863,3 +1863,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - 2026-10-27 Claude: theo yêu cầu người dùng quay lại MỘT dự án Firebase (ai-sgk-tinhoc, dự án của Worker): Worker ký vé presence bằng FIREBASE_* (PRESENCE_* tùy chọn), presence-config.js trỏ ai-sgk-tinhoc (thiếu apiKey), luật chỉ thêm nhánh presence + rules-live-check.test.mjs. Test UI/Worker PASS; chưa có apiKey, luật chưa kiểm.
 - 2026-10-27 Claude: điền apiKey web của dự án ai-sgk-tinhoc vào frontend/hoc/presence-config.js (khóa công khai do người dùng cung cấp). test_presence_ui 28 PASS. Còn: Antigravity thêm nhánh presence vào luật + kiểm rules-live-check + deploy Worker.
 - 2026-10-27 Claude: thi NHIỀU bài cùng lúc — Code.gs (BaiThi/DiemDanh, gv_list/create/update/set/delete/stats/reset, HS action exams), HS chọn bài trong thi.html, giáo viên menu Thi 2 tab (Danh sách bài thi / Tạo đề thi) với icon thống kê/sửa/khóa-mở/xóa. Test sheet_exam_gs, thi_sheet_ui 43, teacher_thi_ui 80, presence_ui 28. Cần dán lại Code.gs + Tạo mẫu.
+
+### 27/10/2026 — Antigravity — Kiểm thử Emulator luật ai-sgk-final đạt 100% & kiểm thử toàn diện
+- Đã thực hiện: Chạy emulator rules-live-check.test.mjs với RULES_FILE=../database.rules.ai-sgk-final.json và PUBLIC_READ=catalog,packages in TẤT CẢ CA ĐÚNG; chạy 4 bộ test test_presence_ui (28), test_sheet_exam_gs, test_teacher_thi_ui (80), test_thi_sheet_ui (43) PASS 100%; PWA shell check nguyên vẹn.
+- Tệp đổi: aisgk.md.
+- Việc tiếp: Người dùng dán luật mới vào Firebase Console ai-sgk-tinhoc và cập nhật Code.gs trên Google Sheet.
