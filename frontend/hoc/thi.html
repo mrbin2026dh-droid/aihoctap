@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Bài thi</title>
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./thi.css">
+  <script type="module" src="./thi.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="head"><a class="back" href="./">‹ Góc học tập</a><h1>Bài thi</h1></header>
+
+    <form id="login" class="card" novalidate>
+      <div class="field"><label for="ma">Mã học sinh</label><input id="ma" name="ma" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+      <div class="field"><label for="pin">Mã PIN</label><input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" required></div>
+      <p id="login-error" class="msg bad" role="alert"></p>
+      <button class="primary" type="submit">Lấy đề</button>
+    </form>
+
+    <section id="exam" hidden>
+      <div class="card who"><p id="who"></p><p id="draft-note" class="muted"></p></div>
+      <ol id="questions" class="questions"></ol>
+      <p id="submit-error" class="msg bad" role="alert"></p>
+      <div class="actions"><button id="submit" class="primary" type="button">Nộp bài</button><button id="logout" class="ghost" type="button">Thoát</button></div>
+    </section>
+
+    <section id="result" class="card result" hidden aria-live="polite">
+      <h2 id="result-title">Đã nộp bài</h2>
+      <p id="result-score" class="score"></p>
+      <p id="result-detail" class="muted"></p>
+      <button id="done" class="ghost" type="button">Xong</button>
+    </section>
+  </main>
+
+  <dialog id="confirm" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Nộp bài?</h2>
+    <p id="confirm-text"></p>
+    <div class="actions"><button id="confirm-cancel" class="ghost" type="button">Làm tiếp</button><button id="confirm-ok" class="primary" type="button">Nộp bài</button></div>
+  </dialog>
+</body>
+</html>

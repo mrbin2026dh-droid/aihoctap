@@ -38,11 +38,19 @@ function stateText(e) {
 }
 
 /** @param {HTMLElement} target @param {boolean} loggedIn */
+/** Bật: tab Thi chỉ dẫn sang thi.html (bài thi từ Google Sheet). Tắt: đường thi Worker/Firebase cũ. */
+const SHEET_EXAM = true;
 export async function renderExamList(target, loggedIn) {
   target.replaceChildren();
   const note = (/** @type {string} */ title, /** @type {string} */ body) => {
     const box = el('div', '', 'empty'); box.append(icon('exam', 'ic empty-ic'), el('h2', title), el('p', body)); target.append(box);
   };
+  // Bài thi lấy từ Google Sheet (thi.html): một nút, không cần đăng nhập hệ thống học.
+  if (SHEET_EXAM) {
+    const box = el('div', '', 'empty'); box.append(icon('exam', 'ic empty-ic'), el('h2', 'Bài thi'), el('p', 'Đăng nhập bằng Mã học sinh và Mã PIN thầy cô phát để lấy đề.'));
+    const go = /** @type {HTMLAnchorElement} */ (el('a', 'Vào bài thi', 'auth-btn btn-full')); go.href = './thi.html'; box.append(go); target.append(box);
+    return;
+  }
   await fb.ready();
   if (!loggedIn || (!host?.getToken() && !fb.hasSession())) { note('Đăng nhập để xem bài kiểm tra', 'Bài kiểm tra do giáo viên mở cho lớp của em sẽ hiện ở đây.'); return; }
   target.append(el('p', 'Đang tải danh sách bài kiểm tra…', 'muted'));

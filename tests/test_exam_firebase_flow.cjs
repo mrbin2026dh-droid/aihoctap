@@ -2,11 +2,12 @@
 // Kiểm: đăng nhập song song Firebase, danh sách gộp Worker + Firebase, vào thi tạo phiên bằng giờ máy chủ, đề theo thứ tự,
 // lưu nháp, nộp bài, nộp lại khi lần trước đã ghi nhưng mất phản hồi, kết quả "chờ chấm", làm mới token khi hết hạn,
 // đăng xuất xóa phiên Firebase, Worker vẫn chạy khi Firebase lỗi.
+// Đường thi cũ (Worker/Firebase): test tắt cờ SHEET_EXAM khi phục vụ exam.js.
 // Chạy: NODE_PATH=$(npm root -g) node tests/test_exam_firebase_flow.cjs
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
-r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8193);
+r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(p.endsWith('/exam.js')?Buffer.from(fs.readFileSync(f,'utf8').replace('const SHEET_EXAM = true;','const SHEET_EXAM = false;')):fs.readFileSync(f))}).listen(8193);
 const DB='https://day-hoc-tuong-tac-7ee69-default-rtdb.asia-southeast1.firebasedatabase.app';
 const UID='fbuid01';const SKEW=-90000; // giờ máy chủ chậm hơn máy học sinh 90 giây → đồng hồ phải theo máy chủ
 const now=()=>Date.now()+SKEW;

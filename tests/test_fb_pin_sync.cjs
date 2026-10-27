@@ -1,9 +1,10 @@
 // Đổi PIN ở hệ thống học → PIN hệ thống thi (Firebase) đổi theo; PIN lệch → tab Thi báo cho học sinh, không im lặng.
+// Đường thi cũ (Worker/Firebase): test tắt cờ SHEET_EXAM khi phục vụ exam.js.
 // Chạy: NODE_PATH=$(npm root -g) node tests/test_fb_pin_sync.cjs
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
- r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8194);
+ r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[path.extname(f)]||'x');r.end(p.endsWith('/exam.js')?Buffer.from(fs.readFileSync(f,'utf8').replace('const SHEET_EXAM = true;','const SHEET_EXAM = false;')):fs.readFileSync(f))}).listen(8194);
 const st={fbPw:'123456',updates:0};
 (async()=>{const b=await chromium.launch({args:['--host-resolver-rules=MAP aihoc.test 127.0.0.1']});let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
 try{

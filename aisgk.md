@@ -1829,3 +1829,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Apps Script thi: đề đang thi cho đổi Tiêu đề/Số phút/Đóng lúc/Số lượt (gia hạn), khóa câu hỏi/đáp án; cấp phát: nhận mẫu Excel trang giáo viên.
 - Tài liệu: docs/huong-dan-giao-vien-thi-firebase.md. Test giả lập 35 ca OK. Người dùng chốt: không chờ Antigravity test, dùng thật rồi báo lỗi.
 - Handoff: docs/handoff/claude-nguoidung-hoan-thien-thi.md.
+
+### 27/10/2026 — Claude: LÀM LẠI HỆ THỐNG THI THEO YÊU CẦU NGƯỜI DÙNG — một file Google Sheet
+- Người dùng chốt: chỉ 1 Google Sheet (HocSinh: Stt, Họ tên, Lớp, Mã học sinh, Mã PIN, Trạng thái; DeThi: Stt, Lớp, Đề bài, A–D, Đáp án đúng, Điểm); app lấy thẳng từ Sheet; không cần bảo mật lộ đề, không giờ mở/đóng.
+- Mới: `apps-script/sheet-exam/Code.gs` (+README), `frontend/hoc/thi.html|thi.js|thi.css`; màn hình đầu có nút "Vào bài thi" (#gate-exam), tab Thi chỉ còn nút "Vào bài thi" (cờ `SHEET_EXAM` trong exam.js; đặt false để quay lại đường cũ). Kết quả ghi trang KetQua, Trạng thái "Đã thi", mỗi em nộp 1 lần.
+- Đường Firebase/Worker cũ giữ nguyên trong mã, không dùng nữa. Test: test_sheet_exam_gs 15 ca, test_thi_sheet_ui 31 ca (2 kích thước) OK; hồi quy xanh.
+- Chờ: người dùng triển khai web app, gửi địa chỉ /exec để dán vào `SHEET_API` trong thi.js.

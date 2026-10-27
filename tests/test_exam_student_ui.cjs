@@ -2,7 +2,7 @@
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
-r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8186);
+r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(p.endsWith('/exam.js')?Buffer.from(fs.readFileSync(f,'utf8').replace('const SHEET_EXAM = true;','const SHEET_EXAM = false;')):fs.readFileSync(f))}).listen(8186);
 const Q=[{id:'q1',kind:'choice',prompt:'Câu một là gì?',options:{A:'Một',B:'Hai',C:'Ba',D:'Bốn'},points:2},{id:'q2',kind:'choice',prompt:'Câu hai là gì?',options:{A:'Một',B:'Hai',C:'Ba',D:'Bốn'},points:2},{id:'q3',kind:'text',prompt:'Giải thích ngắn.',points:1}];
 const state={saves:[],submits:0,failSubmit:1,deadlineMs:20*60000,exam:'real'};
 const CAT={schema_version:1,revision:'r1',courses:[]};
