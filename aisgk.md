@@ -1844,3 +1844,4 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc tiếp: Người dùng mở ứng dụng và đăng nhập bằng tài khoản trong Google Sheet.
 - 2026-10-27 Claude: đổi menu Kiểm tra→Về nhà, thêm menu Thi (Sheet: CauHinh, gv_info/gv_set/gv_reset), test_teacher_thi_ui.cjs. Cần dán lại Code.gs + Tạo mẫu.
 - 2026-10-27 Claude: bỏ nút Vào bài thi ở cổng, tab Thi của HS nhúng thẳng đề (thi.html?auto=1, thi-cred sessionStorage), cache-bust teacher.
+- 2026-10-27 Claude: menu Thi giáo viên bản tạo bài thi (khối/lớp, thật từ Sheet, thử từ Excel), phòng chờ + điểm danh, bỏ ô mật khẩu (PIN giáo viên tự gửi). Cần dán lại Code.gs + Tạo mẫu.

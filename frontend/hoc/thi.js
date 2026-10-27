@@ -4,7 +4,7 @@ import { SHEET_API } from './sheet-config.js';
 export { SHEET_API };
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
-/** @type {{ma:string,pin:string,mode?:string,student:any,questions:any[]}|null} */ let state = null;
+/** @type {{ma:string,pin:string,mode?:string,title?:string,student:any,questions:any[]}|null} */ let state = null;
 const draftKey = () => 'thi-nhap-' + (state ? state.ma.toLowerCase() : '');
 
 /** Gọi Apps Script; thử lại 3 lần khi mạng/Apps Script bận. @param {Record<string,unknown>} body */
@@ -38,12 +38,13 @@ function answers() {
   return a;
 }
 
-function show(/** @type {'login'|'exam'|'result'} */ v) { $('login').hidden = v !== 'login'; $('exam').hidden = v !== 'exam'; $('result').hidden = v !== 'result'; }
+function show(/** @type {'login'|'wait'|'exam'|'result'} */ v) { $('login').hidden = v !== 'login'; $('wait').hidden = v !== 'wait'; $('exam').hidden = v !== 'exam'; $('result').hidden = v !== 'result'; if (v !== 'wait') clearTimeout(waitTimer); }
+let waitTimer = 0;
 
 function renderExam() {
   if (!state) return;
   const s = state.student;
-  $('who').textContent = `${s.name} — Lớp ${s.lop} — ${state.questions.length} câu` + (state.mode === 'thu' ? ' — THI THỬ (làm được nhiều lần)' : '');
+  $('who').textContent = (state.title ? state.title + ' — ' : '') + `${s.name} — Lớp ${s.lop} — ${state.questions.length} câu` + (state.mode === 'thu' ? ' — THI THỬ (làm được nhiều lần)' : '');
   const draft = readDraft(), list = $('questions'); list.replaceChildren();
   state.questions.forEach((q, i) => {
     const li = document.createElement('li'); li.className = 'q';
@@ -79,13 +80,30 @@ $('login').addEventListener('submit', async ev => {
   await busy(btn, 'Đang lấy đề…', async () => {
     try {
       const data = await call({ action: 'exam', ma: ma.value.trim(), pin: pin.value.trim() });
-      state = { ma: ma.value.trim(), pin: pin.value.trim(), mode: data.mode, student: data.student, questions: data.questions || [] };
+      state = { ma: ma.value.trim(), pin: pin.value.trim(), mode: data.mode, title: data.title, student: data.student, questions: data.questions || [] };
       pin.value = '';
-      if (data.student.done && data.mode !== 'thu') { renderResult(null, 'Em đã nộp bài này rồi'); return; }
-      renderExam();
+      enter(data);
     } catch (e) { err.textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
   });
 });
+
+/** Vào bài: phòng chờ (bài đang khóa, tự hỏi lại 5 giây một lần) → làm bài, hoặc báo đã nộp. @param {any} data */
+function enter(data) {
+  if (!state) return;
+  if (data.waiting) {
+    $('wait-text').textContent = `${data.title || 'Bài thi'} — ${data.student.name}, lớp ${data.student.lop}. Thầy cô chưa mở thi.`;
+    show('wait');
+    clearTimeout(waitTimer);
+    waitTimer = window.setTimeout(async () => {
+      if (!state) return;
+      try { const d = await call({ action: 'exam', ma: state.ma, pin: state.pin }); state.mode = d.mode; state.title = d.title; state.student = d.student; state.questions = d.questions || []; enter(d); }
+      catch (e) { show('login'); $('login-error').textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
+    }, 5000);
+    return;
+  }
+  if (data.student.done && data.mode !== 'thu') { renderResult(null, 'Em đã nộp bài này rồi'); return; }
+  renderExam();
+}
 
 $('submit').addEventListener('click', () => {
   if (!state) return;
