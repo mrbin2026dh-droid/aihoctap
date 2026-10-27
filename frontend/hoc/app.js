@@ -752,6 +752,7 @@ on('logout', async () => {
     renderStudentSettings(false);
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
+  try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.
@@ -797,6 +798,7 @@ form('login-form').addEventListener('submit', async event => {
       identity.must_change_pin = Boolean(response.must_change_pin);
       const next = {token:response.token, identity};
       await db.put('meta', 'session', next); session = next;
+      try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
       clearTeacherSession();
       // Cổng 2: đăng nhập song song hệ thống thi Firebase bằng cùng mã + PIN. Chưa có tài khoản Firebase thì bỏ qua (chỉ thấy đề Worker).
       fb.clear(); if (!isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});

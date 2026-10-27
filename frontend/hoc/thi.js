@@ -107,6 +107,17 @@ $('confirm-ok').addEventListener('click', async () => {
   });
 });
 const reset = () => { state = null; /** @type {HTMLFormElement} */ ($('login')).reset(); $('login-error').textContent = ''; show('login'); $('ma').focus(); };
-$('logout').addEventListener('click', reset);
+$('logout').addEventListener('click', () => { if (document.body.classList.contains('embedded')) { state = null; show('login'); $('login-error').textContent = 'Đã thoát bài thi. Bấm "Lấy đề" để vào lại.'; $('pin').focus(); } else reset(); });
 $('done').addEventListener('click', reset);
 $('result-title').setAttribute('tabindex', '-1');
+
+// Chế độ nhúng trong app (tab Thi): dùng Mã học sinh + PIN vừa đăng nhập, vào thẳng đề.
+(function auto() {
+  if (!/[?&]auto=1/.test(location.search)) return;
+  let c = null; try { c = JSON.parse(sessionStorage.getItem('thi-cred') || 'null'); } catch { /* bỏ qua */ }
+  document.body.classList.add('embedded');
+  const head = document.querySelector('.head'); if (head) /** @type {HTMLElement} */ (head).hidden = true;
+  if (!c || !c.ma || !c.pin) return;
+  /** @type {HTMLInputElement} */ ($('ma')).value = c.ma; /** @type {HTMLInputElement} */ ($('pin')).value = c.pin;
+  /** @type {HTMLFormElement} */ ($('login')).requestSubmit();
+})();

@@ -45,10 +45,13 @@ export async function renderExamList(target, loggedIn) {
   const note = (/** @type {string} */ title, /** @type {string} */ body) => {
     const box = el('div', '', 'empty'); box.append(icon('exam', 'ic empty-ic'), el('h2', title), el('p', body)); target.append(box);
   };
-  // Bài thi lấy từ Google Sheet (thi.html): một nút, không cần đăng nhập hệ thống học.
+  // Bài thi lấy từ Google Sheet: học sinh đã đăng nhập thì đề hiện thẳng trong tab Thi (không hỏi lại, không nút phụ).
   if (SHEET_EXAM) {
-    const box = el('div', '', 'empty'); box.append(icon('exam', 'ic empty-ic'), el('h2', 'Bài thi'), el('p', 'Đăng nhập bằng Mã học sinh và Mã PIN thầy cô phát để lấy đề.'));
-    const go = /** @type {HTMLAnchorElement} */ (el('a', 'Vào bài thi', 'auth-btn btn-full')); go.href = './thi.html'; box.append(go); target.append(box);
+    let cred = ''; try { cred = sessionStorage.getItem('thi-cred') || ''; } catch { /* bỏ qua */ }
+    if (!loggedIn || !cred) { note('Đăng nhập để thi', 'Đăng nhập bằng Mã học sinh và Mã PIN, rồi chọn mục Thi.'); return; }
+    const frame = /** @type {HTMLIFrameElement} */ (el('iframe', '', 'thi-frame')); frame.src = './thi.html?auto=1'; frame.title = 'Bài thi';
+    frame.style.cssText = 'width:100%;min-height:78vh;border:0;background:transparent';
+    target.append(frame);
     return;
   }
   await fb.ready();

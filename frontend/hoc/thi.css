@@ -27,3 +27,4 @@ dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);co
 dialog::backdrop{background:rgb(0 0 0 / .45)}dialog h2{margin-top:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .q fieldset{border:0;padding:0;margin:0;min-width:0}
+body.embedded .head{display:none}body.embedded .wrap{padding-top:8px}
