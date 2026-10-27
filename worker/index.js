@@ -1055,6 +1055,13 @@ export class GateDurableObject {
       return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
     }
 
+    if (action === '/teacher-ai-count') {   // giới hạn AI cho giáo viên: đếm theo ngày
+      const { who } = await request.json().catch(() => ({}));
+      const k = `tai:${new Date().toISOString().slice(0, 10)}:${String(who || '').slice(0, 80)}`;
+      const n = ((await this.storage.get(k)) || 0) + 1; await this.storage.put(k, n);
+      return new Response(JSON.stringify({ count: n }), { headers: { 'Content-Type': 'application/json' } });
+    }
+
     if (action === '/acquire-gemini-key') {
       const keyList = (await this.storage.get('gemini_keys_list')) || [];
       if (!keyList.length) {
@@ -1298,7 +1305,11 @@ CÁCH TRẢ LỜI (bắt buộc):
 export function buildExamReviewPrompt(review) {
   const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').slice(0, n);
   const items = (Array.isArray(review?.items) ? review.items : []).slice(0, 40)
-    .map((it, i) => `Câu ${Number(it?.stt) || i + 1}: ${it?.bo_trong ? 'BỎ TRỐNG' : (it?.dung ? 'ĐÚNG' : 'SAI')} — ${clip(it?.text, 240)}`);
+    .map((it, i) => `Câu ${Number(it?.stt) || i + 1}${it?.topic ? ` [${clip(it.topic, 60)}]` : ''}: ${it?.bo_trong ? 'BỎ TRỐNG' : (it?.dung ? 'ĐÚNG' : 'SAI')} — ${clip(it?.text, 240)}`);
+  // Tổng hợp theo chủ đề (do code tính) để AI nhận xét theo mảng kiến thức, không theo từng câu rời rạc.
+  const byTopic = new Map();
+  for (const it of (Array.isArray(review?.items) ? review.items : []).slice(0, 40)) { const t = clip(it?.topic, 60); if (!t) continue; const r = byTopic.get(t) || { d: 0, n: 0 }; r.n++; if (it?.dung) r.d++; byTopic.set(t, r); }
+  const topicLines = [...byTopic].map(([t, r]) => `- ${t}: đúng ${r.d}/${r.n} câu (${Math.round(100 * r.d / r.n)}%)`);
   return [
     'Em là giáo viên Tin học THCS, nhận xét NGẮN GỌN bài thi thử một học sinh vừa nộp. Viết tiếng Việt, xưng "thầy/cô" và gọi "em", thân thiện, động viên.',
     'TUYỆT ĐỐI KHÔNG nêu đáp án đúng, không nói phương án nào đúng/sai, không giải câu hỏi. Chỉ chỉ ra mảng kiến thức cần ôn.',
@@ -1306,9 +1317,108 @@ export function buildExamReviewPrompt(review) {
     '',
     `BÀI THI THỬ: ${clip(review?.title, 120)}`,
     `ĐIỂM: ${Number(review?.diem) || 0}/${Number(review?.tong) || 0} · Đúng ${Number(review?.dung) || 0}/${Number(review?.so_cau) || items.length} câu`,
+    ...(topicLines.length ? ['THEO CHỦ ĐỀ (hãy nhận xét theo các chủ đề này, chủ đề dưới 50% là cần ôn):', ...topicLines] : []),
     'KẾT QUẢ TỪNG CÂU (chỉ đúng/sai, không có đáp án):',
     ...items
   ].join('\n');
+}
+
+/** Dòng nhắc Gia sư biết chủ đề học sinh còn yếu (từ Bản đồ năng lực, do code tính). @param {unknown} list */
+export function weakTopicsLine(list) {
+  const items = (Array.isArray(list) ? list : []).map(x => String(x || '').replace(/[\r\n"`]/g, ' ').trim().slice(0, 70)).filter(Boolean).slice(0, 5);
+  if (!items.length) return '';
+  return `BẢN ĐỒ NĂNG LỰC CỦA EM NÀY: còn yếu các chủ đề: ${items.join('; ')}. Khi phù hợp với câu hỏi, liên hệ và củng cố các chủ đề này (giải thích lại ngắn gọn, gợi ý ôn), vẫn tuyệt đối không đưa đáp án.`;
+}
+
+/* ---------- AI cho giáo viên: soạn đề theo ma trận, gợi ý chấm thực hành ---------- */
+export const MUC_DO = ['Biết', 'Hiểu', 'Vận dụng'];
+/** Lấy JSON từ câu trả lời của Gemini (bỏ rào ```json). */
+export function parseJsonLoose(text) {
+  const t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  try { return JSON.parse(t); } catch { /* thử cắt phần JSON */ }
+  const a = t.indexOf('['), o = t.indexOf('{');
+  const start = a >= 0 && (o < 0 || a < o) ? a : o, end = start === a ? t.lastIndexOf(']') : t.lastIndexOf('}');
+  if (start >= 0 && end > start) { try { return JSON.parse(t.slice(start, end + 1)); } catch { /* bỏ */ } }
+  return null;
+}
+/** Prompt soạn câu hỏi trắc nghiệm theo ma trận, bám tài liệu bài học. */
+export function buildQuestionGenPrompt({ title, content, counts, topic }) {
+  const want = MUC_DO.map(m => `${m}: ${counts[m] || 0} câu`).join(', ');
+  return [
+    'Em là giáo viên Tin học THCS giỏi, soạn câu hỏi TRẮC NGHIỆM cho bài kiểm tra theo Chương trình GDPT 2018.',
+    `Ma trận: ${want}. ${topic ? `Tập trung chủ đề: ${String(topic).slice(0, 80)}.` : ''}`,
+    'Mức độ: Biết = nhớ khái niệm, sự kiện; Hiểu = giải thích, so sánh, nhận ra ví dụ; Vận dụng = áp dụng vào tình huống mới, tính toán, xử lý tình huống thực tế.',
+    'Yêu cầu: chỉ dùng kiến thức có trong TÀI LIỆU BÀI HỌC; mỗi câu đúng 4 phương án A–D, chỉ 1 phương án đúng; phương án nhiễu hợp lý; không dùng "Tất cả đều đúng/sai"; tiếng Việt chuẩn, ngắn gọn; không trùng ý giữa các câu.',
+    'Trả về DUY NHẤT một mảng JSON, mỗi phần tử: {"text":"đề bài","options":{"A":"…","B":"…","C":"…","D":"…"},"answer":"A|B|C|D","level":"Biết|Hiểu|Vận dụng","topic":"chủ đề ngắn ≤ 6 từ","explain":"giải thích ngắn vì sao đúng (để giáo viên duyệt)"}.',
+    '', `BÀI: ${String(title || '').slice(0, 120)}`, 'TÀI LIỆU BÀI HỌC:', '"""', String(content || '').slice(0, 12000), '"""'
+  ].join('\n');
+}
+/** Kiểm tra + chuẩn hóa câu AI soạn; xáo vị trí đáp án đúng (AI hay dồn vào A). @param {unknown} raw @param {() => number} [rnd] */
+export function cleanGeneratedQuestions(raw, rnd = Math.random) {
+  const out = [], seen = new Set();
+  for (const q of Array.isArray(raw) ? raw : []) {
+    const text = String(q?.text || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+    const opts = ['A', 'B', 'C', 'D'].map(k => String(q?.options?.[k] || '').replace(/\s+/g, ' ').trim().slice(0, 300));
+    const ans = String(q?.answer || '').trim().toUpperCase();
+    if (!text || opts.some(o => !o) || new Set(opts.map(o => o.toLowerCase())).size < 4 || !/^[A-D]$/.test(ans) || seen.has(text.toLowerCase())) continue;
+    seen.add(text.toLowerCase());
+    const correct = opts['ABCD'.indexOf(ans)], order = opts.map((o, i) => [o, rnd()]).sort((x, y) => x[1] - y[1]).map(x => x[0]);
+    const options = { A: order[0], B: order[1], C: order[2], D: order[3] };
+    out.push({ text, options, answer: 'ABCD'[order.indexOf(correct)], points: 1, level: MUC_DO.includes(q?.level) ? q.level : 'Hiểu', topic: String(q?.topic || '').trim().slice(0, 60), explain: String(q?.explain || '').trim().slice(0, 400), ai: true });
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+/** Prompt gợi ý chấm bài thực hành theo tiêu chí giáo viên (code đã kiểm tra tự động trước). */
+export function buildPracticalPrompt({ kind, task, rubric, evidence, auto }) {
+  const r = (Array.isArray(rubric) ? rubric : []).slice(0, 12).map((x, i) => `${i + 1}. ${String(x?.mo_ta || '').slice(0, 200)} (tối đa ${Number(x?.diem) || 0} điểm)`);
+  const a = (Array.isArray(auto) ? auto : []).slice(0, 30).map(x => `- ${String(x?.mo_ta || '').slice(0, 160)}: ${x?.ok ? 'ĐẠT' : 'CHƯA ĐẠT'}`);
+  return [
+    'Em là giáo viên Tin học THCS, GỢI Ý chấm bài thực hành của học sinh theo TIÊU CHÍ. Giáo viên sẽ duyệt và quyết định điểm cuối.',
+    'Dựa trên BẰNG CHỨNG (nội dung file đã trích ra) và KẾT QUẢ KIỂM TRA TỰ ĐỘNG (do máy kiểm chính xác — tin theo kết quả này). Không bịa nội dung không có trong bằng chứng.',
+    'Trả về DUY NHẤT JSON: {"items":[{"diem":số điểm gợi ý ≤ tối đa, "nhan_xet":"1 câu ngắn"}...theo đúng thứ tự tiêu chí], "tong_ket":"2–3 câu nhận xét chung, động viên, chỉ ra điều cần sửa"}.',
+    '', `LOẠI BÀI: ${kind === 'python' ? 'Lập trình Python' : kind === 'excel' ? 'Bảng tính Excel' : 'Khác'}`,
+    `ĐỀ BÀI: ${String(task || '').slice(0, 1500)}`, 'TIÊU CHÍ:', ...r,
+    ...(a.length ? ['KIỂM TRA TỰ ĐỘNG:', ...a] : []), 'BẰNG CHỨNG:', '"""', String(evidence || '').slice(0, 8000), '"""'
+  ].join('\n');
+}
+/** Gọi Gemini một lượt (dùng kho khóa nếu có). Trả chữ; lỗi → ném Error có .status. Kiểm thử: env.MOCK_GEMINI(prompt). */
+export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096, temperature = 0.4 } = {}) {
+  if (typeof env.MOCK_GEMINI === 'function' && SecurityConfigContract.isMockModeAllowed(env)) return String(await env.MOCK_GEMINI(prompt));
+  let pool = null;
+  if (isKeyEncSecretValid(env.KEY_ENC_SECRET)) {
+    for (let i = 0; i < 5 && !pool; i++) {
+      const r = await gateStub.fetch('http://do/acquire-gemini-key', { method: 'POST' }).catch(() => null);
+      const d = r && r.ok ? await r.json().catch(() => ({})) : {};
+      if (!d.found) break;
+      try { pool = { id: d.key_id, key: await decryptKeyText(d.ciphertext, d.iv, env.KEY_ENC_SECRET) }; }
+      catch { await gateStub.fetch('http://do/report-gemini-key-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key_id: d.key_id, status: 'error' }) }).catch(() => {}); }
+    }
+  }
+  const key = pool ? pool.key : env.GEMINI_API_KEY;
+  if (!key) throw Object.assign(new Error('Chưa cài khóa Gemini.'), { status: 503 });
+  const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature, maxOutputTokens, responseMimeType: 'application/json' } })
+  });
+  if (pool) await gateStub.fetch('http://do/report-gemini-key-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(res.ok ? { key_id: pool.id, status: 'success' } : { key_id: pool.id, status: res.status === 429 ? 'rate_limited' : 'error', retry_after_sec: 60 }) }).catch(() => {});
+  if (!res.ok) throw Object.assign(new Error(res.status === 429 ? 'AI đang bận, thử lại sau 1 phút.' : 'AI chưa trả lời được, thử lại.'), { status: res.status === 429 ? 429 : 502 });
+  return geminiText(await res.json());
+}
+/** Giáo viên: token Worker (quản trị) hoặc giáo viên lớp (Mã + PIN, Google Sheet xác minh qua gv_login). */
+export async function authTeacherAny(request, env, signingKeys, body, corsHeaders) {
+  const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
+  if (auth.authorized) return { ok: true, who: 'admin' };
+  const ma = String(body?.gv_ma || '').trim(), pin = String(body?.gv_pin || '').trim();
+  if (ma && pin && env.SHEET_LOGIN_URL) {
+    try {
+      const r = await fetch(env.SHEET_LOGIN_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'gv_login', ma, pin }) });
+      const d = await r.json().catch(() => ({}));
+      if (d?.ok && d.teacher) return { ok: true, who: 'gv:' + String(d.teacher.ma || ma).toLowerCase() };
+    } catch { /* rơi xuống từ chối */ }
+  }
+  return { ok: false };
 }
 
 export async function requireTeacher(request, env, signingKeys, { allowMustChange = false, corsHeaders = {} } = {}) {
@@ -1482,6 +1592,27 @@ export function reviewTopicsForStudent(records, lessons) {
     }
   }
   return [...rows.values()].map(r => ({ ...r, percent: Math.round((100 * r.correct) / r.total) })).filter(r => r.percent < OK_PERCENT).sort((a, b) => a.percent - b.percent).slice(0, 5);
+}
+
+/**
+ * Bản đồ năng lực (luyện tập): MỌI chủ đề với số câu đúng/tổng, theo lượt làm gần nhất của mỗi bài.
+ * Chỉ trả tên chủ đề + số liệu + bài chứa chủ đề (để mở ôn), không trả câu nào sai hay đáp án.
+ */
+export function masteryForStudent(records, lessons) {
+  const practice = records.filter(r => r && r.lesson_id && !String(r.lesson_id).startsWith('exam_'));
+  const rows = new Map();
+  for (const r of latestPerStudentLesson(practice.map(x => ({ ...x, uid: 'self' })))) {
+    const key = `${r.course_id}:${r.lesson_id}`; const lesson = lessons[key];
+    if (!lesson || !r.per_question) continue;
+    for (const q of lesson.questions || []) {
+      if (!q.topic || !r.per_question[q.id]) continue;
+      const t = String(q.topic).trim().slice(0, 60), row = rows.get(t.toLowerCase()) || { topic: t, correct: 0, total: 0, lessons: [] };
+      row.total += 1; if (r.per_question[q.id].ok) row.correct += 1;
+      if (!row.lessons.some(l => l.lesson_id === r.lesson_id && l.course_id === r.course_id)) row.lessons.push({ course_id: r.course_id, lesson_id: r.lesson_id, title: lesson.title || r.lesson_id });
+      rows.set(t.toLowerCase(), row);
+    }
+  }
+  return [...rows.values()].map(r => ({ ...r, lessons: r.lessons.slice(0, 3), percent: Math.round((100 * r.correct) / r.total) })).sort((a, b) => a.percent - b.percent).slice(0, 40);
 }
 
 /** Bỏ chi tiết từng câu trước khi trả về trình duyệt học sinh (chống lộ câu nào đúng/sai). */
@@ -2428,8 +2559,9 @@ export default {
       }
       const lessonsForReview = await loadLessonsFor(env, attempts, signingKeys);
       const review = reviewTopicsForStudent(attemptsWithDetail, lessonsForReview);
+      const mastery = masteryForStudent(attemptsWithDetail, lessonsForReview);
       attempts = attempts.filter(a => !a.exam_id).map(publicAttempt);
-      return new Response(JSON.stringify({ attempts, review }), {
+      return new Response(JSON.stringify({ attempts, review, mastery }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -4135,6 +4267,41 @@ export default {
     }
 
     // Teacher AI Usage & Limits Management (A9 / B7)
+    // AI cho giáo viên: soạn câu hỏi theo ma trận (giáo viên duyệt trước khi lưu) và gợi ý chấm thực hành.
+    if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical') && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const who = await authTeacherAny(request, env, signingKeys, body, corsHeaders);
+      if (!who.ok) return j(403, { detail: 'Đăng nhập tài khoản giáo viên để dùng AI.' });
+      const LIMIT = Number(env.TEACHER_AI_DAILY) || 40;
+      const cnt = { count: 0 };   // chỉ tính lượt khi thật sự gọi AI (yêu cầu sai không mất lượt)
+      const spend = async () => { const r = await gateStub.fetch('http://do/teacher-ai-count', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ who: who.who }) }).then(x => x.json()).catch(() => ({ count: 0 })); cnt.count = Number(r.count) || 0; if (cnt.count > LIMIT) throw Object.assign(new Error(`Hôm nay thầy cô đã dùng AI ${LIMIT} lượt. Mai dùng tiếp nhé.`), { status: 429 }); };
+      try {
+        if (url.pathname === '/api/teacher/ai-questions') {
+          const counts = {}; let total = 0;
+          for (const m of MUC_DO) { const n = Math.max(0, Math.min(20, Math.floor(Number(body?.counts?.[m]) || 0))); counts[m] = n; total += n; }
+          if (!total || total > 20) return j(400, { detail: 'Chọn từ 1 đến 20 câu.' });
+          const lesson = await loadPublicLesson(env, String(body.course_id || ''), String(body.lesson_id || ''));
+          if (!lesson?.content_markdown) return j(404, { detail: 'Không tìm thấy nội dung bài học.' });
+          const content = pickLessonContext(lesson.content_markdown, String(body.topic || '') + ' ' + (lesson.title || ''), 12000);
+          await spend();
+          const text = await geminiOnce(env, gateStub, buildQuestionGenPrompt({ title: lesson.title, content, counts, topic: body.topic }), { maxOutputTokens: 8192, temperature: 0.5 });
+          const parsed = parseJsonLoose(text);
+          const questions = cleanGeneratedQuestions(Array.isArray(parsed) ? parsed : parsed?.questions);
+          if (!questions.length) return j(502, { detail: 'AI chưa soạn được câu hợp lệ. Thử lại.' });
+          return j(200, { questions, lesson_title: lesson.title, remaining: Math.max(0, LIMIT - cnt.count) });
+        }
+        const kind = ['excel', 'python'].includes(body.kind) ? body.kind : 'khac';
+        const rubric = (Array.isArray(body.rubric) ? body.rubric : []).slice(0, 12);
+        if (!rubric.length) return j(400, { detail: 'Bài thi chưa có tiêu chí chấm thực hành.' });
+        await spend();
+        const text = await geminiOnce(env, gateStub, buildPracticalPrompt({ kind, task: body.task, rubric, evidence: body.evidence, auto: body.auto }), { maxOutputTokens: 2048, temperature: 0.2 });
+        const parsed = parseJsonLoose(text) || {};
+        const items = rubric.map((r, i) => { const it = Array.isArray(parsed.items) ? parsed.items[i] : null; const max = Number(r?.diem) || 0; return { diem: Math.max(0, Math.min(max, Math.round((Number(it?.diem) || 0) * 4) / 4)), nhan_xet: String(it?.nhan_xet || '').slice(0, 300) }; });
+        return j(200, { items, tong_ket: String(parsed.tong_ket || '').slice(0, 800), remaining: Math.max(0, LIMIT - cnt.count) });
+      } catch (e) { return j(Number(e?.status) || 502, { detail: e?.message || 'AI chưa trả lời được.' }); }
+    }
+
     if (url.pathname.startsWith('/api/teacher/ai-')) {
       const auth = await requireTeacher(request, env, signingKeys, { corsHeaders });
       if (!auth.authorized) return auth.response;
@@ -4661,7 +4828,7 @@ export default {
           }
 
           if (isExamReview) systemText = buildExamReviewPrompt(requestData.review);
-          else systemText += '\n' + TUTOR_STYLE_RULES;
+          else { systemText += '\n' + TUTOR_STYLE_RULES; const wt = weakTopicsLine(context?.weak_topics); if (wt) systemText += '\n' + wt; }
 
           // Build multi-turn contents from history if available
           const contents = [];

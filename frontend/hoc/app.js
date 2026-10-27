@@ -9,6 +9,7 @@ import * as thiApp from './thi-app.js';
 import { typeOut } from './typing.js';
 import * as readProgress from './read-progress.js';
 import * as support from './support.js';
+import * as mastery from './mastery.js';
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -637,11 +638,12 @@ async function progressBuild(target, syncButton, generation) {
   let fresh = false;
   /** @type {{course_id:string,lesson_id:string,lesson_title:string,topic:string,correct:number,total:number,percent:number}[]} */
   let review = [];
+  /** @type {any[]|null} */ let masteryData = null;
   // Đăng nhập nhanh: token Worker đang lấy ở nền → chờ tối đa 8 giây rồi mới tải tiến độ (trước đây bỏ qua → hiện 0 lượt).
   if (navigator.onLine && captured.pin && !captured.token) await Promise.race([workerToken(captured.identity.uid, captured.pin), new Promise(r => setTimeout(r, 8000))]);
   if (session !== captured || generation !== viewGeneration) return false;
   if (navigator.onLine && (captured.token || !captured.pin)) {
-    try { const data = await api('/pwa/progress', {token:captured.token}); attempts = data.attempts; review = Array.isArray(data.review) ? data.review : []; fresh = true; }
+    try { const data = await api('/pwa/progress', {token:captured.token}); if (Array.isArray(data?.attempts)) attempts = data.attempts; review = Array.isArray(data?.review) ? data.review : []; masteryData = Array.isArray(data?.mastery) ? data.mastery : null; fresh = true; }
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
   if (session !== captured || generation !== viewGeneration) return false;
@@ -717,6 +719,14 @@ async function progressBuild(target, syncButton, generation) {
   tiles.append(streakTile, statTile('Lượt làm bài', String(attempts.length), 'repeat', 'blue'), statTile('Điểm trung bình', stats.size ? (Math.round(average) / 10).toString() : '–', 'target', 'teal'), statTile('Tỉ lệ câu đúng', sumTotal ? `${Math.round(100 * sumCorrect / sumTotal)}%` : '–', 'check', 'green'));
   overview.append(ringCard, tiles); target.append(overview);
 
+  // Bản đồ năng lực: luyện tập (máy chủ) + thi thử/thi thật (Firebase), mỗi chủ đề một ô màu.
+  const practiceTopics = masteryData || review.map(r => ({ topic: r.topic, correct: r.correct, total: r.total, lessons: [{ course_id: r.course_id, lesson_id: r.lesson_id, title: r.lesson_title }] }));
+  const examTopics = await Promise.race([thiApp.myTopics().catch(() => ({})), new Promise(r => setTimeout(() => r({}), 2500))]);
+  if (session !== captured || generation !== viewGeneration) return false;
+  const topicList = mastery.merge(practiceTopics, /** @type {any} */ (examTopics));
+  if (fresh || Object.keys(/** @type {any} */ (examTopics)).length) void mastery.publish(captured.identity, topicList).catch(() => {});
+  target.append(mastery.render(topicList, { onReview: t => void openTopicLesson(t, false), onAsk: t => void openTopicLesson(t, true) }));
+
   if (stamps.length) {
     const days = []; const today = dayStart(Date.now());
     for (let offset = 6; offset >= 0; offset--) { const start = today - offset * DAY_MS; days.push({start, label: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][new Date(start).getDay()], count: 0}); }
@@ -786,6 +796,17 @@ async function progressBuild(target, syncButton, generation) {
     el('p', `Số liệu lấy từ các bài máy chủ đã nhận. "Thành thạo" là bài có lượt làm đạt từ ${MASTERED_PERCENT}% câu đúng; "Đang học" là đã làm nhưng chưa đạt. Điểm trung bình là trung bình kết quả tốt nhất của mỗi bài. Tỉ lệ câu đúng tính trên mọi lượt làm. Ngày học liên tiếp đếm các ngày có nộp bài.`, 'meta'));
   target.append(how);
   return true;
+}
+/** Ô chủ đề yếu: mở bài chứa chủ đề để ôn, hoặc mở bài + hỏi Gia sư về chủ đề đó. @param {import('./mastery.js').Topic} t @param {boolean} ask */
+async function openTopicLesson(t, ask) {
+  const l = t.lessons[0]; if (!l) return;
+  const summary = catalog?.courses.find(c => c.id === l.course_id)?.lessons.find(x => x.id === l.lesson_id);
+  if (!summary) { notify('Bài học này chưa có trong danh mục.', true); return; }
+  await loadLesson(l.course_id, l.lesson_id, summary.version, !ask);
+  if (!ask || active?.lesson_id !== l.lesson_id) return;
+  openTutor(null);
+  const input = /** @type {HTMLInputElement} */ (node('tutor-input'));
+  input.value = `Em chưa vững chủ đề "${t.ten}". Thầy/cô giải thích lại ngắn gọn kèm ví dụ giúp em nhé.`; input.focus();
 }
 /** @param {{course_id:string,lesson_id:string}} item */
 function lessonTitle(item) {return catalog?.courses.find(course => course.id === item.course_id)?.lessons.find(lesson => lesson.id === item.lesson_id)?.title || 'Bài học đã nộp';}
@@ -1194,7 +1215,8 @@ form('tutor-form').addEventListener('submit', async event => {
       history: tutorHistory,
       question_id: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
       selected_option: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
-      attempt_count: 1
+      attempt_count: 1,
+      context: session ? { weak_topics: mastery.weakTopics(session.identity.uid) } : undefined   // Bản đồ năng lực: Gia sư củng cố đúng chủ đề em còn yếu
     };
     /** @type {import('./contracts').TutorResponse} */
     const res = await api('/pwa/tutor', { method: 'POST', body: payload, token: session?.token });

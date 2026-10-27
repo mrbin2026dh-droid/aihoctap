@@ -97,6 +97,17 @@
           },
           "cao_nhat": {
             ".validate": "newData.isNumber()"
+          },
+          "dau": {
+            ".validate": "newData.isNumber()"
+          },
+          "roi_tab": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "chu_de": {
+            "$t": {
+              ".validate": "$t.length <= 64 && newData.hasChildren(['ten','d','n']) && newData.child('ten').isString() && newData.child('ten').val().length <= 60 && newData.child('d').isNumber() && newData.child('n').isNumber()"
+            }
           }
         }
       }
@@ -108,6 +119,30 @@
     "thi_gv": {
       ".read": true,
       ".write": false
+    },
+    "nang_luc": {
+      ".read": true,
+      "$ma": {
+        ".write": "$ma.length <= 64",
+        ".validate": "newData.hasChildren(['at','topics']) && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000",
+        "at": {
+          ".validate": true
+        },
+        "ten": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "lop": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "topics": {
+          "$t": {
+            ".validate": "$t.length <= 64 && newData.hasChildren(['ten','d','n']) && newData.child('ten').isString() && newData.child('ten').val().length <= 60 && newData.child('d').isNumber() && newData.child('n').isNumber() && newData.child('n').val() <= 10000"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     },
     "doc_read": {
       ".read": true,

@@ -155,6 +155,12 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Câu mới?', options: { A: 'x', B: 'y' }, answer: 'B', points: 4 }] });
   ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === 'B', 'lưu câu hỏi đã sửa → Sheet và Firebase');
   ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
+  c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Bit là gì?', options: { A: 'x', B: 'y' }, answer: 'A', points: 2, topic: 'Mã nhị phân', level: 'Hiểu' }, { text: 'Byte?', options: { A: 'x', B: 'y' }, answer: 'B', points: 2, topic: 'Mã nhị phân', level: 'Sai' }] });
+  const dRow = E.sheets.DeThi.rows.find(r => r[2] === 'Bit là gì?');
+  ok(dRow[9] === 'Mã nhị phân' && dRow[10] === 'Hiểu' && E.sheets.DeThi.rows.find(r => r[2] === 'Byte?')[10] === '' && E.fbdb.thi_de[e2.ma_de][0].topic === 'Mã nhị phân' && c({ action: 'gv_questions', ma_de: e2.ma_de }).questions[0].level === 'Hiểu', 'câu hỏi có Chủ đề + Mức độ (Biết/Hiểu/Vận dụng): lưu Sheet, đẩy chủ đề lên Firebase');
+  const tt = c({ action: 'gv_create', tieu_de: 'TT chủ đề', che_do: 'thu', khoi: 9, lop: '9A', questions: [{ text: 'Q1', options: { A: 'a', B: 'b' }, answer: 'A', points: 1, topic: 'Dữ liệu số', level: 'Biết' }] });
+  const ttId = tt.exams.find(e => e.tieu_de === 'TT chủ đề').ma_de;
+  ok(E.sheets.DeThiThu.rows.find(r => r[9] === ttId)[10] === 'Dữ liệu số' && E.fbdb.thi_de[ttId][0].topic === 'Dữ liệu số', 'thi thử: chủ đề lưu ở DeThiThu (giữ cột Mã bài thi)');
 }
 // ---------- Lấy điểm về Sheet khi nhiều học sinh: nhanh, không chép trùng, đúng thứ tự khi cho thi lại ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';

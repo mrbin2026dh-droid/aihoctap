@@ -1399,3 +1399,31 @@ body.student-app #lesson-content.reading-paper{max-width:none}
 /* Không che khi đang làm bài thi hoặc đang mở Gia sư AI */
 body:has(#exams-view:not([hidden]) .thi-exam) .zalo-fab,body.tutor-open .zalo-fab,body:has(dialog[open]:modal) .zalo-fab{display:none}
 :where(:root[data-theme=dark]) .zalo-fab{background:#2b7bff}
+/* Bản đồ năng lực: mỗi chủ đề một ô, màu theo mức (Vững / Đang học / Cần ôn) */
+.student-app{--lv-good-fg:var(--green-fg,#15803d);--lv-good-bg:var(--green-bg,#e7f6ec);--lv-mid-fg:var(--amber-fg,#a15c07);--lv-mid-bg:var(--amber-bg,#fdf3e1);--lv-weak-fg:#b42318;--lv-weak-bg:#fdecea}
+:root[data-theme=dark] .student-app{--lv-weak-fg:#ff9a8f;--lv-weak-bg:#3a1f1d}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .student-app{--lv-weak-fg:#ff9a8f;--lv-weak-bg:#3a1f1d}}
+.student-app .mastery-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.student-app .mastery-legend{display:flex;flex-wrap:wrap;gap:6px}
+.student-app .mastery-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:var(--fs-small,13px);font-weight:600}
+.student-app .mastery-chip::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
+.student-app .is-good.mastery-chip,.student-app .mastery-tile.is-good{color:var(--lv-good-fg);background:var(--lv-good-bg)}
+.student-app .is-mid.mastery-chip,.student-app .mastery-tile.is-mid{color:var(--lv-mid-fg);background:var(--lv-mid-bg)}
+.student-app .is-weak.mastery-chip,.student-app .mastery-tile.is-weak{color:var(--lv-weak-fg);background:var(--lv-weak-bg)}
+.student-app .mastery-tip{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:14px 16px;border-radius:14px;border:1px solid currentColor;color:var(--lv-weak-fg);background:var(--lv-weak-bg)}
+.student-app .mastery-tip.is-mid{color:var(--lv-mid-fg);background:var(--lv-mid-bg)}
+.student-app .mastery-tip .ic{flex:none;width:22px;height:22px}
+.student-app .mastery-tip strong{color:inherit}
+.student-app .mastery-grid{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.student-app .mastery-tile{padding:14px 16px;border-radius:14px;min-width:0}
+.student-app .mastery-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.student-app .mastery-top h3{margin:0;font-size:16px;color:var(--ink);overflow-wrap:anywhere}
+.student-app .mastery-pct{font-size:22px;font-variant-numeric:tabular-nums}
+.student-app .mastery-bar{display:block;height:8px;margin:8px 0 6px;border-radius:999px;background:color-mix(in srgb,currentColor 18%,transparent);position:relative;overflow:hidden}
+.student-app .mastery-bar::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--pct,0%);background:currentColor;border-radius:inherit}
+.student-app .mastery-tile .meta{margin:0;color:var(--ink);opacity:.8;font-size:13px}
+.student-app .mastery-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.student-app .mastery-acts button{min-height:44px;font-size:14px;padding:6px 12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;display:inline-flex;align-items:center;gap:6px}
+.student-app .mastery-empty{margin:12px 0 0;color:var(--muted)}
+/* Thi thật: nhắc rời màn hình */
+.student-app .thi-leave{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:var(--amber-bg,#fdf3e1);color:var(--amber-fg,#a15c07);font-size:14px}
