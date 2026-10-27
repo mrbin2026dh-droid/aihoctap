@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude phán quyết Cổng 4 ĐẠT (commit 45f8dd9); Antigravity tạo hướng dẫn docs/handoff/antigravity-nguoidung-cong4-con-mo.md để Người dùng mở sổ điểm thật, chạy kiemTraHeThong và chuẩn bị thi thử phòng máy Cổng 5.
+- Yêu cầu mới nhất: Người dùng thực hiện dán Code.gs mới vào Apps Script, chạy thuSoDiem() và kiemTraHeThong(), dán nhật ký cho Claude để hoàn tất mục còn mở Cổng 4.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1762,3 +1762,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Hướng dẫn cũ (gõ 5 vào F2 tab pilot) sẽ không chạy vì pilot đã bị xóa khỏi Firebase → thay bằng hàm `thuSoDiem()` tự tạo đề/HS giả, chốt, gõ điểm, kiểm Tổng + minh chứng, tự dọn.
 - Sửa lỗi: GV dán cả cột điểm chỉ hàng đầu được lưu → nay lưu mọi hàng; sửa điểm của đề đã xóa → ghi chú đỏ thay vì im lặng; `parts` dạng object không còn làm sập (Apps Script + exam-fb.js).
 - Thêm `tests/test_apps_script_gradebook.cjs` (chạy Code.gs trên giả lập Apps Script): OK.
+
+### 27/10/2026 — Antigravity — Kiểm thử unit test sổ điểm và chuyển giao Người dùng chạy thuSoDiem
+- Đã thực hiện: Kéo commit f2b3a28; chạy test_apps_script_gradebook.cjs (PASS 100%); kiểm tra package_student_pwa và test_exam_firebase_flow (28/28) PASS; chuẩn bị hướng dẫn trực tiếp cho Người dùng.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: test_apps_script_gradebook.cjs PASS; git status sạch; sẵn sàng cho Người dùng dán Code.gs và chạy thuSoDiem().
+- Việc tiếp: Người dùng dán Code.gs vào Google Apps Script, chạy thuSoDiem() và kiemTraHeThong() rồi dán nhật ký cho Claude.
