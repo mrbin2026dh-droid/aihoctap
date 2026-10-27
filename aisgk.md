@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng đã chạy kiemTraHeThong() ĐẠT TOÀN BỘ trên Apps Script; Antigravity kiểm thử Cổng 4 live ĐẠT và bàn giao Claude kiểm định Cổng 5 tại docs/handoff/antigravity-claude-kiem-dinh-apps-script-cong5.md.
+- Yêu cầu mới nhất: Antigravity đã npx wrangler deploy Worker aihoctap-gate (Version 70b4a7cd), kiểm thử live thành công đăng nhập HS01 và hs9a02 qua Google Sheet.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1836,3 +1836,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đường Firebase/Worker cũ giữ nguyên trong mã, không dùng nữa. Test: test_sheet_exam_gs 15 ca, test_thi_sheet_ui 31 ca (2 kích thước) OK; hồi quy xanh.
 - Chờ: người dùng triển khai web app, gửi địa chỉ /exec để dán vào `SHEET_API` trong thi.js.
 - 2026-10-27 Claude: đăng nhập cả hệ thống bằng Google Sheet (Worker SHEET_LOGIN_URL), test tests/test_worker_sheet_login.mjs. Cần wrangler deploy.
+
+### 27/10/2026 — Antigravity — Triển khai Worker aihoctap-gate hỗ trợ đăng nhập qua Google Sheet & kiểm thử live
+- Đã thực hiện: Lưu ID bản cũ cdb02c29; chạy npx wrangler deploy triển khai bản mới 70b4a7cd-dc12-4a25-a166-13901ccb1194; kiểm tra smoke test endpoint live /api/login với HS01 (200 OK, cấp token Firebase đúng họ tên/lớp 9A) và hs9a02 (200 OK); kiểm tra sai PIN (401 OK).
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: test_worker_sheet_login.mjs PASS; live Worker phản hồi 200/401 chính xác.
+- Việc tiếp: Người dùng mở ứng dụng và đăng nhập bằng tài khoản trong Google Sheet.
