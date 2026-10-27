@@ -38,10 +38,22 @@
 - Lưu trữ Google Drive: thư mục **Bài thi - Góc học tập / Năm học / Lớp … / Hình thức - Tiêu đề**: mỗi học sinh một file chữ (từng câu, đáp án đúng, em chọn, đúng/sai, điểm) + file thực hành. File chữ được tạo khi điểm chép về Sheet (mở menu Thi hoặc menu Sheet **Lấy điểm về Sheet**).
   Lần đầu sau khi dán Code.gs mới, Google hỏi thêm quyền **Google Drive** → Cho phép.
 
+## Tài liệu PDF (menu Tài liệu trong app giáo viên)
+- **Thêm tài liệu**: nhập Tiêu đề, chọn Khối, mô tả (không bắt buộc), chọn file PDF ≤ 10 MB trên máy → Lưu. File vào Google Drive: **Tài liệu - Góc học tập / Khối N** (chia sẻ xem bằng đường dẫn).
+- Mỗi tài liệu: **Mở xem**, **Chỉnh sửa** (tiêu đề, khối, mô tả, thay file), **Xóa** (có xác nhận, file vào thùng rác Drive).
+- Học sinh: mục **Tài liệu** chỉ hiện tài liệu đúng khối của em (không còn ô chọn môn), nút **Mở xem** / **Tải về**.
+- Giáo viên lớp thấy và đăng tài liệu cho khối của các lớp mình phụ trách.
+
+## Gia sư AI và đọc bài
+- Khung chat Gia sư AI neo góc phải dưới (điện thoại: tấm trượt từ dưới lên), không che bài; câu trả lời hiện dần như đang gõ.
+- Gia sư **tự tạm nghỉ** khi lớp em có bài **thi thật** đang mở (chưa nộp). Ô **"Khóa AI trong khi kiểm tra"** (Hồ sơ → Gia sư AI) khóa AI cho mọi học sinh mọi lúc — chỉ bật khi thật cần.
+- Nộp bài **thi thử** (có Cho xem điểm): Gia sư AI tự nhận xét — nhận xét chung, em làm tốt, cần ôn thêm (không nêu đáp án). Cần Worker bản mới.
+- Bài học có thanh **tên bài + % đã đọc** dính trên cùng khi cuộn. Giáo viên xem ở **Tổng quan → Học sinh đọc bài** (chọn bài, lớp; ai đã đọc hết / đang đọc / chưa đọc).
+
 ## Tài khoản (menu Tài khoản trong app giáo viên)
 - Tab **Học sinh**: danh sách trang HocSinh của Google Sheet — thêm, sửa, đặt lại mã PIN, khóa/mở, xóa (có hộp thoại xác nhận). Lưu là học sinh đăng nhập được ngay; tài khoản khóa không đăng nhập được.
 - Tab **Giáo viên** (chỉ quản trị thấy): thêm giáo viên dạy lớp — Mã giáo viên, Họ tên, Lớp phụ trách (ví dụ `9A, 9B`), Mã PIN. Lưu ở trang **GiaoVien** của Sheet.
-- Giáo viên lớp đăng nhập trang giáo viên: chọn **Giáo viên lớp** → Mã giáo viên + PIN. Họ chỉ thấy menu **Thi** (tạo/mở/khóa/sửa thi thử, thi thật, thống kê) và **Tài khoản** (học sinh lớp mình). **Về nhà**, **Tài liệu** cho giáo viên lớp sẽ bật sau khi Worker được cập nhật (giai đoạn 2).
+- Giáo viên lớp đăng nhập trang giáo viên: chọn **Giáo viên lớp** → Mã giáo viên + PIN. Họ thấy menu **Thi** (tạo/mở/khóa/sửa thi thử, thi thật, thống kê), **Tài liệu** (khối mình) và **Tài khoản** (học sinh lớp mình). **Về nhà** cho giáo viên lớp sẽ bật sau khi Worker được cập nhật (giai đoạn 2).
 - Quản trị đăng nhập như cũ (chọn **Quản trị**, nhập PIN giáo viên).
 
 ## Nếu có sự cố

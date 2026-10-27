@@ -360,5 +360,9 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 .teacher-app .acc-note{margin:0;flex:1}
 .teacher-app .t-field-error{color:var(--danger);margin:4px 0 0;font-size:var(--t-small)}
 .teacher-app .t-field-error:empty{display:none}
-/* Giáo viên lớp: chỉ Thi và Tài khoản (Về nhà, Tài liệu cần Worker cập nhật — giai đoạn 2) */
-body.is-class-teacher #nav-overview,body.is-class-teacher #nav-lessons,body.is-class-teacher #nav-exams,body.is-class-teacher #nav-materials,body.is-class-teacher #open-settings,body.is-class-teacher #thi-publish{display:none!important}
+/* Giáo viên lớp: Thi, Tài liệu (khối mình, qua Google Sheet), Tài khoản. Về nhà cần Worker cập nhật — giai đoạn 2 */
+body.is-class-teacher #nav-overview,body.is-class-teacher #nav-lessons,body.is-class-teacher #nav-exams,body.is-class-teacher #open-settings,body.is-class-teacher #thi-publish{display:none!important}
+.teacher-app .read-report{margin-top:24px}
+.teacher-app .read-mini-wrap{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.teacher-app .read-mini{position:relative;display:inline-block;width:72px;height:8px;border-radius:99px;background:var(--brand-soft);overflow:hidden}
+.teacher-app .read-mini::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--pct,0%);background:var(--brand);border-radius:99px}

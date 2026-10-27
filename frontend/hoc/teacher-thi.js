@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027l';
-import * as ui from './teacher-ui.js?v=20261027l';
+import * as presence from './presence.js?v=20261027m';
+import * as ui from './teacher-ui.js?v=20261027m';
 import * as store from './thi-store.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));

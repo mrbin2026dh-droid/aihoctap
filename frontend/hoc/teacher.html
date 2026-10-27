@@ -79,6 +79,12 @@
 </div>
 <div id="teacher-analytics" aria-live="polite"><p class="t-muted">Chưa tải báo cáo.</p></div>
 </section>
+<section id="read-report" class="t-card read-report" aria-labelledby="read-report-title">
+<div class="t-heading"><div><h2 id="read-report-title">Học sinh đọc bài</h2><p class="t-muted" id="read-report-sub">Tiến độ đọc phần lý thuyết của từng em (cập nhật tức thì).</p></div></div>
+<div class="t-toolbar"><div class="t-field"><label for="read-lesson">Bài học</label><select id="read-lesson"><option value="">Đang tải…</option></select></div><div class="t-field"><label for="read-lop">Lớp</label><select id="read-lop"><option value="">Tất cả lớp</option></select></div></div>
+<dl class="t-metrics" id="read-metrics"></dl>
+<table class="t-table" id="read-table"><caption>Phần trăm đã đọc</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Đã đọc</th><th scope="col">Lúc</th></tr></thead><tbody id="read-body"><tr><td colspan="4" class="t-muted">Chưa có dữ liệu.</td></tr></tbody></table>
+</section>
 </section>
 <section id="view-lessons" hidden>
 <section id="list-lessons" class="t-list">
@@ -277,6 +283,22 @@
 </section>
 </section>
 <section id="view-materials" hidden>
+<section id="docs-root" class="t-list" aria-labelledby="docs-title">
+<h2 id="docs-title" class="visually-hidden">Tài liệu PDF</h2>
+<div class="notice status thi-alert" id="docs-alert" role="status" hidden><span id="docs-status"></span></div>
+<div class="t-toolbar acc-toolbar"><div class="t-field"><label for="docs-khoi">Khối</label><select id="docs-khoi"><option value="">Tất cả khối</option><option value="9">Khối 9</option><option value="8">Khối 8</option><option value="7">Khối 7</option><option value="6">Khối 6</option></select></div><p class="t-muted acc-note" id="docs-count" role="status">Đang tải…</p><button type="button" id="docs-add" class="t-button t-primary">Thêm tài liệu</button></div>
+<table class="t-table" id="docs-table"><caption>Tài liệu PDF (lưu trên Google Drive, học sinh đúng khối xem và tải)</caption><thead><tr><th scope="col">Tiêu đề</th><th scope="col">Khối</th><th scope="col">File</th><th scope="col">Cập nhật</th><th scope="col">Thao tác</th></tr></thead><tbody id="docs-body"></tbody></table>
+<dialog id="docs-dialog" class="t-dialog" aria-labelledby="docs-dlg-title"><form id="docs-form" class="t-form" novalidate>
+<h2 id="docs-dlg-title">Thêm tài liệu</h2>
+<div class="t-field"><label for="docs-title-in">Tiêu đề tài liệu</label><input id="docs-title-in" required maxlength="200" autocomplete="off" aria-describedby="docs-title-err"><p id="docs-title-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="docs-khoi-in">Khối</label><select id="docs-khoi-in"><option value="9">Khối 9</option><option value="8">Khối 8</option><option value="7">Khối 7</option><option value="6">Khối 6</option></select></div>
+<div class="t-field"><label for="docs-mota-in">Mô tả ngắn (không bắt buộc)</label><input id="docs-mota-in" maxlength="300" autocomplete="off"></div>
+<div class="t-field"><label for="docs-file-in" id="docs-file-label">File PDF (tối đa 10 MB)</label><input id="docs-file-in" type="file" accept="application/pdf,.pdf" aria-describedby="docs-file-err docs-file-hint"><p id="docs-file-hint" class="t-hint"></p><p id="docs-file-err" class="t-field-error"></p></div>
+<p id="docs-form-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="docs-cancel" class="t-button">Hủy</button><button type="submit" id="docs-save" class="t-button t-primary">Lưu tài liệu</button></div>
+</form></dialog>
+</section>
+<section id="legacy-materials" hidden>
 <section id="list-materials" class="t-list">
 <h2 class="visually-hidden">Tài liệu Google Drive</h2>
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-materials-new" class="t-button t-primary" data-action="new-materials" >Thêm tài liệu</button></div>
@@ -301,6 +323,7 @@
 </div>
 </details><button type="submit" class="t-button t-primary" data-action="save-material">Lưu tài liệu</button>
 </form>
+</section>
 </section>
 </section>
 <section id="view-accounts" hidden>
@@ -493,6 +516,6 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261027l"></script>
+<script type="module" src="./teacher.js?v=20261027m"></script>
 </body>
 </html>

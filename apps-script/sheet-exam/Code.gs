@@ -17,6 +17,7 @@ var DT_HEAD = DE_HEAD.concat(['Mã bài thi']);
 var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy', 'Mã nộp'];
 /** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
 var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
+var SH_TL = 'TaiLieu', TL_HEAD = ['Mã tài liệu', 'Tiêu đề', 'Khối', 'Mô tả', 'File ID', 'Tên file', 'Kích thước', 'Cập nhật lúc', 'Người đăng'];
 var SH_GV = 'GiaoVien', GV_HEAD = ['Mã giáo viên', 'Họ tên', 'Mã PIN', 'Lớp phụ trách', 'Trạng thái'];
 /** Lớp giáo viên đang đăng nhập được phụ trách (chữ thường); null = quản trị (thấy mọi lớp). */
 var SCOPE_ = null;
@@ -274,6 +275,7 @@ function teacher_(p) {
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); if (me) setTeacherPin_(me.ma, np); else setConfig_('mat_khau_gv', np); return { ok: true }; }
   if (a === 'gv_whoami') return { ok: true, me: me ? { ma: me.ma, ten: me.ten, lop: me.lop } : null, admin: !me };
   if (/^gv_(teachers|teacher_save|teacher_delete|students|student_save|student_delete)$/.test(a)) return accounts_(a, p, me);
+  if (/^gv_doc(s|_save|_delete)$/.test(a)) return docs_(a, p, me);
   if (p.ma_de && a !== 'gv_create') ownExam_(String(p.ma_de));
   if (a === 'gv_stats') return stats_(String(p.ma_de || ''));
   if (a === 'gv_questions') { var exq = exam_(String(p.ma_de || '')); return { ok: true, ma_de: exq.ma_de, che_do: exq.che_do, khoi: exq.khoi, questions: questionsFor_(exq) }; }
@@ -464,6 +466,60 @@ function accounts_(a, p, me) {
   throw new Error('Yêu cầu không hợp lệ.');
 }
 
+/* ---------- Tài liệu PDF (giáo viên tải lên → Google Drive; học sinh đúng khối xem/tải) ---------- */
+function docList_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_TL), out = [];
+  if (!sh) return out;
+  var v = sh.getDataRange().getValues();
+  for (var r = 1; r < v.length; r++) { var id = String(v[r][0] || '').trim(); if (id) out.push({ row: r + 1, id: id, tieu_de: String(v[r][1] || '').trim(), khoi: Number(v[r][2]) || 0, mo_ta: String(v[r][3] || '').trim(), file_id: String(v[r][4] || '').trim(), ten_file: String(v[r][5] || '').trim(), size: Number(v[r][6]) || 0, at: v[r][7] instanceof Date ? v[r][7].toISOString() : String(v[r][7] || ''), nguoi: String(v[r][8] || '').trim() }); }
+  return out;
+}
+/** Khối giáo viên lớp được quản lý (từ lớp phụ trách); null = quản trị. */
+function scopeKhoi_() { if (!SCOPE_) return null; var k = {}; SCOPE_.forEach(function (l) { var n = khoiOf_(l); if (n) k[n] = 1; }); return Object.keys(k).map(Number); }
+function docFolder_(khoi) {
+  var pr = PropertiesService.getScriptProperties(), id = pr.getProperty('DRIVE_TL'), root = null;
+  if (id) { try { root = DriveApp.getFolderById(id); } catch (e) { root = null; } }
+  if (!root) { root = child_(DriveApp.getRootFolder(), 'Tài liệu - Góc học tập'); pr.setProperty('DRIVE_TL', root.getId()); }
+  return child_(root, 'Khối ' + khoi);
+}
+function docs_(a, p, me) {
+  var ks = scopeKhoi_(), mineK = function (k) { return !ks || ks.indexOf(Number(k)) >= 0; };
+  var list = function () { return { ok: true, admin: !me, khoi: ks, docs: docList_().filter(function (d) { return mineK(d.khoi); }).map(function (d) { return { id: d.id, tieu_de: d.tieu_de, khoi: d.khoi, mo_ta: d.mo_ta, file_id: d.file_id, ten_file: d.ten_file, size: d.size, at: d.at, nguoi: d.nguoi }; }) }; };
+  var done = function () { var res = list(); try { publish_(); } catch (e) { res.fb_error = e.message; } return res; };
+  if (a === 'gv_docs') return list();
+  var sh = ensure_(SH_TL, TL_HEAD);
+  if (a === 'gv_doc_delete') {
+    var dd = docList_().filter(function (d) { return d.id === String(p.id || ''); })[0];
+    if (!dd) throw new Error('Không tìm thấy tài liệu.');
+    if (!mineK(dd.khoi)) throw new Error('Tài liệu này không thuộc khối thầy cô phụ trách.');
+    if (dd.file_id) { try { DriveApp.getFileById(dd.file_id).setTrashed(true); } catch (e) { /* file đã xóa tay */ } }
+    sh.deleteRow(dd.row); return done();
+  }
+  // gv_doc_save: thêm mới (bắt buộc file PDF) hoặc sửa (đổi tiêu đề/khối/mô tả, có thể thay file)
+  var title = String(p.tieu_de || '').trim(), khoi = Number(p.khoi) || 0, moTa = String(p.mo_ta || '').trim().slice(0, 300);
+  if (!title) throw new Error('Nhập tiêu đề tài liệu.');
+  if ([6, 7, 8, 9].indexOf(khoi) < 0) throw new Error('Chọn khối 6, 7, 8 hoặc 9.');
+  if (!mineK(khoi)) throw new Error('Chỉ đăng tài liệu cho khối thầy cô phụ trách.');
+  var old = p.id ? docList_().filter(function (d) { return d.id === String(p.id); })[0] : null;
+  if (p.id && !old) throw new Error('Không tìm thấy tài liệu.');
+  if (old && !mineK(old.khoi)) throw new Error('Tài liệu này không thuộc khối thầy cô phụ trách.');
+  var fileId = old ? old.file_id : '', name = old ? old.ten_file : '', size = old ? old.size : 0;
+  if (p.data) {
+    var bytes = Utilities.base64Decode(String(p.data));
+    if (bytes.length > 10 * 1024 * 1024) throw new Error('File quá lớn (tối đa 10 MB).');
+    if (String(p.mime || '') !== 'application/pdf' && !/\.pdf$/i.test(String(p.ten_file || ''))) throw new Error('Chỉ nhận file PDF.');
+    name = safeName_(p.ten_file || (title + '.pdf')).slice(0, 120); if (!/\.pdf$/i.test(name)) name += '.pdf';
+    var f = docFolder_(khoi).createFile(Utilities.newBlob(bytes, 'application/pdf', name));
+    f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);   // học sinh mở được bằng đường dẫn
+    if (fileId) { try { DriveApp.getFileById(fileId).setTrashed(true); } catch (e) { /* bỏ qua */ } }
+    fileId = f.getId(); size = bytes.length;
+  } else if (!old) throw new Error('Chọn file PDF để tải lên.');
+  else if (old.khoi !== khoi && fileId) { try { DriveApp.getFileById(fileId).moveTo(docFolder_(khoi)); } catch (e) { /* vẫn dùng được */ } }
+  var row = [old ? old.id : 'tl' + new Date().getTime(), title, khoi, moTa, fileId, name, size, new Date(), me ? me.ten : 'Quản trị'];
+  if (old) sh.getRange(old.row, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+  return done();
+}
+
 /* ---------- Firebase: đẩy đề lên, lấy điểm về ---------- */
 function fbOn_() { return !!PropertiesService.getScriptProperties().getProperty('FB_SECRET'); }
 function fbKey_(ma) { return norm_(ma).replace(/[.#$\[\]\/]/g, '_'); }
@@ -497,7 +553,8 @@ function publish_() {
     de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
   });
   var gvs = {}; teachers_().forEach(function (t) { if (t.trang_thai !== 'Khóa') gvs[fbKey_(t.ma)] = { ma: t.ma, ten: t.ten, lop: t.lop, h: sha256_(norm_(t.ma) + ':' + t.pin) }; });
-  fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de, thi_gv: gvs });
+  var tl = {}; docList_().forEach(function (d) { tl[d.id] = { tieu_de: d.tieu_de, khoi: d.khoi, mo_ta: d.mo_ta, file_id: d.file_id, ten_file: d.ten_file, size: d.size, at: d.at }; });
+  fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de, thi_gv: gvs, tai_lieu: tl });
   return list.length;
 }
 /** Chép bài nộp trên Firebase (thi_nop) về trang KetQua, mỗi lần nộp một dòng, không chép trùng. */

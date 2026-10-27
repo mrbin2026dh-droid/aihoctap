@@ -6,6 +6,8 @@ import * as fb from './fb.js';
 import * as presence from './presence.js';
 import * as thiStore from './thi-store.js';
 import * as thiApp from './thi-app.js';
+import { typeOut } from './typing.js';
+import * as readProgress from './read-progress.js';
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -73,10 +75,12 @@ async function refreshTutorQuota() {
   }
   try {
     /** @type {{ used: number, limit: number, remaining: number, locked: boolean, exam_mode: boolean }} */
+    if (thiApp.realExamOpen()) { badge.textContent = 'Đang thi'; badge.className = 'tutor-quota-badge is-locked'; badge.title = 'Lớp em đang có bài thi thật đang mở'; return; }
     const quota = await api('/pwa/ai-quota', { token: session.token });
     if (quota.exam_mode) {
       badge.textContent = 'Giờ thi';
       badge.className = 'tutor-quota-badge is-locked';
+      badge.title = 'Thầy cô đang bật "Khóa AI trong khi kiểm tra" (trang giáo viên → Hồ sơ → Gia sư AI)';
     } else if (quota.locked) {
       badge.textContent = 'Tạm khóa';
       badge.className = 'tutor-quota-badge is-locked';
@@ -126,13 +130,24 @@ function openTutor(questionId = null) {
   else chooseTutorLesson();
   updateTutorStatus();
   refreshTutorQuota().catch(() => {});
-  dialog.showModal();
+  if (!dialog.open) dialog.show();   // khung chat neo góc màn hình (không che trang), như các ứng dụng nhắn tin
+  document.body.classList.add('tutor-open');
   if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
 function closeTutor() {
   /** @type {HTMLDialogElement} */ (node('tutor-dialog')).close();
+  document.body.classList.remove('tutor-open');
 }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && /** @type {HTMLDialogElement} */ (node('tutor-dialog')).open && !document.querySelector('dialog[open]:modal')) closeTutor(); });
+/** Gia sư AI nhận xét bài thi thử vừa nộp (Worker, tốn 1 lượt). Lỗi/không có token → '' để tab Thi hiện lời nhắn thay. */
+thiApp.setReviewer(async review => {
+  if (!navigator.onLine || !session) return '';
+  if (!session.token && session.pin) await workerToken(session.identity.uid, session.pin);   // vừa đăng nhập nhanh: chờ token Gia sư (chạy ngầm) xong
+  if (!session?.token) return '';
+  try { const r = await api('/pwa/tutor', { method: 'POST', token: session.token, body: { mode: 'exam_review', message: 'Nhận xét bài thi thử của em', review } }); refreshTutorQuota().catch(() => {}); return String(r.reply || ''); }
+  catch { return ''; }
+});
 
 
 /** @param {Error} error */
@@ -140,15 +155,20 @@ function report(error) { if (error instanceof ApiError && error.status === 401) 
 let expiring = false;
 let renewing = false;
 /** Lấy token Worker ở nền (cho Gia sư AI, đồng bộ tiến độ). Không bao giờ chặn việc học/thi; lỗi thì im lặng. @param {string} code @param {string} pin @param {boolean} [force] */
-async function workerToken(code, pin, force = false) {
-  if (renewing || isLocalhostBackend || (!force && session?.token)) return;
+/** @type {Promise<void>|null} */ let renewPromise = null;
+function workerToken(/** @type {string} */ code, /** @type {string} */ pin, force = false) {
+  if (renewing && renewPromise) return renewPromise;
+  if (isLocalhostBackend || (!force && session?.token)) return Promise.resolve();
   renewing = true;
+  renewPromise = workerTokenRun(code, pin).finally(() => { renewing = false; renewPromise = null; });
+  return renewPromise;
+}
+async function workerTokenRun(/** @type {string} */ code, /** @type {string} */ pin) {
   try {
     const r = await api('/login', {method:'POST', body:{student_id:code, pin}});
     if (!session || String(session.identity.uid).toLowerCase() !== String(code).toLowerCase() || !r?.token) return;
     session.token = r.token; await db.put('meta', 'session', session); void sync();
   } catch { /* bỏ qua: học và thi vẫn chạy bằng Firebase */ }
-  finally { renewing = false; }
 }
 /** Token học sinh hết hạn sau 1 giờ: giữ nháp và bài chờ nộp, yêu cầu đăng nhập lại một lần. */
 async function expireSession() {
@@ -216,6 +236,7 @@ function identityUI() {
 }
 /** @param {string} name */
 function show(name) {
+  queueMicrotask(readProgress.refresh);
   viewGeneration++;
   currentView = name;
   if (studentSettingsActive) {
@@ -382,6 +403,7 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
   node('lesson-version').textContent = `Phiên bản ${lesson.version.slice(0, 8)}`;
   renderMarkdown(node('lesson-content'), lesson.content_markdown);
   node('result').replaceChildren(); renderQuestions(); setPractice(practice);
+  readProgress.track(lesson, session?.identity || null);   // thanh neo tên bài + % đã đọc
   if (pending) node('result').append(el('p', 'Chờ máy chủ xác nhận. Bài nộp được giữ trên máy.', 'inline-note'));
   updateResume();
   notify(navigator.onLine ? 'Bài học đã sẵn sàng.' : 'Đang học từ bài đã lưu trên máy.');
@@ -416,7 +438,7 @@ function renderQuestions() {
 }
 /** @param {boolean} value */
 function setPractice(value) {
-  practice = value; node('question-form').hidden = !value; node('lesson-content').hidden = value;
+  practice = value; queueMicrotask(readProgress.refresh); node('question-form').hidden = !value; node('lesson-content').hidden = value;
   node('read-lesson').setAttribute('aria-pressed', String(!value)); node('practice-lesson').setAttribute('aria-pressed', String(value));
   node('practice-help').hidden = !value;
   node('practice-help').textContent = session ? (locked ? 'Bài đã khóa để giữ nguyên nội dung nộp.' : 'Câu trả lời được lưu nháp trên máy.') : 'Em có thể luyện tập. Đăng nhập để lưu nháp và nộp bài.';
@@ -947,102 +969,32 @@ on('download', async () => {
 function exams() {
   show('exams'); void renderExamList(node('exams'), Boolean(session));
 }
+/** Mục Tài liệu: tài liệu PDF thầy cô tải lên Google Drive cho đúng khối của em (đọc Firebase tai_lieu, không qua Worker). */
 async function materials() {
   show('materials');
-  const generation = viewGeneration;
-  const select = /** @type {HTMLSelectElement} */ (node('materials-course-select'));
-  const list = node('materials-list');
-
-  if (!select.options.length && catalog?.courses?.length) {
-    for (const course of catalog.courses) {
-      const opt = el('option', `${course.title} · Lớp ${course.grade}`);
-      opt.value = course.id;
-      select.append(opt);
-    }
-    select.addEventListener('change', () => {
-      materials().catch(report);
-    });
-  }
-
-  const courseId = select.value || catalog?.courses?.[0]?.id;
-  if (!courseId) {
-    list.replaceChildren();
-    empty(list, 'Chưa có môn học', 'Hãy chọn môn học để xem tài liệu.');
-    return;
-  }
-
-  list.replaceChildren();
-  const loading = el('div', '', 'lesson-skeleton');
-  list.append(loading);
-
+  const generation = viewGeneration, list = node('materials-list'); list.replaceChildren();
+  if (!session) { empty(list, 'Đăng nhập để xem tài liệu', 'Tài liệu thầy cô đăng cho khối của em sẽ hiện ở đây.'); return; }
+  if (!thiStore.enabled()) { empty(list, 'Chưa có tài liệu', 'Hệ thống tài liệu chưa được cài đặt.'); return; }
+  const grade = Number(session.identity.grade) || 0;
+  node('materials-sub').textContent = grade ? `Tài liệu thầy cô đăng cho khối ${grade}. Bấm Mở xem để đọc, Tải về để lưu máy.` : 'Xem và tải tài liệu PDF.';
+  list.append(el('div', '', 'lesson-skeleton'));
   try {
-    const data = await api(`/pwa/materials/${encodeURIComponent(courseId)}`);
+    const all = /** @type {Record<string, any>} */ ((await thiStore.get('tai_lieu')) || {});
     if (generation !== viewGeneration) return;
     list.replaceChildren();
-
-    const items = data.materials || [];
-    if (!items.length) {
-      empty(list, 'Chưa có tài liệu', 'Giáo viên chưa đăng tải tài liệu bổ trợ cho môn học này.');
-      return;
-    }
-
-    const cache = 'caches' in window ? await caches.open('aisgk-materials-v1') : null;
-
-    for (const mat of items) {
-      const card = el('article', '', 'download-card');
+    const items = Object.entries(all).filter(([, d]) => d && Number(d.khoi) === grade).sort((a, b) => String(b[1].at || '').localeCompare(String(a[1].at || '')));
+    if (!items.length) { empty(list, 'Chưa có tài liệu', `Thầy cô chưa đăng tài liệu cho khối ${grade}.`, 'folder'); return; }
+    const size = (/** @type {number} */ n) => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+    for (const [, d] of items) {
+      const card = el('article', '', 'download-card doc-card');
       const desc = el('div', '', 'lesson-description');
-      desc.append(
-        el('h3', mat.title),
-        el('p', mat.description || 'Tài liệu tóm tắt bài học', 'meta')
-      );
-
-      const fileUrl = `/api/pwa/materials/${encodeURIComponent(mat.course_id)}/${encodeURIComponent(mat.id)}/file`;
-      const isCached = cache ? Boolean(await cache.match(fileUrl)) : false;
-
+      const ic = el('span', '', 'doc-ic'); ic.append(icon('file', 'ic'));
+      desc.append(el('h3', d.tieu_de), el('p', [d.mo_ta, `PDF · ${size(Number(d.size) || 0)}`].filter(Boolean).join(' · '), 'meta'));
       const actions = el('div', '', 'actions');
-      const statusBadge = el('span', isCached ? 'Đã lưu offline' : 'Chưa tải', 'offline-label');
-      statusBadge.style.fontSize = '13px';
-      statusBadge.style.color = isCached ? 'var(--blue)' : 'var(--muted)';
-      actions.append(statusBadge);
-
-      if (isCached) {
-        actions.append(button('Mở xem', async () => {
-          if (!cache) return;
-          const res = await cache.match(fileUrl);
-          if (res) {
-            const blob = await res.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-          }
-        }));
-        actions.append(button('Xóa offline', async () => {
-          if (!cache) return;
-          await cache.delete(fileUrl);
-          await materials();
-          notify('Đã xóa bản offline của tài liệu.');
-        }, 'danger'));
-      } else {
-        actions.append(button('Tải về học offline', async () => {
-          if (!navigator.onLine) {
-            notify('Cần có kết nối mạng để tải tài liệu.', true);
-            return;
-          }
-          try {
-            notify('Đang tải tài liệu PDF...');
-            const fetchHeaders = session?.token ? { Authorization: `Bearer ${session.token}` } : {};
-            const res = await fetch(fileUrl, { headers: fetchHeaders });
-            if (!res.ok) throw new Error(`Tải lỗi HTTP ${res.status}`);
-            if (cache) await cache.put(fileUrl, res.clone());
-            await materials();
-            notify('Đã tải tài liệu về máy thành công.');
-          } catch (err) {
-            report(err instanceof Error ? err : new Error('Không thể tải tài liệu.'));
-          }
-        }, 'primary'));
-      }
-
-      card.append(desc, actions);
-      list.append(card);
+      const id = encodeURIComponent(String(d.file_id || ''));
+      actions.append(button('Mở xem', () => { window.open(`https://drive.google.com/file/d/${id}/view`, '_blank', 'noopener'); }, 'primary'),
+        button('Tải về', () => { window.open(`https://drive.google.com/uc?export=download&id=${id}`, '_blank', 'noopener'); }));
+      card.append(ic, desc, actions); list.append(card);
     }
   } catch {
     if (generation !== viewGeneration) return;
@@ -1173,6 +1125,7 @@ form('tutor-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (!navigator.onLine) { notify('Cần kết nối mạng để gửi câu hỏi.', true); return; }
   if (!tutorLesson || tutorPending) return;
+  if (thiApp.realExamOpen()) { const m = el('div', '', 'tutor-msg tutor-bot'); m.append(el('p', 'Lớp em đang có bài thi thật đang mở. Gia sư tạm nghỉ đến khi em nộp bài hoặc thầy cô khóa bài thi.')); node('tutor-messages').append(m); return; }
   const input = /** @type {HTMLInputElement} */ (node('tutor-input'));
   const text = input.value.trim();
   if (!text) return;
@@ -1184,7 +1137,7 @@ form('tutor-form').addEventListener('submit', async event => {
   msgs.append(userMsg);
 
   const loadingMsg = el('div', '', 'tutor-msg tutor-bot is-loading');
-  loadingMsg.append(el('p', 'Thầy/Cô đang suy nghĩ…'));
+  const dots = el('p', '', 'typing-dots'); dots.setAttribute('aria-label', 'Gia sư đang soạn câu trả lời'); dots.append(el('span'), el('span'), el('span')); loadingMsg.append(dots);
   msgs.append(loadingMsg);
   msgs.scrollTop = msgs.scrollHeight;
 
@@ -1205,8 +1158,8 @@ form('tutor-form').addEventListener('submit', async event => {
     const res = await api('/pwa/tutor', { method: 'POST', body: payload, token: session?.token });
     loadingMsg.remove();
     const botMsg = el('div', '', 'tutor-msg tutor-bot');
-    renderMarkdown(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.');
     msgs.append(botMsg);
+    await typeOut(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.', () => { msgs.scrollTop = msgs.scrollHeight; });
     tutorHistory.push({ role: 'user', content: text });
     tutorHistory.push({ role: 'model', content: res.reply || '' });
     refreshTutorQuota().catch(() => {});
@@ -1221,7 +1174,7 @@ form('tutor-form').addEventListener('submit', async event => {
     } else if (errCode === 'AI_LOCKED') {
       messageText = 'Giáo viên đã tạm khóa gia sư với em. Hãy hỏi thầy/cô nhé.';
     } else if (errCode === 'AI_DISABLED_IN_EXAM') {
-      messageText = 'Đang trong giờ thi, gia sư tạm tắt.';
+      messageText = 'Thầy cô đang bật khóa Gia sư AI trong giờ kiểm tra. Khi thầy cô tắt, em hỏi lại nhé.';
     } else if (err && typeof err === 'object' && ('status' in err && err.status === 429)) {
       messageText = 'Gia sư đang nghỉ ngơi một chút, em hãy tự suy nghĩ thêm hoặc quay lại sau nhé!';
     }

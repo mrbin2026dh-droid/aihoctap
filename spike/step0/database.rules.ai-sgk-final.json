@@ -108,6 +108,34 @@
     "thi_gv": {
       ".read": true,
       ".write": false
+    },
+    "doc_read": {
+      ".read": true,
+      "$bai": {
+        "$ma": {
+          ".write": "$bai.length <= 120 && $ma.length <= 64",
+          ".validate": "newData.hasChildren(['pct','at']) && newData.child('pct').isNumber() && newData.child('pct').val() >= 0 && newData.child('pct').val() <= 100 && (!data.exists() || newData.child('pct').val() >= data.child('pct').val()) && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000",
+          "pct": {
+            ".validate": true
+          },
+          "at": {
+            ".validate": true
+          },
+          "ten": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "lop": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "tai_lieu": {
+      ".read": true,
+      ".write": false
     }
   }
 }

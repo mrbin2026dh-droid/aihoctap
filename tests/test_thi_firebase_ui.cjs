@@ -15,12 +15,14 @@ const seed=()=>({thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,
   b2:[{id:'r9',stt:1,text:'RAM là?',options:{A:'Bộ nhớ',B:'Ổ cứng'},answer:'A',points:10}]}});
 (async()=>{const b=await chromium.launch({args:['--host-resolver-rules=MAP thi.test 127.0.0.1','--unsafely-treat-insecure-origin-as-secure=http://thi.test:8198']});let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
 try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
- let db=seed();const writes=[];const workerCalls=[];const upl=[];
+ let db=seed();const writes=[];const workerCalls=[];const upl=[];const reviews=[];
  const ctx=await b.newContext({viewport:vp,serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
  await pg.route('**/api/**',async r=>{const p=new URL(r.request().url()).pathname;workerCalls.push(p);let body={schema_version:1,revision:'r',courses:[]};
   if(p.endsWith('/login')){await new Promise(x=>setTimeout(x,4000));body={token:'worker-token',must_change_pin:false};}
   if(p.endsWith('/pwa/me'))body={uid:'HS77',student_name:'Lê Cũ',class_code:'9A',grade:9};
-  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
+  if(p.endsWith('/pwa/tutor')){reviews.push(JSON.parse(r.request().postData()));body={reply:'**Nhận xét chung** Em làm rất tốt. **Cần ôn thêm** bộ nhớ máy tính.'}}
+  if(r.request().method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
+  r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(body)})});
  await pg.route('https://script.google.com/**',r=>{const p=JSON.parse(r.request().postData());upl.push(p);r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,ten_file:p.ten_file})})});
  await pg.route(DB+'/**',r=>{const u=new URL(r.request().url());const parts=u.pathname.replace(/\.json$/,'').split('/').filter(Boolean);const m=r.request().method();
   const getAt=()=>parts.reduce((o,k)=>o==null?undefined:o[k],db);
@@ -82,6 +84,9 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
  await pg.click('.thi-back');await pg.click('.thi-card:has-text("Ôn tập khối 9") button:has-text("Vào thi")');await pg.waitForSelector('.thi-form .question');
  await pg.click('.thi-form .option:has-text("Bộ nhớ")');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForSelector('.thi-stats');
  ok((await pg.textContent('.thi-score')).includes('10 / 10')&&await pg.isVisible('.thi-actions button:has-text("Làm lại")'),'thi thử (cho xem điểm): 10/10, có nút Làm lại');
+ await pg.waitForFunction(()=>!!document.querySelector('.thi-review-msg strong'),null,{timeout:8000});
+ ok((await pg.textContent('.thi-review')).includes('Nhận xét của Gia sư AI')&&(await pg.textContent('.thi-review-msg')).includes('Cần ôn thêm'),'thi thử: Gia sư AI tự nhận xét bài (hiệu ứng gõ chữ)');
+ const rv=reviews.at(-1);ok(rv.mode==='exam_review'&&rv.review.items.length===1&&rv.review.items[0].dung===true&&!JSON.stringify(rv).includes('"answer"'),'gửi AI câu hỏi + đúng/sai, không gửi đáp án');
  const stx=await pg.textContent('.thi-stats');ok(stx.includes('1/2')&&!(await pg.textContent('.thi-board')).includes('Bạn 9B'),'xếp hạng: hạng 1/2 trong lớp 9A, không tính bạn lớp khác');
  ok(await pg.locator('.thi-rank-row').count()===2&&(await pg.textContent('.thi-rank-row.is-me')).includes('(em)'),'bảng xếp hạng lớp, tô sáng dòng của em');
  await pg.click('.thi-actions button:has-text("Làm lại")');await pg.waitForSelector('.thi-form .question');await pg.click('.thi-form .option:has-text("Ổ cứng")');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForFunction(()=>(document.querySelector('.thi-score')?.textContent||'').includes('0 / 10'));

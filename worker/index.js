@@ -1267,6 +1267,27 @@ export async function rtdb(env, signingKeys, method, path, body) {
   return r;
 }
 
+/**
+ * Lời nhắc cho AI nhận xét một bài THI THỬ học sinh vừa nộp. Chỉ nhận câu hỏi + đúng/sai (không có đáp án đúng),
+ * cắt độ dài mọi trường để chống chèn lệnh; yêu cầu AI không nêu đáp án.
+ * @param {any} review
+ */
+export function buildExamReviewPrompt(review) {
+  const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').slice(0, n);
+  const items = (Array.isArray(review?.items) ? review.items : []).slice(0, 40)
+    .map((it, i) => `Câu ${Number(it?.stt) || i + 1}: ${it?.bo_trong ? 'BỎ TRỐNG' : (it?.dung ? 'ĐÚNG' : 'SAI')} — ${clip(it?.text, 240)}`);
+  return [
+    'Em là giáo viên Tin học THCS, nhận xét NGẮN GỌN bài thi thử một học sinh vừa nộp. Viết tiếng Việt, xưng "thầy/cô" và gọi "em", thân thiện, động viên.',
+    'TUYỆT ĐỐI KHÔNG nêu đáp án đúng, không nói phương án nào đúng/sai, không giải câu hỏi. Chỉ chỉ ra mảng kiến thức cần ôn.',
+    'Trình bày tối đa 150 từ theo 3 mục có tiêu đề in đậm: **Nhận xét chung** (điểm và mức độ), **Em làm tốt**, **Cần ôn thêm** (2–3 chủ đề rút ra từ nội dung các câu SAI/BỎ TRỐNG, mỗi chủ đề kèm một gợi ý ôn cụ thể).',
+    '',
+    `BÀI THI THỬ: ${clip(review?.title, 120)}`,
+    `ĐIỂM: ${Number(review?.diem) || 0}/${Number(review?.tong) || 0} · Đúng ${Number(review?.dung) || 0}/${Number(review?.so_cau) || items.length} câu`,
+    'KẾT QUẢ TỪNG CÂU (chỉ đúng/sai, không có đáp án):',
+    ...items
+  ].join('\n');
+}
+
 export async function requireTeacher(request, env, signingKeys, { allowMustChange = false, corsHeaders = {} } = {}) {
   const origin = request.headers.get('Origin') || '*';
   const defaultCors = {
@@ -4424,7 +4445,9 @@ export default {
 
       // Căn cứ trả lời lấy từ máy chủ; ở môi trường thật, thiếu bài học thì không gọi AI và không tốn lượt.
       const lessonForTutor = await loadPublicLesson(env, courseId, lessonId);
-      if (!lessonForTutor && !SecurityConfigContract.isMockModeAllowed(env)) {
+      // Nhận xét bài THI THỬ đã nộp (không gắn bài học): app gửi câu hỏi + đúng/sai, KHÔNG gửi đáp án đúng.
+      const isExamReview = requestData.mode === 'exam_review' && requestData.review && typeof requestData.review === 'object';
+      if (!lessonForTutor && !isExamReview && !SecurityConfigContract.isMockModeAllowed(env)) {
         return new Response(JSON.stringify({ detail: 'Hãy chọn một bài học để hỏi gia sư về bài đó.' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -4547,6 +4570,8 @@ export default {
             if (context?.curriculum_text) systemText += `\n\nTÀI LIỆU THAM KHẢO:\n"""\n${String(context.curriculum_text).slice(0, 4000)}\n"""`;
             if (context?.question_prompt) systemText += `\n\nCÂU HỎI HIỆN TẠI:\n"""\n${String(context.question_prompt).slice(0, 1000)}\n"""\n(Không bao giờ tiết lộ đáp án.)`;
           }
+
+          if (isExamReview) systemText = buildExamReviewPrompt(requestData.review);
 
           // Build multi-turn contents from history if available
           const contents = [];

@@ -13,10 +13,10 @@ function env() {
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     CacheService: { getScriptCache: () => ({ get: k => cacheMap[k] ?? null, put: (k, v) => { cacheMap[k] = v; }, remove: k => { delete cacheMap[k]; } }) }, Date,
     console, MimeType: { PLAIN_TEXT: 'text/plain' },
-    DriveApp: (() => { const mkF = (name, path) => { const f = { name, path, folders: {}, files: [], getId: () => path, getFoldersByName: n => { const x = f.folders[n]; let used = false; return { hasNext: () => !!x && !used, next: () => { used = true; return x; } }; }, createFolder: n => (f.folders[n] = mkF(n, path + '/' + n)),
+    DriveApp: (() => { const files = {}; const mkF = (name, path) => { const f = { name, path, folders: {}, files: [], getId: () => path, getFoldersByName: n => { const x = f.folders[n]; let used = false; return { hasNext: () => !!x && !used, next: () => { used = true; return x; } }; }, createFolder: n => (f.folders[n] = mkF(n, path + '/' + n)),
       getFilesByName: n => { const xs = f.files.filter(z => z.name === n && !z.trashed); let i = 0; return { hasNext: () => i < xs.length, next: () => xs[i++] }; },
-      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getId = () => path + '/' + z.name; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
-      const root = mkF('root', ''); return { getRootFolder: () => root, getFolderById: () => { throw new Error('x'); } }; })(),
+      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getId = () => path + '/' + z.name; z.setSharing = (acc, perm) => { z.sharing = acc + ':' + perm; }; z.moveTo = d => { z.moved = d.path; }; files[z.getId()] = z; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
+      const root = mkF('root', ''); return { Access: { ANYONE_WITH_LINK: 'link' }, Permission: { VIEW: 'view' }, getRootFolder: () => root, getFolderById: () => { throw new Error('x'); }, getFileById: id => { if (!files[id]) throw new Error('no'); return files[id]; } }; })(),
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; }, deleteProperty: k => { delete props[k]; } }) },
     Utilities: { base64Decode: b => [...Buffer.from(b, 'base64')], newBlob: (bytes, mime, name) => ({ bytes, mime, name }), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
     UrlFetchApp: { fetch: (url, opt) => {
@@ -189,6 +189,27 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   c({ action: 'gv_teacher_save', ma: 'GV01', ten: 'Cô Hoa', lop: '9A', trang_thai: 'Khóa' });
   ok(g({ action: 'gv_list', gv: '999999' }).error.includes('khóa') && !E.fbdb.thi_gv.gv01, 'khóa giáo viên → không vào được');
   ok(c({ action: 'gv_teacher_delete', ma: 'GV01' }).teachers.length === 0, 'xóa giáo viên');
+}
+// ---------- Tài liệu PDF → Google Drive, học sinh đúng khối xem qua Firebase ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
+  const pdf = Buffer.from('%PDF-1.4 test').toString('base64');
+  ok(c({ action: 'gv_doc_save', tieu_de: 'Đề cương', khoi: 9 }).error.includes('Chọn file PDF'), 'thêm tài liệu thiếu file → báo');
+  ok(c({ action: 'gv_doc_save', tieu_de: 'Ảnh', khoi: 9, ten_file: 'a.png', mime: 'image/png', data: pdf }).error.includes('PDF'), 'không phải PDF → chặn');
+  const r1 = c({ action: 'gv_doc_save', tieu_de: 'Đề cương HK1', khoi: 9, mo_ta: 'Ôn tập', ten_file: 'de-cuong.pdf', mime: 'application/pdf', data: pdf });
+  const d1 = r1.docs[0];
+  ok(r1.ok && d1.tieu_de === 'Đề cương HK1' && d1.khoi === 9 && d1.file_id.includes('/Tài liệu - Góc học tập/Khối 9/de-cuong.pdf'), 'tải PDF lên Drive: thư mục Tài liệu - Góc học tập / Khối 9');
+  ok(E.drive.find(f => f.name === 'de-cuong.pdf') && E.fbdb.tai_lieu[d1.id].file_id === d1.file_id && E.fbdb.tai_lieu[d1.id].khoi === 9, 'đẩy danh sách tài liệu lên Firebase cho học sinh');
+  const r2 = c({ action: 'gv_doc_save', id: d1.id, tieu_de: 'Đề cương HK1 (sửa)', khoi: 8 });
+  ok(r2.docs[0].tieu_de === 'Đề cương HK1 (sửa)' && r2.docs[0].khoi === 8 && r2.docs[0].file_id === d1.file_id, 'sửa tiêu đề, khối (giữ file)');
+  const r3 = c({ action: 'gv_doc_save', id: d1.id, tieu_de: 'Đề cương mới', khoi: 8, ten_file: 'moi.pdf', mime: 'application/pdf', data: pdf });
+  ok(r3.docs[0].file_id.endsWith('/Khối 8/moi.pdf') && r3.docs.length === 1, 'thay file mới (file cũ vào thùng rác)');
+  E.sheets.HocSinh.appendRow([9, 'X', '7A', 'hs7a01', '123456', '']);
+  c({ action: 'gv_teacher_save', moi: true, ma: 'GV7', ten: 'Cô Lan', lop: '7A', pin: '777777' });
+  const g = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: '777777', gv_ma: 'GV7', ...p }) } });
+  ok(g({ action: 'gv_docs' }).docs.length === 0 && g({ action: 'gv_doc_save', tieu_de: 'X', khoi: 8, ten_file: 'x.pdf', mime: 'application/pdf', data: pdf }).error.includes('khối thầy cô phụ trách'), 'giáo viên lớp 7A: chỉ thấy/đăng tài liệu khối 7');
+  ok(g({ action: 'gv_doc_save', tieu_de: 'Bài tập 7', khoi: 7, ten_file: 'bt7.pdf', mime: 'application/pdf', data: pdf }).docs.length === 1, 'giáo viên lớp đăng tài liệu khối mình');
+  const del = c({ action: 'gv_doc_delete', id: d1.id });
+  ok(del.docs.length === 1 && !E.fbdb.tai_lieu[d1.id], 'xóa tài liệu → gỡ khỏi Firebase');
 }
 for (let i = 0; i < 10; i++) call({ action: 'gv_list', gv: 'x' });
 ok(gv({ action: 'gv_list' }).error.includes('quá nhiều'), 'dò PIN giáo viên → khóa 10 phút');

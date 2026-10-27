@@ -6,6 +6,7 @@ import * as store from './thi-store.js';
 import { setState as presence } from './presence.js';
 import { el, icon, confirmBox, noticeBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
+import { typeOut } from './typing.js';
 
 /** @typedef {{ma:string,ten:string,lop:string,khoi:number}} Me */
 /** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean,noi_dung?:'tn'|'tn_th',hinh_thuc?:string,nam_hoc?:string}} Bai */
@@ -19,6 +20,7 @@ import { SHEET_API } from './sheet-config.js';
 /** @type {null|(() => void)} */ let stop = null;
 /** @type {{phase:'list'|'wait'|'exam'|'result', id:string, qs:Cau[], result?:any, fresh?:boolean}} */ let cur = { phase: 'list', id: '', qs: [] };
 let loaded = false, online = true, pin = '';
+/** @type {any} bài thi thử vừa nộp (để Gia sư AI nhận xét) */ let reviewData = null;
 
 const draftKey = (/** @type {string} */ id) => `thi-fb-${store.keyOf(me?.ma || '')}-${id}`;
 const readDraft = (/** @type {string} */ id) => { try { return JSON.parse(localStorage.getItem(draftKey(id)) || '{}'); } catch { return {}; } };
@@ -67,6 +69,11 @@ export function watchBadge(identity, cb) {
   if (!stop) stop = store.listen('thi_bai', d => { bai = d || {}; loaded = true; onChange(); }, ok => { online = ok; if (cur.phase === 'list' && root?.isConnected) draw(); });
   else updateBadge();
 }
+/** Có bài THI THẬT đang mở cho em mà em chưa nộp → Gia sư AI tạm nghỉ (tự động, không cần thầy cô bật). */
+export function realExamOpen() { return visible().some(([id, b]) => b.che_do === 'that' && b.trang_thai === 'mo' && !mine[id]); }
+/** @type {null|((review:any)=>Promise<string>)} */ let reviewer = null;
+/** app.js cung cấp hàm gọi Gia sư AI nhận xét bài thi thử (cần token Worker). @param {(review:any)=>Promise<string>} fn */
+export function setReviewer(fn) { reviewer = fn; }
 /** Đăng xuất: dừng nghe, tắt huy hiệu. */
 export function stopAll() { if (badgeCb) badgeCb(0); badgeCb = null; leave(); me = null; mine = {}; bai = {}; loaded = false; cur = { phase: 'list', id: '', qs: [] }; }
 /** Rời tab Thi (đăng xuất/đổi tab): dừng nghe. */
@@ -294,6 +301,7 @@ async function doSubmit(btn, err) {
     await store.put(`thi_nop/${cur.id}/${key}`, rec);
     clearDraft(cur.id); mine[cur.id] = { ...rec, at: Date.now() };
     void presence('da_nop');
+    reviewData = { id: cur.id, title: b.tieu_de, rec, items: cur.qs.map((q, i) => ({ stt: i + 1, text: q.text, dung: !!a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase(), bo_trong: !a[q.id] })) };
     if (b.xem_diem) await showStats(cur.id, true);
     else { cur = { phase: 'result', id: cur.id, qs: cur.qs, result: rec, fresh: true }; drawResult(); }
   } catch (e) {
@@ -354,7 +362,26 @@ function drawResult(all) {
     }
     board.append(ol); w.append(board);
   }
+  if (b && b.che_do === 'thu' && cur.fresh && reviewData && reviewData.id === cur.id) w.append(reviewBox(reviewData));
   actions(w, b); hero.tabIndex = -1; hero.focus?.();
+}
+/** Nhận xét bài thi thử: tóm tắt ngay (câu sai/bỏ trống), rồi Gia sư AI nhận xét có hiệu ứng gõ chữ. @param {any} rv */
+function reviewBox(rv) {
+  const box = el('section', '', 'thi-review'); box.setAttribute('aria-labelledby', 'thi-rv-title');
+  const head = el('div', '', 'thi-review-head'); const av = el('span', '', 'thi-review-av'); av.append(icon('spark', 'ic'));
+  const h = el('h3', 'Nhận xét của Gia sư AI'); h.id = 'thi-rv-title'; head.append(av, h); box.append(head);
+  const wrong = rv.items.filter((/** @type {any} */ x) => !x.dung);
+  box.append(el('p', wrong.length ? `Em cần xem lại ${wrong.length} câu: ${wrong.map((/** @type {any} */ x) => x.stt).join(', ')}.` : 'Em làm đúng tất cả các câu. Rất tốt!', 'meta'));
+  const msg = el('div', '', 'thi-review-msg'); box.append(msg);
+  if (!reviewer) { msg.append(el('p', 'Đăng nhập lại để Gia sư AI nhận xét chi tiết.', 'meta')); return box; }
+  const dots = el('p', 'Gia sư AI đang đọc bài của em', 'meta thi-typing-dots'); msg.append(dots);
+  const payload = { title: rv.title, diem: rv.rec.diem, tong: rv.rec.tong, dung: rv.rec.dung, so_cau: rv.rec.so_cau, items: rv.items };
+  void reviewer(payload).then(text => {
+    if (!box.isConnected) return;
+    if (!text) { msg.replaceChildren(el('p', 'Gia sư AI chưa nhận xét được lúc này. Em xem các câu sai ở trên và ôn lại bài nhé.', 'meta')); return; }
+    void typeOut(msg, text);
+  }).catch(() => { msg.replaceChildren(el('p', 'Gia sư AI chưa nhận xét được lúc này.', 'meta')); });
+  return box;
 }
 /** @param {HTMLElement} w @param {Bai|undefined} b */
 function actions(w, b) {

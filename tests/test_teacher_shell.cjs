@@ -10,7 +10,7 @@ const STUDENTS=[{id:'hs01',name:'Học sinh Thử 01',grade:9,class_code:'9A',di
 for(const vp of [{width:1280,height:800,n:'d'},{width:390,height:800,n:'m'}]){
 const ctx=await b.newContext({viewport:{width:vp.width,height:vp.height},serviceWorkers:'block'});const pg=await ctx.newPage();const reqs=[];const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 const sheetCalls=[];const STU=[{ma:'hs01',ten:'Học sinh thử 01',lop:'9A',trang_thai:'Hoạt động'},{ma:'hs02',ten:'Học sinh thử 02',lop:'9A',trang_thai:'Hoạt động'},{ma:'hs03',ten:'Học sinh thử 03',lop:'9B',trang_thai:'Hoạt động'}];
-await pg.route('https://script.google.com/**',r=>{const p=JSON.parse(r.request().postData());sheetCalls.push(p);const t=[{ma:'GV01',ten:'Cô Hoa',lop:['9A','9B'],trang_thai:'Hoạt động'}];r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action.startsWith('gv_teacher')?{ok:true,teachers:t}:p.action.startsWith('gv_student')?{ok:true,admin:true,students:STU,classes:{'9A':9,'9B':9}}:{ok:true,exams:[],bank:{},classes:{}})})});
+await pg.route('https://script.google.com/**',r=>{const p=JSON.parse(r.request().postData());sheetCalls.push(p);const t=[{ma:'GV01',ten:'Cô Hoa',lop:['9A','9B'],trang_thai:'Hoạt động'}];r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action.startsWith('gv_teacher')?{ok:true,teachers:t}:p.action.startsWith('gv_doc')?{ok:true,khoi:null,docs:[{id:'tl1',tieu_de:'Đề cương HK1',khoi:9,mo_ta:'',file_id:'F1',ten_file:'de-cuong.pdf',size:20480,at:'2026-10-27'}]}:p.action.startsWith('gv_student')?{ok:true,admin:true,students:STU,classes:{'9A':9,'9B':9}}:{ok:true,exams:[],bank:{},classes:{}})})});
 await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;const m=r.request().method();let body={};let post=null;try{post=r.request().postDataJSON()}catch{}
 reqs.push({m,u,post});
 let status=200;
@@ -67,14 +67,19 @@ assert(!(await pg.isVisible('#exams-preview-note')),T+'đã bỏ ghi chú dữ l
 await pg.click('#nav-sheetexam');await pg.waitForTimeout(300);assert(await pg.isVisible('#view-sheetexam')&&await pg.isVisible('#list-sheetexam'),T+'menu Thi mở được');assert.strictEqual(await pg.textContent('#workspace-title'),'Thi');assert(!(await pg.isVisible('#view-exams')),T+'menu Thi không còn hiện trang Về nhà');await pg.click('#nav-exams');await pg.waitForTimeout(300);
 await pg.click('#act-exams-new');await pg.waitForTimeout(200);assert(!(await pg.isDisabled('#form-exams button[type=submit]')),T+'nút Lưu đề hoạt động');
 if(SHOTS)await pg.screenshot({path:`${SHOTS}/${vp.n}-3-exams.png`,fullPage:true});
-// tài liệu
-await pg.click('#nav-materials');await pg.waitForTimeout(200);await pg.click('#act-materials-new');await pg.waitForTimeout(200);
-await pg.fill('[name=material_title]','Đề cương Tin học 9');
-const mid=await pg.inputValue('[name=material_id]');assert(/^[a-z0-9][a-z0-9_-]{0,63}$/.test(mid)&&mid.startsWith('de-cuong-tin-hoc-9'),T+'mã tài liệu tự sinh: '+mid);
-await pg.selectOption('#field-material-form-material_course_id','tin-hoc-9');await pg.fill('[name=material_drive_url]','https://drive.google.com/file/d/abc/view');
-const before=reqs.length;await pg.click('#material-form button[type=submit]');await pg.waitForTimeout(500);
-const posts=reqs.slice(before).filter(r=>r.u.endsWith('/pwa/teacher/materials'));assert.strictEqual(posts.length,1,T+'một yêu cầu đăng tài liệu');assert.strictEqual(posts[0].post.course_id,'tin-hoc-9');assert(await pg.isVisible('#msg-dialog'),T+'kết quả báo bằng hộp thoại');await ack();
-assert(await pg.isVisible('#list-materials'),T+'về danh sách sau khi lưu');
+// tài liệu: PDF ≤ 10 MB → Google Drive qua Google Sheet
+await pg.click('#nav-materials');await pg.waitForFunction(()=>document.querySelectorAll('#docs-body tr').length===1&&document.querySelector('#docs-body').textContent.includes('Đề cương'));
+assert.strictEqual(await pg.locator('#docs-body tr:first-child .t-icon-btn').count(),3,T+'mỗi tài liệu: mở xem, chỉnh sửa, xóa');
+await pg.click('#docs-add');await pg.waitForSelector('#docs-dialog[open]');await pg.click('#docs-save');await pg.waitForTimeout(100);
+assert.strictEqual(await pg.getAttribute('#docs-title-in','aria-invalid'),'true',T+'thiếu tiêu đề → báo dưới trường');
+await pg.fill('#docs-title-in','Đề cương Tin học 9');await pg.click('#docs-save');await pg.waitForTimeout(100);assert((await pg.textContent('#docs-file-err')).includes('Chọn file PDF'),T+'thiếu file → báo');
+await pg.setInputFiles('#docs-file-in',{name:'anh.png',mimeType:'image/png',buffer:Buffer.from('x')});await pg.click('#docs-save');await pg.waitForTimeout(100);assert((await pg.textContent('#docs-file-err')).includes('PDF'),T+'không phải PDF → báo');
+await pg.setInputFiles('#docs-file-in',{name:'big.pdf',mimeType:'application/pdf',buffer:Buffer.alloc(10*1024*1024+1)});await pg.click('#docs-save');await pg.waitForTimeout(100);assert((await pg.textContent('#docs-file-err')).includes('tối đa 10 MB'),T+'quá 10 MB → báo');
+await pg.setInputFiles('#docs-file-in',{name:'de-cuong.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4')});await pg.selectOption('#docs-khoi-in','9');
+await pg.click('#docs-save');await pg.waitForFunction(()=>!document.getElementById('docs-dialog').open);
+const dsv=sheetCalls.at(-1);assert(dsv.action==='gv_doc_save'&&dsv.tieu_de==='Đề cương Tin học 9'&&dsv.khoi===9&&dsv.ten_file==='de-cuong.pdf'&&Buffer.from(dsv.data,'base64').toString()==='%PDF-1.4',T+'tải PDF lên gửi đúng tiêu đề, khối, file');
+let nd=sheetCalls.length;await pg.locator('#docs-body tr:first-child .t-icon-btn').nth(2).click();await pg.waitForSelector('#msg-dialog[open]');assert((await pg.textContent('#msg-dialog')).includes('Xóa tài liệu?'),T+'xóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(150);assert.strictEqual(sheetCalls.length,nd,T+'Hủy = 0 yêu cầu');
+await pg.locator('#docs-body tr:first-child .t-icon-btn').nth(1).click();await pg.waitForSelector('#docs-dialog[open]');assert((await pg.inputValue('#docs-title-in'))==='Đề cương HK1'&&(await pg.textContent('#docs-file-hint')).includes('de-cuong.pdf'),T+'chỉnh sửa: điền sẵn, file cũ');await pg.click('#docs-cancel');
 // tài khoản (Google Sheet): tab Học sinh + tab Giáo viên
 await pg.click('#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===3);
 assert.strictEqual((await pg.textContent('#nav-accounts')).includes('Tài khoản'),true,T+'menu đổi tên Tài khoản');
