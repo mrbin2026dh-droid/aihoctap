@@ -1,32 +1,32 @@
 {
   "rules": {
     "rooms": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "remoteCommand": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "activeSession": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "lessons": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "sessionHistory": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "lessonPlans": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "questionBank": {
-      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
-      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
+      ".read": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && auth.token.role == null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "teachers": {
       ".read": false,
@@ -137,6 +137,29 @@
         ".read": "auth.uid === $uid",
         ".write": "auth.uid === $uid",
         ".validate": "newData.val() === now"
+      }
+    },
+    "presence": {
+      ".read": "auth != null && auth.token.role === 'teacher'",
+      ".write": "auth != null && auth.token.role === 'teacher'",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && auth.token.role === 'student'",
+        ".validate": "!newData.exists() || (newData.hasChildren(['state', 'at']) && newData.child('state').isString() && newData.child('state').val().length <= 20 && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000)",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "lop": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "state": {
+          ".validate": "newData.val().matches(/^(hoc|phong_cho|dang_thi|da_nop|offline)$/)"
+        },
+        "at": {
+          ".validate": true
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     }
   }

@@ -2,9 +2,11 @@
 // Menu "Thi" của giáo viên — mọi dữ liệu nằm trong một Google Sheet (apps-script/sheet-exam/Code.gs), không qua Worker.
 // Tạo bài thi (tiêu đề, thi thật/thử, khối, lớp) → học sinh đúng lớp vào phòng chờ (điểm danh) → Mở thi → theo dõi ai đã nộp.
 // Xác thực: app tự gửi PIN giáo viên vừa đăng nhập; giáo viên không phải nhập thêm mật khẩu.
+// Trạng thái trực tuyến (đang học / phòng chờ / đang thi / đã nộp) nhận TỨC THÌ từ Firebase (presence.js), không qua Worker.
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
+import * as presence from './presence.js?v=20261027d';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -16,6 +18,12 @@ const STATE = { chua: 'Chưa vào', vao: 'Đã vào', nop: 'Đã nộp' };
 /** @type {any} */ let info = null;
 /** @type {{text:string,options:Record<string,string>,answer:string,points:number}[]} */ let trialQuestions = [];
 let busyCount = 0;
+/** @type {Record<string, any>} */ let live = {};
+let watching = false;
+const timeAgo = (/** @type {number} */ at) => { const s = Math.max(0, Math.round((Date.now() - at) / 1000)); return s < 60 ? 'vừa xong' : s < 3600 ? Math.floor(s / 60) + ' phút trước' : new Date(at).toLocaleTimeString('vi-VN', { hour12: false, hour: '2-digit', minute: '2-digit' }); };
+/** Trạng thái hiển thị: quá 2,5 phút không có nhịp thì coi như mất kết nối. @param {any} p */
+const liveLabel = p => !p ? 'Chưa đăng nhập' : p.state === 'offline' ? 'Đã thoát' : (Date.now() - Number(p.at || 0) > presence.STALE_MS ? 'Mất kết nối' : presence.STATES[/** @type {keyof typeof presence.STATES} */ (p.state)] || p.state);
+const liveKey = (/** @type {string} */ ma) => Object.keys(live).find(k => k.toLowerCase() === String(ma).toLowerCase()) || '';
 
 /** @param {Record<string,unknown>} body */
 async function call(body) {
@@ -76,13 +84,13 @@ function render() {
   }
   const only = input('thi-gv-only').checked, rows = only ? sts.filter((/** @type {any} */ s) => s.state === 'chua') : sts;
   const body = $('thi-gv-body'); body.replaceChildren();
-  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', only ? 'Các em đã vào đủ.' : 'Không có học sinh nào thuộc lớp/khối này trong trang HocSinh.', 't-muted'); c.colSpan = 5; tr.append(c); body.append(tr); }
+  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', only ? 'Các em đã vào đủ.' : 'Không có học sinh nào thuộc lớp/khối này trong trang HocSinh.', 't-muted'); c.colSpan = 6; tr.append(c); body.append(tr); }
   for (const s of rows) {
     const tr = document.createElement('tr');
     const badge = document.createElement('span'); badge.className = 't-badge' + (s.state === 'chua' ? ' t-badge-error' : ''); badge.textContent = STATE[/** @type {keyof typeof STATE} */ (s.state)] || s.state;
     const act = document.createElement('button'); act.type = 'button'; act.className = 't-button'; act.textContent = 'Cho thi lại'; act.disabled = s.state !== 'nop' || ex.che_do !== 'that';
     act.addEventListener('click', () => void run(act, () => call({ action: 'gv_reset', ma: s.ma }), `Đã cho ${s.name} thi lại.`));
-    tr.append(td('Học sinh', `${s.name} (${s.ma})`), td('Lớp', s.lop), td('Trạng thái', badge), td('Điểm', s.score === null || s.score === undefined ? '—' : `${s.score}/${s.total}`, 't-number'), td('Thao tác', act));
+    tr.append(td('Học sinh', `${s.name} (${s.ma})`), td('Lớp', s.lop), td('Bài thi', badge), td('Trực tuyến', liveLabel(live[liveKey(s.ma)])), td('Điểm', s.score === null || s.score === undefined ? '—' : `${s.score}/${s.total}`, 't-number'), td('Thao tác', act));
     body.append(tr);
   }
   fillClasses();
@@ -97,6 +105,53 @@ async function run(btn, fn, okMsg) {
   finally { busyCount--; if (btn) { btn.removeAttribute('aria-busy'); btn.disabled = false; render(); } }
 }
 const load = (quiet = false) => run(null, () => call({ action: 'gv_info' }), quiet ? '' : '');
+
+/* ---------- Trực tuyến (Firebase, tức thì) ---------- */
+function renderLive() {
+  const sel = select('thi-live-lop'), keep = sel.value;
+  const lops = [...new Set(Object.values(live).map(p => String(p.lop || '')).filter(Boolean))].sort();
+  sel.replaceChildren(new Option('Tất cả lớp', ''), ...lops.map(l => new Option('Lớp ' + l, l)));
+  if (lops.includes(keep)) sel.value = keep;
+  const rows = Object.entries(live).filter(([, p]) => !sel.value || p.lop === sel.value).sort((a, b) => Number(b[1].at || 0) - Number(a[1].at || 0));
+  const on = (/** @type {string} */ st) => rows.filter(([, p]) => p.state === st && Date.now() - Number(p.at || 0) <= presence.STALE_MS).length;
+  const m = $('thi-live-metrics'); m.replaceChildren();
+  for (const [k, v] of [['Đang học', on('hoc')], ['Phòng chờ', on('phong_cho')], ['Đang thi', on('dang_thi')], ['Đã nộp', on('da_nop')]]) {
+    const w = document.createElement('div'), a = document.createElement('dt'), b = document.createElement('dd'); a.textContent = String(k); b.textContent = String(v); w.append(a, b); m.append(w);
+  }
+  const body = $('thi-live-body'); body.replaceChildren();
+  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', 'Chưa có học sinh nào trực tuyến.', 't-muted'); c.colSpan = 4; tr.append(c); body.append(tr); return; }
+  for (const [ma, p] of rows) {
+    const tr = document.createElement('tr'), label = liveLabel(p);
+    const badge = document.createElement('span'); badge.className = 't-badge' + (/Mất|thoát/.test(label) ? ' t-badge-error' : ''); badge.textContent = label;
+    tr.append(td('Học sinh', `${p.name || ma} (${ma})`), td('Lớp', String(p.lop || '')), td('Trạng thái', badge), td('Lúc', p.at ? timeAgo(Number(p.at)) : '—'));
+    body.append(tr);
+  }
+}
+async function startLive() {
+  if (watching) return;
+  if (!(await ensureTeacherTicket())) { $('thi-live-status').textContent = 'Chưa kết nối Firebase. Đăng xuất rồi đăng nhập lại tài khoản giáo viên.'; return; }
+  watching = true;
+  /** @type {Record<string,string>} */ let prev = {};
+  void presence.watch(map => {
+    live = map; renderLive(); if (info?.exam) render();
+    // Có em vừa nộp → lấy điểm từ Google Sheet ngay, không chờ chu kỳ.
+    const justSubmitted = Object.entries(map).some(([k, p]) => p.state === 'da_nop' && prev[k] !== 'da_nop');
+    prev = Object.fromEntries(Object.entries(map).map(([k, p]) => [k, p.state]));
+    if (justSubmitted && info?.exam && !busyCount) void load(true);
+  }, (st, why) => {
+    $('thi-live-status').textContent = st === 'live' ? 'Đang cập nhật tức thì từ Firebase.' : (why || 'Mất kết nối Firebase.');
+    if (st === 'off' && /Chưa có vé/.test(why || '')) watching = false;
+  });
+}
+/** Vé Firebase của giáo viên: lấy từ lần đăng nhập; nếu chưa có thì đổi token Worker (còn hạn 1 giờ) đang giữ trong phiên. */
+async function ensureTeacherTicket() {
+  try { if (localStorage.getItem('aisgk-presence-gv')) return true; } catch { /* bỏ qua */ }
+  let t = ''; try { t = sessionStorage.getItem('aisgk-pwa-teacher') || ''; } catch { /* bỏ qua */ }
+  return t ? presence.startTeacher(t) : false;
+}
+window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; if (t) void presence.startTeacher(t); });
+setInterval(() => { if (watching) renderLive(); }, 30000);   // cập nhật "x phút trước" và "Mất kết nối"
+select('thi-live-lop').addEventListener('change', renderLive);
 
 /* ---------- Đề thi thử từ Excel (cùng mẫu với phần Về nhà) ---------- */
 /** @type {Map<string, Promise<void>>} */ const scripts = new Map();
@@ -147,15 +202,15 @@ $('thi-gv-open').addEventListener('click', () => void run(button('thi-gv-open'),
 $('thi-gv-lock').addEventListener('click', () => void run(button('thi-gv-lock'), () => call({ action: 'gv_set', trang_thai: 'khoa' }), 'Đã KHÓA thi.'));
 $('thi-gv-refresh').addEventListener('click', () => void run(button('thi-gv-refresh'), () => call({ action: 'gv_info' }), ''));
 input('thi-gv-only').addEventListener('change', render);
-$('nav-sheetexam').addEventListener('click', () => void load());
+$('nav-sheetexam').addEventListener('click', () => { void load(); void startLive(); });
 // Giáo viên đổi PIN: báo Google Sheet PIN mới (xác thực bằng PIN cũ) để menu Thi tiếp tục dùng được.
 window.addEventListener('thi-gv-repin', ev => {
   const d = /** @type {CustomEvent} */ (ev).detail || {};
   void call({ gv: d.oldPin, action: 'gv_repin', new_gv: d.newPin }).then(() => { try { sessionStorage.setItem('thi-gv-mk', d.newPin); } catch { /* bỏ qua */ } }, () => { /* Sheet sẽ báo khi mở menu Thi */ });
 });
-// Tự cập nhật điểm danh / bài nộp mỗi 10 giây khi đang mở menu Thi.
+// Điểm và danh sách bài thi lấy lại từ Google Sheet mỗi 20 giây (trạng thái trực tuyến đã tức thì qua Firebase).
 setInterval(() => {
   const v = document.getElementById('view-sheetexam');
   if (v && !v.hidden && document.visibilityState === 'visible' && !busyCount && info?.exam && getPass()) void load(true);
-}, 10000);
+}, 20000);
 fillClasses();

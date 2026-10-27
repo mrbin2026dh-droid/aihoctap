@@ -24,6 +24,10 @@ const call = async (path, o = {}, token) => { const r = await worker.fetch(new R
 let r = await call('/login', {method:'POST', body:{student_id:'HS01', pin:'123456'}});
 assert.equal(r.status, 200, JSON.stringify(r.body)); assert.ok(r.body.token);
 assert.equal(r.body.name, 'Nguyễn Văn An'); assert.equal(r.body.class_code, '9A'); assert.equal(r.body.grade, 9); assert.equal(r.body.must_change_pin, false); assert.equal(r.body.uid, 'HS01');
+const fbp = JSON.parse(Buffer.from(String(r.body.fb_token).split('.')[1], 'base64url').toString());
+assert.equal(fbp.exp - fbp.iat, 3600, 'vé Firebase phải ≤ 1 giờ (Firebase từ chối custom token dài hơn)');
+assert.equal(fbp.uid, 'HS01'); assert.equal(fbp.claims.role, 'student'); assert.equal(fbp.claims.class_code, '9A');
+assert.ok(fbp.aud.includes('identitytoolkit'), 'vé Firebase đúng đối tượng Identity Toolkit');
 const me = await call('/pwa/me', {}, r.body.token); assert.equal(me.status, 200, JSON.stringify(me.body)); assert.equal(me.body.grade, 9); assert.equal(me.body.class_code, '9A');
 // viết hoa/thường: gõ hs01 vẫn vào, uid chuẩn theo Sheet
 r = await call('/login', {method:'POST', body:{student_id:'hs01', pin:'123456'}}); assert.equal(r.status, 200); assert.equal(r.body.uid, 'HS01');

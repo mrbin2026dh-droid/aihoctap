@@ -43,8 +43,8 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();
  await pg.check('#thi-gv-only');ok((await pg.$$('#thi-gv-body tr')).length===1&&(await pg.textContent('#thi-gv-body')).includes('Trần Thị Bình'),'lọc em chưa vào');await pg.uncheck('#thi-gv-only');
  await pg.click('#thi-gv-open');await pg.waitForTimeout(400);ok(st.exam.trang_thai==='mo'&&(await pg.textContent('#thi-gv-sub')).includes('MỞ'),'mở thi');
  ok(await pg.isDisabled('#thi-gv-open')&&!(await pg.isDisabled('#thi-gv-lock')),'đang mở: Mở tắt, Khóa bật');
- st.students[0].state='nop';await pg.waitForTimeout(10600);
- ok((await pg.textContent('#thi-gv-body')).includes('Đã nộp')&&(await pg.textContent('#thi-gv-body')).includes('7/10'),'tự cập nhật 10 giây: thấy em đã nộp + điểm');
+ st.students[0].state='nop';await pg.waitForTimeout(20600);
+ ok((await pg.textContent('#thi-gv-body')).includes('Đã nộp')&&(await pg.textContent('#thi-gv-body')).includes('7/10'),'tự cập nhật 20 giây từ Sheet: thấy em đã nộp + điểm');
  await pg.click('#thi-gv-body tr:first-child button');await pg.waitForTimeout(400);ok(st.calls.some(c=>c.action==='gv_reset'&&c.ma==='HS01'),'cho thi lại');
  await pg.click('#thi-gv-lock');await pg.waitForTimeout(400);ok(st.exam.trang_thai==='khoa','khóa thi');
  // thi thử: phải có file Excel; bài mới thay bài cũ cần xác nhận

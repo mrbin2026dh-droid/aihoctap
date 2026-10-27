@@ -3,6 +3,7 @@ import { api, ApiError, verifyPackage, isLocalhostBackend } from './api.js';
 import * as db from './db.js';
 import { renderExamList, initExams } from './exam.js';
 import * as fb from './fb.js';
+import * as presence from './presence.js';
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -196,6 +197,7 @@ function show(name) {
     renderStudentSettings(false);
   }
   for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'exams', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
+  if (session && name !== 'exams' && presence.currentState() !== 'hoc') void presence.setState('hoc');   // rời tab Thi → về Đang học
   const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name === 'result' ? 'practice' : name;
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
@@ -707,6 +709,7 @@ async function start() {
   catalog = /** @type {import('./contracts').Catalog|null} */ (await db.get('meta', 'catalog')) || null;
   identityUI(); renderCatalog();
   if (session) {
+    presence.resumeStudent();
     const saved = await db.get('meta', `active:${session.identity.uid}`);
     const restored = saved ? /** @type {Draft|undefined} */ (await db.get('drafts', saved.key)) : null;
     if (restored?.uid === session.identity.uid) { practice = Boolean(saved.practice); await openLesson(restored.lesson, restored); }
@@ -753,6 +756,7 @@ on('logout', async () => {
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
+  await presence.stopStudent();
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.
@@ -799,6 +803,7 @@ form('login-form').addEventListener('submit', async event => {
       const next = {token:response.token, identity};
       await db.put('meta', 'session', next); session = next;
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
+      void presence.startStudent(response.fb_token || '', identity);
       clearTeacherSession();
       // Cổng 2: đăng nhập song song hệ thống thi Firebase bằng cùng mã + PIN. Chưa có tài khoản Firebase thì bỏ qua (chỉ thấy đề Worker).
       fb.clear(); if (!isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});

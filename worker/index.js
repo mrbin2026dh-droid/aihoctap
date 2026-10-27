@@ -2511,8 +2511,16 @@ export default {
         12 * 3600
       );
 
+      // Vé Firebase 1 giờ (Firebase chỉ nhận custom token ≤ 1 giờ): app đổi lấy idToken để ghi trạng thái trực tuyến thẳng lên Firebase, không qua Worker.
+      let fbToken = '';
+      try {
+        fbToken = await createFirebaseCustomToken(uidForToken, { role: 'student', grade: studentCred.grade, class_code: studentCred.class_code, name: studentCred.name },
+          signingKeys.privateKey, env.FIREBASE_CLIENT_EMAIL, env.FIREBASE_PRIVATE_KEY_ID, 3600);
+      } catch (e) { console.error('[FB_TOKEN_ERROR]', e); }
+
       return new Response(JSON.stringify({
         token: token,
+        fb_token: fbToken,
         uid: uidForToken,
         name: studentCred.name,
         grade: studentCred.grade,

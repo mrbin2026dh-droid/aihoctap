@@ -1,6 +1,7 @@
 // @ts-check
 // Bài thi lấy thẳng từ Google Sheet (apps-script/sheet-exam/Code.gs). Đăng nhập Mã học sinh + PIN → Lấy đề → Nộp → Điểm.
 import { SHEET_API } from './sheet-config.js';
+import { setState as presence } from './presence.js';
 export { SHEET_API };
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -92,7 +93,7 @@ function enter(data) {
   if (!state) return;
   if (data.waiting) {
     $('wait-text').textContent = `${data.title || 'Bài thi'} — ${data.student.name}, lớp ${data.student.lop}. Thầy cô chưa mở thi.`;
-    show('wait');
+    show('wait'); void presence('phong_cho');
     clearTimeout(waitTimer);
     waitTimer = window.setTimeout(async () => {
       if (!state) return;
@@ -101,8 +102,8 @@ function enter(data) {
     }, 5000);
     return;
   }
-  if (data.student.done && data.mode !== 'thu') { renderResult(null, 'Em đã nộp bài này rồi'); return; }
-  renderExam();
+  if (data.student.done && data.mode !== 'thu') { renderResult(null, 'Em đã nộp bài này rồi'); void presence('da_nop'); return; }
+  renderExam(); void presence('dang_thi');
 }
 
 $('submit').addEventListener('click', () => {
@@ -120,12 +121,12 @@ $('confirm-ok').addEventListener('click', async () => {
     try {
       const r = await call({ action: 'submit', ma: state?.ma, pin: state?.pin, answers: answers() });
       try { localStorage.removeItem(draftKey()); } catch { /* bỏ qua */ }
-      renderResult(r);
+      renderResult(r); void presence('da_nop');
     } catch (e) { $('submit-error').textContent = (e instanceof Error ? e.message : 'Chưa nộp được.') + ' Bài làm vẫn còn trên máy.'; }
   });
 });
 const reset = () => { state = null; /** @type {HTMLFormElement} */ ($('login')).reset(); $('login-error').textContent = ''; show('login'); $('ma').focus(); };
-$('logout').addEventListener('click', () => { if (document.body.classList.contains('embedded')) { state = null; show('login'); $('login-error').textContent = 'Đã thoát bài thi. Bấm "Lấy đề" để vào lại.'; $('pin').focus(); } else reset(); });
+$('logout').addEventListener('click', () => { if (document.body.classList.contains('embedded')) { void presence('hoc'); state = null; show('login'); $('login-error').textContent = 'Đã thoát bài thi. Bấm "Lấy đề" để vào lại.'; $('pin').focus(); } else reset(); });
 $('done').addEventListener('click', reset);
 $('result-title').setAttribute('tabindex', '-1');
 
