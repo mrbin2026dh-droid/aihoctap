@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã pull 5ec1f98, chạy toàn bộ bộ test trên Windows ĐẠT 100%, xác nhận GitHub Pages live mang dấu SW b8619930f9fcc54fc16ed6ff và appsScriptUrl bz5b5d; hướng dẫn người dùng dán Code.gs New version, chạy setup(), kiemTraHeThong() và thử vòng soạn đề theo docs/handoff/antigravity-nguoidung-truoc-cong5.md.
+- Yêu cầu mới nhất: Người dùng đã chạy kiemTraHeThong() ĐẠT TOÀN BỘ trên Apps Script; Antigravity kiểm thử Cổng 4 live ĐẠT và bàn giao Claude kiểm định Cổng 5 tại docs/handoff/antigravity-claude-kiem-dinh-apps-script-cong5.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1817,3 +1817,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: aisgk.md, docs/handoff/antigravity-nguoidung-truoc-cong5.md.
 - Kiểm thực tế: 10/10 bộ test PASS 100% trên Windows, Pages live đồng bộ.
 - Việc tiếp: Người dùng dán Code.gs mới vào Apps Script, Deploy New version, chạy setup() tạo DE_mau, chạy kiemTraHeThong(), thử 1 vòng soạn đề thật theo handoff.
+
+### 27/10/2026 — Antigravity — Bàn giao Claude: kiemTraHeThong() ĐẠT TOÀN BỘ và Cổng 4 ĐẠT
+- Đã thực hiện: Ghi nhận nhật ký Apps Script kiemTraHeThong() do người dùng chạy (OAuth chủ dự án, Drive, Sổ điểm, Trigger đều ĐẠT); chạy debug live load_gate4.mjs (5 HS, RTDB live) in "=== CỔNG 4 ĐẠT ===", 5/5 trả điểm tức thì qua Apps Script Web App.
+- Tệp đổi/tạo: docs/handoff/antigravity-claude-kiem-dinh-apps-script-cong5.md, aisgk.md.
+- Kiểm thực tế: Apps Script log ĐẠT TOÀN BỘ; load_gate4.mjs PASS; 10/10 test Windows PASS.
+- Việc tiếp: Chuyển Claude rà soát và hướng dẫn bước tiếp theo cho Cổng 5.
