@@ -161,7 +161,7 @@ async function expireSession() {
     pin?.focus();
   } finally { expiring = false; }
 }
-initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', getIdentity: () => session?.identity || null, onClose: () => {}});   // tab Thi: thẳng danh sách bài trên Firebase, không đăng nhập lại
+initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', getIdentity: () => session?.identity || null, getPin: () => session?.pin || (() => { try { return JSON.parse(sessionStorage.getItem('thi-cred') || '{}').pin || ''; } catch { return ''; } })(), onClose: () => {}});   // tab Thi: thẳng danh sách bài trên Firebase, không đăng nhập lại
 window.addEventListener('aisgk:unauthorized', () => { void expireSession(); });
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }
@@ -192,6 +192,7 @@ function identityUI() {
   if (accountSection) accountSection.hidden = !session;
   node('login-form').hidden = Boolean(session);
   node('account-info').hidden = !session;
+  const settingsLogout = document.getElementById('settings-logout'); if (settingsLogout) settingsLogout.hidden = !session;
   node('account-info').textContent = session ? `${session.identity.student_name} · Lớp ${session.identity.class_code}` : '';
   const changePinForm = node('student-change-pin-form');
   if (changePinForm) changePinForm.hidden = !session;
@@ -747,6 +748,7 @@ on('account', () => {
   }
 });
 on('close-login', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).close());
+document.getElementById('settings-logout')?.addEventListener('click', () => document.getElementById('logout')?.click());
 if (document.getElementById('close-account')) {
   on('close-account', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).close());
 }

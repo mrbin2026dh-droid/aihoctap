@@ -14,7 +14,7 @@ const KIND_LABEL = { '15m': 'Kiểm tra 15 phút', period: 'Kiểm tra 1 tiết'
 const AUTOSAVE_MS = 1500;
 const HEARTBEAT_MS = 30000;
 
-/** @typedef {{getToken:()=>string|null,getUid:()=>string,onClose:()=>void,getIdentity?:()=>any}} Host */
+/** @typedef {{getToken:()=>string|null,getUid:()=>string,onClose:()=>void,getIdentity?:()=>any,getPin?:()=>string}} Host */
 /** @type {Host|null} */
 let host = null;
 /** Thiết lập nguồn token/uid của học sinh. @param {Host} h */
@@ -52,7 +52,7 @@ export async function renderExamList(target, loggedIn) {
   // Bài thi chạy thẳng trên Firebase (nhanh, tức thì): vẽ ngay trong tab Thi.
   const identity = host?.getIdentity?.();
   if (SHEET_EXAM && thiStore.enabled()) {
-    if (loggedIn && identity) { thiApp.render(target, identity); return; }
+    if (loggedIn && identity) { thiApp.render(target, identity, host?.getPin?.() || ''); return; }
     note('Đăng nhập để thi', 'Đăng nhập bằng Mã học sinh và Mã PIN, mục Thi sẽ hiện các bài thầy cô đã mở.'); return;
   }
   if (SHEET_EXAM) {

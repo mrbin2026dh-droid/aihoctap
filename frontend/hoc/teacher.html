@@ -248,7 +248,13 @@
 <div class="t-field"><label for="thi-new-khoi">Khối</label><select id="thi-new-khoi"><option value="9">Khối 9</option><option value="8">Khối 8</option><option value="7">Khối 7</option><option value="6">Khối 6</option></select></div>
 <div class="t-field"><label for="thi-new-lop">Lớp được vào thi</label><select id="thi-new-lop"><option value="">Cả khối</option></select></div>
 </div>
+<div class="t-form-grid thi-that-fields" id="thi-that-fields">
+<div class="t-field"><label for="thi-new-nam">Năm học</label><select id="thi-new-nam"></select></div>
+<div class="t-field"><label for="thi-new-ht">Hình thức thi</label><select id="thi-new-ht"><option>15 phút</option><option>Giữa kỳ I</option><option>Cuối kỳ I</option><option>Giữa kỳ II</option><option>Cuối kỳ II</option><option>Khác</option></select></div>
+<div class="t-field"><label for="thi-new-nd">Nội dung thi</label><select id="thi-new-nd"><option value="tn">Trắc nghiệm</option><option value="tn_th">Trắc nghiệm + Thực hành (học sinh nộp file)</option></select></div>
+</div>
 <p class="t-hint" id="thi-new-bank" aria-live="polite"></p>
+<section id="thi-q-editor" class="thi-qe-wrap" hidden aria-labelledby="thi-qe-title"><div class="t-heading"><div><h3 id="thi-qe-title">Câu hỏi</h3><p class="t-muted" id="thi-qe-note"></p></div><button type="button" id="thi-qe-add" class="t-button">Thêm câu</button></div><div id="thi-qe-list"></div></section>
 <div class="t-actions" id="thi-new-file-row" hidden><button type="button" id="thi-new-template" class="t-button">Tải mẫu Excel đề</button><label class="t-file" for="thi-new-file">Tải lên Excel đề thi thử<input id="thi-new-file" type="file" accept=".xlsx"></label></div>
 <div class="t-actions"><button type="submit" id="thi-new-create" class="t-button t-primary">Tạo bài thi</button><button type="button" id="thi-new-cancel" class="t-button" hidden>Hủy sửa</button></div>
 </form>
@@ -258,8 +264,13 @@
 <section class="t-card">
 <div class="t-heading"><div><h2 id="thi-gv-title">Thống kê bài thi</h2><p class="t-muted" id="thi-gv-sub"></p></div><div class="t-heading-actions"><button type="button" id="thi-gv-toggle" class="t-button t-primary">Mở thi</button><button type="button" id="thi-gv-refresh" class="t-button">Làm mới</button></div></div>
 <dl class="t-metrics" id="thi-gv-metrics" aria-busy="false"></dl>
+<div class="t-tabs" role="tablist" aria-label="Thống kê bài thi" id="thi-st-tabs" hidden><button type="button" id="tab-thi-kq" role="tab" aria-selected="true" aria-controls="tabpanel-thi-kq" tabindex="0">Kết quả</button><button type="button" id="tab-thi-td" role="tab" aria-selected="false" aria-controls="tabpanel-thi-td" tabindex="-1">Theo dõi nộp bài</button></div>
+<div role="tabpanel" id="tabpanel-thi-kq" aria-labelledby="tab-thi-kq">
 <div class="t-toolbar t-toolbar-actions-only"><label class="t-check" for="thi-gv-only"><input id="thi-gv-only" type="checkbox">Chỉ hiện em chưa vào</label></div>
 <table class="t-table" id="thi-gv-table"><caption>Học sinh của bài thi</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Bài thi</th><th scope="col">Trực tuyến</th><th scope="col" class="t-number">Điểm</th><th scope="col">Thao tác</th></tr></thead><tbody id="thi-gv-body"><tr><td colspan="6" class="t-muted">Chưa có dữ liệu.</td></tr></tbody></table>
+</div>
+<div role="tabpanel" id="tabpanel-thi-td" aria-labelledby="tab-thi-td" hidden><div id="thi-track" class="thi-track" aria-live="polite"></div></div>
+
 </section>
 </section>
 </section>
@@ -457,6 +468,6 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261027j"></script>
+<script type="module" src="./teacher.js?v=20261027k"></script>
 </body>
 </html>

@@ -17,7 +17,8 @@ var DT_HEAD = DE_HEAD.concat(['Mã bài thi']);
 var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy', 'Mã nộp'];
 /** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
 var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
-var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm'];
+var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm', 'Năm học', 'Hình thức', 'Nội dung'];
+var HINH_THUC = ['15 phút', 'Giữa kỳ I', 'Cuối kỳ I', 'Giữa kỳ II', 'Cuối kỳ II', 'Khác'];
 var DD_HEAD = ['Mã bài thi', 'Mã học sinh', 'Vào lúc'];
 
 function doGet(e) { return route_((e && e.parameter) || {}); }
@@ -35,6 +36,7 @@ function route_(p) {
     if (p.action === 'exams') return out_(list_(hs));
     if (p.action === 'exam') return out_(enter_(hs, p.ma_de));
     if (p.action === 'submit') return out_(submit_(hs, p.ma_de, p.answers || {}));
+    if (p.action === 'nop_th') return out_(nopThucHanh_(hs, String(p.ma_de || ''), p));
     throw new Error('Yêu cầu không hợp lệ.');
   } catch (err) { return out_({ ok: false, error: err.message }); }
 }
@@ -107,13 +109,17 @@ function setConfig_(key, val) {
 /** Mọi bài thi chưa xóa. Mỗi phần tử: {row, ma_de, tieu_de, che_do, khoi, lop, trang_thai, tao_luc}. */
 function exams_() {
   var sh = ensure_(SH_BT, BT_HEAD), v = sh.getDataRange().getValues(), out = [];
-  if (v.length && String(v[0][7] || '').trim() !== 'Xem điểm') sh.getRange(1, 8).setValue('Xem điểm');
+  if (v.length) for (var c = 7; c < BT_HEAD.length; c++) if (String(v[0][c] || '').trim() !== BT_HEAD[c]) sh.getRange(1, c + 1).setValue(BT_HEAD[c]);
   for (var r = 1; r < v.length; r++) {
     var id = String(v[r][0] || '').trim(); if (!id || String(v[r][5]).trim() === 'xoa') continue;
-    out.push({ row: r + 1, ma_de: id, tieu_de: String(v[r][1] || '').trim(), che_do: String(v[r][2]).trim() === 'that' ? 'that' : 'thu', khoi: Number(v[r][3]) || 0, lop: String(v[r][4] || '').trim(), trang_thai: String(v[r][5]).trim() === 'mo' ? 'mo' : 'khoa', tao_luc: v[r][6] instanceof Date ? v[r][6].toISOString() : String(v[r][6] || ''), xem_diem: String(v[r][7] || '').trim() === 'co' });
+    out.push({ row: r + 1, ma_de: id, tieu_de: String(v[r][1] || '').trim(), che_do: String(v[r][2]).trim() === 'that' ? 'that' : 'thu', khoi: Number(v[r][3]) || 0, lop: String(v[r][4] || '').trim(), trang_thai: String(v[r][5]).trim() === 'mo' ? 'mo' : 'khoa', tao_luc: v[r][6] instanceof Date ? v[r][6].toISOString() : String(v[r][6] || ''), xem_diem: xemOf_(v[r][7], v[r][2]), nam_hoc: String(v[r][8] || '').trim(), hinh_thuc: String(v[r][9] || '').trim(), noi_dung: String(v[r][10] || '').trim() === 'tn_th' ? 'tn_th' : 'tn' });
   }
   return out;
 }
+/** Ô "Xem điểm": co / khong; để trống = thi thử cho xem, thi thật ẩn. */
+function xemOf_(v, che) { v = String(v || '').trim(); return v === 'co' ? true : v === 'khong' ? false : String(che).trim() !== 'that'; }
+/** Năm học hiện tại, ví dụ 2026-2027 (năm học mới bắt đầu tháng 8). */
+function namHoc_() { var d = new Date(), y = d.getFullYear(); return d.getMonth() >= 7 ? y + '-' + (y + 1) : (y - 1) + '-' + y; }
 function exam_(maDe) {
   var list = exams_();
   for (var i = 0; i < list.length; i++) if (list[i].ma_de === String(maDe)) return list[i];
@@ -255,6 +261,7 @@ function teacher_(p) {
   var a = p.action;
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); setConfig_('mat_khau_gv', np); return { ok: true }; }
   if (a === 'gv_stats') return stats_(String(p.ma_de || ''));
+  if (a === 'gv_questions') { var exq = exam_(String(p.ma_de || '')); return { ok: true, ma_de: exq.ma_de, che_do: exq.che_do, khoi: exq.khoi, questions: questionsFor_(exq) }; }
   if (a === 'gv_publish') { var n = publish_(); var info = info_(); info.published = n; return info; }
   if (a === 'gv_create') create_(p);
   else if (a === 'gv_update') update_(p);
@@ -285,21 +292,48 @@ function create_(p) {
   var ex = { che_do: che, khoi: khoi, ma_de: String(new Date().getTime()) };
   if (che === 'that') { if (!countBank_(ex)) throw new Error('Trang DeThi trong Google Sheet chưa có câu cho khối ' + khoi + '.'); }
   else { if (!(p.questions || []).length) throw new Error('Tải file Excel đề thi thử lên trước.'); writeQuestions_(ex.ma_de, khoi, p.questions); }
-  ensure_(SH_BT, BT_HEAD).appendRow([ex.ma_de, title, che, khoi, lop, 'khoa', new Date().toISOString(), che === 'thu' ? 'co' : '']);   // thi thử: mặc định cho xem điểm
+  var nam = String(p.nam_hoc || '').trim() || namHoc_(), ht = HINH_THUC.indexOf(String(p.hinh_thuc || '')) >= 0 ? String(p.hinh_thuc) : (che === 'that' ? 'Khác' : '');
+  ensure_(SH_BT, BT_HEAD).appendRow([ex.ma_de, title, che, khoi, lop, 'khoa', new Date().toISOString(), che === 'thu' ? 'co' : 'khong', che === 'that' ? nam : '', ht, che === 'that' && p.noi_dung === 'tn_th' ? 'tn_th' : 'tn']);
 }
 function update_(p) {
   var ex = exam_(String(p.ma_de || '')), sh = sheet_(SH_BT);
   var title = String(p.tieu_de === undefined ? ex.tieu_de : p.tieu_de).trim(), khoi = p.khoi === undefined ? ex.khoi : (Number(p.khoi) || 0), lop = String(p.lop === undefined ? ex.lop : p.lop).trim();
   if (!title) throw new Error('Nhập tiêu đề bài thi.');
   if (!khoi) throw new Error('Chọn khối.');
-  if (ex.che_do === 'thu' && p.questions && p.questions.length) writeQuestions_(ex.ma_de, khoi, p.questions);
+  if (p.questions && p.questions.length) saveQuestions_(ex, khoi, p.questions);
   sh.getRange(ex.row, 2).setValue(title); sh.getRange(ex.row, 4).setValue(khoi); sh.getRange(ex.row, 5).setValue(lop);
+  if (ex.che_do === 'that') {
+    if (p.nam_hoc !== undefined) sh.getRange(ex.row, 9).setValue(String(p.nam_hoc || '').trim() || namHoc_());
+    if (HINH_THUC.indexOf(String(p.hinh_thuc || '')) >= 0) sh.getRange(ex.row, 10).setValue(String(p.hinh_thuc));
+    if (p.noi_dung === 'tn' || p.noi_dung === 'tn_th') sh.getRange(ex.row, 11).setValue(p.noi_dung);
+  }
+}
+/** Câu hỏi của bài để giáo viên sửa (kèm đáp án). Thi thật: các câu của khối trong DeThi; thi thử: các câu của bài trong DeThiThu. */
+function questionsFor_(ex) {
+  var qs = []; try { qs = questions_(ex, { lop: '' }); } catch (e) { qs = []; }
+  return qs.map(function (q) { return { id: q.id, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
+}
+/** Lưu câu hỏi giáo viên sửa: thi thử thay đề của bài; thi thật thay các câu của khối đó trong DeThi (giữ câu các khối khác). */
+function saveQuestions_(ex, khoi, qs) {
+  qs = (qs || []).filter(function (q) { return String(q && q.text || '').trim(); });
+  if (!qs.length) throw new Error('Bài thi cần ít nhất một câu hỏi.');
+  qs.forEach(function (q, i) {
+    var o = q.options || {}, n = ['A', 'B', 'C', 'D'].filter(function (L) { return String(o[L] || '').trim(); });
+    if (n.length < 2) throw new Error('Câu ' + (i + 1) + ': cần ít nhất 2 phương án.');
+    if (n.indexOf(String(q.answer || '').toUpperCase()) < 0) throw new Error('Câu ' + (i + 1) + ': đáp án đúng phải là một phương án có nội dung.');
+  });
+  if (ex.che_do === 'thu') { writeQuestions_(ex.ma_de, khoi, qs); return; }
+  var d = sheet_(SH_DE), v = d.getDataRange().getValues(), keep = [];
+  for (var r = 1; r < v.length; r++) { var k = khoiOf_(v[r][1]); if (String(v[r][2] || '').trim() && k !== khoi) keep.push(v[r].slice(0, 9)); }
+  qs.forEach(function (q, i) { var o = q.options || {}; keep.push([i + 1, khoi, String(q.text).trim(), o.A || '', o.B || '', o.C || '', o.D || '', String(q.answer).toUpperCase(), Number(q.points) || 1]); });
+  d.clear(); d.appendRow(DE_HEAD); d.setFrozenRows(1);
+  if (keep.length) d.getRange(2, 1, keep.length, 9).setValues(keep);
 }
 /** Mở/khóa (trang_thai) và/hoặc cho học sinh xem điểm, xếp hạng (xem_diem: 'co' | 'khong'). */
 function setStatus_(maDe, st, xem) {
   var ex = exam_(maDe), done = false;
   if (st === 'mo' || st === 'khoa') { sheet_(SH_BT).getRange(ex.row, 6).setValue(st); done = true; }
-  if (xem === 'co' || xem === 'khong') { sheet_(SH_BT).getRange(ex.row, 8).setValue(xem === 'co' ? 'co' : ''); done = true; }
+  if (xem === 'co' || xem === 'khong') { sheet_(SH_BT).getRange(ex.row, 8).setValue(xem); done = true; }
   if (!done) throw new Error('Trạng thái không hợp lệ.');
 }
 /** Xóa = ẩn khỏi danh sách (giữ nguyên điểm trong KetQua). */
@@ -326,7 +360,7 @@ function info_() {
   exams_().forEach(function (ex) {
     var res = allRes[ex.ma_de] || {}, vis = allVis[ex.ma_de] || {}, n = 0, vao = 0, nop = 0;
     st.forEach(function (s) { if (!allowed_(s, ex)) return; n++; var k = norm_(s.ma); if (res[k]) nop++; else if (vis[k]) vao++; });
-    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
+    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
   });
   list.sort(function (a, b) { return String(b.tao_luc).localeCompare(String(a.tao_luc)); });
   var bank = {}; [6, 7, 8, 9].forEach(function (k) { bank[k] = (bc.khoi[k] || 0) + bc.khoiFree; });
@@ -334,11 +368,13 @@ function info_() {
 }
 /** Chi tiết một bài thi: từng học sinh thuộc đối tượng với trạng thái chưa vào / đã vào / đã nộp. */
 function stats_(maDe) {
-  var ex = exam_(maDe), res = results_(maDe), vis = visited_(maDe), out = [];
+  var ex = exam_(maDe), res = results_(maDe), vis = visited_(maDe), out = [], lan = {};
+  var kq = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_KQ);
+  if (kq) { var kv = kq.getDataRange().getValues(); for (var i = 1; i < kv.length; i++) if (String(kv[i][9]) === maDe && String(kv[i][10] || '') !== 'Hủy') { var kk = norm_(kv[i][1]); lan[kk] = (lan[kk] || 0) + 1; } }
   students_().forEach(function (s) {
     if (!allowed_(s, ex)) return;
     var k = norm_(s.ma), r = res[k];
-    out.push({ name: s.name, lop: s.lop, ma: s.ma, state: r ? 'nop' : (vis[k] ? 'vao' : 'chua'), last: vis[k] || '', score: r ? r.score : null, total: r ? r.total : null });
+    out.push({ name: s.name, lop: s.lop, ma: s.ma, state: r ? 'nop' : (vis[k] ? 'vao' : 'chua'), last: vis[k] || '', score: r ? r.score : null, total: r ? r.total : null, lan: lan[k] || 0 });
   });
   return { ok: true, exam: { ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, questions: countBank_(ex) }, students: out };
 }
@@ -372,7 +408,7 @@ function publish_() {
   var bai = {}, de = {}, list = exams_();
   list.forEach(function (ex) {
     var qs = []; try { qs = questions_(ex, { lop: '' }); } catch (e) { qs = []; }
-    bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem };
+    bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung };
     de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
   });
   fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de });
@@ -384,19 +420,64 @@ function pull_() {
   var all = fb_('get', 'thi_nop') || {}, kq = ensure_(SH_KQ, KQ_HEAD), v = kq.getDataRange().getValues(), seen = {}, rows = [];
   if (String(kq.getRange(1, 12).getValue()).trim() !== 'Mã nộp') kq.getRange(1, 12).setValue('Mã nộp');
   for (var i = 1; i < v.length; i++) if (v[i][11]) seen[String(v[i][11])] = 1;
-  var ex = {}; exams_().forEach(function (e) { ex[e.ma_de] = e; });
+  var ex = {}, archive = []; exams_().forEach(function (e) { ex[e.ma_de] = e; });
   Object.keys(all).forEach(function (maDe) {
     var byHs = all[maDe] || {};
     Object.keys(byHs).forEach(function (k) {
       var n = byHs[k] || {}, id = maDe + '|' + k + '|' + (n.at || '');
       if (seen[id]) return;
       var ans = n.tra_loi || {}, line = Object.keys(ans).map(function (q) { return q + ':' + ans[q]; }).join('  ');
+      if (ex[maDe] && ex[maDe].che_do === 'that') archive.push({ ex: ex[maDe], n: n });
       rows.push([n.at ? new Date(Number(n.at)) : new Date(), n.ma || k, n.ten || '', n.lop || '', Number(n.diem) || 0, Number(n.tong) || 0, (n.dung || 0) + '/' + (n.so_cau || 0), line, (ex[maDe] && ex[maDe].che_do === 'that') ? 'Thi thật' : 'Thi thử', maDe, '', id]);
     });
   });
   if (rows.length) kq.getRange(kq.getLastRow() + 1, 1, rows.length, 12).setValues(rows);
+  // Lưu bài thi thật vào Google Drive: Bài thi - Góc học tập / Năm học / Lớp / Hình thức - Tiêu đề / Mã - Họ tên.txt
+  archive.forEach(function (a) { try { saveTxt_(a.ex, a.n); } catch (e) { console.error('[DRIVE]', e.message); } });
   return rows.length;
 }
+/* ---------- Lưu bài thi thật trên Google Drive theo lớp ---------- */
+function child_(parent, name) { var it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
+function safeName_(s) { return String(s || '').replace(/[\\/:*?"<>|]/g, ' ').trim(); }
+/** Thư mục của một bài thi cho một lớp: Bài thi - Góc học tập / Năm học / Lớp … / Hình thức - Tiêu đề. */
+function folderFor_(ex, lop) {
+  var pr = PropertiesService.getScriptProperties(), id = pr.getProperty('DRIVE_ROOT'), root = null;
+  if (id) { try { root = DriveApp.getFolderById(id); } catch (e) { root = null; } }
+  if (!root) { root = child_(DriveApp.getRootFolder(), 'Bài thi - Góc học tập'); pr.setProperty('DRIVE_ROOT', root.getId()); }
+  return child_(child_(child_(root, ex.nam_hoc || namHoc_()), 'Lớp ' + (lop || 'chưa rõ')), safeName_((ex.hinh_thuc || 'Khác') + ' - ' + ex.tieu_de));
+}
+/** File chữ một bài làm: từng câu, các phương án, đáp án đúng, em chọn, đúng/sai, điểm. */
+function saveTxt_(ex, n) {
+  var qs = []; try { qs = questions_(ex, { lop: n.lop || '' }); } catch (e) { qs = []; }
+  var ans = n.tra_loi || {}, lines = [
+    'BÀI THI: ' + ex.tieu_de, 'Năm học: ' + (ex.nam_hoc || '') + ' · Hình thức: ' + (ex.hinh_thuc || '') + ' · Nội dung: ' + (ex.noi_dung === 'tn_th' ? 'Trắc nghiệm + Thực hành' : 'Trắc nghiệm'),
+    'Học sinh: ' + (n.ten || '') + ' (' + (n.ma || '') + ') · Lớp ' + (n.lop || ''), 'Nộp lúc: ' + (n.at ? new Date(Number(n.at)).toLocaleString('vi-VN') : ''),
+    'ĐIỂM: ' + n.diem + '/' + n.tong + ' · Đúng ' + (n.dung || 0) + '/' + (n.so_cau || qs.length) + ' câu', ''];
+  qs.forEach(function (q, i) {
+    var mine = String(ans[q.id] || '').toUpperCase(), ok = mine && mine === q.answer;
+    lines.push('Câu ' + (i + 1) + ' (' + q.points + ' điểm): ' + q.text);
+    Object.keys(q.options).forEach(function (L) { lines.push('   ' + L + '. ' + q.options[L]); });
+    lines.push('   Đáp án đúng: ' + q.answer + ' · Em chọn: ' + (mine || '(bỏ trống)') + ' · ' + (ok ? 'ĐÚNG' : 'SAI'), '');
+  });
+  var f = folderFor_(ex, n.lop), name = safeName_((n.ma || '') + ' - ' + (n.ten || '')) + '.txt', it = f.getFilesByName(name);
+  while (it.hasNext()) it.next().setTrashed(true);   // nộp lại sau khi giáo viên cho thi lại: giữ bản mới nhất
+  f.createFile(name, lines.join('\n'), MimeType.PLAIN_TEXT);
+}
+/** Học sinh nộp bài thực hành (bài thi thật "Trắc nghiệm + Thực hành"): lưu file vào thư mục lớp trên Drive. */
+function nopThucHanh_(hs, maDe, p) {
+  var ex = exam_(maDe);
+  if (!allowed_(hs, ex)) throw new Error('Bài thi này không dành cho lớp em.');
+  if (ex.noi_dung !== 'tn_th') throw new Error('Bài thi này không có phần thực hành.');
+  if (ex.trang_thai !== 'mo') throw new Error('Bài thi đang khóa. Báo thầy cô.');
+  var name = safeName_(p.ten_file || 'thuc-hanh').slice(0, 120), data = String(p.data || '');
+  if (!data) throw new Error('Chưa chọn file.');
+  var bytes = Utilities.base64Decode(data);
+  if (bytes.length > 10 * 1024 * 1024) throw new Error('File quá lớn (tối đa 10 MB).');
+  var f = folderFor_(ex, hs.lop), file = f.createFile(Utilities.newBlob(bytes, String(p.mime || 'application/octet-stream'), safeName_(hs.ma + ' - ' + hs.name) + ' - Thực hành - ' + name));
+  if (fbOn_()) { try { fb_('put', 'thi_th/' + maDe + '/' + fbKey_(hs.ma), { ten_file: name, at: { '.sv': 'timestamp' } }); } catch (e) { /* đã lưu Drive */ } }
+  return { ok: true, ten_file: name, id: file.getId() };
+}
+
 function caiKhoaFirebase() {
   var ui = SpreadsheetApp.getUi();
   var r = ui.prompt('Cài khóa Firebase', 'Dán "Database secret" (Firebase Console → Cài đặt dự án → Service accounts → Database secrets):', ui.ButtonSet.OK_CANCEL);

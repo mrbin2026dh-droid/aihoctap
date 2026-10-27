@@ -5,9 +5,10 @@
 import * as store from './thi-store.js';
 import { setState as presence } from './presence.js';
 import { el, icon, confirmBox } from './dom.js';
+import { SHEET_API } from './sheet-config.js';
 
 /** @typedef {{ma:string,ten:string,lop:string,khoi:number}} Me */
-/** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean}} Bai */
+/** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean,noi_dung?:'tn'|'tn_th',hinh_thuc?:string,nam_hoc?:string}} Bai */
 /** @typedef {{id:string,stt?:number|string,text:string,options:Record<string,string>,answer:string,points:number}} Cau */
 
 /** @type {HTMLElement|null} */ let root = null;
@@ -17,7 +18,7 @@ import { el, icon, confirmBox } from './dom.js';
 /** @type {Record<string, Cau[]>} */ const deCache = {};
 /** @type {null|(() => void)} */ let stop = null;
 /** @type {{phase:'list'|'wait'|'exam'|'result', id:string, qs:Cau[], result?:any, fresh?:boolean}} */ let cur = { phase: 'list', id: '', qs: [] };
-let loaded = false, online = true;
+let loaded = false, online = true, pin = '';
 
 const draftKey = (/** @type {string} */ id) => `thi-fb-${store.keyOf(me?.ma || '')}-${id}`;
 const readDraft = (/** @type {string} */ id) => { try { return JSON.parse(localStorage.getItem(draftKey(id)) || '{}'); } catch { return {}; } };
@@ -33,8 +34,8 @@ const visible = () => Object.entries(bai || {}).filter(([, b]) => b && forMe(b) 
  * Vẽ tab Thi. Gọi mỗi lần học sinh mở tab.
  * @param {HTMLElement} target @param {{uid:string,student_name:string,class_code:string,grade:number}} identity
  */
-export function render(target, identity) {
-  root = target;
+export function render(target, identity, studentPin = '') {
+  root = target; pin = studentPin || pin;
   const next = { ma: identity.uid, ten: identity.student_name, lop: identity.class_code, khoi: Number(identity.grade) || 0 };
   if (!me || me.ma !== next.ma) { mine = {}; cur = { phase: 'list', id: '', qs: [] }; loaded = false; }
   me = next;
@@ -45,8 +46,11 @@ export function render(target, identity) {
 /** Rời tab Thi (đăng xuất/đổi tab): dừng nghe. */
 export function leave() { if (stop) { stop(); stop = null; } }
 
+let lastSeen = '';
 function onChange() {
   const b = bai[cur.id];
+  // Trang kết quả: chỉ vẽ lại khi chính bài này đổi (ví dụ thầy cô bật/tắt Cho xem điểm), tránh nháy màn hình.
+  if (cur.phase === 'result') { const sig = JSON.stringify(b || null); if (sig === lastSeen) return; lastSeen = sig; }
   if (cur.phase === 'wait' && b && b.trang_thai === 'mo') { void startExam(cur.id); return; }
   if ((cur.phase === 'wait' || cur.phase === 'exam') && !b) { cur = { phase: 'list', id: '', qs: [] }; }
   if (cur.phase === 'exam') { lockBanner(); return; }
@@ -94,9 +98,12 @@ function drawList() {
     else if (done) parts.push('Đã nộp');
     info.append(el('h3', b.tieu_de, 'thi-card-title'), tags, el('p', parts.join(' · '), 'meta thi-card-meta'));
     const acts = el('div', '', 'thi-card-actions');
-    if (done && xem) acts.append(btn('Kết quả', 'thi-btn-ghost', () => void showStats(id)));
+    if (done && xem) {   // nút biểu tượng thống kê: điểm, số lần thi, xếp hạng lớp
+      const sb = btn('', 'thi-icon-btn', () => void showStats(id)); sb.append(icon('chart', 'ic')); sb.setAttribute('aria-label', 'Kết quả và xếp hạng: ' + b.tieu_de); sb.title = 'Kết quả và xếp hạng'; acts.append(sb);
+    }
     if (that && done) { if (!xem) acts.append(el('span', 'Đã nộp bài', 'meta thi-done')); }
-    else acts.append(btn(open ? (done ? 'Làm lại' : 'Vào thi') : 'Vào phòng chờ', 'primary thi-go', () => void openExam(id)));
+    else if (open) acts.append(btn(done ? 'Làm lại' : 'Vào thi', 'primary thi-go', () => void openExam(id)));
+    else acts.append(el('span', 'Chờ thầy cô mở', 'meta thi-done'));   // chưa mở: không có nút, tránh vào nhầm
     card.append(info, acts); ul.append(card);
   }
   w.append(ul);
@@ -113,8 +120,8 @@ function drawList() {
 async function openExam(id) {
   const b = bai[id]; if (!b || !me) return;
   if (b.che_do === 'that' && mine[id]) { if (b.xem_diem) await showStats(id); return; }
+  if (b.trang_thai !== 'mo') return;   // chỉ vào được khi thầy cô đã mở
   void store.put(`thi_vao/${id}/${store.keyOf(me.ma)}`, store.SERVER_TIME).catch(() => {});   // điểm danh
-  if (b.trang_thai !== 'mo') { cur = { phase: 'wait', id, qs: [] }; drawWait(); void presence('phong_cho'); return; }
   await startExam(id);
 }
 /* ---------- Phòng chờ ---------- */
@@ -172,7 +179,35 @@ function drawExam() {
   const update = () => { const n = Object.keys(answers()).length; count.textContent = `Đã làm ${n}/${cur.qs.length} câu`; };
   f.addEventListener('change', () => { saveDraft(cur.id, answers()); update(); });
   f.addEventListener('submit', ev => { ev.preventDefault(); void doSubmit(submit, err); });
-  bar.append(count, exit, submit); f.append(err, bar); w.append(f); update(); lockBanner();
+  bar.append(count, exit, submit);
+  if (b.noi_dung === 'tn_th') f.append(practical(cur.id));
+  f.append(err, bar); w.append(f); update(); lockBanner();
+}
+/** Phần thực hành: chọn file, tải lên Google Drive của thầy cô (qua Google Sheet). @param {string} id */
+function practical(id) {
+  const box = el('section', '', 'thi-practical'); box.setAttribute('aria-labelledby', 'thi-th-title');
+  const h = el('h3', 'Bài thực hành'); h.id = 'thi-th-title';
+  const inp = /** @type {HTMLInputElement} */ (el('input')); inp.type = 'file'; inp.id = 'thi-th-file';
+  const lab = el('label', 'Chọn file bài làm (tối đa 10 MB)'); lab.setAttribute('for', 'thi-th-file');
+  const st = el('p', '', 'meta thi-th-status'); st.setAttribute('role', 'status');
+  const done = (() => { try { return localStorage.getItem(`thi-th-${store.keyOf(me?.ma || '')}-${id}`) || ''; } catch { return ''; } })();
+  if (done) st.textContent = `Đã nộp file: ${done}. Có thể nộp lại file khác.`;
+  const up = btn('Tải bài thực hành lên', 'thi-btn-ghost thi-th-up', async () => {
+    const file = inp.files?.[0]; st.classList.remove('is-bad');
+    if (!file) { st.textContent = 'Chọn file trước.'; st.classList.add('is-bad'); inp.focus(); return; }
+    if (file.size > 10 * 1024 * 1024) { st.textContent = 'File quá lớn (tối đa 10 MB).'; st.classList.add('is-bad'); return; }
+    up.disabled = true; up.setAttribute('aria-busy', 'true'); const old = up.textContent; up.textContent = 'Đang tải lên…';
+    try {
+      const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(new Error('Không đọc được file.')); r.readAsDataURL(file); });
+      const resp = await fetch(SHEET_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'nop_th', ma: me?.ma, pin, ma_de: id, ten_file: file.name, mime: file.type, data }) });
+      const d = await resp.json().catch(() => ({}));
+      if (!d.ok) throw new Error(d.error || 'Chưa tải lên được, thử lại.');
+      try { localStorage.setItem(`thi-th-${store.keyOf(me?.ma || '')}-${id}`, file.name); } catch { /* bỏ qua */ }
+      st.textContent = `Đã nộp file: ${file.name}.`;
+    } catch (e) { st.textContent = (e instanceof Error ? e.message : 'Chưa tải lên được.'); st.classList.add('is-bad'); }
+    finally { up.disabled = false; up.removeAttribute('aria-busy'); up.textContent = old; }
+  });
+  box.append(h, lab, inp, up, st); return box;
 }
 function lockBanner() {
   const box = root?.querySelector('.thi-lock'); const b = bai[cur.id]; if (!box) return;
@@ -208,8 +243,9 @@ async function doSubmit(btn, err) {
 async function showStats(id, fresh = false) {
   const b = bai[id]; if (!b || !me) return;
   if (!b.xem_diem) { cur = { phase: 'result', id, qs: [], result: mine[id], fresh }; drawResult(); return; }
-  cur = { phase: 'result', id, qs: [], result: mine[id], fresh };
-  const w = page(b.tieu_de, 'Đang tải kết quả…'); w.append(el('p', 'Đang tải kết quả…', 'meta thi-loading'));
+  const again = cur.phase === 'result' && cur.id === id && !!root?.querySelector('.thi-stats');
+  cur = { phase: 'result', id, qs: [], result: mine[id], fresh }; lastSeen = JSON.stringify(b);
+  if (!again) { const w = page(b.tieu_de, 'Đang tải kết quả…'); w.append(el('p', 'Đang tải kết quả…', 'meta thi-loading')); }
   /** @type {Record<string, any>} */ let all = {};
   try { all = (await store.get('thi_nop/' + id)) || {}; } catch { /* vẫn hiện điểm của em */ }
   if (cur.phase !== 'result' || cur.id !== id) return;

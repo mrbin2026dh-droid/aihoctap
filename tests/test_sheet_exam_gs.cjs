@@ -3,7 +3,7 @@ const fs = require('fs'), vm = require('vm'), path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '../apps-script/sheet-exam/Code.gs'), 'utf8');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 function env() {
-  const sheets = {}, cacheMap = {}, props = {}, fbdb = {}, fbCalls = [];
+  const sheets = {}, cacheMap = {}, props = {}, fbdb = {}, fbCalls = [], drive = [];
   const mk = name => { const sh = { name, rows: [], appendRow(r) { this.rows.push([...r]); }, clear() { this.rows.length = 0; }, setFrozenRows() {}, getLastRow() { return this.rows.length; },
     getDataRange() { const rows = this.rows; return { getValues: () => rows.map(r => [...r]) }; },
     getRange(r, c) { if (typeof r === 'string') return { setNumberFormat() {} }; const rows = this.rows; return { getValue: () => (rows[r - 1] || [])[c - 1] ?? '', setValue: v => { (rows[r - 1] ||= [])[c - 1] = v; }, setValues: vs => vs.forEach((row, i) => row.forEach((v, j) => { (rows[r - 1 + i] ||= [])[c - 1 + j] = v; })) }; } };
@@ -12,8 +12,13 @@ function env() {
   const ctx = { SpreadsheetApp: { getActiveSpreadsheet: () => ss, getUi: () => ({}) }, ContentService: { createTextOutput: t => ({ setMimeType: () => JSON.parse(t) }), MimeType: { JSON: 'j' } },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     CacheService: { getScriptCache: () => ({ get: k => cacheMap[k] ?? null, put: (k, v) => { cacheMap[k] = v; }, remove: k => { delete cacheMap[k]; } }) }, Date,
+    console, MimeType: { PLAIN_TEXT: 'text/plain' },
+    DriveApp: (() => { const mkF = (name, path) => { const f = { name, path, folders: {}, files: [], getId: () => path, getFoldersByName: n => { const x = f.folders[n]; let used = false; return { hasNext: () => !!x && !used, next: () => { used = true; return x; } }; }, createFolder: n => (f.folders[n] = mkF(n, path + '/' + n)),
+      getFilesByName: n => { const xs = f.files.filter(z => z.name === n && !z.trashed); let i = 0; return { hasNext: () => i < xs.length, next: () => xs[i++] }; },
+      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getId = () => path + '/' + z.name; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
+      const root = mkF('root', ''); return { getRootFolder: () => root, getFolderById: () => { throw new Error('x'); } }; })(),
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; }, deleteProperty: k => { delete props[k]; } }) },
-    Utilities: { DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
+    Utilities: { base64Decode: b => [...Buffer.from(b, 'base64')], newBlob: (bytes, mime, name) => ({ bytes, mime, name }), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
     UrlFetchApp: { fetch: (url, opt) => {
       const u = new URL(url); fbCalls.push({ method: opt.method, path: u.pathname, auth: u.searchParams.get('auth') });
       const parts = u.pathname.replace(/\.json$/, '').split('/').filter(Boolean);
@@ -26,7 +31,7 @@ function env() {
       else if (opt.method === 'delete') setAt(undefined);
       return { getResponseCode: () => 200, getContentText: () => JSON.stringify(out) };
     } } };
-  vm.createContext(ctx); vm.runInContext(src, ctx); return { ctx, sheets, props, fbdb, fbCalls };
+  vm.createContext(ctx); vm.runInContext(src, ctx); return { ctx, sheets, props, fbdb, fbCalls, drive };
 }
 const { ctx, sheets } = env();
 const call = p => ctx.doPost({ postData: { contents: JSON.stringify(p) } });
@@ -130,9 +135,24 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   c({ action: 'gv_list' }); c({ action: 'gv_list' });
   const rows = E.sheets.KetQua.rows.filter(r => r[9] === id);
   ok(rows.length === 1 && rows[0][4] === 5 && rows[0][8] === 'Thi thật' && rows[0][11].startsWith(id + '|hs9a01|'), 'mở danh sách → điểm trên Firebase chép về KetQua, không chép trùng');
+  const txt = E.drive.find(f => f.path.endsWith('hs9a01 - Nguyễn Văn An.txt'));
+  ok(txt && txt.path.includes('/Bài thi - Góc học tập/') && txt.path.includes('/Lớp 9A/Khác - TT/') && txt.content.includes('Đáp án đúng: A · Em chọn: A · ĐÚNG') && txt.content.includes('Em chọn: (bỏ trống) · SAI') && txt.content.includes('ĐIỂM: 5/10'), 'thi thật: lưu file chữ bài làm lên Drive theo Năm học / Lớp / Hình thức - Tiêu đề');
   const rs = c({ action: 'gv_reset', ma_de: id, ma: 'HS9A01' });
   ok(rs.ok && !E.fbdb.thi_nop[id].hs9a01 && E.sheets.KetQua.rows.find(r => r[9] === id)[10] === 'Hủy', 'cho thi lại → xóa bài nộp trên Firebase + đánh dấu Hủy');
   c({ action: 'gv_delete', ma_de: id });
+  const r2 = c({ action: 'gv_create', tieu_de: 'Cuối kỳ', che_do: 'that', khoi: 9, lop: '9A', nam_hoc: '2026-2027', hinh_thuc: 'Cuối kỳ I', noi_dung: 'tn_th' });
+  const e2 = r2.exams.find(e => e.tieu_de === 'Cuối kỳ');
+  ok(e2.nam_hoc === '2026-2027' && e2.hinh_thuc === 'Cuối kỳ I' && e2.noi_dung === 'tn_th' && E.fbdb.thi_bai[e2.ma_de].noi_dung === 'tn_th', 'thi thật: lưu năm học, hình thức, Trắc nghiệm + Thực hành');
+  const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
+  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai.docx', data: 'aGVsbG8=' }).error.includes('khóa'), 'nộp thực hành khi bài khóa → chặn');
+  c({ action: 'gv_set', ma_de: e2.ma_de, trang_thai: 'mo' });
+  const th = call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai.docx', mime: 'application/msword', data: 'aGVsbG8=' });
+  ok(th.ok && E.drive.some(f => f.path.endsWith('/Lớp 9A/Cuối kỳ I - Cuối kỳ/hs9a01 - Nguyễn Văn An - Thực hành - bai.docx')) && E.fbdb.thi_th[e2.ma_de].hs9a01.ten_file === 'bai.docx', 'nộp thực hành → file vào thư mục lớp trên Drive + báo Firebase');
+  const qd = c({ action: 'gv_questions', ma_de: e2.ma_de });
+  ok(qd.questions.length === 2 && qd.questions[0].answer === 'A', 'giáo viên lấy câu hỏi kèm đáp án để sửa');
+  ok(c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Q?', options: { A: 'x' }, answer: 'A', points: 1 }] }).error.includes('ít nhất 2 phương án'), 'sửa câu hỏi: kiểm phương án');
+  c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Câu mới?', options: { A: 'x', B: 'y' }, answer: 'B', points: 4 }] });
+  ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === 'B', 'lưu câu hỏi đã sửa → Sheet và Firebase');
   ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
 }
 for (let i = 0; i < 10; i++) call({ action: 'gv_list', gv: 'x' });

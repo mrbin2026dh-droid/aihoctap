@@ -44,9 +44,8 @@ try{
  ok(w.body.name==='Nguyễn Văn An'&&w.body.lop==='9A'&&w.body.at['.sv']==='timestamp','kèm họ tên, lớp, giờ máy chủ Firebase');
  ok(!st.writes.some(x=>JSON.stringify(x).includes('123456')),'không gửi PIN lên Firebase');
  await pg.click('.bottom-nav [data-tab="exams"]');
- await pg.click('.thi-card button:has-text("Vào phòng chờ")');
- ok(await waitState('phong_cho'),'tab Thi, bài đang khóa → "Phòng chờ thi"');
- st.fdb.thi_bai.g1.trang_thai='mo';ok(await waitState('dang_thi',12000),'thầy cô mở thi → "Đang thi"');
+ await pg.waitForSelector('.thi-card');ok(await pg.locator('.thi-card button').count()===0,'tab Thi, bài đang khóa → chưa vào được (không có phòng chờ)');
+ st.fdb.thi_bai.g1.trang_thai='mo';await pg.click('.thi-card button:has-text("Vào thi")',{timeout:12000});ok(await waitState('dang_thi',12000),'thầy cô mở thi → vào bài → "Đang thi"');
  await pg.click('.thi-form .option >> nth=0');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');
  ok(await waitState('da_nop'),'nộp bài → "Đã nộp"');
  await pg.click('.bottom-nav [data-tab="progress"]');ok(await waitState('hoc'),'rời tab Thi → "Đang học"');

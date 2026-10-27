@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027j';
-import * as ui from './teacher-ui.js?v=20261027j';
+import * as presence from './presence.js?v=20261027k';
+import * as ui from './teacher-ui.js?v=20261027k';
 import * as store from './thi-store.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -27,15 +27,16 @@ let busyCount = 0;
 /** @type {Record<string, any>|null} */ let fbHs = null;
 /** @type {Record<string, any>} */ let fbVao = {};
 /** @type {Record<string, any>} */ let fbNop = {};
+/** @type {Record<string, any>} bài thực hành đã nộp */ let fbTh = {};
 /** @type {Array<() => void>} */ let fbStops = [];
 /** Dùng Firebase khi Google Sheet đã cài khóa Firebase và đã có danh sách học sinh trên Firebase. */
 const useFb = () => !!info?.fb && fbHs !== null && Object.keys(fbHs).length > 0;
 function startFb() {
   if (fbStops.length || !store.enabled()) return;
   const refresh = () => { if (!useFb() || busyCount) return; renderList(); if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
-  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; refresh(); }), store.listen('thi_vao', d => { fbVao = d || {}; refresh(); }), store.listen('thi_nop', d => { fbNop = d || {}; refresh(); })];
+  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; refresh(); }), store.listen('thi_vao', d => { fbVao = d || {}; refresh(); }), store.listen('thi_nop', d => { fbNop = d || {}; refresh(); }), store.listen('thi_th', d => { fbTh = d || {}; refresh(); })];
 }
-function stopFb() { fbStops.forEach(f => f()); fbStops = []; fbHs = null; fbVao = {}; fbNop = {}; }
+function stopFb() { fbStops.forEach(f => f()); fbStops = []; fbHs = null; fbVao = {}; fbNop = {}; fbTh = {}; }
 /** @param {any} e @param {any} s */
 const inScope = (e, s) => e.lop ? String(s.lop || '').trim().toLowerCase() === String(e.lop).trim().toLowerCase() : Number(s.khoi) === Number(e.khoi);
 /** Thống kê một bài từ Firebase: ai chưa vào / đã vào / đã nộp + điểm. @param {string} id */
@@ -43,7 +44,7 @@ function fbStats(id) {
   const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === id); if (!e) return null;
   const vao = fbVao[id] || {}, nop = fbNop[id] || {};
   const students = Object.entries(fbHs || {}).filter(([, s]) => s && inScope(e, s)).map(([k, s]) => {
-    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null };
+    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null, lan: n ? (Number(n.lan) || 1) : 0, th: (fbTh[id] || {})[k] || null };
   }).sort((a, b) => (a.lop + a.name).localeCompare(b.lop + b.name, 'vi'));
   return { ok: true, exam: e, students };
 }
@@ -101,11 +102,67 @@ function fillClasses() {
 }
 function bankHint() {
   const that = select('thi-new-mode').value === 'that', k = select('thi-new-khoi').value;
-  $('thi-new-file-row').hidden = that;
+  $('thi-new-file-row').hidden = that; $('thi-that-fields').hidden = !that;
   const n = info?.bank?.[k] ?? null;
   $('thi-new-bank').textContent = that
     ? (n === null ? 'Câu hỏi lấy từ trang DeThi của Google Sheet theo khối đã chọn.' : `Trang DeThi trong Google Sheet có ${n} câu cho khối ${k}.` + (n ? '' : ' Thêm câu vào Sheet trước khi tạo bài.'))
     : (trialQuestions.length ? `Đã nhận ${trialQuestions.length} câu trắc nghiệm từ file Excel.` : 'Tải file Excel đề thi thử (dùng mẫu Excel của app).');
+}
+
+/** Năm học: năm trước, năm nay, năm sau (năm học mới bắt đầu tháng 8). */
+function fillYears(/** @type {string} */ keep = '') {
+  const d = new Date(), y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1, sel = select('thi-new-nam');
+  const list = [y - 1, y, y + 1].map(a => `${a}-${a + 1}`); if (keep && !list.includes(keep)) list.unshift(keep);
+  sel.replaceChildren(...list.map(v => new Option(v, v))); sel.value = keep || `${y}-${y + 1}`;
+}
+
+/* ---------- Sửa câu hỏi / đáp án (khi Chỉnh sửa bài thi) ---------- */
+/** @type {boolean} */ let qeLoaded = false;
+/** @param {{text?:string,options?:Record<string,string>,answer?:string,points?:number}} [q] */
+function qeRow(q = {}) {
+  const fs = document.createElement('fieldset'); fs.className = 'thi-qe';
+  const lg = document.createElement('legend'); fs.append(lg);
+  const uid = Math.random().toString(36).slice(2, 8);
+  const field = (/** @type {string} */ label, /** @type {HTMLElement} */ ctl) => { const w = document.createElement('div'); w.className = 't-field'; const l = document.createElement('label'); l.textContent = label; ctl.id = 'qe-' + uid + '-' + label.replace(/\W/g, ''); l.htmlFor = ctl.id; w.append(l, ctl); return w; };
+  const text = document.createElement('textarea'); text.className = 'qe-text'; text.value = q.text || ''; text.maxLength = 1000;
+  fs.append(field('Đề bài', text));
+  const opts = document.createElement('div'); opts.className = 'thi-qe-opts';
+  for (const L of ['A', 'B', 'C', 'D']) { const i = document.createElement('input'); i.className = 'qe-opt'; i.dataset.k = L; i.value = q.options?.[L] || ''; i.maxLength = 300; opts.append(field('Phương án ' + L, i)); }
+  fs.append(opts);
+  const foot = document.createElement('div'); foot.className = 'thi-qe-foot';
+  const ans = document.createElement('select'); ans.className = 'qe-ans'; for (const L of ['A', 'B', 'C', 'D']) ans.append(new Option(L, L)); ans.value = String(q.answer || 'A').toUpperCase();
+  const pts = document.createElement('input'); pts.type = 'number'; pts.min = '0.25'; pts.step = '0.25'; pts.className = 'qe-pts'; pts.value = String(q.points || 1);
+  const del = ui.iconButton({ icon: 'trash', label: 'Xóa câu này', danger: true, onClick: () => { fs.remove(); qeNumber(); } });
+  foot.append(field('Đáp án đúng', ans), field('Điểm', pts), del); fs.append(foot);
+  return fs;
+}
+function qeNumber() { $('thi-qe-list').querySelectorAll('.thi-qe').forEach((f, i) => { const lg = f.querySelector('legend'); if (lg) lg.textContent = `Câu ${i + 1}`; }); }
+/** @param {any[]} qs */
+function qeRender(qs) { const box = $('thi-qe-list'); box.replaceChildren(...qs.map(q => qeRow(q))); qeNumber(); $('thi-q-editor').hidden = false; qeLoaded = true; }
+/** Đọc câu hỏi từ trình sửa; lỗi → trả {error}. */
+function qeCollect() {
+  const out = []; let i = 0;
+  for (const f of $('thi-qe-list').querySelectorAll('.thi-qe')) {
+    i++;
+    const text = /** @type {HTMLTextAreaElement} */ (f.querySelector('.qe-text')).value.trim();
+    /** @type {Record<string,string>} */ const options = {};
+    f.querySelectorAll('.qe-opt').forEach(n => { const v = /** @type {HTMLInputElement} */ (n).value.trim(); if (v) options[/** @type {HTMLElement} */ (n).dataset.k || ''] = v; });
+    const answer = /** @type {HTMLSelectElement} */ (f.querySelector('.qe-ans')).value, points = Number(/** @type {HTMLInputElement} */ (f.querySelector('.qe-pts')).value) || 1;
+    const bad = (/** @type {string} */ m) => { const t = /** @type {HTMLElement} */ (f.querySelector(m === 'text' ? '.qe-text' : m === 'opt' ? '.qe-opt' : '.qe-ans')); t.setAttribute('aria-invalid', 'true'); t.focus(); };
+    f.querySelectorAll('[aria-invalid]').forEach(n => n.removeAttribute('aria-invalid'));
+    if (!text) { bad('text'); return { error: `Câu ${i}: nhập đề bài.` }; }
+    if (Object.keys(options).length < 2) { bad('opt'); return { error: `Câu ${i}: cần ít nhất 2 phương án.` }; }
+    if (!options[answer]) { bad('ans'); return { error: `Câu ${i}: đáp án đúng ${answer} chưa có nội dung.` }; }
+    out.push({ text, options, answer, points });
+  }
+  if (!out.length) return { error: 'Bài thi cần ít nhất một câu hỏi.' };
+  return { questions: out };
+}
+async function qeLoad(/** @type {any} */ e) {
+  qeLoaded = false; $('thi-q-editor').hidden = false; $('thi-qe-list').replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted', textContent: 'Đang tải câu hỏi…' }));
+  $('thi-qe-note').textContent = e.che_do === 'that' ? `Câu hỏi thi thật dùng chung trang DeThi của khối ${e.khoi}: lưu ở đây sẽ thay các câu khối ${e.khoi} trong Google Sheet.` : 'Sửa đề bài, phương án, đáp án đúng, điểm rồi bấm Lưu thay đổi.';
+  try { const r = await call({ action: 'gv_questions', ma_de: e.ma_de }); if (editing === e.ma_de) qeRender(r.questions || []); }
+  catch (err) { $('thi-qe-list').replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted', textContent: err instanceof Error ? err.message : 'Chưa tải được câu hỏi.' })); }
 }
 
 const KIND = { that: 'Thi thật', thu: 'Thi thử' };
@@ -147,6 +204,9 @@ function renderStats() {
   $('thi-gv-title').textContent = ex.tieu_de;
   $('thi-gv-sub').textContent = `${KIND[/** @type {'that'|'thu'} */ (ex.che_do)]} · ${sel(ex)} · ${ex.questions} câu · đang ${open ? 'MỞ' : 'KHÓA'}`;
   button('thi-gv-toggle').textContent = open ? 'Khóa thi' : 'Mở thi'; button('thi-gv-toggle').dataset.to = open ? 'khoa' : 'mo';
+  $('thi-st-tabs').hidden = ex.che_do !== 'that'; if (ex.che_do !== 'that') stTab('kq');
+  renderTrack();
+  const head = document.querySelector('#thi-gv-table thead th:last-child'); if (head) { head.textContent = ex.che_do === 'thu' ? 'Số lần thi' : 'Thao tác'; head.className = ex.che_do === 'thu' ? 't-number' : ''; }
   const sts = stats.students || [];
   const cnt = (/** @type {string} */ st) => sts.filter((/** @type {any} */ s) => s.state === st).length;
   metric($('thi-gv-metrics'), [['Học sinh của bài', sts.length], ['Đã vào phòng thi', cnt('vao') + cnt('nop')], ['Đã nộp', cnt('nop')], ['Chưa vào', cnt('chua')]]);
@@ -156,18 +216,48 @@ function renderStats() {
   for (const s of rows) {
     const tr = document.createElement('tr');
     const badge = document.createElement('span'); badge.className = 't-badge' + (s.state === 'chua' ? ' t-badge-error' : ''); badge.textContent = STATE[/** @type {keyof typeof STATE} */ (s.state)] || s.state;
-    const act = document.createElement('button'); act.type = 'button'; act.className = 't-button'; act.textContent = 'Cho thi lại'; act.disabled = s.state !== 'nop' || ex.che_do !== 'that';
-    act.addEventListener('click', () => void run(act, () => call({ action: 'gv_reset', ma_de: ex.ma_de, ma: s.ma }), `Đã cho ${s.name} thi lại.`));
-    tr.append(td('Học sinh', `${s.name} (${s.ma})`), td('Lớp', s.lop), td('Bài thi', badge), td('Trực tuyến', liveLabel(live[liveKey(s.ma)])), td('Điểm', s.score === null || s.score === undefined ? '—' : `${s.score}/${s.total}`, 't-number'), td('Thao tác', act));
+    /** @type {string|Node} */ let last;
+    if (ex.che_do === 'thu') last = s.lan ? `${s.lan} lần` : '—';   // thi thử: thi thoải mái, chỉ cần biết số lần
+    else {
+      const act = document.createElement('button'); act.type = 'button'; act.className = 't-button'; act.textContent = 'Cho thi lại';
+      act.hidden = s.state !== 'nop';
+      act.addEventListener('click', async () => {
+        if (!(await confirmBox({ title: 'Cho thi lại?', body: `Bài nộp của ${s.name} trong "${ex.tieu_de}" sẽ bị hủy (điểm cũ vẫn lưu trong trang KetQua với dấu Hủy). Em được làm lại từ đầu.`, okText: 'Cho thi lại' }))) return;
+        void run(act, () => call({ action: 'gv_reset', ma_de: ex.ma_de, ma: s.ma }), `Đã cho ${s.name} thi lại.`);
+      });
+      last = s.state === 'nop' ? act : '—';
+    }
+    tr.append(td('Học sinh', `${s.name} (${s.ma})`), td('Lớp', s.lop), td('Bài thi', badge), td('Trực tuyến', liveLabel(live[liveKey(s.ma)])), td('Điểm', s.score === null || s.score === undefined ? '—' : `${s.score}/${s.total}`, 't-number'), td(ex.che_do === 'thu' ? 'Số lần thi' : 'Thao tác', last, ex.che_do === 'thu' ? 't-number' : ''));
     body.append(tr);
   }
 }
+/** Tab "Theo dõi nộp bài" (thi thật): ba cột Chưa vào / Đang làm / Đã nộp, cập nhật tức thì. */
+function renderTrack() {
+  const ex = stats?.exam, box = $('thi-track'); if (!ex || !box) return;
+  const sts = stats.students || [], th = ex.noi_dung === 'tn_th';
+  const time = (/** @type {string} */ iso) => iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+  /** @param {string} title @param {any[]} list @param {string} cls @param {(s:any)=>string} note */
+  const col = (title, list, cls, note) => {
+    const sec = document.createElement('section'); sec.className = cls;
+    const h = document.createElement('h3'); h.append(title); const n = document.createElement('span'); n.textContent = String(list.length); h.append(n); sec.append(h);
+    const ul = document.createElement('ul');
+    if (!list.length) { const li = document.createElement('li'); li.className = 't-muted'; li.textContent = 'Không có'; ul.append(li); }
+    for (const s of list) { const li = document.createElement('li'); const a = document.createElement('span'); a.textContent = `${s.name} · ${s.lop}`; const b = document.createElement('small'); b.textContent = note(s); li.append(a, b); ul.append(li); }
+    sec.append(ul); return sec;
+  };
+  box.replaceChildren(
+    col('Chưa vào', sts.filter((/** @type {any} */ s) => s.state === 'chua'), 'is-wait', () => ''),
+    col('Đang làm', sts.filter((/** @type {any} */ s) => s.state === 'vao'), 'is-doing', s => s.last ? 'vào ' + time(s.last) : ''),
+    col('Đã nộp', sts.filter((/** @type {any} */ s) => s.state === 'nop'), 'is-done', s => (s.score !== null ? `${s.score}/${s.total}` : '') + (th ? (s.th ? ' · đã nộp thực hành' : ' · chưa nộp thực hành') : '')));
+}
+/** @param {'kq'|'td'} t */
+function stTab(t) { for (const k of ['kq', 'td']) { const b = button('tab-thi-' + k), on = k === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; $('tabpanel-thi-' + k).hidden = !on; } }
 function render() { renderList(); if (stats) renderStats(); fillClasses(); }
 const onDetail = () => { const d = document.getElementById('detail-sheetexam'); return !!d && !d.hidden; };
 
 /** Mở trang thống kê NGAY (dùng số liệu sẵn có của thẻ), rồi tải chi tiết từng em từ Google Sheet ở nền. */
 async function openStats(/** @type {string} */ maDe) {
-  current = maDe; stats = null;
+  current = maDe; stats = null; stTab('kq');
   const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === maDe);
   if (e) {
     $('thi-gv-title').textContent = e.tieu_de;
@@ -194,13 +284,16 @@ function startEdit(e) {
   input('thi-new-title').value = e.tieu_de; select('thi-new-mode').value = e.che_do; select('thi-new-mode').disabled = true;
   select('thi-new-khoi').value = String(e.khoi); fillClasses(); select('thi-new-lop').value = e.lop || '';
   $('thi-form-title').textContent = 'Chỉnh sửa bài thi';
-  $('thi-form-sub').textContent = e.che_do === 'that' ? 'Câu hỏi thi thật sửa trực tiếp ở trang DeThi của Google Sheet. Ở đây chỉ đổi tiêu đề, khối, lớp.' : 'Muốn thay đề thi thử, tải file Excel mới lên. Không tải thì giữ đề cũ.';
+  $('thi-form-sub').textContent = 'Sửa thông tin và câu hỏi, đáp án bên dưới rồi bấm Lưu thay đổi.' + (e.che_do === 'thu' ? ' Hoặc tải file Excel mới để thay cả đề.' : '');
+  fillYears(e.nam_hoc || ''); if (e.hinh_thuc) select('thi-new-ht').value = e.hinh_thuc; select('thi-new-nd').value = e.noi_dung === 'tn_th' ? 'tn_th' : 'tn';
   button('thi-new-create').textContent = 'Lưu thay đổi'; $('thi-new-cancel').hidden = false; bankHint(); tab('new'); input('thi-new-title').focus();
+  void qeLoad(e);
 }
 function endEdit() {
   editing = ''; trialQuestions = []; input('thi-new-title').value = ''; input('thi-new-file').value = ''; select('thi-new-mode').disabled = false;
   $('thi-form-title').textContent = 'Tạo đề thi'; $('thi-form-sub').textContent = 'Bài mới luôn ở trạng thái khóa cho đến khi bấm Mở thi. Có thể tạo nhiều bài cho nhiều lớp cùng lúc.';
   button('thi-new-create').textContent = 'Tạo bài thi'; $('thi-new-cancel').hidden = true; bankHint();
+  $('thi-q-editor').hidden = true; $('thi-qe-list').replaceChildren(); qeLoaded = false; fillYears(); select('thi-new-nd').value = 'tn';
 }
 
 /** @param {HTMLButtonElement|null} btn @param {() => Promise<any>} fn @param {string} okMsg */
@@ -289,6 +382,7 @@ input('thi-new-file').addEventListener('change', async () => {
     const parsed = parseExamRows(rows);
     if (!parsed.valid) { status(parsed.fatal || 'File có dòng chưa đúng mẫu. Sửa rồi tải lại.', 'error'); return; }
     trialQuestions = parsed.questions.filter(q => q.kind === 'choice').map(q => ({ text: q.prompt, options: q.options, answer: q.correct_answer, points: q.points }));
+    if (editing && trialQuestions.length) qeRender(trialQuestions);   // đang sửa: đề trong file Excel thay vào trình sửa
     const skipped = parsed.questions.length - trialQuestions.length;
     status(`Đã nhận ${trialQuestions.length} câu trắc nghiệm.` + (skipped ? ` Bỏ qua ${skipped} câu tự luận (thi thử chỉ chấm trắc nghiệm).` : ''), trialQuestions.length ? 'success' : 'error');
   } catch (e) { status(e instanceof Error && /Không tải được/.test(e.message) ? e.message : 'Không đọc được file Excel.', 'error'); }
@@ -303,9 +397,12 @@ $('thi-new-form').addEventListener('submit', async ev => {
   const title = input('thi-new-title'), mode = select('thi-new-mode').value;
   if (!title.value.trim()) { title.setAttribute('aria-invalid', 'true'); status('Nhập tiêu đề bài thi.', 'error'); title.focus(); return; }
   title.removeAttribute('aria-invalid');
-  const base = { tieu_de: title.value.trim(), khoi: Number(select('thi-new-khoi').value), lop: select('thi-new-lop').value };
+  const base = { tieu_de: title.value.trim(), khoi: Number(select('thi-new-khoi').value), lop: select('thi-new-lop').value,
+    ...(mode === 'that' ? { nam_hoc: select('thi-new-nam').value, hinh_thuc: select('thi-new-ht').value, noi_dung: select('thi-new-nd').value } : {}) };
   if (editing) {
-    await run(button('thi-new-create'), () => call({ action: 'gv_update', ma_de: editing, ...base, questions: mode === 'thu' && trialQuestions.length ? trialQuestions : undefined }), 'Đã lưu thay đổi.');
+    let questions;
+    if (qeLoaded) { const r = qeCollect(); if (r.error) { status(r.error, 'error'); return; } questions = r.questions; }
+    await run(button('thi-new-create'), () => call({ action: 'gv_update', ma_de: editing, ...base, questions }), 'Đã lưu thay đổi.');
     if (!$('thi-gv-alert').classList.contains('error')) { endEdit(); tab('list'); }
     return;
   }
@@ -314,11 +411,13 @@ $('thi-new-form').addEventListener('submit', async ev => {
   if (!$('thi-gv-alert').classList.contains('error')) { endEdit(); tab('list'); }
 });
 $('thi-new-cancel').addEventListener('click', () => { endEdit(); tab('list'); });
+$('thi-qe-add').addEventListener('click', () => { const r = qeRow(); $('thi-qe-list').append(r); qeNumber(); /** @type {HTMLElement} */ (r.querySelector('.qe-text')).focus(); });
 for (const k of /** @type {const} */ (['list', 'new'])) $('tab-thi-' + k).addEventListener('click', () => { if (k === 'list' && editing) endEdit(); tab(k); });
 $('thi-gv-toggle').addEventListener('click', () => { const to = button('thi-gv-toggle').dataset.to; void run(button('thi-gv-toggle'), useFb() ? () => call({ action: 'gv_set', ma_de: current, trang_thai: to }) : async () => { await call({ action: 'gv_set', ma_de: current, trang_thai: to }); return call({ action: 'gv_stats', ma_de: current }); }, to === 'mo' ? 'Đã MỞ thi.' : 'Đã KHÓA thi.'); });
 $('thi-gv-refresh').addEventListener('click', () => void run(button('thi-gv-refresh'), () => call({ action: useFb() ? 'gv_list' : 'gv_stats', ma_de: current }), ''));
 $('thi-publish').addEventListener('click', () => void run(button('thi-publish'), () => call({ action: 'gv_publish' }), 'Đã cập nhật lên Firebase: học sinh thấy ngay danh sách bài, đề và tài khoản mới.'));
 $('thi-list-refresh').addEventListener('click', () => void load());
+for (const k of /** @type {const} */ (['kq', 'td'])) $('tab-thi-' + k).addEventListener('click', () => stTab(k));
 $('act-sheetexam-back').addEventListener('click', () => { stats = null; void ui.showSub('list-sheetexam'); void load(); });
 input('thi-gv-only').addEventListener('change', renderStats);
 $('nav-sheetexam').addEventListener('click', () => { stats = null; startFb(); void load(); void startLive(); });
@@ -333,4 +432,4 @@ setInterval(() => {
   if (useFb()) return;   // đã cập nhật tức thì qua Firebase
   if (v && !v.hidden && document.visibilityState === 'visible' && !busyCount && info && getPass() && !editing) void reload();
 }, 20000);
-fillClasses();
+fillClasses(); fillYears();

@@ -64,19 +64,23 @@
               <li><button class="group-link" data-view="offline"><strong>Tải ngoại tuyến</strong><span>Bài đã lưu trên thiết bị</span></button></li>
               <li><button class="group-link" data-view="help"><strong>Hướng dẫn</strong><span>Cách học và dùng gia sư AI</span></button></li>
             </ul>
+            <button id="settings-logout" class="group-logout" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4h4v16h-4 M10 8l-4 4 4 4 M6 12h10"/></svg>Đăng xuất</button>
           </nav>
           <div class="settings-detail">
             <section id="panel-account" class="settings-panel" aria-labelledby="heading-account">
               <div class="detail-top"><button class="back-button quiet" data-back aria-label="Quay lại Cài đặt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 12H5 M11 6l-6 6 6 6"/></svg></button><h2 id="heading-account" tabindex="-1">Tài khoản</h2></div>
               <div class="card" id="account-section">
-                <div class="account-summary">
+                <div class="account-summary account-head">
+                  <div class="account-avatar" aria-hidden="true">
+                    <svg class="ic" viewBox="0 0 24 24" focusable="false"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>
+                  </div>
                   <div id="account-info"></div>
+                  <button id="logout" class="secondary account-logout" type="button">Đăng xuất</button>
                 </div>
                 <div id="account-must-change" class="notice account-note" hidden>Hãy đổi mã PIN do giáo viên cấp để bảo mật tài khoản.</div>
-                <div class="intro form-intro">
-                  <h3 class="form-subheading">Đổi mã PIN</h3>
-                  <p class="form-note">Mã PIN mới có tối thiểu 6 ký tự.</p>
-                </div>
+                <details class="pin-details">
+                <summary class="form-subheading">Đổi mã PIN</summary>
+                <p class="form-note">Mã PIN mới có tối thiểu 6 ký tự.</p>
                 <form id="student-change-pin-form">
                   <div class="field">
                     <label for="student-old">Mã PIN hiện tại</label>
@@ -102,10 +106,7 @@
                   <p id="student-change-pin-status" class="notice error status" role="alert" aria-live="polite"></p>
                   <button class="primary btn-full" type="submit">Lưu mã PIN mới</button>
                 </form>
-                <div class="actions dialog-footer-actions">
-                  <button id="logout" class="secondary" type="button" style="width:100%;">Đăng xuất</button>
-                  <button id="close-account" class="text-button" type="button">Đóng</button>
-                </div>
+                </details>
               </div>
             </section>
 

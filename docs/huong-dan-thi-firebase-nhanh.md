@@ -19,7 +19,8 @@
 
 ## Học sinh thấy gì
 - Đăng nhập app một lần → mục **Thi** hiện ngay các bài thầy cô đã tạo cho lớp/khối của em (không đăng nhập lại).
-- Mỗi bài là một thẻ: loại thi, lớp/khối, Đang mở/Chưa mở, số câu, đã thi mấy lần; nút **Vào thi**, **Vào phòng chờ**, **Làm lại** (thi thử).
+- Mỗi bài là một thẻ: loại thi, lớp/khối, Đang mở/Chưa mở, số câu, đã thi mấy lần; nút **Vào thi** / **Làm lại** chỉ hiện khi bài đang mở (không còn phòng chờ). Biểu tượng thống kê mở trang Kết quả.
+- Bài thi thật "Trắc nghiệm + Thực hành": trong bài có ô **Bài thực hành** để học sinh tải file lên (tối đa 10 MB) — file vào thư mục lớp trên Google Drive của thầy cô.
 - Nếu thầy cô bật **Cho xem điểm** cho bài đó: thẻ có nút **Kết quả** → điểm lần gần nhất, điểm cao nhất, số lần thi, **hạng trong lớp**, điểm trung bình lớp, bảng xếp hạng lớp (dòng của em được tô sáng).
 - Nếu chưa bật: học sinh chỉ thấy "Đã nộp bài — thầy cô sẽ công bố điểm sau".
 - Lưu ý: tab Thi chỉ có bài sau khi làm xong 3 bước cài đặt ở trên (Firebase còn trống thì hiện "Chưa có bài thi").
@@ -30,7 +31,12 @@
 - Tạo/sửa/mở/khóa/xóa bài trong app: tự cập nhật, không cần bấm thêm.
 - Thống kê từng bài: hiện tức thì ai chưa vào / đã vào / đã nộp + điểm.
 - Điểm vào trang KetQua khi mở menu Thi hoặc menu Sheet **Bài thi → Lấy điểm về Sheet** (cột "Mã nộp" giúp không chép trùng).
-- Cho thi lại (thi thật): trang Thống kê → nút "Cho thi lại".
+- Cho thi lại (thi thật): trang Thống kê → nút "Cho thi lại" (có hộp thoại xác nhận). Thi thử: cột **Số lần thi** thay cho nút này.
+- Thi thật: trang Thống kê có tab **Theo dõi nộp bài** (Chưa vào / Đang làm / Đã nộp, có cả trạng thái nộp bài thực hành).
+- **Chỉnh sửa** bài: sửa được cả câu hỏi, phương án, đáp án đúng, điểm; thêm/xóa câu. Thi thật: câu hỏi dùng chung trang DeThi của khối đó.
+- Thi thật có **Năm học**, **Hình thức thi** (15 phút, Giữa kỳ I, Cuối kỳ I, Giữa kỳ II, Cuối kỳ II, Khác), **Nội dung** (Trắc nghiệm / Trắc nghiệm + Thực hành).
+- Lưu trữ Google Drive: thư mục **Bài thi - Góc học tập / Năm học / Lớp … / Hình thức - Tiêu đề**: mỗi học sinh một file chữ (từng câu, đáp án đúng, em chọn, đúng/sai, điểm) + file thực hành. File chữ được tạo khi điểm chép về Sheet (mở menu Thi hoặc menu Sheet **Lấy điểm về Sheet**).
+  Lần đầu sau khi dán Code.gs mới, Google hỏi thêm quyền **Google Drive** → Cho phép.
 
 ## Nếu có sự cố
 - Học sinh báo "Mã học sinh hoặc mã PIN chưa đúng" dù đúng: thầy cô vừa đổi PIN trong Sheet nhưng chưa bấm **Cập nhật lên Firebase**.

@@ -330,3 +330,22 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 
 .teacher-app .thi-alert{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}.teacher-app .thi-alert[hidden]{display:none}
 .teacher-app .thi-live-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0}.teacher-app .thi-live-line[hidden]{display:none}
+.teacher-app .thi-track{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:8px}
+.teacher-app .thi-track section{border:1px solid var(--line);border-radius:var(--t-card-radius,12px);padding:16px;background:var(--surface);min-width:0}
+.teacher-app .thi-track h3{margin:0 0 10px;font-size:var(--t-body,16px);display:flex;justify-content:space-between;gap:8px}
+.teacher-app .thi-track ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.teacher-app .thi-track li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;background:var(--brand-soft);overflow-wrap:anywhere}
+.teacher-app .thi-track .is-wait li{background:var(--danger-bg)}
+.teacher-app .thi-track small{color:var(--muted);white-space:nowrap}
+@media(max-width:760px){.teacher-app .thi-track{grid-template-columns:minmax(0,1fr)}}
+.teacher-app .thi-that-fields[hidden]{display:none}
+.teacher-app .thi-qe-wrap{margin:16px 0;padding-top:16px;border-top:1px solid var(--line)}
+.teacher-app .thi-qe-wrap h3{margin:0}
+.teacher-app .thi-qe{border:1px solid var(--line);border-radius:var(--t-card-radius,12px);padding:16px;margin:12px 0;background:var(--surface);min-width:0}
+.teacher-app .thi-qe legend{font-weight:700;padding:0 6px}
+.teacher-app .thi-qe-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.teacher-app .thi-qe-foot{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
+.teacher-app .thi-qe-foot .t-field{min-width:140px}
+.teacher-app .thi-qe-foot .t-icon-btn{margin-left:auto}
+.teacher-app .thi-qe textarea{width:100%;min-height:72px;font:inherit;font-size:16px}
+@media(max-width:760px){.teacher-app .thi-qe-opts{grid-template-columns:minmax(0,1fr)}}
