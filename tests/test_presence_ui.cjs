@@ -57,16 +57,16 @@ try{
   await pg.route('https://identitytoolkit.googleapis.com/**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({localId:'teacher_admin',idToken:'gv-id-tok',refreshToken:'gv-rf',expiresIn:'3600'})}));
   await pg.route('**/*firebasedatabase.app/presence.json*',r=>{streamAuth=new URL(r.request().url()).searchParams.get('auth');
    r.fulfill({status:200,headers:{'content-type':'text/event-stream','cache-control':'no-cache'},body:`event: put\ndata: ${JSON.stringify({path:'/',data:stream})}\n\nevent: patch\ndata: ${JSON.stringify({path:'/hs9a02',data:{state:'phong_cho',at:now}})}\n\n`})});
-  await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exam:null,bank:{9:3},classes:{'9A':9,'8A':8},students:[]})}));
+  const EX={ma_de:'1',tieu_de:'Giữa kỳ',che_do:'that',khoi:9,lop:'9A',trang_thai:'mo',questions:3,total:3,vao:1,nop:0};
+  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action==='gv_stats'?{ok:true,exam:EX,students:[{name:'Nguyễn Văn An',lop:'9A',ma:'HS01',state:'vao'},{name:'Trần Thị Bình',lop:'9A',ma:'hs9a02',state:'chua'},{name:'Phạm Dũng',lop:'9A',ma:'hs8a01',state:'chua'}]}:{ok:true,exams:[EX],bank:{9:3},classes:{'9A':9,'8A':8}})})});
   await pg.goto('http://localhost:8197/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
-  await pg.click('#nav-sheetexam');await pg.waitForFunction(()=>document.querySelectorAll('#thi-live-body tr').length===3,null,{timeout:8000});
+  await pg.click('#nav-sheetexam');await pg.waitForFunction(()=>document.getElementById('thi-live-status').textContent.includes('tức thì'),null,{timeout:8000});
   ok(streamAuth==='gv-id-tok','giáo viên nghe presence bằng idToken Firebase của mình (không qua Worker)');
-  const txt=await pg.textContent('#thi-live-body');
-  ok(txt.includes('Đang thi')&&txt.includes('Phòng chờ thi'),'hiện trạng thái tức thì, kể cả thay đổi (patch)');
+  ok(await pg.isHidden('#thi-live-line')&&(await pg.locator('#thi-live-table').count())===0,'đã bỏ bảng "Học sinh trực tuyến" riêng; kết nối tốt thì không hiện dòng báo');
+  await pg.click('#thi-list .t-icon-btn[aria-label^="Thống kê"]');await pg.waitForFunction(()=>document.querySelectorAll('#thi-gv-body tr').length===3,null,{timeout:8000});
+  const txt=await pg.textContent('#thi-gv-body');
+  ok(txt.includes('Đang thi')&&txt.includes('Phòng chờ thi'),'trang thống kê: cột Trực tuyến tức thì, kể cả thay đổi (patch)');
   ok(txt.includes('Mất kết nối'),'quá 2,5 phút không có nhịp → "Mất kết nối"');
-  ok((await pg.textContent('#thi-live-metrics')).includes('Đang thi1')&&(await pg.textContent('#thi-live-metrics')).includes('Phòng chờ1'),'đếm Đang học / Phòng chờ / Đang thi / Đã nộp');
-  await pg.selectOption('#thi-live-lop','8A');ok((await pg.$$('#thi-live-body tr')).length===1,'lọc theo lớp');
-  ok((await pg.textContent('#thi-live-status')).includes('tức thì'),'báo đang cập nhật tức thì');
   ok(errs.length===0,'không lỗi JS '+errs.join('|'));await ctx.close()}
  // ---------- Giáo viên dùng phiên cũ (đăng nhập trước bản cập nhật): báo rõ + nút Đăng nhập lại ----------
  {const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
@@ -76,7 +76,7 @@ try{
    if(t==='old-expired-token')return r.fulfill({status:400,contentType:'application/json',body:'{"error":{"message":"TOKEN_EXPIRED"}}'});
    r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({localId:'teacher_admin',idToken:'gv-id-tok',refreshToken:'gv-rf',expiresIn:'3600'})})});
   await pg.route('**/*firebasedatabase.app/presence.json*',r=>r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'event: put\ndata: {"path":"/","data":null}\n\n'}));
-  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.gv?{ok:true,exam:null,bank:{9:3},classes:{},students:[]}:{ok:false,error:'Đăng xuất rồi đăng nhập lại tài khoản giáo viên để dùng menu Thi.'})})});
+  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.gv?{ok:true,exams:[],bank:{9:3},classes:{}}:{ok:false,error:'Đăng xuất rồi đăng nhập lại tài khoản giáo viên để dùng menu Thi.'})})});
   await pg.goto('http://localhost:8197/teacher.html');await pg.waitForTimeout(600);
   if(!(await pg.isVisible('#workspace'))){ok(true,'(phiên cũ không tự vào — bỏ qua phần phiên cũ)');}
   else{await pg.click('#nav-sheetexam');await pg.waitForTimeout(800);
@@ -92,14 +92,14 @@ try{
   await pg.route('**/presence-config.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:"export const PRESENCE_CONFIG = {apiKey:'', dbUrl:''};"}));
   await pg.route('https://identitytoolkit.googleapis.com/**',r=>{hits++;r.abort()});await pg.route('**/*firebasedatabase.app/**',r=>{hits++;r.abort()});
   await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'w',fb_token:'x',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
-  await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exam:null,bank:{},classes:{},students:[]})}));
+  await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exams:[],bank:{},classes:{}})}));
   await pg.goto('http://localhost:8197/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
   await pg.click('#nav-sheetexam');await pg.waitForTimeout(600);
   ok((await pg.textContent('#thi-live-status')).includes('presence-config.js')&&hits===0,'chưa điền dự án presence → báo rõ, không gọi Firebase nào');await ctx.close()}
  // ---------- Worker chưa cài khóa PRESENCE: báo rõ, không có nút đăng nhập lại vô ích ----------
  {const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();
   await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'w',fb_token:'',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
-  await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exam:null,bank:{},classes:{},students:[]})}));
+  await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exams:[],bank:{},classes:{}})}));
   await pg.goto('http://localhost:8197/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
   await pg.click('#nav-sheetexam');await pg.waitForTimeout(600);
   ok((await pg.textContent('#thi-live-status')).includes('PRESENCE')&&await pg.isHidden('#thi-live-relogin'),'Worker chưa có khóa presence → báo rõ, không bắt đăng nhập lại');await ctx.close()}

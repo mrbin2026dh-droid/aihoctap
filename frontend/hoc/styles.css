@@ -1209,3 +1209,6 @@ body.exam-open{overflow:hidden}
 :where(:root[data-theme=dark]) .student-app .connection.is-offline{color:#fbbf24}
 :where(:root[data-theme=dark]) .student-app .role-switch [aria-current=page],:where(:root[data-theme=dark]) .student-app .auth-logo{background:#2d7a6c;color:#fff}
 /* DARK-THEME:END */
+/* Sửa banner chào ở chế độ tối: thuộc tính background rút gọn làm hình lặp lại khắp khung */
+.student-app .dash-hero{background-repeat:no-repeat;background-position:right 24px center,0 0;background-size:190px auto,auto}
+@media(max-width:760px){.student-app .dash-hero{background-position:0 0;background-size:auto}}

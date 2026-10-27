@@ -1868,3 +1868,4 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã thực hiện: Chạy emulator rules-live-check.test.mjs với RULES_FILE=../database.rules.ai-sgk-final.json và PUBLIC_READ=catalog,packages in TẤT CẢ CA ĐÚNG; chạy 4 bộ test test_presence_ui (28), test_sheet_exam_gs, test_teacher_thi_ui (80), test_thi_sheet_ui (43) PASS 100%; PWA shell check nguyên vẹn.
 - Tệp đổi: aisgk.md.
 - Việc tiếp: Người dùng dán luật mới vào Firebase Console ai-sgk-tinhoc và cập nhật Code.gs trên Google Sheet.
+- 2026-10-27 Claude: bỏ bảng Học sinh trực tuyến ở danh sách Thi (chỉ còn dòng báo khi lỗi; trực tuyến xem ở cột Thống kê), mở Thống kê tức thì + tải nền, Code.gs đọc KetQua/DiemDanh/DeThi 1 lần (nhanh hơn), sửa banner chào lặp hình ở chế độ tối. Đề xuất chuyển đề + mở/khóa lên Firebase (chờ người dùng chốt).

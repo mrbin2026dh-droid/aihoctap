@@ -329,3 +329,4 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 @media(max-width:760px){.teacher-app .t-qe-head{grid-template-columns:minmax(0,1fr) auto}.teacher-app .t-qe-head h4{grid-column:1/-1}.teacher-app .t-qe-meta{grid-template-columns:minmax(0,1fr)}}
 
 .teacher-app .thi-alert{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}.teacher-app .thi-alert[hidden]{display:none}
+.teacher-app .thi-live-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0}.teacher-app .thi-live-line[hidden]{display:none}

@@ -235,12 +235,9 @@
 <div class="t-tabs" role="tablist" aria-label="Thi"><button type="button" id="tab-thi-list" role="tab" aria-selected="true" aria-controls="tabpanel-thi-list" tabindex="0">Danh sách bài thi</button><button type="button" id="tab-thi-new" role="tab" aria-selected="false" aria-controls="tabpanel-thi-new" tabindex="-1">Tạo đề thi</button></div>
 <div role="tabpanel" id="tabpanel-thi-list" aria-labelledby="tab-thi-list">
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="thi-list-refresh" class="t-button">Làm mới</button></div>
+<p class="t-muted thi-live-line" id="thi-live-line" hidden><span id="thi-live-status" role="status"></span> <button type="button" id="thi-live-relogin" class="t-button" hidden>Đăng nhập lại</button></p>
 <div id="thi-list" class="t-list-items" aria-live="polite"><p class="t-muted">Đang tải danh sách bài thi…</p></div>
-<section id="thi-live" class="t-card">
-<div class="t-heading"><div><h2>Học sinh trực tuyến</h2><p class="t-muted" id="thi-live-status" role="status">Đang kết nối Firebase…</p><button type="button" id="thi-live-relogin" class="t-button" hidden>Đăng nhập lại</button></div><div class="t-field"><label for="thi-live-lop">Lớp</label><select id="thi-live-lop"><option value="">Tất cả lớp</option></select></div></div>
-<dl class="t-metrics" id="thi-live-metrics"></dl>
-<table class="t-table" id="thi-live-table"><caption>Cập nhật tức thì từ Firebase</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Trạng thái</th><th scope="col">Lúc</th></tr></thead><tbody id="thi-live-body"><tr><td colspan="4" class="t-muted">Chưa có học sinh nào trực tuyến.</td></tr></tbody></table>
-</section>
+
 </div>
 <div role="tabpanel" id="tabpanel-thi-new" aria-labelledby="tab-thi-new" hidden>
 <form id="thi-new-form" class="t-card t-form" novalidate>
@@ -260,7 +257,7 @@
 <section id="detail-sheetexam" hidden class="t-detail"><button type="button" id="act-sheetexam-back" class="t-button">Quay lại danh sách</button>
 <section class="t-card">
 <div class="t-heading"><div><h2 id="thi-gv-title">Thống kê bài thi</h2><p class="t-muted" id="thi-gv-sub"></p></div><div class="t-heading-actions"><button type="button" id="thi-gv-toggle" class="t-button t-primary">Mở thi</button><button type="button" id="thi-gv-refresh" class="t-button">Làm mới</button></div></div>
-<dl class="t-metrics" id="thi-gv-metrics"></dl>
+<dl class="t-metrics" id="thi-gv-metrics" aria-busy="false"></dl>
 <div class="t-toolbar t-toolbar-actions-only"><label class="t-check" for="thi-gv-only"><input id="thi-gv-only" type="checkbox">Chỉ hiện em chưa vào</label></div>
 <table class="t-table" id="thi-gv-table"><caption>Học sinh của bài thi</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Bài thi</th><th scope="col">Trực tuyến</th><th scope="col" class="t-number">Điểm</th><th scope="col">Thao tác</th></tr></thead><tbody id="thi-gv-body"><tr><td colspan="6" class="t-muted">Chưa có dữ liệu.</td></tr></tbody></table>
 </section>
@@ -460,6 +457,6 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261027g"></script>
+<script type="module" src="./teacher.js?v=20261027h"></script>
 </body>
 </html>

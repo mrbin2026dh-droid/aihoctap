@@ -81,6 +81,7 @@ function migrate_() {
   for (var r = 0; r < v.length; r++) c[norm_(v[r][0])] = String(v[r][1] === undefined ? '' : v[r][1]).trim();
   if (!c.ma_de) return;
   var bt = ensure_(SH_BT, BT_HEAD), bv = bt.getDataRange().getValues();
+  setConfig_('ma_de', '');   // đã chuyển → lần sau không kiểm tra lại
   for (var i = 1; i < bv.length; i++) if (String(bv[i][0]) === c.ma_de) return;
   bt.appendRow([c.ma_de, c.tieu_de || 'Bài thi', c.che_do === 'that' ? 'that' : 'thu', Number(c.khoi) || 0, c.lop || '', c.trang_thai === 'mo' ? 'mo' : 'khoa', c.bat_dau || new Date().toISOString()]);
   var dt = ensure_(SH_DT, DT_HEAD), dv = dt.getDataRange().getValues();
@@ -153,29 +154,46 @@ function countBank_(ex) {
 function bankCount_(khoi) { return countBank_({ che_do: 'that', khoi: khoi, ma_de: '' }); }
 
 /** Bản ghi nộp còn hiệu lực của học sinh cho bài thi (điểm lần cuối). */
-function results_(maDe) {
+/** Đọc KetQua MỘT lần: {maDe: {mã hs: {score,total,at}}} (bỏ dòng đã Hủy). */
+function allResults_() {
   var kq = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_KQ), res = {};
   if (!kq) return res;
   var v = kq.getDataRange().getValues();
-  for (var i = 1; i < v.length; i++) if (String(v[i][9]) === maDe && String(v[i][10] || '') !== 'Hủy') res[norm_(v[i][1])] = { score: v[i][4], total: v[i][5], at: v[i][0] instanceof Date ? v[i][0].toISOString() : '' };
+  for (var i = 1; i < v.length; i++) {
+    if (String(v[i][10] || '') === 'Hủy') continue;
+    var id = String(v[i][9]); (res[id] = res[id] || {})[norm_(v[i][1])] = { score: v[i][4], total: v[i][5], at: v[i][0] instanceof Date ? v[i][0].toISOString() : '' };
+  }
   return res;
 }
-function visited_(maDe) {
+/** Đọc DiemDanh MỘT lần: {maDe: {mã hs: giờ vào}}. */
+function allVisited_() {
   var dd = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_DD), res = {};
   if (!dd) return res;
   var v = dd.getDataRange().getValues();
-  for (var i = 1; i < v.length; i++) if (String(v[i][0]) === maDe) res[norm_(v[i][1])] = v[i][2] instanceof Date ? v[i][2].toISOString() : String(v[i][2] || '');
+  for (var i = 1; i < v.length; i++) { var id = String(v[i][0]); (res[id] = res[id] || {})[norm_(v[i][1])] = v[i][2] instanceof Date ? v[i][2].toISOString() : String(v[i][2] || ''); }
   return res;
 }
+function results_(maDe) { return allResults_()[maDe] || {}; }
+function visited_(maDe) { return allVisited_()[maDe] || {}; }
+/** Đếm câu mọi bài trong 2 lần đọc (DeThi + DeThiThu) thay vì đọc lại cho từng bài. */
+function bankCounts_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), out = { khoi: {}, thu: {}, khoiFree: 0 };
+  var de = ss.getSheetByName(SH_DE);
+  if (de) { var v = de.getDataRange().getValues(); for (var r = 1; r < v.length; r++) { if (!String(v[r][2] || '').trim()) continue; var k = khoiOf_(v[r][1]); if (k) out.khoi[k] = (out.khoi[k] || 0) + 1; else out.khoiFree++; } }
+  var dt = ss.getSheetByName(SH_DT);
+  if (dt) { var w = dt.getDataRange().getValues(); for (var j = 1; j < w.length; j++) { if (!String(w[j][2] || '').trim()) continue; var id = String(w[j][9] || '').trim(); out.thu[id] = (out.thu[id] || 0) + 1; } }
+  return out;
+}
+function countFrom_(bc, ex) { return ex.che_do === 'that' ? (bc.khoi[ex.khoi] || 0) + bc.khoiFree : (bc.thu[ex.ma_de] || 0); }
 
 /* ---------- Học sinh ---------- */
 /** Danh sách bài thi học sinh được thấy: thi thử chỉ khi đang mở; thi thật hiện cả khi khóa (vào phòng chờ). */
 function list_(hs) {
-  var out = [];
+  var out = [], allRes = allResults_();
   exams_().forEach(function (ex) {
     if (!allowed_(hs, ex)) return;
     if (ex.che_do === 'thu' && ex.trang_thai !== 'mo') return;
-    var mine = results_(ex.ma_de)[norm_(hs.ma)];
+    var mine = (allRes[ex.ma_de] || {})[norm_(hs.ma)];
     out.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, trang_thai: ex.trang_thai, done: ex.che_do === 'that' && !!mine, score: mine ? mine.score : null, total: mine ? mine.total : null });
   });
   return { ok: true, student: pub_(hs), exams: out };
@@ -230,7 +248,7 @@ function teacher_(p) {
   if (!stored) setConfig_('mat_khau_gv', sent);
   else if (sent !== stored) { cache.put('gvfail', String(fails + 1), 600); throw new Error('PIN giáo viên chưa khớp với Google Sheet. Mở Sheet → menu Bài thi → Đặt lại mật khẩu giáo viên.'); }
   cache.remove('gvfail');
-  schema_();
+  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT) || !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_DD) || cfgGet_('ma_de')) schema_();
   var a = p.action;
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); setConfig_('mat_khau_gv', np); return { ok: true }; }
   if (a === 'gv_stats') return stats_(String(p.ma_de || ''));
@@ -288,15 +306,15 @@ function students_() {
 }
 /** Danh sách bài thi + số liệu tóm tắt. */
 function info_() {
-  var st = students_(), classes = {}, list = [];
+  var st = students_(), classes = {}, list = [], allRes = allResults_(), allVis = allVisited_(), bc = bankCounts_();
   st.forEach(function (s) { classes[s.lop] = khoiOf_(s.lop); });
   exams_().forEach(function (ex) {
-    var res = results_(ex.ma_de), vis = visited_(ex.ma_de), n = 0, vao = 0, nop = 0;
+    var res = allRes[ex.ma_de] || {}, vis = allVis[ex.ma_de] || {}, n = 0, vao = 0, nop = 0;
     st.forEach(function (s) { if (!allowed_(s, ex)) return; n++; var k = norm_(s.ma); if (res[k]) nop++; else if (vis[k]) vao++; });
-    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, questions: countBank_(ex), total: n, vao: vao, nop: nop });
+    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
   });
   list.sort(function (a, b) { return String(b.tao_luc).localeCompare(String(a.tao_luc)); });
-  var bank = {}; [6, 7, 8, 9].forEach(function (k) { bank[k] = bankCount_(k); });
+  var bank = {}; [6, 7, 8, 9].forEach(function (k) { bank[k] = (bc.khoi[k] || 0) + bc.khoiFree; });
   return { ok: true, exams: list, bank: bank, classes: classes };
 }
 /** Chi tiết một bài thi: từng học sinh thuộc đối tượng với trạng thái chưa vào / đã vào / đã nộp. */

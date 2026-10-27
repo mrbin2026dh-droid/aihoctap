@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027g';
-import * as ui from './teacher-ui.js?v=20261027g';
+import * as presence from './presence.js?v=20261027h';
+import * as ui from './teacher-ui.js?v=20261027h';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -131,10 +131,19 @@ function renderStats() {
 function render() { renderList(); if (stats) renderStats(); fillClasses(); }
 const onDetail = () => { const d = document.getElementById('detail-sheetexam'); return !!d && !d.hidden; };
 
+/** Mở trang thống kê NGAY (dùng số liệu sẵn có của thẻ), rồi tải chi tiết từng em từ Google Sheet ở nền. */
 async function openStats(/** @type {string} */ maDe) {
   current = maDe; stats = null;
-  await run(null, () => call({ action: 'gv_stats', ma_de: maDe }), '');
-  if (stats) await ui.showSub('detail-sheetexam');
+  const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === maDe);
+  if (e) {
+    $('thi-gv-title').textContent = e.tieu_de;
+    $('thi-gv-sub').textContent = `${KIND[/** @type {'that'|'thu'} */ (e.che_do)]} · ${sel(e)} · ${e.questions} câu · đang ${e.trang_thai === 'mo' ? 'MỞ' : 'KHÓA'}`;
+    metric($('thi-gv-metrics'), [['Học sinh của bài', e.total], ['Đã vào phòng thi', e.vao + e.nop], ['Đã nộp', e.nop], ['Chưa vào', e.total - e.vao - e.nop]]);
+    button('thi-gv-toggle').textContent = e.trang_thai === 'mo' ? 'Khóa thi' : 'Mở thi'; button('thi-gv-toggle').dataset.to = e.trang_thai === 'mo' ? 'khoa' : 'mo';
+  }
+  const body = $('thi-gv-body'); body.replaceChildren(); const tr = document.createElement('tr'); const c = td('', 'Đang tải danh sách học sinh từ Google Sheet…', 't-muted'); c.colSpan = 6; tr.append(c); body.append(tr);
+  await ui.showSub('detail-sheetexam');
+  await run(button('thi-gv-refresh'), () => call({ action: 'gv_stats', ma_de: maDe }), '');
 }
 async function deleteExam(/** @type {any} */ e, /** @type {HTMLButtonElement} */ btn) {
   const ok = await confirmBox({ title: 'Xóa bài thi?', body: `Bài "${e.tieu_de}" sẽ ẩn khỏi danh sách và học sinh không còn thấy. Điểm đã nộp vẫn giữ trong trang KetQua của Google Sheet.`, okText: 'Xóa bài thi', danger: true });
@@ -172,49 +181,32 @@ const load = () => run(null, () => call({ action: 'gv_list' }), '');
 const reload = () => (onDetail() && current) ? run(null, () => call({ action: 'gv_stats', ma_de: current }), '') : load();
 
 /* ---------- Trực tuyến (Firebase, tức thì) ---------- */
-function renderLive() {
-  const sel = select('thi-live-lop'), keep = sel.value;
-  const lops = [...new Set(Object.values(live).map(p => String(p.lop || '')).filter(Boolean))].sort();
-  sel.replaceChildren(new Option('Tất cả lớp', ''), ...lops.map(l => new Option('Lớp ' + l, l)));
-  if (lops.includes(keep)) sel.value = keep;
-  const rows = Object.entries(live).filter(([, p]) => !sel.value || p.lop === sel.value).sort((a, b) => Number(b[1].at || 0) - Number(a[1].at || 0));
-  const on = (/** @type {string} */ st) => rows.filter(([, p]) => p.state === st && Date.now() - Number(p.at || 0) <= presence.STALE_MS).length;
-  const m = $('thi-live-metrics'); m.replaceChildren();
-  for (const [k, v] of [['Đang học', on('hoc')], ['Phòng chờ', on('phong_cho')], ['Đang thi', on('dang_thi')], ['Đã nộp', on('da_nop')]]) {
-    const w = document.createElement('div'), a = document.createElement('dt'), b = document.createElement('dd'); a.textContent = String(k); b.textContent = String(v); w.append(a, b); m.append(w);
-  }
-  const body = $('thi-live-body'); body.replaceChildren();
-  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', 'Chưa có học sinh nào trực tuyến.', 't-muted'); c.colSpan = 4; tr.append(c); body.append(tr); return; }
-  for (const [ma, p] of rows) {
-    const tr = document.createElement('tr'), label = liveLabel(p);
-    const badge = document.createElement('span'); badge.className = 't-badge' + (/Mất|thoát/.test(label) ? ' t-badge-error' : ''); badge.textContent = label;
-    tr.append(td('Học sinh', `${p.name || ma} (${ma})`), td('Lớp', String(p.lop || '')), td('Trạng thái', badge), td('Lúc', p.at ? timeAgo(Number(p.at)) : '—'));
-    body.append(tr);
-  }
-}
+/** Bảng trực tuyến riêng đã bỏ: trạng thái trực tuyến hiện ở cột "Trực tuyến" của trang Thống kê. */
+function renderLive() { if (stats) renderStats(); }
+/** Dòng báo trạng thái Firebase: chỉ hiện khi có vấn đề. @param {string} msg @param {boolean} show @param {boolean} [relog] */
+function liveMsg(msg, show, relog = false) { $('thi-live-status').textContent = msg; $('thi-live-line').hidden = !show; button('thi-live-relogin').hidden = !relog; }
 async function startLive() {
   if (watching) return;
   if (!(await ensureTeacherTicket())) {
     const why = presence.lastTeacherError();
-    if (why === 'CHUA_CAI_DU_AN') { $('thi-live-status').textContent = 'Bảng trực tuyến chưa bật: chưa điền dự án Firebase vào presence-config.js. Học và thi vẫn chạy bình thường.'; button('thi-live-relogin').hidden = true; return; }
-    if (noKey) { $('thi-live-status').textContent = 'Bảng trực tuyến chưa bật: Worker chưa cài khóa Firebase (PRESENCE_*). Học và thi vẫn chạy bình thường.'; button('thi-live-relogin').hidden = true; return; }
-    $('thi-live-status').textContent = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why)
-      ? 'Firebase không nhận vé của Worker (khác dự án Firebase). Báo Antigravity kiểm tra FIREBASE_CLIENT_EMAIL. (' + why + ')'
-      : 'Phiên giáo viên đã cũ nên chưa kết nối được Firebase. Bấm Đăng nhập lại.' + (why ? ' (' + why.replace('Firebase từ chối vé: ', '') + ')' : '');
-    button('thi-live-relogin').hidden = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why);
+    if (why === 'CHUA_CAI_DU_AN') { liveMsg('Trạng thái trực tuyến chưa bật: chưa điền dự án Firebase vào presence-config.js. Thi vẫn chạy bình thường.', true); return; }
+    if (noKey) { liveMsg('Trạng thái trực tuyến chưa bật: Worker chưa cài khóa Firebase (PRESENCE_*). Thi vẫn chạy bình thường.', true); return; }
+    const mismatch = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why);
+    liveMsg(mismatch ? 'Firebase không nhận vé của Worker (khác dự án Firebase). Báo Antigravity kiểm tra FIREBASE_CLIENT_EMAIL. (' + why + ')'
+      : 'Trạng thái trực tuyến chưa kết nối: phiên giáo viên đã cũ. Bấm Đăng nhập lại.' + (why ? ' (' + why.replace('Firebase từ chối vé: ', '') + ')' : ''), true, !mismatch);
     return;
   }
-  button('thi-live-relogin').hidden = true;
+  liveMsg('', false);
   watching = true;
   /** @type {Record<string,string>} */ let prev = {};
   void presence.watch(map => {
-    live = map; renderLive(); if (stats) renderStats();
+    live = map; renderLive();
     // Có em vừa nộp → lấy điểm từ Google Sheet ngay, không chờ chu kỳ.
     const justSubmitted = Object.entries(map).some(([k, p]) => p.state === 'da_nop' && prev[k] !== 'da_nop');
     prev = Object.fromEntries(Object.entries(map).map(([k, p]) => [k, p.state]));
     if (justSubmitted && info && !busyCount) void reload();
   }, (st, why) => {
-    $('thi-live-status').textContent = st === 'live' ? 'Đang cập nhật tức thì từ Firebase.' : (why || 'Mất kết nối Firebase.');
+    liveMsg(st === 'live' ? 'Trạng thái trực tuyến đang cập nhật tức thì từ Firebase.' : (why || 'Mất kết nối Firebase.'), st !== 'live');
     if (st === 'off' && /Chưa có vé/.test(why || '')) watching = false;
   });
 }
@@ -234,7 +226,6 @@ $('thi-relogin').addEventListener('click', relogin);
 document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); watching = false; info = null; live = {}; status(''); });
 $('thi-live-relogin').addEventListener('click', relogin);
 setInterval(() => { if (watching) renderLive(); }, 30000);   // cập nhật "x phút trước" và "Mất kết nối"
-select('thi-live-lop').addEventListener('change', renderLive);
 
 /* ---------- Đề thi thử từ Excel (cùng mẫu với phần Về nhà) ---------- */
 /** @type {Map<string, Promise<void>>} */ const scripts = new Map();
