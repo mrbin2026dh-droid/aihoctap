@@ -120,6 +120,16 @@ function gradeMyAttempt_(uid, examId, attemptNo) {
  * Ghi exam_meta (công khai), exam_questions (không có đáp án), exam_secrets (chỉ Apps Script đọc).
  */
 function publishExam_(exam) {
+  var b = buildExam_(exam), id = b.id;
+  db_('exam_questions/' + id, 'put', b.questions);
+  db_('exam_secrets/' + id, 'put', b.key);
+  b.meta.published_at = { '.sv': 'timestamp' };
+  db_('exam_meta/' + id, 'put', b.meta);
+  CacheService.getScriptCache().remove('pack:' + id);
+  return { ok: true, exam_id: id, question_count: b.meta.question_count, total_points: b.meta.total_points };
+}
+/** Kiểm tra + dựng dữ liệu đề (chưa ghi). */
+function buildExam_(exam) {
   var id = String(exam.id || '').trim();
   if (!/^[A-Za-z0-9_-]{2,64}$/.test(id)) throw new Error('Mã đề chỉ gồm chữ không dấu, số, _ hoặc -, 2–64 ký tự.');
   var grade = Number(exam.grade), minutes = Number(exam.minutes), opens = Number(exam.opens_at), closes = Number(exam.closes_at);
@@ -144,15 +154,11 @@ function publishExam_(exam) {
     total += pts;
   });
   var parts = Array.isArray(exam.parts) && exam.parts.length ? exam.parts : [{ key: 'theory', label: 'Trắc nghiệm', max: total, grader: 'auto' }];
-  db_('exam_questions/' + id, 'put', outQ);
-  db_('exam_secrets/' + id, 'put', key);
-  db_('exam_meta/' + id, 'put', {
+  return { id: id, questions: outQ, key: key, meta: {
     title: String(exam.title || id), grade: grade, minutes: minutes, opens_at: opens, closes_at: closes,
     max_attempts: Math.max(1, Math.min(2, Number(exam.max_attempts) || 1)), kind: String(exam.kind || 'period'),
-    question_count: qs.length, total_points: round2_(total), parts: parts, backend: 'firebase', published_at: { '.sv': 'timestamp' }
-  });
-  CacheService.getScriptCache().remove('pack:' + id);
-  return { ok: true, exam_id: id, question_count: qs.length, total_points: round2_(total) };
+    question_count: qs.length, total_points: round2_(total), parts: parts, backend: 'firebase'
+  } };
 }
 
 /**
@@ -184,14 +190,31 @@ function examFromSheet_(sh) {
   if (practiceMax > 0) parts.push({ key: 'practice', label: 'Thực hành', max: practiceMax, grader: 'teacher' });
   return { id: String(cell(0)).trim(), title: cell(1), grade: cell(2), minutes: cell(3), opens_at: opens, closes_at: closes, max_attempts: cell(6), parts: parts, questions: qs };
 }
-/** Không cho sửa đề đã có học sinh vào thi (đổi câu/đáp án giữa chừng làm sai điểm). */
-function assertEditable_(id) {
-  var old = db_('exam_meta/' + id);
-  if (old && Date.now() >= Number(old.opens_at) && db_('sessions/' + id))
-    throw new Error('Đề "' + id + '" đã có học sinh vào thi — không sửa được. Hãy đặt Mã đề mới.');
+function canon_(v) {
+  if (Array.isArray(v)) return v.map(canon_);
+  if (v && typeof v === 'object') { var o = {}; Object.keys(v).sort().forEach(function (k) { o[k] = canon_(v[k]); }); return o; }
+  return v;
+}
+/**
+ * Đề đã có học sinh vào thi: KHÔNG cho đổi câu hỏi/đáp án/khối/điểm (làm sai điểm), nhưng CHO đổi Tiêu đề, Số phút,
+ * Đóng lúc, Số lượt — để thầy cô gia hạn khi mất mạng. Trả thông báo nếu đã xử lý theo cách này, '' nếu đề còn sửa tự do.
+ */
+function updateLockedExam_(exam) {
+  var id = String(exam.id || '').trim(), old = db_('exam_meta/' + id);
+  if (!old || Date.now() < Number(old.opens_at) || !db_('sessions/' + id)) return '';
+  if (old.finalized_at) throw new Error('Đề "' + id + '" đã đóng và chốt điểm — không sửa được. Muốn thi lại hãy đặt Mã đề mới.');
+  var b = buildExam_(exam);
+  var same = JSON.stringify(canon_(db_('exam_questions/' + id))) === JSON.stringify(canon_(b.questions))
+    && JSON.stringify(canon_(db_('exam_secrets/' + id))) === JSON.stringify(canon_(b.key))
+    && Number(old.grade) === b.meta.grade && JSON.stringify(canon_(partsOf_(old))) === JSON.stringify(canon_(b.meta.parts));
+  if (!same) throw new Error('Đề "' + id + '" đã có học sinh vào thi — không đổi được câu hỏi, đáp án, khối hay điểm. Chỉ đổi được Tiêu đề, Số phút, Đóng lúc, Số lượt. Muốn đề khác hãy đặt Mã đề mới.');
+  if (b.meta.closes_at < Number(old.closes_at) && b.meta.closes_at < Date.now()) throw new Error('Giờ đóng mới đã qua — học sinh đang làm sẽ mất quyền nộp.');
+  db_('exam_meta/' + id, 'patch', { title: b.meta.title, minutes: b.meta.minutes, closes_at: b.meta.closes_at, max_attempts: b.meta.max_attempts });
+  return 'Đã cập nhật ' + id + ' (đề đang thi): Số phút ' + b.meta.minutes + ', Đóng lúc ' + fmt_(b.meta.closes_at) + ' — câu hỏi giữ nguyên. ' + fmt_(Date.now());
 }
 function publishTab_(sh) {
-  var exam = examFromSheet_(sh); assertEditable_(String(exam.id || '').trim());
+  var exam = examFromSheet_(sh);
+  var locked = updateLockedExam_(exam); if (locked) return locked;
   var res = publishExam_(exam);
   return 'Đã phát hành ' + res.exam_id + ': ' + res.question_count + ' câu, ' + res.total_points + ' điểm' + (exam.parts.length > 1 ? ' + thực hành ' + exam.parts[1].max : '') + ' — ' + fmt_(Date.now());
 }

@@ -162,7 +162,16 @@ function makeEnv(opts = {}) {
   // Đề đã mở và có học sinh vào → không cho phát hành đè
   sh.put(12, 8, 'B'); ctx.db_('exam_meta/thu-01/opens_at', 'put', Date.now() - 60000); ctx.db_('sessions/thu-01/u1', 'put', { started_at: Date.now() });
   sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
-  ok(/đã có học sinh vào thi/.test(sh.cell(9, 3)), 'đề đã có học sinh vào thi → không cho sửa');
+  ok(/Đã cập nhật thu-01 \(đề đang thi\)/.test(sh.cell(9, 3)), 'đề đang thi, câu hỏi giữ nguyên → cho cập nhật giờ (C9: ' + sh.cell(9, 3) + ')');
+  // Gia hạn: đổi Số phút và Đóng lúc khi đang thi
+  sh.put(4, 2, 25); sh.put(6, 2, '28/10/2030 09:00'); sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  ok(db.exam_meta['thu-01'].minutes === 25 && db.exam_meta['thu-01'].closes_at === Date.UTC(2030, 9, 28, 2, 0) && db.exam_meta['thu-01'].opens_at < Date.now(), 'gia hạn khi đang thi: Số phút 25, Đóng 09:00, giữ giờ mở');
+  // Đổi câu hỏi khi đang thi → chặn
+  sh.put(11, 3, 'CPU (sửa)?'); sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  ok(/không đổi được câu hỏi/.test(sh.cell(9, 3)) && db.exam_questions['thu-01'].q1.prompt === 'CPU?', 'đổi câu hỏi khi đang thi → chặn, đề trên Firebase giữ nguyên');
+  // Đề đã chốt → chặn mọi sửa
+  sh.put(11, 3, 'CPU?'); ctx.db_('exam_meta/thu-01/finalized_at', 'put', Date.now()); sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  ok(/đã đóng và chốt điểm/.test(sh.cell(9, 3)), 'đề đã chốt → không sửa được');
   // Ngày giờ sai định dạng
   const sh2 = ss.insertSheet('DE_sai'); [['Mã đề', 'x-02'], ['Tiêu đề', 'x'], ['Khối', 9], ['Số phút', 15], ['Mở lúc', 'sáng mai'], ['Đóng lúc', ''], ['', 1], ['', 0], ['', true], [], ['q1', 'choice', 'p', 'a', 'b', '', '', 'A', 1]].forEach(r => sh2.appendRow(r));
   ctx.onGradebookEdit({ range: sh2.getRange(9, 2) });

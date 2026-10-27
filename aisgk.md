@@ -1823,3 +1823,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: docs/handoff/antigravity-claude-kiem-dinh-apps-script-cong5.md, aisgk.md.
 - Kiểm thực tế: Apps Script log ĐẠT TOÀN BỘ; load_gate4.mjs PASS; 10/10 test Windows PASS.
 - Việc tiếp: Chuyển Claude rà soát và hướng dẫn bước tiếp theo cho Cổng 5.
+
+### 27/10/2026 — Claude: kiểm định trước Cổng 5 ĐẠT; gia hạn khi đang thi; một danh sách cho hai hệ thống; hướng dẫn giáo viên
+- Báo cáo Antigravity (kiemTraHeThong OAuth, load_gate4 5 HS, Pages dấu b8619930) khớp mã và log.
+- Apps Script thi: đề đang thi cho đổi Tiêu đề/Số phút/Đóng lúc/Số lượt (gia hạn), khóa câu hỏi/đáp án; cấp phát: nhận mẫu Excel trang giáo viên.
+- Tài liệu: docs/huong-dan-giao-vien-thi-firebase.md. Test giả lập 35 ca OK. Người dùng chốt: không chờ Antigravity test, dùng thật rồi báo lỗi.
+- Handoff: docs/handoff/claude-nguoidung-hoan-thien-thi.md.

@@ -204,6 +204,16 @@ function deleteStudentAccount(uid) {
 }
 
 /**
+ * Vị trí cột Lớp/Khối theo dòng tiêu đề: chấp nhận cả mẫu Sheet này (Mã HS | Họ tên | Lớp | Khối | PIN)
+ * lẫn mẫu Excel nhập học sinh của trang giáo viên (Mã học sinh | Họ và tên | Khối | Lớp | Mã PIN) → dán thẳng cùng một danh sách.
+ */
+function rosterCols_(header) {
+  var h = (header || []).map(function (x) { return String(x || '').trim().toLowerCase(); });
+  var khoi = h.indexOf('khối'), lop = h.indexOf('lớp');
+  return { cls: lop === 2 || lop === 3 ? lop : 2, grade: khoi === 2 || khoi === 3 ? khoi : 3 };
+}
+
+/**
  * 1. Chạy từ menu Sheet: Cấp phát toàn bộ học sinh
  */
 function provisionAllStudentsFromSheet() {
@@ -214,6 +224,7 @@ function provisionAllStudentsFromSheet() {
     return;
   }
 
+  var C = rosterCols_(data[0]);
   var countNew = 0, countSynced = 0, countSkipped = 0, errors = [];
   var startedAt = Date.now(), stoppedAt = 0;
 
@@ -223,8 +234,8 @@ function provisionAllStudentsFromSheet() {
     var row = data[r];
     var studentId = String(row[0] || '').trim();
     var fullName  = String(row[1] || '').trim();
-    var classCode = String(row[2] || '').trim();
-    var grade     = Number(row[3]);
+    var classCode = String(row[C.cls] || '').trim();
+    var grade     = Number(String(row[C.grade] || '').replace(/^lớp\s*/i, ''));
     var pin       = String(row[4] || '').trim();
     var curUid    = String(row[6] || '').trim();
     var curStatus = String(row[7] || '');
@@ -232,7 +243,7 @@ function provisionAllStudentsFromSheet() {
     if (!studentId || !fullName) continue;
     // Đã cấp phát thành công trước đó: bỏ qua (muốn ghi lại hồ sơ thì dùng mục 3 "Đồng bộ lại danh bạ").
     if (curUid && curStatus.indexOf('LỖI') !== 0) { countSkipped++; continue; }
-    if (!(grade >= 6 && grade <= 9)) { sheet.getRange(r + 1, 8).setValue('LỖI: cột Khối phải là 6, 7, 8 hoặc 9'); errors.push(studentId + ': thiếu khối'); continue; }
+    if (!(grade >= 6 && grade <= 9)) { sheet.getRange(r + 1, 8).setValue('LỖI: cột Khối phải là 6, 7, 8 hoặc 9 (kiểm tra dòng tiêu đề có cột "Khối")'); errors.push(studentId + ': thiếu khối'); continue; }
     // Không bao giờ dùng PIN mặc định chung: thiếu PIN thì sinh ngẫu nhiên 6 chữ số và ghi lại vào cột E để phát cho học sinh.
     if (pin.length < 6) { pin = randomPin_(); sheet.getRange(r + 1, 5).setNumberFormat('@').setValue(pin); }
 
@@ -302,13 +313,13 @@ function resetPinSelectedRow() {
 function syncRosterToRtdbFromSheet() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = sheet.getDataRange().getValues();
-  var count = 0;
+  var count = 0, C = rosterCols_(data[0]);
 
   for (var r = 1; r < data.length; r++) {
     var studentId = String(data[r][0] || '').trim();
     var fullName  = String(data[r][1] || '').trim();
-    var classCode = String(data[r][2] || '').trim();
-    var grade     = Number(data[r][3]);
+    var classCode = String(data[r][C.cls] || '').trim();
+    var grade     = Number(String(data[r][C.grade] || '').replace(/^lớp\s*/i, ''));
     var uid       = String(data[r][6] || '').trim();
 
     if (!uid || !fullName || !(grade >= 6 && grade <= 9)) continue;
