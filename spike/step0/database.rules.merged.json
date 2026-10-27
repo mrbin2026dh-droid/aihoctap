@@ -1,32 +1,32 @@
 {
   "rules": {
     "rooms": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "remoteCommand": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "activeSession": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "lessons": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "sessionHistory": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "lessonPlans": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "questionBank": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))",
+      ".write": "auth != null && (auth.token.email == null || !auth.token.email.endsWith('@hs.aihoc.test'))"
     },
     "teachers": {
       ".read": false,

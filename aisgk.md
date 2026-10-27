@@ -1792,3 +1792,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: test suite xanh 100%; sẵn sàng cho Người dùng deploy New version và xóa DB_SECRET.
 - Việc tiếp: Người dùng thao tác 6 bước theo hướng dẫn và dán nhật ký kiemTraHeThong cho Claude.
+
+### 27/10/2026 — Claude: kiemTraHeThong ĐẠT TOÀN BỘ bằng OAuth (đã xóa DB_SECRET); đóng 7 nhánh RTDB cũ với tài khoản thi
+- Nhật ký người dùng 08:49: OAuth chủ dự án, không còn DB_SECRET. Rủi ro "mật khẩu toàn quyền" đã đóng.
+- `spike/step0/build_merged.py` + `emulator/rules-merged.test.mjs`: 7 nhánh cũ chặn email @hs.aihoc.test. Handoff: `docs/handoff/claude-antigravity-luat-nhanh-cu.md` (chưa publish).
