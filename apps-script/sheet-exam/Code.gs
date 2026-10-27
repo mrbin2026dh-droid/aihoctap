@@ -17,7 +17,7 @@ var DT_HEAD = DE_HEAD.concat(['Mã bài thi']);
 var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy', 'Mã nộp'];
 /** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
 var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
-var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc'];
+var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm'];
 var DD_HEAD = ['Mã bài thi', 'Mã học sinh', 'Vào lúc'];
 
 function doGet(e) { return route_((e && e.parameter) || {}); }
@@ -106,10 +106,11 @@ function setConfig_(key, val) {
 /* ---------- Bài thi ---------- */
 /** Mọi bài thi chưa xóa. Mỗi phần tử: {row, ma_de, tieu_de, che_do, khoi, lop, trang_thai, tao_luc}. */
 function exams_() {
-  var v = ensure_(SH_BT, BT_HEAD).getDataRange().getValues(), out = [];
+  var sh = ensure_(SH_BT, BT_HEAD), v = sh.getDataRange().getValues(), out = [];
+  if (v.length && String(v[0][7] || '').trim() !== 'Xem điểm') sh.getRange(1, 8).setValue('Xem điểm');
   for (var r = 1; r < v.length; r++) {
     var id = String(v[r][0] || '').trim(); if (!id || String(v[r][5]).trim() === 'xoa') continue;
-    out.push({ row: r + 1, ma_de: id, tieu_de: String(v[r][1] || '').trim(), che_do: String(v[r][2]).trim() === 'that' ? 'that' : 'thu', khoi: Number(v[r][3]) || 0, lop: String(v[r][4] || '').trim(), trang_thai: String(v[r][5]).trim() === 'mo' ? 'mo' : 'khoa', tao_luc: v[r][6] instanceof Date ? v[r][6].toISOString() : String(v[r][6] || '') });
+    out.push({ row: r + 1, ma_de: id, tieu_de: String(v[r][1] || '').trim(), che_do: String(v[r][2]).trim() === 'that' ? 'that' : 'thu', khoi: Number(v[r][3]) || 0, lop: String(v[r][4] || '').trim(), trang_thai: String(v[r][5]).trim() === 'mo' ? 'mo' : 'khoa', tao_luc: v[r][6] instanceof Date ? v[r][6].toISOString() : String(v[r][6] || ''), xem_diem: String(v[r][7] || '').trim() === 'co' });
   }
   return out;
 }
@@ -257,7 +258,7 @@ function teacher_(p) {
   if (a === 'gv_publish') { var n = publish_(); var info = info_(); info.published = n; return info; }
   if (a === 'gv_create') create_(p);
   else if (a === 'gv_update') update_(p);
-  else if (a === 'gv_set') setStatus_(String(p.ma_de || ''), p.trang_thai);
+  else if (a === 'gv_set') setStatus_(String(p.ma_de || ''), p.trang_thai, p.xem_diem);
   else if (a === 'gv_delete') del_(String(p.ma_de || ''));
   else if (a === 'gv_reset') reset_(String(p.ma_de || ''), p.ma);
   else if (a !== 'gv_list' && a !== 'gv_info') throw new Error('Yêu cầu không hợp lệ.');
@@ -284,7 +285,7 @@ function create_(p) {
   var ex = { che_do: che, khoi: khoi, ma_de: String(new Date().getTime()) };
   if (che === 'that') { if (!countBank_(ex)) throw new Error('Trang DeThi trong Google Sheet chưa có câu cho khối ' + khoi + '.'); }
   else { if (!(p.questions || []).length) throw new Error('Tải file Excel đề thi thử lên trước.'); writeQuestions_(ex.ma_de, khoi, p.questions); }
-  ensure_(SH_BT, BT_HEAD).appendRow([ex.ma_de, title, che, khoi, lop, 'khoa', new Date().toISOString()]);
+  ensure_(SH_BT, BT_HEAD).appendRow([ex.ma_de, title, che, khoi, lop, 'khoa', new Date().toISOString(), che === 'thu' ? 'co' : '']);   // thi thử: mặc định cho xem điểm
 }
 function update_(p) {
   var ex = exam_(String(p.ma_de || '')), sh = sheet_(SH_BT);
@@ -294,9 +295,12 @@ function update_(p) {
   if (ex.che_do === 'thu' && p.questions && p.questions.length) writeQuestions_(ex.ma_de, khoi, p.questions);
   sh.getRange(ex.row, 2).setValue(title); sh.getRange(ex.row, 4).setValue(khoi); sh.getRange(ex.row, 5).setValue(lop);
 }
-function setStatus_(maDe, st) {
-  if (st !== 'mo' && st !== 'khoa') throw new Error('Trạng thái không hợp lệ.');
-  var ex = exam_(maDe); sheet_(SH_BT).getRange(ex.row, 6).setValue(st);
+/** Mở/khóa (trang_thai) và/hoặc cho học sinh xem điểm, xếp hạng (xem_diem: 'co' | 'khong'). */
+function setStatus_(maDe, st, xem) {
+  var ex = exam_(maDe), done = false;
+  if (st === 'mo' || st === 'khoa') { sheet_(SH_BT).getRange(ex.row, 6).setValue(st); done = true; }
+  if (xem === 'co' || xem === 'khong') { sheet_(SH_BT).getRange(ex.row, 8).setValue(xem === 'co' ? 'co' : ''); done = true; }
+  if (!done) throw new Error('Trạng thái không hợp lệ.');
 }
 /** Xóa = ẩn khỏi danh sách (giữ nguyên điểm trong KetQua). */
 function del_(maDe) { var ex = exam_(maDe); sheet_(SH_BT).getRange(ex.row, 6).setValue('xoa'); }
@@ -322,7 +326,7 @@ function info_() {
   exams_().forEach(function (ex) {
     var res = allRes[ex.ma_de] || {}, vis = allVis[ex.ma_de] || {}, n = 0, vao = 0, nop = 0;
     st.forEach(function (s) { if (!allowed_(s, ex)) return; n++; var k = norm_(s.ma); if (res[k]) nop++; else if (vis[k]) vao++; });
-    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
+    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
   });
   list.sort(function (a, b) { return String(b.tao_luc).localeCompare(String(a.tao_luc)); });
   var bank = {}; [6, 7, 8, 9].forEach(function (k) { bank[k] = (bc.khoi[k] || 0) + bc.khoiFree; });
@@ -368,7 +372,7 @@ function publish_() {
   var bai = {}, de = {}, list = exams_();
   list.forEach(function (ex) {
     var qs = []; try { qs = questions_(ex, { lop: '' }); } catch (e) { qs = []; }
-    bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc };
+    bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem };
     de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
   });
   fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de });

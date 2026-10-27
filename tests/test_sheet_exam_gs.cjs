@@ -123,6 +123,9 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   ok(bai.tieu_de === 'TT' && bai.trang_thai === 'khoa' && bai.so_cau === 2 && E.fbdb.thi_de[id].length === 2 && E.fbdb.thi_de[id][0].answer === 'A', 'thi_bai + thi_de (kèm đáp án để máy học sinh tự chấm)');
   c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' });
   ok(E.fbdb.thi_bai[id].trang_thai === 'mo', 'Mở thi → Firebase đổi ngay');
+  ok(E.fbdb.thi_bai[id].xem_diem === false, 'thi thật: mặc định chưa cho xem điểm');
+  const xd = c({ action: 'gv_set', ma_de: id, xem_diem: 'co' });
+  ok(xd.exams[0].xem_diem === true && E.fbdb.thi_bai[id].xem_diem === true && E.fbdb.thi_bai[id].trang_thai === 'mo', 'bật Cho xem điểm → Firebase đổi ngay, vẫn giữ trạng thái mở');
   E.fbdb.thi_nop = { [id]: { hs9a01: { ma: 'hs9a01', ten: 'Nguyễn Văn An', lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, tra_loi: { r2: 'A' }, at: 1761550000000 } } };
   c({ action: 'gv_list' }); c({ action: 'gv_list' });
   const rows = E.sheets.KetQua.rows.filter(r => r[9] === id);

@@ -161,7 +161,7 @@ async function expireSession() {
     pin?.focus();
   } finally { expiring = false; }
 }
-initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', getIdentity: () => (session?.pin ? session.identity : null), onClose: () => {}});   // đăng nhập nhanh qua Firebase → tab Thi Firebase; đường cũ → bài thi Google Sheet
+initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', getIdentity: () => session?.identity || null, onClose: () => {}});   // tab Thi: thẳng danh sách bài trên Firebase, không đăng nhập lại
 window.addEventListener('aisgk:unauthorized', () => { void expireSession(); });
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }

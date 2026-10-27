@@ -17,7 +17,15 @@
    Khóa chỉ nằm trong Sheet của bạn (Script Properties) — không dán vào chat, không đưa lên GitHub.
 4. Mở app giáo viên (Ctrl+F5) → **Thi** → bấm **Cập nhật lên Firebase** một lần.
 
+## Học sinh thấy gì
+- Đăng nhập app một lần → mục **Thi** hiện ngay các bài thầy cô đã tạo cho lớp/khối của em (không đăng nhập lại).
+- Mỗi bài là một thẻ: loại thi, lớp/khối, Đang mở/Chưa mở, số câu, đã thi mấy lần; nút **Vào thi**, **Vào phòng chờ**, **Làm lại** (thi thử).
+- Nếu thầy cô bật **Cho xem điểm** cho bài đó: thẻ có nút **Kết quả** → điểm lần gần nhất, điểm cao nhất, số lần thi, **hạng trong lớp**, điểm trung bình lớp, bảng xếp hạng lớp (dòng của em được tô sáng).
+- Nếu chưa bật: học sinh chỉ thấy "Đã nộp bài — thầy cô sẽ công bố điểm sau".
+- Lưu ý: tab Thi chỉ có bài sau khi làm xong 3 bước cài đặt ở trên (Firebase còn trống thì hiện "Chưa có bài thi").
+
 ## Dùng hằng ngày
+- Nút biểu tượng con mắt trên thẻ bài (app giáo viên → Thi): **Cho xem điểm / Ẩn điểm**. Thi thử mặc định cho xem; thi thật mặc định ẩn đến khi thầy cô bật.
 - Thêm/sửa học sinh trong trang HocSinh hoặc sửa đề trong DeThi → bấm **Cập nhật lên Firebase** (trong app, hoặc menu Sheet).
 - Tạo/sửa/mở/khóa/xóa bài trong app: tự cập nhật, không cần bấm thêm.
 - Thống kê từng bài: hiện tức thì ai chưa vào / đã vào / đã nộp + điểm.

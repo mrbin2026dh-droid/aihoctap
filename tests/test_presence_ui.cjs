@@ -19,7 +19,11 @@ try{
  await pg.route('https://identitytoolkit.googleapis.com/**',r=>{st.exchanged.push(JSON.parse(r.request().postData()).token);
   if(fbDown)return r.fulfill({status:400,contentType:'application/json',body:'{"error":{"message":"INVALID_CUSTOM_TOKEN"}}'});
   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({localId:'HS01',idToken:'id-tok',refreshToken:'rf-tok',expiresIn:'3600'})})});
- await pg.route('**/*firebasedatabase.app/**',r=>{const u=new URL(r.request().url());st.writes.push({m:r.request().method(),path:u.pathname,auth:u.searchParams.get('auth'),body:JSON.parse(r.request().postData()||'null')});r.fulfill({status:200,contentType:'application/json',body:'{}'})});
+ const fdb={thi_bai:{g1:{tieu_de:'Giữa kỳ',che_do:'that',khoi:9,lop:'9A',trang_thai:'khoa',so_cau:1}},thi_de:{g1:[{id:'r2',text:'CPU?',options:{A:'x',B:'y'},answer:'A',points:5}]}};st.fdb=fdb;
+ await pg.route('**/*firebasedatabase.app/**',r=>{const u=new URL(r.request().url());const parts=u.pathname.replace(/\.json$/,'').split('/').filter(Boolean);const v=parts.reduce((o,k)=>o==null?undefined:o[k],fdb);
+  if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`retry: 300\nevent: put\ndata: ${JSON.stringify({path:'/',data:v??null})}\n\n`});
+  if(r.request().method()==='GET')return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(parts[0]==='thi_hs'?null:(v??null))});
+  st.writes.push({m:r.request().method(),path:u.pathname,auth:u.searchParams.get('auth'),body:JSON.parse(r.request().postData()||'null')});r.fulfill({status:200,contentType:'application/json',body:'{}'})});
  await pg.route(API,r=>{st.calls++;const p=JSON.parse(r.request().postData());const j=x=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(x)});
   const student={name:'Nguyễn Văn An',lop:'9A',ma:'HS01',done:false};
   if(p.action==='submit')return j({ok:true,mode:'that',score:5,total:5,correct:1,count:1});
@@ -40,10 +44,10 @@ try{
  ok(w.body.name==='Nguyễn Văn An'&&w.body.lop==='9A'&&w.body.at['.sv']==='timestamp','kèm họ tên, lớp, giờ máy chủ Firebase');
  ok(!st.writes.some(x=>JSON.stringify(x).includes('123456')),'không gửi PIN lên Firebase');
  await pg.click('.bottom-nav [data-tab="exams"]');
- await pg.frameLocator('iframe.thi-frame').locator('.exam-item').first().click();
+ await pg.click('.thi-card button:has-text("Vào phòng chờ")');
  ok(await waitState('phong_cho'),'tab Thi, bài đang khóa → "Phòng chờ thi"');
- ok(await waitState('dang_thi',12000),'thầy cô mở thi → "Đang thi"');
- const fr=pg.frameLocator('iframe.thi-frame');await fr.locator('.opt').first().click();await fr.locator('#submit').click();await fr.locator('#confirm-ok').click();
+ st.fdb.thi_bai.g1.trang_thai='mo';ok(await waitState('dang_thi',12000),'thầy cô mở thi → "Đang thi"');
+ await pg.click('.thi-form .option >> nth=0');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');
  ok(await waitState('da_nop'),'nộp bài → "Đã nộp"');
  await pg.click('.bottom-nav [data-tab="progress"]');ok(await waitState('hoc'),'rời tab Thi → "Đang học"');
  await pg.evaluate(()=>document.getElementById('logout').click());ok(await waitState('offline'),'đăng xuất → "Đã thoát"');

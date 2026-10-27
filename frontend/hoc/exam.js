@@ -51,7 +51,10 @@ export async function renderExamList(target, loggedIn) {
   // Bài thi lấy từ Google Sheet: học sinh đã đăng nhập thì đề hiện thẳng trong tab Thi (không hỏi lại, không nút phụ).
   // Bài thi chạy thẳng trên Firebase (nhanh, tức thì): vẽ ngay trong tab Thi.
   const identity = host?.getIdentity?.();
-  if (loggedIn && identity && thiStore.enabled()) { thiApp.render(target, identity); return; }
+  if (SHEET_EXAM && thiStore.enabled()) {
+    if (loggedIn && identity) { thiApp.render(target, identity); return; }
+    note('Đăng nhập để thi', 'Đăng nhập bằng Mã học sinh và Mã PIN, mục Thi sẽ hiện các bài thầy cô đã mở.'); return;
+  }
   if (SHEET_EXAM) {
     let cred = ''; try { cred = sessionStorage.getItem('thi-cred') || ''; } catch { /* bỏ qua */ }
     if (!loggedIn || !cred) { note('Đăng nhập để thi', 'Đăng nhập bằng Mã học sinh và Mã PIN, rồi chọn mục Thi.'); return; }

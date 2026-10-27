@@ -91,6 +91,12 @@
           },
           "$other": {
             ".validate": false
+          },
+          "lan": {
+            ".validate": "newData.isNumber()"
+          },
+          "cao_nhat": {
+            ".validate": "newData.isNumber()"
           }
         }
       }

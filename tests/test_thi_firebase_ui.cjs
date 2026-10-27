@@ -8,8 +8,9 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
  r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml'}[path.extname(f)]||'x');r.end(body)}).listen(8198);
 const h=(ma,pin)=>crypto.createHash('sha256').update(ma.toLowerCase()+':'+pin).digest('hex');
 const seed=()=>({thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:h('hs01','123456')}},
- thi_bai:{b1:{tieu_de:'Giữa kỳ 9A',che_do:'that',khoi:9,lop:'9A',trang_thai:'khoa',so_cau:2},b2:{tieu_de:'Ôn tập khối 9',che_do:'thu',khoi:9,lop:'',trang_thai:'mo',so_cau:1},
+ thi_bai:{b1:{tieu_de:'Giữa kỳ 9A',che_do:'that',khoi:9,lop:'9A',trang_thai:'khoa',so_cau:2},b2:{tieu_de:'Ôn tập khối 9',che_do:'thu',khoi:9,lop:'',trang_thai:'mo',so_cau:1,xem_diem:true},
   b3:{tieu_de:'Bài của 9B',che_do:'that',khoi:9,lop:'9B',trang_thai:'mo',so_cau:1},b4:{tieu_de:'Thử đang khóa',che_do:'thu',khoi:9,lop:'',trang_thai:'khoa',so_cau:1}},
+ thi_nop:{b2:{hs02:{ma:'hs02',ten:'Bạn 9A',lop:'9A',diem:8,tong:10,dung:1,so_cau:1,lan:1,cao_nhat:8,at:1},hs03:{ma:'hs03',ten:'Bạn 9B',lop:'9B',diem:10,tong:10,dung:1,so_cau:1,lan:1,cao_nhat:10,at:2}}},
  thi_de:{b1:[{id:'r2',stt:1,text:'CPU là gì?',options:{A:'Bộ xử lý',B:'Bộ nhớ'},answer:'A',points:5},{id:'r3',stt:2,text:'Excel là?',options:{A:'Soạn thảo',B:'Bảng tính'},answer:'B',points:5}],
   b2:[{id:'r9',stt:1,text:'RAM là?',options:{A:'Bộ nhớ',B:'Ổ cứng'},answer:'A',points:10}]}});
 (async()=>{const b=await chromium.launch({args:['--host-resolver-rules=MAP thi.test 127.0.0.1','--unsafely-treat-insecure-origin-as-secure=http://thi.test:8198']});let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
@@ -41,7 +42,7 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
  const cards=await pg.$$eval('.thi-card',a=>a.map(x=>x.textContent));
  ok(cards.length===2&&cards.some(c=>c.includes('Giữa kỳ 9A')&&c.includes('Chưa mở'))&&cards.some(c=>c.includes('Ôn tập khối 9')&&c.includes('Đang mở')),'tab Thi trong app: bài của lớp/khối em; thi thật khóa vẫn hiện, thi thử khóa ẩn, bài lớp khác ẩn');
  ok(await pg.locator('iframe.thi-frame').count()===0,'không còn khung thi riêng (iframe)');
- await pg.click('.thi-card:has-text("Giữa kỳ 9A")');await pg.waitForSelector('.thi-waitbox');
+ await pg.click('.thi-card:has-text("Giữa kỳ 9A") button:has-text("Vào phòng chờ")');await pg.waitForSelector('.thi-waitbox');
  await pg.waitForTimeout(200);ok(writes.some(w=>w.path.endsWith('/thi_vao/b1/hs01.json'))&&writes.filter(w=>w.path.includes('/presence/')).at(-1).v.state==='phong_cho','vào phòng chờ: điểm danh thi_vao + "Phòng chờ thi"');
  db.thi_bai.b1.trang_thai='mo';await pg.waitForSelector('.thi-form .question',{timeout:8000});
  ok(await pg.locator('.thi-form .question').count()===2,'thầy cô bấm Mở → tự vào bài, không cần bấm gì');
@@ -54,17 +55,25 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
  ok(await pg.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'không tràn ngang '+vp.width);
  await pg.click('.thi-submit');await pg.waitForSelector('#msg-dialog[open]');ok((await pg.textContent('#msg-dialog')).includes('1/2'),'Nộp → hộp thoại xác nhận "mới làm 1/2 câu"');
  await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForSelector('.thi-result');
- ok((await pg.textContent('.thi-score')).includes('5 / 10'),'tự chấm, hiện điểm ngay 5/10');
- const nop=db.thi_nop.b1.hs01;ok(nop.diem===5&&nop.tong===10&&nop.dung===1&&nop.tra_loi.r2==='A'&&nop.ma==='HS01'&&typeof nop.at==='number','ghi bài nộp + điểm vào Firebase thi_nop');
+ ok((await pg.textContent('.thi-result')).includes('Thầy cô sẽ công bố điểm sau')&&await pg.locator('.thi-score').count()===0,'chưa cho xem điểm → chỉ báo "Đã nộp bài", không hiện điểm');
+ const nop=db.thi_nop.b1.hs01;ok(nop.diem===5&&nop.tong===10&&nop.dung===1&&nop.lan===1&&nop.cao_nhat===5&&nop.tra_loi.r2==='A'&&nop.ma==='HS01'&&typeof nop.at==='number','ghi bài nộp + điểm + số lần vào Firebase thi_nop');
  ok(writes.filter(w=>w.path.includes('/presence/')).at(-1).v.state==='da_nop','"Đã nộp"');
  ok(!(await pg.evaluate(()=>localStorage.getItem('thi-fb-hs01-b1'))),'nộp xong xóa nháp');
- await pg.click('.thi-back');await pg.waitForSelector('.thi-card');ok((await pg.textContent('.thi-card:has-text("Giữa kỳ 9A")')).includes('Đã nộp · 5/10'),'danh sách: bài đã nộp hiện điểm');
- await pg.click('.thi-card:has-text("Giữa kỳ 9A")');await pg.waitForSelector('.thi-result');ok((await pg.textContent('.thi-head')).includes('đã nộp bài này rồi'),'thi thật: vào lại → báo đã nộp, không làm lại');
- await pg.click('.thi-back');await pg.click('.thi-card:has-text("Ôn tập khối 9")');await pg.waitForSelector('.thi-form .question');
- await pg.click('.thi-form .option:has-text("Bộ nhớ")');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForSelector('.thi-result');
- ok((await pg.textContent('.thi-score')).includes('10 / 10')&&await pg.isVisible('.thi-actions button:has-text("Làm lại")'),'thi thử: điểm 10/10, có nút Làm lại');
- await pg.click('.thi-actions button:has-text("Làm lại")');await pg.waitForSelector('.thi-form .question');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForSelector('.thi-result');
- ok((await pg.textContent('.thi-score')).includes('0 / 10'),'thi thử làm lại và nộp lại được');
+ await pg.click('.thi-back');await pg.waitForSelector('.thi-card');
+ const c1=await pg.textContent('.thi-card:has-text("Giữa kỳ 9A")');ok(c1.includes('Đã thi 1 lần')&&c1.includes('Đã nộp bài')&&!c1.includes('5/10')&&await pg.locator('.thi-card:has-text("Giữa kỳ 9A") button').count()===0,'thẻ bài: đã thi 1 lần, không lộ điểm, không còn nút vào thi');
+ db.thi_bai.b1.xem_diem=true;await pg.waitForSelector('.thi-card:has-text("Giữa kỳ 9A") button:has-text("Kết quả")',{timeout:8000});
+ ok((await pg.textContent('.thi-card:has-text("Giữa kỳ 9A")')).includes('Điểm cao nhất 5/10'),'thầy cô bật Cho xem điểm → thẻ hiện điểm và nút Kết quả ngay');
+ await pg.click('.thi-card:has-text("Giữa kỳ 9A") button:has-text("Kết quả")');await pg.waitForSelector('.thi-stats');
+ ok((await pg.textContent('.thi-score')).includes('5 / 10')&&(await pg.textContent('.thi-stats')).includes('1/1')&&(await pg.textContent('.thi-stats')).includes('Số lần thi'),'trang kết quả: điểm, hạng trong lớp, số lần thi');
+ await pg.click('.thi-back');await pg.click('.thi-card:has-text("Ôn tập khối 9") button:has-text("Vào thi")');await pg.waitForSelector('.thi-form .question');
+ await pg.click('.thi-form .option:has-text("Bộ nhớ")');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForSelector('.thi-stats');
+ ok((await pg.textContent('.thi-score')).includes('10 / 10')&&await pg.isVisible('.thi-actions button:has-text("Làm lại")'),'thi thử (cho xem điểm): 10/10, có nút Làm lại');
+ const stx=await pg.textContent('.thi-stats');ok(stx.includes('1/2')&&!(await pg.textContent('.thi-board')).includes('Bạn 9B'),'xếp hạng: hạng 1/2 trong lớp 9A, không tính bạn lớp khác');
+ ok(await pg.locator('.thi-rank-row').count()===2&&(await pg.textContent('.thi-rank-row.is-me')).includes('(em)'),'bảng xếp hạng lớp, tô sáng dòng của em');
+ await pg.click('.thi-actions button:has-text("Làm lại")');await pg.waitForSelector('.thi-form .question');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForFunction(()=>(document.querySelector('.thi-score')?.textContent||'').includes('0 / 10'));
+ const st2=await pg.textContent('.thi-stats');ok(st2.includes('Số lần thi')&&db.thi_nop.b2.hs01.lan===2&&db.thi_nop.b2.hs01.cao_nhat===10&&st2.includes('1/2'),'làm lại: lần 2, giữ điểm cao nhất 10 để xếp hạng');
+ if(vp.width<500)await pg.screenshot({path:process.env.SHOT||'/dev/null'}).catch(()=>{});
+ ok(await pg.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'trang kết quả không tràn ngang '+vp.width);
  ok(errs.length===0,'không lỗi JS '+errs.join('|'));await ctx.close();
  // tài khoản chưa có trên Firebase → đường cũ qua Worker
  {db=seed();delete db.thi_hs.hs01;workerCalls.length=0;const c2=await b.newContext({viewport:vp,serviceWorkers:'block'});const p2=await c2.newPage();

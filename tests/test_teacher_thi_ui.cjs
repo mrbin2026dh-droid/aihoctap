@@ -18,7 +18,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   const ex=()=>st.exams.find(e=>e.ma_de===p.ma_de);
   if(p.action==='gv_create'){if(p.che_do==='that'&&p.khoi===7)return j({ok:false,error:'Trang DeThi trong Google Sheet chưa có câu cho khối 7.'});st.exams.unshift({ma_de:String(++st.seq),tieu_de:p.tieu_de,che_do:p.che_do,khoi:p.khoi,lop:p.lop,trang_thai:'khoa',questions:p.che_do==='thu'?p.questions.length:3,tao_luc:'x'})}
   if(p.action==='gv_update'){Object.assign(ex(),{tieu_de:p.tieu_de,khoi:p.khoi,lop:p.lop})}
-  if(p.action==='gv_set')ex().trang_thai=p.trang_thai;
+  if(p.action==='gv_set'){if(p.trang_thai)ex().trang_thai=p.trang_thai;if(p.xem_diem)ex().xem_diem=p.xem_diem==='co';}
   if(p.action==='gv_delete')st.exams=st.exams.filter(e=>e.ma_de!==p.ma_de);
   if(p.action==='gv_reset'){st.state[p.ma_de+p.ma]='vao';return j(stats(ex()))}
   if(p.action==='gv_stats')return j(stats(ex()));
@@ -52,7 +52,9 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
  ok(cards.length===2&&cards[0].includes('Kiểm tra 8')&&cards[0].includes('khối 8')&&cards[1].includes('Giữa kỳ')&&cards[1].includes('lớp 9A')&&cards[1].includes('Đang KHÓA')&&cards[1].includes('Thi thật'),'danh sách: 2 bài cho 2 lớp, có loại, đối tượng, trạng thái');
  ok(cards[1].includes('2 học sinh'),'thẻ bài: số học sinh thuộc bài');
  const labels=await pg.$$eval('#thi-list article:nth-child(2) .t-icon-btn',a=>a.map(x=>x.getAttribute('aria-label')));
- ok(labels.length===4&&labels[0].startsWith('Thống kê')&&labels[1].startsWith('Chỉnh sửa')&&labels[2].startsWith('Mở thi')&&labels[3].startsWith('Xóa'),'4 nút biểu tượng có tên: thống kê, chỉnh sửa, mở thi, xóa');
+ ok(labels.length===5&&labels[0].startsWith('Thống kê')&&labels[1].startsWith('Chỉnh sửa')&&labels[2].startsWith('Mở thi')&&labels[3].startsWith('Cho học sinh xem điểm')&&labels[4].startsWith('Xóa'),'5 nút biểu tượng có tên: thống kê, chỉnh sửa, mở thi, cho xem điểm, xóa');
+ await pg.click('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Cho học sinh xem điểm"]');await pg.waitForFunction(()=>document.querySelector('#thi-list article:nth-child(2)').textContent.includes('Cho xem điểm'));
+ ok(st.calls.filter(c=>c.action==='gv_set').at(-1).xem_diem==='co'&&await pg.getAttribute('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Ẩn điểm"]','aria-pressed')==='true','bật Cho xem điểm: gửi đúng bài, nút đổi thành Ẩn điểm');
  ok((await pg.$$eval('#thi-list .t-icon-btn',a=>a.every(x=>x.getBoundingClientRect().height>=48&&x.getBoundingClientRect().width>=48))),'nút biểu tượng ≥ 48px');
  // ----- khóa / mở
  await pg.click('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Mở thi"]');await pg.waitForFunction(()=>document.querySelector('#thi-list article:nth-child(2)').textContent.includes('Đang MỞ'));

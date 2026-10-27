@@ -1,12 +1,13 @@
 // @ts-check
 // Tab Thi của học sinh — chạy thẳng trên Firebase (thi-store.js), KHÔNG qua Worker hay Google Sheet:
-// danh sách bài (cập nhật tức thì) → phòng chờ (tự vào khi thầy cô bấm Mở) → làm bài (nháp lưu trên máy) → nộp → điểm ngay.
+// danh sách bài (cập nhật tức thì) → phòng chờ (tự vào khi thầy cô bấm Mở) → làm bài (nháp lưu trên máy) → nộp →
+// kết quả: số lần thi, điểm, hạng trong lớp — CHỈ khi thầy cô bật "Cho xem điểm" (xem_diem) cho bài đó.
 import * as store from './thi-store.js';
 import { setState as presence } from './presence.js';
 import { el, icon, confirmBox } from './dom.js';
 
 /** @typedef {{ma:string,ten:string,lop:string,khoi:number}} Me */
-/** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number}} Bai */
+/** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean}} Bai */
 /** @typedef {{id:string,stt?:number|string,text:string,options:Record<string,string>,answer:string,points:number}} Cau */
 
 /** @type {HTMLElement|null} */ let root = null;
@@ -15,7 +16,7 @@ import { el, icon, confirmBox } from './dom.js';
 /** @type {Record<string, any>} bài đã nộp của em, theo mã bài */ let mine = {};
 /** @type {Record<string, Cau[]>} */ const deCache = {};
 /** @type {null|(() => void)} */ let stop = null;
-/** @type {{phase:'list'|'wait'|'exam'|'result', id:string, qs:Cau[], result?:any}} */ let cur = { phase: 'list', id: '', qs: [] };
+/** @type {{phase:'list'|'wait'|'exam'|'result', id:string, qs:Cau[], result?:any, fresh?:boolean}} */ let cur = { phase: 'list', id: '', qs: [] };
 let loaded = false, online = true;
 
 const draftKey = (/** @type {string} */ id) => `thi-fb-${store.keyOf(me?.ma || '')}-${id}`;
@@ -37,7 +38,7 @@ export function render(target, identity) {
   const next = { ma: identity.uid, ten: identity.student_name, lop: identity.class_code, khoi: Number(identity.grade) || 0 };
   if (!me || me.ma !== next.ma) { mine = {}; cur = { phase: 'list', id: '', qs: [] }; loaded = false; }
   me = next;
-  if (cur.phase === 'result') cur = { phase: 'list', id: '', qs: [] };
+  if (cur.phase === 'result') cur = { phase: 'list', id: '', qs: [] };   // mở lại tab Thi → về danh sách (nút Kết quả trên thẻ)
   draw(); if (cur.phase === 'wait') void presence('phong_cho');
   if (!stop) stop = store.listen('thi_bai', d => { bai = d || {}; loaded = true; onChange(); }, ok => { online = ok; if (cur.phase === 'list') draw(); });
 }
@@ -55,7 +56,7 @@ function draw() {
   if (!root) return;
   if (cur.phase === 'list') drawList();
   else if (cur.phase === 'wait') drawWait();
-  else if (cur.phase === 'result') drawResult();
+  else if (cur.phase === 'result') void showStats(cur.id, cur.fresh);
   else if (cur.phase === 'exam') { if (cur.qs.length) { drawExam(); void presence('dang_thi'); } else void startExam(cur.id); }   // quay lại tab Thi giữa chừng: bài làm vẫn còn (nháp)
 }
 const page = (/** @type {string} */ title, /** @type {string} */ sub) => {
@@ -64,7 +65,13 @@ const page = (/** @type {string} */ title, /** @type {string} */ sub) => {
   h.append(el('h2', title), el('p', sub, 'meta')); w.append(h); root?.append(w); return w;
 };
 
-/* ---------- Danh sách bài ---------- */
+/* ---------- Danh sách bài (giống thẻ bài thi của giáo viên) ---------- */
+const best = (/** @type {any} */ r) => r ? Number(r.cao_nhat ?? r.diem) || 0 : 0;
+const lanOf = (/** @type {any} */ r) => r ? Number(r.lan) || 1 : 0;
+/** @param {string} text @param {string} [cls] */
+const chip = (text, cls = '') => el('span', text, 'thi-chip' + (cls ? ' ' + cls : ''));
+/** @param {string} text @param {string} cls @param {() => void} fn */
+function btn(text, cls, fn) { const b = /** @type {HTMLButtonElement} */ (el('button', text, cls)); b.type = 'button'; b.addEventListener('click', fn); return b; }
 function drawList() {
   if (!me) return;
   const w = page('Bài thi', `${me.ten} · Lớp ${me.lop}`);
@@ -76,18 +83,24 @@ function drawList() {
   }
   const ul = el('ul', '', 'thi-list');
   for (const [id, b] of list) {
-    const done = mine[id];
-    const btn = /** @type {HTMLButtonElement} */ (el('button', '', 'thi-card')); btn.type = 'button'; btn.dataset.id = id;
-    const top = el('div', '', 'thi-card-top');
-    top.append(el('strong', b.tieu_de), el('span', b.che_do === 'that' ? 'Thi thật' : 'Thi thử', 'thi-chip ' + (b.che_do === 'that' ? 'is-real' : 'is-trial')));
-    const st = done && b.che_do === 'that' ? `Đã nộp · ${done.diem}/${done.tong} điểm`
-      : b.trang_thai === 'mo' ? `Đang mở · ${b.so_cau} câu${done ? ` · lần trước ${done.diem}/${done.tong}` : ''}` : 'Chưa mở · bấm để vào phòng chờ';
-    const meta = el('span', st, 'meta thi-card-meta' + (b.trang_thai === 'mo' && !(done && b.che_do === 'that') ? ' is-open' : ''));
-    btn.append(top, meta); btn.addEventListener('click', () => void open(id));
-    const li = el('li'); li.append(btn); ul.append(li);
+    const done = mine[id], open = b.trang_thai === 'mo', that = b.che_do === 'that', xem = !!b.xem_diem;
+    const card = el('li', '', 'thi-card' + (open ? ' is-open' : '')); card.dataset.id = id;
+    const info = el('div', '', 'thi-card-info');
+    const tags = el('div', '', 'thi-tags');
+    tags.append(chip(that ? 'Thi thật' : 'Thi thử', that ? 'is-real' : 'is-trial'), chip(b.lop ? 'Lớp ' + b.lop : 'Khối ' + b.khoi), chip(open ? 'Đang mở' : 'Chưa mở', open ? 'is-open' : 'is-locked'));
+    const parts = [`${b.so_cau} câu`];
+    if (done) parts.push(`Đã thi ${lanOf(done)} lần`);
+    if (done && xem) parts.push(`Điểm cao nhất ${best(done)}/${done.tong}`);
+    else if (done) parts.push('Đã nộp');
+    info.append(el('h3', b.tieu_de, 'thi-card-title'), tags, el('p', parts.join(' · '), 'meta thi-card-meta'));
+    const acts = el('div', '', 'thi-card-actions');
+    if (done && xem) acts.append(btn('Kết quả', 'thi-btn-ghost', () => void showStats(id)));
+    if (that && done) { if (!xem) acts.append(el('span', 'Đã nộp bài', 'meta thi-done')); }
+    else acts.append(btn(open ? (done ? 'Làm lại' : 'Vào thi') : 'Vào phòng chờ', 'primary thi-go', () => void openExam(id)));
+    card.append(info, acts); ul.append(card);
   }
   w.append(ul);
-  // Lấy điểm các bài em đã nộp (một lần, song song) để hiện ngay trên thẻ.
+  // Lấy bài em đã nộp (một lần, song song) để hiện số lần thi và điểm trên thẻ.
   const need = list.map(([id]) => id).filter(id => !(id in mine));
   if (need.length) {
     need.forEach(id => { mine[id] = null; });
@@ -97,14 +110,13 @@ function drawList() {
 }
 
 /** @param {string} id */
-async function open(id) {
+async function openExam(id) {
   const b = bai[id]; if (!b || !me) return;
-  if (b.che_do === 'that' && mine[id]) { cur = { phase: 'result', id, qs: [], result: { ...mine[id], already: true } }; drawResult(); return; }
+  if (b.che_do === 'that' && mine[id]) { if (b.xem_diem) await showStats(id); return; }
   void store.put(`thi_vao/${id}/${store.keyOf(me.ma)}`, store.SERVER_TIME).catch(() => {});   // điểm danh
   if (b.trang_thai !== 'mo') { cur = { phase: 'wait', id, qs: [] }; drawWait(); void presence('phong_cho'); return; }
   await startExam(id);
 }
-
 /* ---------- Phòng chờ ---------- */
 function drawWait() {
   const b = bai[cur.id]; if (!b) return;
@@ -115,7 +127,7 @@ function drawWait() {
   p.setAttribute('role', 'status');
   box.append(dot, p); w.append(box, backBtn('Chọn bài khác'));
 }
-const backBtn = (/** @type {string} */ text) => { const b = el('button', text, 'thi-back'); /** @type {HTMLButtonElement} */ (b).type = 'button'; b.addEventListener('click', () => { cur = { phase: 'list', id: '', qs: [] }; void presence('hoc'); draw(); }); return b; };
+const backBtn = (/** @type {string} */ text) => { const b = el('button', text, 'thi-back thi-btn-ghost'); /** @type {HTMLButtonElement} */ (b).type = 'button'; b.addEventListener('click', () => { cur = { phase: 'list', id: '', qs: [] }; void presence('hoc'); draw(); }); return b; };
 
 /* ---------- Làm bài ---------- */
 /** @param {string} id */
@@ -155,7 +167,7 @@ function drawExam() {
   const bar = el('div', '', 'thi-bar'); const count = el('span', '', 'meta thi-count'); count.setAttribute('aria-live', 'polite');
   const err = el('p', '', 'thi-error'); err.setAttribute('role', 'alert');
   const submit = /** @type {HTMLButtonElement} */ (el('button', 'Nộp bài', 'primary thi-submit')); submit.type = 'submit';
-  const exit = /** @type {HTMLButtonElement} */ (el('button', 'Thoát', 'thi-back')); exit.type = 'button';
+  const exit = /** @type {HTMLButtonElement} */ (el('button', 'Thoát', 'thi-back thi-btn-ghost')); exit.type = 'button';
   exit.addEventListener('click', () => { cur = { phase: 'list', id: '', qs: [] }; void presence('hoc'); draw(); });
   const update = () => { const n = Object.keys(answers()).length; count.textContent = `Đã làm ${n}/${cur.qs.length} câu`; };
   f.addEventListener('change', () => { saveDraft(cur.id, answers()); update(); });
@@ -175,27 +187,78 @@ async function doSubmit(btn, err) {
   let diem = 0, tong = 0, dung = 0;
   for (const q of cur.qs) { const pts = Number(q.points) || 1; tong += pts; if (a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase()) { diem += pts; dung++; } }
   diem = Math.round(diem * 100) / 100; tong = Math.round(tong * 100) / 100;
-  const rec = { ma: me.ma, ten: me.ten, lop: me.lop, diem, tong, dung, so_cau: total, tra_loi: a, at: store.SERVER_TIME };
   btn.disabled = true; btn.textContent = 'Đang nộp…'; err.textContent = '';
   try {
-    await store.put(`thi_nop/${cur.id}/${store.keyOf(me.ma)}`, rec);
+    const key = store.keyOf(me.ma);
+    const prev = mine[cur.id] !== undefined && mine[cur.id] !== null ? mine[cur.id] : await store.get(`thi_nop/${cur.id}/${key}`).catch(() => null);
+    const rec = { ma: me.ma, ten: me.ten, lop: me.lop, diem, tong, dung, so_cau: total, lan: lanOf(prev) + 1, cao_nhat: Math.max(diem, prev ? best(prev) : 0), tra_loi: a, at: store.SERVER_TIME };
+    await store.put(`thi_nop/${cur.id}/${key}`, rec);
     clearDraft(cur.id); mine[cur.id] = { ...rec, at: Date.now() };
-    cur = { phase: 'result', id: cur.id, qs: cur.qs, result: rec }; drawResult(); void presence('da_nop');
+    void presence('da_nop');
+    if (b.xem_diem) await showStats(cur.id, true);
+    else { cur = { phase: 'result', id: cur.id, qs: cur.qs, result: rec, fresh: true }; drawResult(); }
   } catch (e) {
     err.textContent = (e instanceof Error ? e.message : 'Chưa nộp được.') + ' Bài làm vẫn còn trên máy, bấm Nộp bài lần nữa.';
     btn.disabled = false; btn.textContent = 'Nộp bài';
   }
 }
 
-/* ---------- Kết quả ---------- */
-function drawResult() {
+/* ---------- Kết quả: số lần thi, điểm, hạng trong lớp ---------- */
+/** Trang kết quả. Chỉ dùng khi thầy cô cho xem điểm. @param {string} id @param {boolean} [fresh] vừa nộp xong */
+async function showStats(id, fresh = false) {
+  const b = bai[id]; if (!b || !me) return;
+  if (!b.xem_diem) { cur = { phase: 'result', id, qs: [], result: mine[id], fresh }; drawResult(); return; }
+  cur = { phase: 'result', id, qs: [], result: mine[id], fresh };
+  const w = page(b.tieu_de, 'Đang tải kết quả…'); w.append(el('p', 'Đang tải kết quả…', 'meta thi-loading'));
+  /** @type {Record<string, any>} */ let all = {};
+  try { all = (await store.get('thi_nop/' + id)) || {}; } catch { /* vẫn hiện điểm của em */ }
+  if (cur.phase !== 'result' || cur.id !== id) return;
+  const myKey = store.keyOf(me.ma), mineRec = all[myKey] || mine[id];
+  if (mineRec) { all[myKey] = mineRec; mine[id] = mineRec; }
+  cur.result = mineRec; drawResult(all);
+}
+/** @param {Record<string, any>} [all] bài nộp của cả bài thi (để xếp hạng) */
+function drawResult(all) {
   const b = bai[cur.id], r = cur.result || {};
-  const w = page(b ? b.tieu_de : 'Bài thi', r.already ? 'Em đã nộp bài này rồi' : 'Đã nộp bài');
-  const card = el('div', '', 'thi-result'); card.setAttribute('role', 'status');
-  card.append(el('p', `${r.diem} / ${r.tong}`, 'thi-score'), el('p', `điểm · đúng ${r.dung}/${r.so_cau} câu`, 'meta'));
-  w.append(card);
+  const xem = !!b?.xem_diem;
+  const w = page(b ? b.tieu_de : 'Bài thi', cur.fresh ? 'Đã nộp bài' : 'Kết quả của em');
+  if (!xem) {
+    const card = el('div', '', 'thi-result'); card.setAttribute('role', 'status');
+    card.append(icon('check', 'ic thi-result-ic'), el('p', 'Đã nộp bài', 'thi-result-title'), el('p', 'Thầy cô sẽ công bố điểm sau.', 'meta'));
+    w.append(card); actions(w, b); card.tabIndex = -1; card.focus?.(); return;
+  }
+  // Xếp hạng trong lớp theo điểm cao nhất; bằng điểm thì ai nộp trước đứng trước.
+  const cls = Object.entries(all || { [store.keyOf(me?.ma || '')]: r }).map(([k, v]) => ({ k, ...v }))
+    .filter(v => String(v.lop || '').trim().toLowerCase() === String(me?.lop || '').trim().toLowerCase())
+    .sort((x, y) => best(y) - best(x) || (Number(x.at) || 0) - (Number(y.at) || 0));
+  const myKey = store.keyOf(me?.ma || ''), rank = cls.findIndex(v => v.k === myKey) + 1;
+  const avg = cls.length ? Math.round(cls.reduce((s, v) => s + best(v), 0) / cls.length * 10) / 10 : 0;
+  const hero = el('div', '', 'thi-result thi-hero'); hero.setAttribute('role', 'status');
+  hero.append(el('p', cur.fresh ? 'Điểm lần này' : 'Điểm lần gần nhất', 'meta'), el('p', `${r.diem} / ${r.tong}`, 'thi-score'), el('p', `Đúng ${r.dung}/${r.so_cau} câu`, 'meta'));
+  w.append(hero);
+  const grid = el('div', '', 'stat-grid stat-grid-4 thi-stats');
+  /** @param {string} ic @param {string} v @param {string} label */
+  const tile = (ic, v, label) => { const t = el('div', '', 'stat-tile'); const i = el('span', '', 'stat-ic'); i.append(icon(ic, 'ic')); t.append(i, el('span', v, 'stat-value'), el('span', label, 'stat-label')); return t; };
+  grid.append(tile('trophy', rank ? `${rank}/${cls.length}` : '—', `Hạng trong lớp ${me?.lop || ''}`), tile('target', `${best(r)}`, 'Điểm cao nhất'), tile('repeat', `${lanOf(r)}`, 'Số lần thi'), tile('chart', `${avg}`, 'Điểm trung bình lớp'));
+  w.append(grid);
+  if (cls.length) {
+    const board = el('section', '', 'thi-board'); board.setAttribute('aria-label', 'Bảng xếp hạng lớp');
+    board.append(el('h3', `Bảng xếp hạng lớp ${me?.lop || ''}`));
+    const ol = el('ol', '', 'thi-rank');
+    const show = cls.slice(0, 10); if (rank > 10) show.push(cls[rank - 1]);
+    for (const v of show) {
+      const pos = cls.indexOf(v) + 1, li = el('li', '', 'thi-rank-row' + (v.k === myKey ? ' is-me' : '') + (pos <= 3 ? ' is-top' : ''));
+      const bar = el('span', '', 'thi-rank-bar'); bar.style.setProperty('--pct', `${Math.round(best(v) / (Number(v.tong) || 1) * 100)}%`);
+      li.append(el('span', String(pos), 'thi-rank-pos'), el('span', v.k === myKey ? `${v.ten || v.ma} (em)` : String(v.ten || v.ma), 'thi-rank-name'), bar, el('span', `${best(v)}`, 'thi-rank-score'));
+      ol.append(li);
+    }
+    board.append(ol); w.append(board);
+  }
+  actions(w, b); hero.tabIndex = -1; hero.focus?.();
+}
+/** @param {HTMLElement} w @param {Bai|undefined} b */
+function actions(w, b) {
   const row = el('div', '', 'thi-actions');
-  if (b && b.che_do === 'thu' && b.trang_thai === 'mo') { const again = el('button', 'Làm lại', 'primary'); /** @type {HTMLButtonElement} */ (again).type = 'button'; again.addEventListener('click', () => void startExam(cur.id)); row.append(again); }
+  if (b && b.che_do === 'thu' && b.trang_thai === 'mo') row.append(btn('Làm lại', 'primary', () => void startExam(cur.id)));
   row.append(backBtn('Về danh sách bài thi')); w.append(row);
-  /** @type {HTMLElement|null} */ (card).tabIndex = -1; card.focus?.();
 }

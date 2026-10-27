@@ -15,7 +15,7 @@ await env.withSecurityRulesDisabled(async c => {
   });
 });
 const anon = env.unauthenticatedContext().database();
-const NOP = { ma: 'HS01', ten: 'An', lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, tra_loi: { r1: 'A' }, at: serverTimestamp() };
+const NOP = { ma: 'HS01', ten: 'An', lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, lan: 1, cao_nhat: 5, tra_loi: { r1: 'A' }, at: serverTimestamp() };
 let fail = 0;
 async function c(name, fn) { try { await fn(); console.log('PASS', name); } catch (e) { fail++; console.log('FAIL', name, '-', e.message.split('\n')[0]); } }
 for (const k of ['thi_hs', 'thi_bai', 'thi_de']) {

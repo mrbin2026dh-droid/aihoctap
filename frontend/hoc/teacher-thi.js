@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027i';
-import * as ui from './teacher-ui.js?v=20261027i';
+import * as presence from './presence.js?v=20261027j';
+import * as ui from './teacher-ui.js?v=20261027j';
 import * as store from './thi-store.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -126,15 +126,18 @@ function renderList() {
     const left = document.createElement('div');
     const h = document.createElement('h3'); h.textContent = e.tieu_de;
     const tags = document.createElement('p');
-    for (const [t, bad] of [[KIND[/** @type {'that'|'thu'} */ (e.che_do)], false], [sel(e), false], [open ? 'Đang MỞ' : 'Đang KHÓA', !open]]) { const b = document.createElement('span'); b.className = 't-badge' + (bad ? ' t-badge-error' : ''); b.textContent = String(t); tags.append(b, ' '); }
+    for (const [t, bad] of [[KIND[/** @type {'that'|'thu'} */ (e.che_do)], false], [sel(e), false], [open ? 'Đang MỞ' : 'Đang KHÓA', !open], [e.xem_diem ? 'Cho xem điểm' : 'Ẩn điểm', false]]) { const b = document.createElement('span'); b.className = 't-badge' + (bad ? ' t-badge-error' : ''); b.textContent = String(t); tags.append(b, ' '); }
     const meta = document.createElement('p'); meta.className = 't-muted'; meta.textContent = `${e.questions} câu · ${e.total} học sinh · đã vào ${e.vao + e.nop} · đã nộp ${e.nop}`;
     left.append(h, tags, meta);
     const acts = document.createElement('div'); acts.className = 't-icon-actions';
     const bStats = ui.iconButton({ icon: 'stats', label: `Thống kê: ${e.tieu_de}`, onClick: () => void openStats(e.ma_de) });
     const bEdit = ui.iconButton({ icon: 'edit', label: `Chỉnh sửa: ${e.tieu_de}`, onClick: () => startEdit(e) });
     const bLock = ui.iconButton({ icon: open ? 'lock' : 'unlock', label: (open ? 'Khóa thi: ' : 'Mở thi: ') + e.tieu_de, onClick: () => void run(bLock, () => call({ action: 'gv_set', ma_de: e.ma_de, trang_thai: open ? 'khoa' : 'mo' }), open ? 'Đã KHÓA thi.' : 'Đã MỞ thi.') });
+    const xem = !!e.xem_diem;
+    const bXem = ui.iconButton({ icon: xem ? 'view' : 'viewoff', label: (xem ? 'Ẩn điểm với học sinh: ' : 'Cho học sinh xem điểm, xếp hạng: ') + e.tieu_de, onClick: () => void run(bXem, () => call({ action: 'gv_set', ma_de: e.ma_de, xem_diem: xem ? 'khong' : 'co' }), xem ? 'Đã ẩn điểm: học sinh chỉ thấy "Đã nộp bài".' : 'Đã cho xem điểm: học sinh thấy điểm, số lần thi và xếp hạng trong lớp.') });
+    bXem.setAttribute('aria-pressed', String(xem));
     const bDel = ui.iconButton({ icon: 'trash', label: `Xóa: ${e.tieu_de}`, danger: true, onClick: () => void deleteExam(e, bDel) });
-    acts.append(bStats, bEdit, bLock, bDel); card.append(left, acts); box.append(card);
+    acts.append(bStats, bEdit, bLock, bXem, bDel); card.append(left, acts); box.append(card);
   }
 }
 /** Thống kê một bài: học sinh thuộc đối tượng, ai đã vào/nộp, điểm. */
