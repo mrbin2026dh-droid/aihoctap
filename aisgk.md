@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành đóng 7 nhánh RTDB cũ, chạy 45+42 ca emulator PASS 100%, publish database.rules.merged.json và test hồi quy load_gate4 PASS; báo cáo Claude tại docs/handoff/antigravity-claude-luat-nhanh-cu-xong.md.
+- Yêu cầu mới nhất: Antigravity đã pull 5ec1f98, chạy toàn bộ bộ test trên Windows ĐẠT 100%, xác nhận GitHub Pages live mang dấu SW b8619930f9fcc54fc16ed6ff và appsScriptUrl bz5b5d; hướng dẫn người dùng dán Code.gs New version, chạy setup(), kiemTraHeThong() và thử vòng soạn đề theo docs/handoff/antigravity-nguoidung-truoc-cong5.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1810,3 +1810,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Apps Script: soạn đề ở tab DE_ trong sổ điểm, tích B9 để phát hành; chặn sửa đề đã có HS vào; ngày giờ kiểu Việt Nam.
 - Test: apps_script_gradebook 32, fb_pin_sync 8, hồi quy xanh. Kế hoạch: docs/plans/cong5-thi-thu-phong-may.md. Handoff: docs/handoff/claude-antigravity-truoc-cong5.md.
 - Rủi ro còn: tài khoản phải có ở cả hai hệ thống cùng PIN (đặt lại PIN ở trang giáo viên/Sheet không tự đồng bộ) → bước sau Cổng 5: Firebase làm đăng nhập chính.
+
+### 27/10/2026 — Antigravity — Kiểm thử toàn diện Windows và xác nhận GitHub Pages live trước Cổng 5
+- Đã thực hiện: Git pull 5ec1f98; chạy kiểm thử toàn bộ 10 kịch bản test trên Windows (test_apps_script_gradebook 32 ca, test_fb_pin_sync 8 ca, test_exam_firebase_flow 28 ca, test_exam_student_ui, test_role_isolation 4 ca, test_login_gate 7 ca, test_role_switch 235 ca, test_role_switch_step_a 5 ca, test_submit_ack, test_fonts_vietnamese); kiểm tra đóng dấu PWA.
+- Kiểm tra live: Trực tiếp fetch GitHub Pages, xác nhận sw.js mang dấu mới `aisgk-student-shell-b8619930f9fcc54fc16ed6ff`, fb.js chứa appsScriptUrl `...bz5b5d...`, Web App Apps Script phản hồi live 200 OK.
+- Tệp đổi/tạo: aisgk.md, docs/handoff/antigravity-nguoidung-truoc-cong5.md.
+- Kiểm thực tế: 10/10 bộ test PASS 100% trên Windows, Pages live đồng bộ.
+- Việc tiếp: Người dùng dán Code.gs mới vào Apps Script, Deploy New version, chạy setup() tạo DE_mau, chạy kiemTraHeThong(), thử 1 vòng soạn đề thật theo handoff.
