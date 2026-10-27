@@ -1,0 +1,23 @@
+# commit 313bf7d; sha256(script)=93828b613ff82366; args=--n=30 --mb=10
+=== CỔNG 4: 30 học sinh, file 10 MB, đề load_tin9_90620 ===
+Đã tạo 30 tài khoản.
+Đăng nhập đồng loạt: n=30 p50=446ms p95=496ms max=548ms
+Kiểm luật bằng token học sinh…
+✔ luật: HS đọc exam_secrets → HTTP 401 (bị chặn)
+✔ luật: HS ghi results → HTTP 401 (bị chặn)
+✔ luật: HS ghi nháp của bạn khác → HTTP 401 (bị chặn)
+✔ luật: HS tự kéo dài giờ (extra_ms) → HTTP 401 (bị chặn)
+✔ luật: HS sửa exam_meta → HTTP 401 (bị chặn)
+Vào thi (đồng hồ + phiên + tải đề): n=30 p50=645ms p95=890ms max=1094ms
+Lưu nháp: n=30 p50=106ms p95=127ms max=341ms
+Nộp bài (ghi attempts): n=30 p50=81ms p95=253ms max=386ms
+✔ luật: nộp đè attempts/1 → HTTP 401
+Chấm ngay đồng loạt: 30/30 trả điểm ngay (phần còn lại sẽ được trigger tick() chấm bù)
+grade_my_attempt: n=30 p50=3564ms p95=4235ms max=4729ms
+Nộp file 10 MB (base64 13.3 MB) × 30 đồng thời…
+Nộp file (mỗi em, gồm thử lại): n=30 p50=54033ms p95=72145ms max=74071ms
+Nộp file: 30/30 thành công; tổng 76 s; số lần thử TB 1.1; lỗi: không
+⚠ Mất 76 s (> 60 s mục tiêu) — ghi số này vào kế hoạch, hướng dẫn giáo viên cho nộp theo từng nhóm
+Đã dọn tài khoản và dữ liệu RTDB. File Drive thử: thư mục lớp "9LOAD" — xóa tay.
+
+=== CỔNG 4 ĐẠT ===

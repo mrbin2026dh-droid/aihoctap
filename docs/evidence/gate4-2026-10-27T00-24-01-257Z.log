@@ -1,0 +1,19 @@
+# commit 313bf7d; sha256(script)=93828b613ff82366; args=--n=100 --mb=0
+=== CỔNG 4: 100 học sinh, file 0 MB, đề load_tin9_41588 ===
+Đã tạo 100 tài khoản.
+Đăng nhập đồng loạt: n=100 p50=1165ms p95=1230ms max=1317ms
+Kiểm luật bằng token học sinh…
+✔ luật: HS đọc exam_secrets → HTTP 401 (bị chặn)
+✔ luật: HS ghi results → HTTP 401 (bị chặn)
+✔ luật: HS ghi nháp của bạn khác → HTTP 401 (bị chặn)
+✔ luật: HS tự kéo dài giờ (extra_ms) → HTTP 401 (bị chặn)
+✔ luật: HS sửa exam_meta → HTTP 401 (bị chặn)
+Vào thi (đồng hồ + phiên + tải đề): n=100 p50=1424ms p95=1531ms max=1660ms
+Lưu nháp: n=100 p50=126ms p95=187ms max=405ms
+Nộp bài (ghi attempts): n=100 p50=109ms p95=155ms max=312ms
+✔ luật: nộp đè attempts/1 → HTTP 401
+Chấm ngay đồng loạt: 100/100 trả điểm ngay (phần còn lại sẽ được trigger tick() chấm bù)
+grade_my_attempt: n=100 p50=4439ms p95=4829ms max=5698ms
+Đã dọn tài khoản và dữ liệu RTDB. File Drive thử: thư mục lớp "9LOAD" — xóa tay.
+
+=== CỔNG 4 ĐẠT ===

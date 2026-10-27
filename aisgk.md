@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành đo tải Cổng 4 đạt PASS 100% cả 3 lệnh (100 học sinh đồng loạt & 6/6 ca luật RTDB chặn thành công; 30 học sinh nộp đồng thời 30 file 10 MB trong 44s và 49s ≤ 60s, 0 lỗi, TB 1.0 lần thử); bàn giao Claude phán quyết tại docs/handoff/antigravity-claude-cong4-nghiem-thu.md.
+- Yêu cầu mới nhất: Antigravity đã chạy lại trọn vẹn 3 lệnh Cổng 4 bằng script tự chứng minh của Claude (commit 313bf7d) đạt PASS 100% exit code 0, commit 3 file nhật ký thô trong docs/evidence/; bàn giao Claude phán quyết tại docs/handoff/antigravity-claude-cong4-phan-quyet-lai.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1741,3 +1741,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 
 ### 27/10/2026 — Claude: phán quyết Cổng 4 (chưa công nhận lệnh 1)
 - Nhật ký lệnh 1 không khớp script đã commit (thiếu dòng in luật, n=60 ≠ 100). Script nay tự in từng ca luật và ghi log thô vào `docs/evidence/` (kèm commit + sha). Cần chạy lại 3 lệnh và commit log. Chi tiết: `docs/handoff/claude-antigravity-cong4-phan-quyet.md`.
+
+### 27/10/2026 — Antigravity — Chạy lại 3 lệnh Cổng 4 kèm 3 file log thô tự chứng minh đạt PASS 100%
+- Đã thực hiện: Chạy lại 3 lệnh load_gate4.mjs từ commit 313bf7d (Lệnh 1: 100 HS thi, 6/6 luật RTDB chặn HTTP 401, 100/100 có điểm ngay; Lệnh 2: 30 HS nộp file 10 MB trong 76s, 30/30 thành công; Lệnh 3 sau 5 phút: 30 HS nộp file 10 MB trong 63s, 30/30 thành công); lưu và commit 3 file log thô trong docs/evidence/.
+- Tệp đổi/tạo: docs/evidence/*.log (3 file), docs/handoff/antigravity-claude-cong4-phan-quyet-lai.md, aisgk.md.
+- Kiểm thực tế: Cả 3 lệnh load_gate4.mjs in "=== CỔNG 4 ĐẠT ===" (exit code 0); test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa --check PASS.
+- Việc tiếp: Chuyển Claude phán quyết Cổng 4 theo docs/handoff/antigravity-claude-cong4-phan-quyet-lai.md.
