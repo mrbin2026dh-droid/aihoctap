@@ -121,6 +121,32 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   await pg.click('#act-sheetexam-back');await pg.click('#thi-publish');await pg.waitForFunction(()=>document.getElementById('thi-gv-status').textContent.includes('Đã cập nhật lên Firebase'));ok(calls.includes('gv_publish'),'nút Cập nhật lên Firebase');
   ok(!fp.some(p=>/^\/(thi_nop|thi_vao|thi_th)\.json$/.test(p))&&fp.some(p=>p==='/thi_nop/e1.json'),'thống kê: nghe theo từng bài, không tải cả cây thi_nop (nhẹ khi 1000 học sinh)');
   ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}
+ // ---------- AI soạn đề theo ma trận: giáo viên duyệt từng câu trước khi lưu ----------
+ {const calls=[];const aiCalls=[];const ctx=await b.newContext({viewport:{width:1280,height:900},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());calls.push(p);r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exams:[],bank:{9:2},classes:{'9A':9}})})});
+  const cat={courses:[{id:'tin-hoc-9',grade:9,lessons:[{id:'b1',title:'Thế giới kĩ thuật số'}]},{id:'tin-hoc-8',grade:8,lessons:[{id:'b1',title:'Máy tính'}]}]};
+  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body={};if(u.endsWith('/teacher/auth'))body={token:'tt',must_change:false};if(u.endsWith('/pwa/catalog'))body=cat;if(u.endsWith('/teacher/students'))body=[];
+   if(u.endsWith('/teacher/ai-questions')){const p=JSON.parse(r.request().postData());aiCalls.push({p,auth:r.request().headers()['authorization']});body={lesson_title:'Thế giới kĩ thuật số',remaining:39,questions:[{text:'Bit là gì?',options:{A:'Bộ nhớ',B:'Đơn vị nhỏ nhất',C:'Ổ cứng',D:'CPU'},answer:'B',points:1,level:'Biết',topic:'Mã nhị phân',explain:'Theo mục 2',ai:true},{text:'1 byte bằng?',options:{A:'4 bit',B:'8 bit',C:'16 bit',D:'2 bit'},answer:'B',points:1,level:'Hiểu',topic:'Mã nhị phân',explain:'1 byte = 8 bit',ai:true}]};}
+   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
+  await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);await pg.fill('#teacher-login [name=pin]',PIN);await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
+  await pg.click('#nav-sheetexam');await pg.click('#tab-thi-new');await pg.selectOption('#thi-new-mode','thu');await pg.selectOption('#thi-new-khoi','9');
+  ok(await pg.isVisible('#thi-new-ai'),'tạo thi thử: có nút AI soạn đề theo ma trận');
+  await pg.click('#thi-new-ai');await pg.waitForSelector('#ai-q-dialog[open]');await pg.waitForFunction(()=>document.querySelectorAll('#ai-q-lesson option').length>1);
+  ok((await pg.$$eval('#ai-q-lesson option',o=>o.map(x=>x.textContent))).join('|')==='Chọn bài học|Thế giới kĩ thuật số · Lớp 9','chọn bài học: chỉ bài của khối đang chọn');
+  await pg.click('#ai-q-go');ok((await pg.textContent('#ai-q-lesson-err')).includes('Chọn bài học')&&!aiCalls.length,'chưa chọn bài → báo dưới trường, không gọi AI');
+  await pg.selectOption('#ai-q-lesson','tin-hoc-9|b1');await pg.fill('#ai-q-biet','15');await pg.fill('#ai-q-hieu','10');await pg.click('#ai-q-go');
+  ok((await pg.textContent('#ai-q-total')).includes('28')&&(await pg.textContent('#ai-q-matrix-err')).includes('1 đến 20')&&!aiCalls.length,'ma trận quá 20 câu → báo');
+  await pg.fill('#ai-q-biet','1');await pg.fill('#ai-q-hieu','1');await pg.fill('#ai-q-vd','0');await pg.fill('#ai-q-topic','Mã nhị phân');await pg.click('#ai-q-go');await pg.waitForFunction(()=>!document.getElementById('ai-q-dialog').open);
+  const ac=aiCalls[0];ok(ac.p.course_id==='tin-hoc-9'&&ac.p.counts['Biết']===1&&ac.p.counts['Hiểu']===1&&ac.p.counts['Vận dụng']===0&&ac.p.topic==='Mã nhị phân'&&ac.auth==='Bearer tt','gửi Worker: bài, ma trận Biết/Hiểu/Vận dụng, chủ đề (token quản trị)');
+  ok(await pg.locator('#thi-qe-list .thi-qe.is-ai').count()===2&&(await pg.textContent('#thi-qe-list')).includes('Giải thích của AI: 1 byte = 8 bit')&&await pg.inputValue('#thi-qe-list .thi-qe >> nth=0 >> .qe-topic')==='Mã nhị phân'&&await pg.inputValue('#thi-qe-list .thi-qe >> nth=1 >> .qe-level')==='Hiểu','câu AI hiện trong trình sửa: nhãn "cần duyệt", giải thích, chủ đề, mức độ');
+  await pg.fill('#thi-new-title','Thi thử AI');await pg.click('#thi-new-create');await pg.waitForTimeout(200);
+  ok(!calls.some(c=>c.action==='gv_create')&&(await pg.textContent('#thi-gv-status')).includes('Đã duyệt'),'chưa duyệt câu AI → không lưu, nhắc đánh dấu Đã duyệt');
+  for(const cb of await pg.locator('#thi-qe-list .qe-ok').all())await cb.check();
+  ok(await pg.locator('#thi-qe-list .thi-qe.is-approved').count()===2,'đánh dấu Đã duyệt → viền xanh');
+  await pg.fill('#thi-qe-list .thi-qe >> nth=0 >> .qe-text','Bit là gì? (đã sửa)');
+  await pg.click('#thi-new-create');await pg.waitForTimeout(300);
+  const cr=calls.find(c=>c.action==='gv_create');ok(cr&&cr.che_do==='thu'&&cr.questions.length===2&&cr.questions[0].text==='Bit là gì? (đã sửa)'&&cr.questions[0].topic==='Mã nhị phân'&&cr.questions[1].level==='Hiểu'&&cr.questions[1].answer==='B','lưu đề do giáo viên đã duyệt (có sửa), kèm chủ đề và mức độ');
+  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}
  // ---------- Học sinh đọc bài: nghe đúng 1 bài, chỉ khối của bài, 50 dòng/lần ----------
  {const FDB='https://test-gv-default-rtdb.asia-southeast1.firebasedatabase.app';const thi_hs={};for(let i=1;i<=120;i++)thi_hs['hs'+i]={ma:'hs'+i,ten:'Học sinh '+String(i).padStart(3,'0'),lop:i%2?'9A':'9B',khoi:9};thi_hs.hs8x={ma:'hs8x',ten:'Em lớp 8',lop:'8A',khoi:8};
   const fdb={thi_hs,doc_read:{'tin-hoc-9~b1':{hs1:{pct:100,ten:'Học sinh 001',lop:'9A',at:1761550000000},hs2:{pct:40,ten:'Học sinh 002',lop:'9B',at:1}},'tin-hoc-8~b1':{hs8x:{pct:100,ten:'Em lớp 8',lop:'8A',at:1}}}};
