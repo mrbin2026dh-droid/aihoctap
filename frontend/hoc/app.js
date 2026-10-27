@@ -5,6 +5,16 @@ import { renderExamList, initExams } from './exam.js';
 import * as fb from './fb.js';
 import * as presence from './presence.js';
 import * as thiStore from './thi-store.js';
+import * as thiApp from './thi-app.js';
+/** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
+function thiBadge(n) {
+  for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
+    let b = btn.querySelector('.nav-badge'); btn.classList.toggle('has-open', n > 0);
+    if (n > 0) { if (!b) { b = document.createElement('span'); b.className = 'nav-badge'; btn.append(b); } b.textContent = String(n); btn.setAttribute('aria-label', `Thi, ${n} bài đang mở`); }
+    else { b?.remove(); btn.removeAttribute('aria-label'); }
+  }
+}
+const startThiBadge = () => { if (session && thiStore.enabled()) thiApp.watchBadge(session.identity, thiBadge); };
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -725,7 +735,7 @@ async function start() {
   catalog = /** @type {import('./contracts').Catalog|null} */ (await db.get('meta', 'catalog')) || null;
   identityUI(); renderCatalog();
   if (session) {
-    presence.resumeStudent();
+    presence.resumeStudent(); startThiBadge();
     if (session.pin && !session.token) void workerToken(session.identity.uid, session.pin);
     const saved = await db.get('meta', `active:${session.identity.uid}`);
     const restored = saved ? /** @type {Draft|undefined} */ (await db.get('drafts', saved.key)) : null;
@@ -774,7 +784,7 @@ on('logout', async () => {
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
-  await presence.stopStudent();
+  await presence.stopStudent(); thiApp.stopAll();
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.
@@ -831,7 +841,7 @@ form('login-form').addEventListener('submit', async event => {
       await db.put('meta', 'session', next); session = next;
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
       if (quick) { presence.startStudentLite(next.identity); void workerToken(code, pin); }
-      clearTeacherSession();
+      clearTeacherSession(); startThiBadge();
       // Hệ thống thi Firebase cũ (đề do Worker quản lý): chỉ dùng ở đường đăng nhập cũ.
       fb.clear(); if (!quick && !isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});
       draft = null; locked = false; identityUI(); renderCatalog();
