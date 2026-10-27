@@ -4,13 +4,14 @@ import * as db from './db.js';
 import { renderExamList, initExams } from './exam.js';
 import * as fb from './fb.js';
 import * as presence from './presence.js';
+import * as thiStore from './thi-store.js';
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
 /** @typedef {import('./contracts').Draft} Draft */
 /** @typedef {import('./contracts').Outbox} Outbox */
 /** @typedef {import('./contracts').Ack} Ack */
-/** @typedef {{token:string,identity:import('./contracts').Identity}} Session */
+/** @typedef {{token:string,identity:import('./contracts').Identity,pin?:string}} Session */
 /** @param {string} id */
 function node(id) { const value = document.getElementById(id); if (!value) throw new Error(`Thiếu phần tử ${id}`); return value; }
 /** @param {string} id */
@@ -127,9 +128,23 @@ function closeTutor() {
 /** @param {Error} error */
 function report(error) { if (error instanceof ApiError && error.status === 401) { void expireSession(); return; } notify(error.message, true); }
 let expiring = false;
+let renewing = false;
+/** Lấy token Worker ở nền (cho Gia sư AI, đồng bộ tiến độ). Không bao giờ chặn việc học/thi; lỗi thì im lặng. @param {string} code @param {string} pin @param {boolean} [force] */
+async function workerToken(code, pin, force = false) {
+  if (renewing || isLocalhostBackend || (!force && session?.token)) return;
+  renewing = true;
+  try {
+    const r = await api('/login', {method:'POST', body:{student_id:code, pin}});
+    if (!session || String(session.identity.uid).toLowerCase() !== String(code).toLowerCase() || !r?.token) return;
+    session.token = r.token; await db.put('meta', 'session', session); void sync();
+  } catch { /* bỏ qua: học và thi vẫn chạy bằng Firebase */ }
+  finally { renewing = false; }
+}
 /** Token học sinh hết hạn sau 1 giờ: giữ nháp và bài chờ nộp, yêu cầu đăng nhập lại một lần. */
 async function expireSession() {
   if (!session || expiring) return;
+  // Đăng nhập nhanh (Firebase): token Worker chỉ dùng cho Gia sư AI/đồng bộ → tự lấy lại ở nền, KHÔNG bắt học sinh đăng nhập lại.
+  if (session.pin) { void workerToken(session.identity.uid, session.pin, true); return; }
   expiring = true;
   const uid = session.identity?.uid || '';
   try {
@@ -146,7 +161,7 @@ async function expireSession() {
     pin?.focus();
   } finally { expiring = false; }
 }
-initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', onClose: () => {}});
+initExams({getToken: () => session?.token || null, getUid: () => session?.identity?.uid || '', getIdentity: () => (session?.pin ? session.identity : null), onClose: () => {}});   // đăng nhập nhanh qua Firebase → tab Thi Firebase; đường cũ → bài thi Google Sheet
 window.addEventListener('aisgk:unauthorized', () => { void expireSession(); });
 /** @param {string} id @param {(event:Event)=>void|Promise<void>} action */
 function on(id, action) { node(id).addEventListener('click', event => { Promise.resolve(action(event)).catch(report); }); }
@@ -476,7 +491,7 @@ async function submit() {
   if (navigator.onLine) await sync();
 }
 async function sync() {
-  if (syncing || !session || !navigator.onLine) return;
+  if (syncing || !session || (session.pin && !session.token) || !navigator.onLine) return;   // chưa có token Worker (đang lấy ở nền) → bài nộp chờ trong hàng đợi
   const captured = session;
   syncing = true;
   try {
@@ -551,7 +566,7 @@ async function progress() {
   let fresh = false;
   /** @type {{course_id:string,lesson_id:string,lesson_title:string,topic:string,correct:number,total:number,percent:number}[]} */
   let review = [];
-  if (navigator.onLine) {
+  if (navigator.onLine && (captured.token || !captured.pin)) {
     try { const data = await api('/pwa/progress', {token:captured.token}); attempts = data.attempts; review = Array.isArray(data.review) ? data.review : []; fresh = true; }
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
@@ -710,6 +725,7 @@ async function start() {
   identityUI(); renderCatalog();
   if (session) {
     presence.resumeStudent();
+    if (session.pin && !session.token) void workerToken(session.identity.uid, session.pin);
     const saved = await db.get('meta', `active:${session.identity.uid}`);
     const restored = saved ? /** @type {Draft|undefined} */ (await db.get('drafts', saved.key)) : null;
     if (restored?.uid === session.identity.uid) { practice = Boolean(saved.practice); await openLesson(restored.lesson, restored); }
@@ -795,18 +811,27 @@ form('login-form').addEventListener('submit', async event => {
       const guestLesson = !session ? active : null;
       const guestAnswers = guestLesson ? Object.fromEntries(new FormData(form('question-form')).entries()) : null;
       await saveDraft();
-      const response = isLocalhostBackend
-        ? await api('/student/lan-login', {method:'POST', body:{student_code:code}})
-        : await api('/login', {method:'POST', body:{student_id:code, pin}});
-      const identity = await api('/pwa/me', {token:response.token});
-      identity.must_change_pin = Boolean(response.must_change_pin);
-      const next = {token:response.token, identity};
+      // Đường nhanh: kiểm tra mã + PIN thẳng trên Firebase (~0,2 giây), không chờ Worker/Google Sheet.
+      const quick = isLocalhostBackend ? null : await thiStore.login(code, pin);
+      /** @type {Session} */ let next;
+      if (quick) {
+        next = {token:'', pin, identity:{uid:quick.ma, student_name:quick.ten, grade:quick.khoi, class_code:quick.lop}};
+      } else {
+        // Firebase chưa có tài khoản (giáo viên chưa bấm "Cập nhật lên Firebase") → đường cũ qua Worker.
+        const response = isLocalhostBackend
+          ? await api('/student/lan-login', {method:'POST', body:{student_code:code}})
+          : await api('/login', {method:'POST', body:{student_id:code, pin}});
+        const identity = await api('/pwa/me', {token:response.token});
+        identity.must_change_pin = Boolean(response.must_change_pin);
+        next = {token:response.token, identity};
+        void presence.startStudent(response.fb_token || '', identity);
+      }
       await db.put('meta', 'session', next); session = next;
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
-      void presence.startStudent(response.fb_token || '', identity);
+      if (quick) { presence.startStudentLite(next.identity); void workerToken(code, pin); }
       clearTeacherSession();
-      // Cổng 2: đăng nhập song song hệ thống thi Firebase bằng cùng mã + PIN. Chưa có tài khoản Firebase thì bỏ qua (chỉ thấy đề Worker).
-      fb.clear(); if (!isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});
+      // Hệ thống thi Firebase cũ (đề do Worker quản lý): chỉ dùng ở đường đăng nhập cũ.
+      fb.clear(); if (!quick && !isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});
       draft = null; locked = false; identityUI(); renderCatalog();
       if (active) {
         const course = catalog?.courses.find(item => item.id === active?.course_id);

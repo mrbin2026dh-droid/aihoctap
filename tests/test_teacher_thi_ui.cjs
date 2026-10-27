@@ -3,7 +3,7 @@
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.resolve(__dirname,'../frontend/hoc');const API='https://script.google.com/macros/s/TEST/exec';const PIN='Mat-khau-thu-1';
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
- let body=fs.readFileSync(f);if(p==='/sheet-config.js')body=Buffer.from(body.toString().replace(/export const SHEET_API = '[^']*';/,`export const SHEET_API = '${API}';`));
+ let body=fs.readFileSync(f);if(p==='/presence-config.js')body=Buffer.from("export const PRESENCE_CONFIG = {apiKey:'K', dbUrl:'https://test-gv-default-rtdb.asia-southeast1.firebasedatabase.app'};");if(p==='/sheet-config.js')body=Buffer.from(body.toString().replace(/export const SHEET_API = '[^']*';/,`export const SHEET_API = '${API}';`));
  r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(body)}).listen(8196);
 let st;const reset=()=>{st={exams:[],calls:[],seq:0,state:{},students:[{name:'Nguyễn Văn An',lop:'9A',ma:'HS01'},{name:'Trần Thị Bình',lop:'9A',ma:'hs9a02'},{name:'Lê Chi',lop:'9B',ma:'hs9b01'},{name:'Phạm Dũng',lop:'8A',ma:'hs8a01'}]}};
 const scope=(e,s)=>e.lop?s.lop===e.lop:Number(s.lop[0])===e.khoi;
@@ -89,4 +89,19 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
  await pg.fill('#thi-new-title','Ôn tập');await pg.click('#thi-new-create');ok((await pg.textContent('#thi-gv-status')).includes('Excel'),'thi thử chưa có file → báo');
  ok(await pg.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'không tràn ngang '+vp.width);
  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}
+ // ---------- Đã nối Firebase: thống kê tức thì (không gọi Google Sheet), nút Cập nhật lên Firebase ----------
+ {const FDB='https://test-gv-default-rtdb.asia-southeast1.firebasedatabase.app';const fdb={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9},hs02:{ma:'hs02',ten:'Trần Bình',lop:'9A',khoi:9},hs03:{ma:'hs03',ten:'Lê Chi',lop:'9B',khoi:9}},thi_vao:{e1:{hs02:1761550000000}},thi_nop:{e1:{hs01:{ma:'HS01',diem:8,tong:10,at:1761550000000}}}};
+  const calls=[];const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+  const EX={ma_de:'e1',tieu_de:'Giữa kỳ',che_do:'that',khoi:9,lop:'9A',trang_thai:'mo',questions:2,total:0,vao:0,nop:0,tao_luc:'x'};
+  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());calls.push(p.action);r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,fb:true,exams:[EX],bank:{9:2},classes:{'9A':9,'9B':9},published:1})})});
+  await pg.route(FDB+'/**',r=>{const parts=new URL(r.request().url()).pathname.replace(/\.json$/,'').split('/').filter(Boolean);const v=parts.reduce((o,k)=>o==null?undefined:o[k],fdb)??null;
+   if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`retry: 300\nevent: put\ndata: ${JSON.stringify({path:'/',data:v})}\n\n`});r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(v)})});
+  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'tt',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
+  await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);await pg.fill('#teacher-login [name=pin]',PIN);await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
+  await pg.click('#nav-sheetexam');await pg.waitForFunction(()=>(document.querySelector('#thi-list article')?.textContent||'').includes('2 học sinh'),null,{timeout:8000});
+  ok((await pg.textContent('#thi-list article')).includes('đã vào 2')&&(await pg.textContent('#thi-list article')).includes('đã nộp 1'),'Firebase: thẻ bài đếm học sinh/đã vào/đã nộp tức thì');
+  await pg.click('#thi-list .t-icon-btn[aria-label^="Thống kê"]');await pg.waitForFunction(()=>document.querySelectorAll('#thi-gv-body tr').length===2);
+  const body=await pg.textContent('#thi-gv-body');ok(body.includes('8/10')&&body.includes('Đã nộp')&&body.includes('Đã vào')&&!body.includes('Lê Chi')&&!calls.includes('gv_stats'),'Firebase: thống kê hiện ngay (điểm, đã vào), không chờ Google Sheet');
+  await pg.click('#act-sheetexam-back');await pg.click('#thi-publish');await pg.waitForFunction(()=>document.getElementById('thi-gv-status').textContent.includes('Đã cập nhật lên Firebase'));ok(calls.includes('gv_publish'),'nút Cập nhật lên Firebase');
+  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}
 console.log('TEACHER THI UI OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});

@@ -1,10 +1,10 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
-import * as ui from './teacher-ui.js?v=20261027h';
+import * as ui from './teacher-ui.js?v=20261027i';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
-import './teacher-thi.js?v=20261027h';
+import './teacher-thi.js?v=20261027i';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */

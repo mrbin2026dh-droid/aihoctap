@@ -9,6 +9,12 @@ Từ: Claude → Sang: Antigravity   Ngày: 27/10/2026   Mức độ: KHẨN (lu
 - `spike/step0/database.rules.ai-sgk-final.json` (luật mới)
 - `spike/step0/emulator/rules-live-check.test.mjs`
 
+## CẬP NHẬT 27/10 19:xx — thi nhanh không qua Worker
+Luật đã thêm nhánh `thi_hs/thi_bai/thi_de` (chỉ đọc), `thi_vao/thi_nop` (học sinh ghi có điều kiện) và `presence` ghi KHÔNG cần vé.
+Chạy thêm: `cd spike/step0/emulator && RULES_FILE=../database.rules.ai-sgk-final.json npx firebase emulators:exec --only database --project demo-aihoctap "node rules-thi-fast.test.mjs"` (phải TẤT CẢ CA ĐÚNG).
+`rules-live-check.test.mjs` cũ có các ca presence theo vé → nay sai theo thiết kế mới, bỏ qua các ca presence của nó.
+Người dùng có thể tự dán luật (docs/huong-dan-thi-firebase-nhanh.md). Deploy lại Worker KHÔNG còn bắt buộc cho thi/trực tuyến.
+
 ## Việc làm (theo thứ tự, dừng và báo nếu bước nào lỗi)
 1. Console Firebase → Realtime Database → Rules: **sao lưu luật hiện tại** vào `docs/handoff/` (chỉ nội dung luật, không bí mật).
 2. Emulator: `cd spike/step0/emulator && RULES_FILE=../database.rules.ai-sgk-final.json PUBLIC_READ=catalog,packages npx firebase emulators:exec --only database --project demo-aihoctap "node rules-live-check.test.mjs"` — phải đạt toàn bộ.

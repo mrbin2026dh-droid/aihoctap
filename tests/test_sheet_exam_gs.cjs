@@ -3,7 +3,7 @@ const fs = require('fs'), vm = require('vm'), path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '../apps-script/sheet-exam/Code.gs'), 'utf8');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 function env() {
-  const sheets = {}, cacheMap = {};
+  const sheets = {}, cacheMap = {}, props = {}, fbdb = {}, fbCalls = [];
   const mk = name => { const sh = { name, rows: [], appendRow(r) { this.rows.push([...r]); }, clear() { this.rows.length = 0; }, setFrozenRows() {}, getLastRow() { return this.rows.length; },
     getDataRange() { const rows = this.rows; return { getValues: () => rows.map(r => [...r]) }; },
     getRange(r, c) { if (typeof r === 'string') return { setNumberFormat() {} }; const rows = this.rows; return { getValue: () => (rows[r - 1] || [])[c - 1] ?? '', setValue: v => { (rows[r - 1] ||= [])[c - 1] = v; }, setValues: vs => vs.forEach((row, i) => row.forEach((v, j) => { (rows[r - 1 + i] ||= [])[c - 1 + j] = v; })) }; } };
@@ -11,8 +11,22 @@ function env() {
   const ss = { getSheetByName: n => sheets[n] || null, insertSheet: n => mk(n) };
   const ctx = { SpreadsheetApp: { getActiveSpreadsheet: () => ss, getUi: () => ({}) }, ContentService: { createTextOutput: t => ({ setMimeType: () => JSON.parse(t) }), MimeType: { JSON: 'j' } },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    CacheService: { getScriptCache: () => ({ get: k => cacheMap[k] ?? null, put: (k, v) => { cacheMap[k] = v; }, remove: k => { delete cacheMap[k]; } }) }, Date };
-  vm.createContext(ctx); vm.runInContext(src, ctx); return { ctx, sheets };
+    CacheService: { getScriptCache: () => ({ get: k => cacheMap[k] ?? null, put: (k, v) => { cacheMap[k] = v; }, remove: k => { delete cacheMap[k]; } }) }, Date,
+    PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; }, deleteProperty: k => { delete props[k]; } }) },
+    Utilities: { DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
+    UrlFetchApp: { fetch: (url, opt) => {
+      const u = new URL(url); fbCalls.push({ method: opt.method, path: u.pathname, auth: u.searchParams.get('auth') });
+      const parts = u.pathname.replace(/\.json$/, '').split('/').filter(Boolean);
+      const getAt = () => parts.reduce((o, k) => (o == null ? undefined : o[k]), fbdb);
+      const setAt = v => { if (!parts.length) { Object.keys(fbdb).forEach(k => delete fbdb[k]); Object.assign(fbdb, v); return; } let o = fbdb; parts.slice(0, -1).forEach(k => { o = o[k] ||= {}; }); if (v === undefined) delete o[parts.at(-1)]; else o[parts.at(-1)] = v; };
+      const body = opt.payload ? JSON.parse(opt.payload) : undefined; let out = null;
+      if (opt.method === 'get') out = getAt() ?? null;
+      else if (opt.method === 'patch') { const cur = getAt() || {}; setAt({ ...cur, ...body }); out = body; }
+      else if (opt.method === 'put') { setAt(body); out = body; }
+      else if (opt.method === 'delete') setAt(undefined);
+      return { getResponseCode: () => 200, getContentText: () => JSON.stringify(out) };
+    } } };
+  vm.createContext(ctx); vm.runInContext(src, ctx); return { ctx, sheets, props, fbdb, fbCalls };
 }
 const { ctx, sheets } = env();
 const call = p => ctx.doPost({ postData: { contents: JSON.stringify(p) } });
@@ -96,6 +110,28 @@ const { ctx: c4, sheets: s4 } = env(); c4.taoMau();
 s4.DeThiThu.appendRow([1, 9, 'Câu cũ?', 'a', 'b', '', '', 'A', 1]);
 const mg = c4.doPost({ postData: { contents: JSON.stringify({ gv: GV, action: 'gv_list' }) } });
 ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions === 1 && mg.exams[0].trang_thai === 'mo', 'chuyển bài thi cũ trong CauHinh sang BaiThi, đề cũ gắn Mã bài thi');
+// ---------- Firebase: đẩy đề lên, học sinh nộp trên Firebase, lấy điểm về Sheet ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau();
+  const r0 = c({ action: 'gv_create', tieu_de: 'TT', che_do: 'that', khoi: 9, lop: '9A' });
+  ok(r0.ok && r0.fb === false && E.fbCalls.length === 0, 'chưa cài khóa Firebase → vẫn chạy bằng Sheet, không gọi Firebase');
+  E.props.FB_SECRET = 'bi-mat';
+  const pub = c({ action: 'gv_publish' });
+  ok(pub.ok && pub.published === 1 && E.fbCalls[0].method === 'patch' && E.fbCalls[0].auth === 'bi-mat', 'Cập nhật lên Firebase: một lần gọi, dùng khóa bí mật');
+  const hs = E.fbdb.thi_hs.hs9a01, hash = require('crypto').createHash('sha256').update('hs9a01:123456').digest('hex');
+  ok(hs.ten === 'Nguyễn Văn An' && hs.lop === '9A' && hs.khoi === 9 && hs.h === hash && !JSON.stringify(E.fbdb.thi_hs).includes('123456'), 'thi_hs: tên, lớp, khối, PIN đã băm (không lộ PIN gốc)');
+  const id = r0.exams[0].ma_de, bai = E.fbdb.thi_bai[id];
+  ok(bai.tieu_de === 'TT' && bai.trang_thai === 'khoa' && bai.so_cau === 2 && E.fbdb.thi_de[id].length === 2 && E.fbdb.thi_de[id][0].answer === 'A', 'thi_bai + thi_de (kèm đáp án để máy học sinh tự chấm)');
+  c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' });
+  ok(E.fbdb.thi_bai[id].trang_thai === 'mo', 'Mở thi → Firebase đổi ngay');
+  E.fbdb.thi_nop = { [id]: { hs9a01: { ma: 'hs9a01', ten: 'Nguyễn Văn An', lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, tra_loi: { r2: 'A' }, at: 1761550000000 } } };
+  c({ action: 'gv_list' }); c({ action: 'gv_list' });
+  const rows = E.sheets.KetQua.rows.filter(r => r[9] === id);
+  ok(rows.length === 1 && rows[0][4] === 5 && rows[0][8] === 'Thi thật' && rows[0][11].startsWith(id + '|hs9a01|'), 'mở danh sách → điểm trên Firebase chép về KetQua, không chép trùng');
+  const rs = c({ action: 'gv_reset', ma_de: id, ma: 'HS9A01' });
+  ok(rs.ok && !E.fbdb.thi_nop[id].hs9a01 && E.sheets.KetQua.rows.find(r => r[9] === id)[10] === 'Hủy', 'cho thi lại → xóa bài nộp trên Firebase + đánh dấu Hủy');
+  c({ action: 'gv_delete', ma_de: id });
+  ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
+}
 for (let i = 0; i < 10; i++) call({ action: 'gv_list', gv: 'x' });
 ok(gv({ action: 'gv_list' }).error.includes('quá nhiều'), 'dò PIN giáo viên → khóa 10 phút');
 const { ctx: c3 } = env(); c3.taoMau();

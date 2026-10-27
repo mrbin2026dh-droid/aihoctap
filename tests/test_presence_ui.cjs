@@ -80,7 +80,8 @@ try{
   await pg.goto('http://localhost:8197/teacher.html');await pg.waitForTimeout(600);
   if(!(await pg.isVisible('#workspace'))){ok(true,'(phiên cũ không tự vào — bỏ qua phần phiên cũ)');}
   else{await pg.click('#nav-sheetexam');await pg.waitForTimeout(800);
-   ok((await pg.textContent('#thi-live-status')).includes('Đăng nhập lại')&&await pg.isVisible('#thi-live-relogin')&&!ex.includes('old-expired-token'),'phiên cũ: không gửi token Worker sang Firebase, báo + nút Đăng nhập lại');
+   await pg.waitForFunction(()=>document.getElementById('thi-live-status').textContent.includes('tức thì'),null,{timeout:8000});
+   ok(!ex.includes('old-expired-token')&&await pg.isHidden('#thi-live-relogin'),'phiên cũ: không gửi token Worker sang Firebase, vẫn nghe trực tuyến (không cần vé)');
    ok(await pg.isVisible('#thi-relogin'),'thiếu PIN của phiên cũ: nút Đăng nhập lại cạnh thông báo');
    await pg.click('#thi-relogin');await pg.waitForSelector('#teacher-login [name=pin]',{state:'visible'});ok(true,'bấm Đăng nhập lại → về ô PIN giáo viên');
    await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
@@ -96,11 +97,11 @@ try{
   await pg.goto('http://localhost:8197/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
   await pg.click('#nav-sheetexam');await pg.waitForTimeout(600);
   ok((await pg.textContent('#thi-live-status')).includes('presence-config.js')&&hits===0,'chưa điền dự án presence → báo rõ, không gọi Firebase nào');await ctx.close()}
- // ---------- Worker chưa cài khóa PRESENCE: báo rõ, không có nút đăng nhập lại vô ích ----------
+ // ---------- Worker chưa cấp vé presence: không có nút đăng nhập lại vô ích ----------
  {const ctx=await b.newContext({viewport:{width:1280,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();
   await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'w',fb_token:'',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
   await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exams:[],bank:{},classes:{}})}));
   await pg.goto('http://localhost:8197/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
   await pg.click('#nav-sheetexam');await pg.waitForTimeout(600);
-  ok((await pg.textContent('#thi-live-status')).includes('PRESENCE')&&await pg.isHidden('#thi-live-relogin'),'Worker chưa có khóa presence → báo rõ, không bắt đăng nhập lại');await ctx.close()}
+  ok(await pg.isHidden('#thi-live-relogin'),'Worker chưa cấp vé presence → không bắt đăng nhập lại (trực tuyến không cần vé)');await ctx.close()}
  console.log('PRESENCE UI OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});

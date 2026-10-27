@@ -6,8 +6,9 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027h';
-import * as ui from './teacher-ui.js?v=20261027h';
+import * as presence from './presence.js?v=20261027i';
+import * as ui from './teacher-ui.js?v=20261027i';
+import * as store from './thi-store.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -22,6 +23,36 @@ const STATE = { chua: 'Chưa vào', vao: 'Đã vào', nop: 'Đã nộp' };
 /** @type {string} */ let current = '';   // mã bài đang xem thống kê
 /** @type {{text:string,options:Record<string,string>,answer:string,points:number}[]} */ let trialQuestions = [];
 let busyCount = 0;
+/* ---------- Dữ liệu tức thì từ Firebase (học sinh vào/nộp ghi thẳng lên đó) ---------- */
+/** @type {Record<string, any>|null} */ let fbHs = null;
+/** @type {Record<string, any>} */ let fbVao = {};
+/** @type {Record<string, any>} */ let fbNop = {};
+/** @type {Array<() => void>} */ let fbStops = [];
+/** Dùng Firebase khi Google Sheet đã cài khóa Firebase và đã có danh sách học sinh trên Firebase. */
+const useFb = () => !!info?.fb && fbHs !== null && Object.keys(fbHs).length > 0;
+function startFb() {
+  if (fbStops.length || !store.enabled()) return;
+  const refresh = () => { if (!useFb() || busyCount) return; renderList(); if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
+  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; refresh(); }), store.listen('thi_vao', d => { fbVao = d || {}; refresh(); }), store.listen('thi_nop', d => { fbNop = d || {}; refresh(); })];
+}
+function stopFb() { fbStops.forEach(f => f()); fbStops = []; fbHs = null; fbVao = {}; fbNop = {}; }
+/** @param {any} e @param {any} s */
+const inScope = (e, s) => e.lop ? String(s.lop || '').trim().toLowerCase() === String(e.lop).trim().toLowerCase() : Number(s.khoi) === Number(e.khoi);
+/** Thống kê một bài từ Firebase: ai chưa vào / đã vào / đã nộp + điểm. @param {string} id */
+function fbStats(id) {
+  const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === id); if (!e) return null;
+  const vao = fbVao[id] || {}, nop = fbNop[id] || {};
+  const students = Object.entries(fbHs || {}).filter(([, s]) => s && inScope(e, s)).map(([k, s]) => {
+    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null };
+  }).sort((a, b) => (a.lop + a.name).localeCompare(b.lop + b.name, 'vi'));
+  return { ok: true, exam: e, students };
+}
+/** Số liệu trên thẻ bài: lấy từ Firebase nếu có. @param {any} e */
+function counts(e) {
+  if (!useFb()) return e;
+  const st = fbStats(e.ma_de)?.students || [];
+  return { ...e, total: st.length, vao: st.filter(s => s.state === 'vao').length, nop: st.filter(s => s.state === 'nop').length };
+}
 /** @type {Record<string, any>} */ let live = {};
 let watching = false;
 const timeAgo = (/** @type {number} */ at) => { const s = Math.max(0, Math.round((Date.now() - at) / 1000)); return s < 60 ? 'vừa xong' : s < 3600 ? Math.floor(s / 60) + ' phút trước' : new Date(at).toLocaleTimeString('vi-VN', { hour12: false, hour: '2-digit', minute: '2-digit' }); };
@@ -89,8 +120,8 @@ function renderList() {
   const exams = info?.exams || [];
   if (!info) return;
   if (!exams.length) { const p = document.createElement('p'); p.className = 't-muted'; p.textContent = 'Chưa có bài thi nào. Mở tab "Tạo đề thi" để tạo bài đầu tiên.'; box.append(p); return; }
-  for (const e of exams) {
-    const open = e.trang_thai === 'mo';
+  for (const e0 of exams) {
+    const e = counts(e0), open = e.trang_thai === 'mo';
     const card = document.createElement('article'); card.className = 't-card t-list-item'; card.dataset.maDe = e.ma_de;
     const left = document.createElement('div');
     const h = document.createElement('h3'); h.textContent = e.tieu_de;
@@ -143,6 +174,7 @@ async function openStats(/** @type {string} */ maDe) {
   }
   const body = $('thi-gv-body'); body.replaceChildren(); const tr = document.createElement('tr'); const c = td('', 'Đang tải danh sách học sinh từ Google Sheet…', 't-muted'); c.colSpan = 6; tr.append(c); body.append(tr);
   await ui.showSub('detail-sheetexam');
+  if (useFb()) { stats = fbStats(maDe); if (stats) renderStats(); return; }   // tức thì, không chờ Google Sheet
   await run(button('thi-gv-refresh'), () => call({ action: 'gv_stats', ma_de: maDe }), '');
 }
 async function deleteExam(/** @type {any} */ e, /** @type {HTMLButtonElement} */ btn) {
@@ -172,7 +204,15 @@ function endEdit() {
 async function run(btn, fn, okMsg) {
   if (!getPass()) { status('Đăng xuất rồi đăng nhập lại tài khoản giáo viên để dùng menu Thi.', 'error'); return; }
   busyCount++; if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
-  try { const r = await fn(); if (r.students) stats = r; else { info = r; if (stats && !r.exams.some((/** @type {any} */ x) => x.ma_de === stats.exam.ma_de)) stats = null; } render(); status(okMsg, okMsg ? 'success' : ''); }
+  try {
+    const r = await fn();
+    if (r.students) stats = r; else { info = r; if (stats && !r.exams.some((/** @type {any} */ x) => x.ma_de === stats.exam.ma_de)) stats = null; }
+    if (useFb() && current && onDetail()) stats = fbStats(current);
+    render();
+    if (r.fb_error) status('Đã lưu vào Google Sheet nhưng chưa đẩy được lên Firebase: ' + r.fb_error, 'error');
+    else if (info && info.fb === false && !okMsg) status('Chưa nối Firebase nên học sinh chưa thấy bài. Mở Google Sheet → menu Bài thi → Cài khóa Firebase.', 'error');
+    else status(okMsg, okMsg ? 'success' : '');
+  }
   catch (e) { status(e instanceof Error ? e.message : 'Chưa kết nối được Google Sheet.', 'error'); }
   finally { busyCount--; if (btn) { btn.removeAttribute('aria-busy'); btn.disabled = false; render(); } }
 }
@@ -187,15 +227,7 @@ function renderLive() { if (stats) renderStats(); }
 function liveMsg(msg, show, relog = false) { $('thi-live-status').textContent = msg; $('thi-live-line').hidden = !show; button('thi-live-relogin').hidden = !relog; }
 async function startLive() {
   if (watching) return;
-  if (!(await ensureTeacherTicket())) {
-    const why = presence.lastTeacherError();
-    if (why === 'CHUA_CAI_DU_AN') { liveMsg('Trạng thái trực tuyến chưa bật: chưa điền dự án Firebase vào presence-config.js. Thi vẫn chạy bình thường.', true); return; }
-    if (noKey) { liveMsg('Trạng thái trực tuyến chưa bật: Worker chưa cài khóa Firebase (PRESENCE_*). Thi vẫn chạy bình thường.', true); return; }
-    const mismatch = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why);
-    liveMsg(mismatch ? 'Firebase không nhận vé của Worker (khác dự án Firebase). Báo Antigravity kiểm tra FIREBASE_CLIENT_EMAIL. (' + why + ')'
-      : 'Trạng thái trực tuyến chưa kết nối: phiên giáo viên đã cũ. Bấm Đăng nhập lại.' + (why ? ' (' + why.replace('Firebase từ chối vé: ', '') + ')' : ''), true, !mismatch);
-    return;
-  }
+  await ensureTeacherTicket().catch(() => false);   // có vé thì dùng, không có vẫn nghe được (luật cho đọc presence công khai)
   liveMsg('', false);
   watching = true;
   /** @type {Record<string,string>} */ let prev = {};
@@ -223,7 +255,7 @@ async function ensureTeacherTicket() {
 let noKey = false;
 window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; noKey = !t; if (t) { watching = false; pendingTicket = presence.startTeacher(t).finally(() => { pendingTicket = null; }); } });
 $('thi-relogin').addEventListener('click', relogin);
-document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); watching = false; info = null; live = {}; status(''); });
+document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); stopFb(); watching = false; info = null; live = {}; status(''); });
 $('thi-live-relogin').addEventListener('click', relogin);
 setInterval(() => { if (watching) renderLive(); }, 30000);   // cập nhật "x phút trước" và "Mất kết nối"
 
@@ -280,20 +312,22 @@ $('thi-new-form').addEventListener('submit', async ev => {
 });
 $('thi-new-cancel').addEventListener('click', () => { endEdit(); tab('list'); });
 for (const k of /** @type {const} */ (['list', 'new'])) $('tab-thi-' + k).addEventListener('click', () => { if (k === 'list' && editing) endEdit(); tab(k); });
-$('thi-gv-toggle').addEventListener('click', () => { const to = button('thi-gv-toggle').dataset.to; void run(button('thi-gv-toggle'), async () => { await call({ action: 'gv_set', ma_de: current, trang_thai: to }); return call({ action: 'gv_stats', ma_de: current }); }, to === 'mo' ? 'Đã MỞ thi.' : 'Đã KHÓA thi.'); });
-$('thi-gv-refresh').addEventListener('click', () => void run(button('thi-gv-refresh'), () => call({ action: 'gv_stats', ma_de: current }), ''));
+$('thi-gv-toggle').addEventListener('click', () => { const to = button('thi-gv-toggle').dataset.to; void run(button('thi-gv-toggle'), useFb() ? () => call({ action: 'gv_set', ma_de: current, trang_thai: to }) : async () => { await call({ action: 'gv_set', ma_de: current, trang_thai: to }); return call({ action: 'gv_stats', ma_de: current }); }, to === 'mo' ? 'Đã MỞ thi.' : 'Đã KHÓA thi.'); });
+$('thi-gv-refresh').addEventListener('click', () => void run(button('thi-gv-refresh'), () => call({ action: useFb() ? 'gv_list' : 'gv_stats', ma_de: current }), ''));
+$('thi-publish').addEventListener('click', () => void run(button('thi-publish'), () => call({ action: 'gv_publish' }), 'Đã cập nhật lên Firebase: học sinh thấy ngay danh sách bài, đề và tài khoản mới.'));
 $('thi-list-refresh').addEventListener('click', () => void load());
 $('act-sheetexam-back').addEventListener('click', () => { stats = null; void ui.showSub('list-sheetexam'); void load(); });
 input('thi-gv-only').addEventListener('change', renderStats);
-$('nav-sheetexam').addEventListener('click', () => { stats = null; void load(); void startLive(); });
+$('nav-sheetexam').addEventListener('click', () => { stats = null; startFb(); void load(); void startLive(); });
 // Giáo viên đổi PIN: báo Google Sheet PIN mới (xác thực bằng PIN cũ) để menu Thi tiếp tục dùng được.
 window.addEventListener('thi-gv-repin', ev => {
   const d = /** @type {CustomEvent} */ (ev).detail || {};
   void call({ gv: d.oldPin, action: 'gv_repin', new_gv: d.newPin }).then(() => { try { sessionStorage.setItem('thi-gv-mk', d.newPin); } catch { /* bỏ qua */ } }, () => { /* Sheet sẽ báo khi mở menu Thi */ });
 });
-// Danh sách / thống kê đang xem lấy lại từ Google Sheet mỗi 20 giây (trạng thái trực tuyến đã tức thì qua Firebase).
+// Chưa nối Firebase: danh sách / thống kê lấy lại từ Google Sheet mỗi 20 giây (trạng thái trực tuyến đã tức thì qua Firebase).
 setInterval(() => {
   const v = document.getElementById('view-sheetexam');
+  if (useFb()) return;   // đã cập nhật tức thì qua Firebase
   if (v && !v.hidden && document.visibilityState === 'visible' && !busyCount && info && getPass() && !editing) void reload();
 }, 20000);
 fillClasses();

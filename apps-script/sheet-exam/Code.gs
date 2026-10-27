@@ -14,7 +14,9 @@ var SH_HS = 'HocSinh', SH_DE = 'DeThi', SH_DT = 'DeThiThu', SH_KQ = 'KetQua', SH
 var HS_HEAD = ['Stt', 'Họ tên', 'Lớp', 'Mã học sinh', 'Mã PIN', 'Trạng thái'];
 var DE_HEAD = ['Stt', 'Khối', 'Đề bài', 'A', 'B', 'C', 'D', 'Đáp án đúng', 'Điểm'];
 var DT_HEAD = DE_HEAD.concat(['Mã bài thi']);
-var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy'];
+var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy', 'Mã nộp'];
+/** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
+var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
 var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc'];
 var DD_HEAD = ['Mã bài thi', 'Mã học sinh', 'Vào lúc'];
 
@@ -252,13 +254,21 @@ function teacher_(p) {
   var a = p.action;
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); setConfig_('mat_khau_gv', np); return { ok: true }; }
   if (a === 'gv_stats') return stats_(String(p.ma_de || ''));
+  if (a === 'gv_publish') { var n = publish_(); var info = info_(); info.published = n; return info; }
   if (a === 'gv_create') create_(p);
   else if (a === 'gv_update') update_(p);
   else if (a === 'gv_set') setStatus_(String(p.ma_de || ''), p.trang_thai);
   else if (a === 'gv_delete') del_(String(p.ma_de || ''));
   else if (a === 'gv_reset') reset_(String(p.ma_de || ''), p.ma);
   else if (a !== 'gv_list' && a !== 'gv_info') throw new Error('Yêu cầu không hợp lệ.');
-  return a === 'gv_reset' ? stats_(String(p.ma_de || '')) : info_();
+  var fbErr = '';
+  try {
+    if (a === 'gv_list' || a === 'gv_info') pull_();                 // điểm học sinh nộp trên Firebase → ghi vào KetQua
+    else if (a !== 'gv_reset') publish_();                            // tạo/sửa/mở/khóa/xóa → đẩy ngay lên Firebase
+  } catch (e) { fbErr = e.message; }
+  var res = a === 'gv_reset' ? stats_(String(p.ma_de || '')) : info_();
+  res.fb = fbOn_(); if (fbErr) res.fb_error = fbErr;
+  return res;
 }
 function writeQuestions_(maDe, khoi, qs) {
   var d = ensure_(SH_DT, DT_HEAD), v = d.getDataRange().getValues(), keep = [];
@@ -296,6 +306,7 @@ function reset_(maDe, ma) {
     exam_(maDe);
     var kq = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_KQ), n = 0;
     if (kq) { var kv = kq.getDataRange().getValues(); for (var i = 1; i < kv.length; i++) if (norm_(kv[i][1]) === norm_(ma) && String(kv[i][9]) === maDe && String(kv[i][10] || '') !== 'Hủy') { kq.getRange(i + 1, 11).setValue('Hủy'); n++; } }
+    if (fbOn_()) { try { pull_(); } catch (e) { /* vẫn xóa được */ } fb_('delete', 'thi_nop/' + maDe + '/' + fbKey_(ma)); n++; }
     if (!n) throw new Error('Học sinh này chưa nộp bài thi này.');
   } finally { lock.releaseLock(); }
 }
@@ -328,6 +339,72 @@ function stats_(maDe) {
   return { ok: true, exam: { ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, questions: countBank_(ex) }, students: out };
 }
 
+/* ---------- Firebase: đẩy đề lên, lấy điểm về ---------- */
+function fbOn_() { return !!PropertiesService.getScriptProperties().getProperty('FB_SECRET'); }
+function fbKey_(ma) { return norm_(ma).replace(/[.#$\[\]\/]/g, '_'); }
+function sha256_(str) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, str, Utilities.Charset.UTF_8).map(function (b) { var h = (b < 0 ? b + 256 : b).toString(16); return h.length === 1 ? '0' + h : h; }).join('');
+}
+/** Gọi Firebase REST bằng khóa bí mật của cơ sở dữ liệu (Script Properties: FB_SECRET, FB_URL). */
+function fb_(method, path, body) {
+  var pr = PropertiesService.getScriptProperties(), secret = pr.getProperty('FB_SECRET');
+  if (!secret) throw new Error('Chưa cài khóa Firebase. Mở Sheet → menu Bài thi → Cài khóa Firebase.');
+  var url = (pr.getProperty('FB_URL') || FB_URL_DEFAULT).replace(/\/$/, '') + '/' + path + '.json?auth=' + encodeURIComponent(secret);
+  var opt = { method: method, muteHttpExceptions: true, contentType: 'application/json' };
+  if (body !== undefined) opt.payload = JSON.stringify(body);
+  var r = UrlFetchApp.fetch(url, opt), code = r.getResponseCode(), txt = r.getContentText();
+  if (code >= 300) throw new Error('Firebase từ chối (' + code + '): ' + txt.slice(0, 120));
+  return txt ? JSON.parse(txt) : null;
+}
+/** Đẩy danh sách học sinh (PIN đã băm), các bài thi và đề lên Firebase trong MỘT lần gọi. Trả số bài. */
+function publish_() {
+  if (!fbOn_()) return 0;
+  var hv = sheet_(SH_HS).getDataRange().getValues(), hs = {};
+  for (var r = 1; r < hv.length; r++) {
+    var ma = String(hv[r][3] || '').trim(); if (!ma) continue;
+    var lop = String(hv[r][2] || '').trim();
+    hs[fbKey_(ma)] = { ma: ma, ten: String(hv[r][1] || '').trim(), lop: lop, khoi: khoiOf_(lop), h: sha256_(norm_(ma) + ':' + String(hv[r][4]).trim()) };
+  }
+  var bai = {}, de = {}, list = exams_();
+  list.forEach(function (ex) {
+    var qs = []; try { qs = questions_(ex, { lop: '' }); } catch (e) { qs = []; }
+    bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc };
+    de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
+  });
+  fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de });
+  return list.length;
+}
+/** Chép bài nộp trên Firebase (thi_nop) về trang KetQua, mỗi lần nộp một dòng, không chép trùng. */
+function pull_() {
+  if (!fbOn_()) return 0;
+  var all = fb_('get', 'thi_nop') || {}, kq = ensure_(SH_KQ, KQ_HEAD), v = kq.getDataRange().getValues(), seen = {}, rows = [];
+  if (String(kq.getRange(1, 12).getValue()).trim() !== 'Mã nộp') kq.getRange(1, 12).setValue('Mã nộp');
+  for (var i = 1; i < v.length; i++) if (v[i][11]) seen[String(v[i][11])] = 1;
+  var ex = {}; exams_().forEach(function (e) { ex[e.ma_de] = e; });
+  Object.keys(all).forEach(function (maDe) {
+    var byHs = all[maDe] || {};
+    Object.keys(byHs).forEach(function (k) {
+      var n = byHs[k] || {}, id = maDe + '|' + k + '|' + (n.at || '');
+      if (seen[id]) return;
+      var ans = n.tra_loi || {}, line = Object.keys(ans).map(function (q) { return q + ':' + ans[q]; }).join('  ');
+      rows.push([n.at ? new Date(Number(n.at)) : new Date(), n.ma || k, n.ten || '', n.lop || '', Number(n.diem) || 0, Number(n.tong) || 0, (n.dung || 0) + '/' + (n.so_cau || 0), line, (ex[maDe] && ex[maDe].che_do === 'that') ? 'Thi thật' : 'Thi thử', maDe, '', id]);
+    });
+  });
+  if (rows.length) kq.getRange(kq.getLastRow() + 1, 1, rows.length, 12).setValues(rows);
+  return rows.length;
+}
+function caiKhoaFirebase() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.prompt('Cài khóa Firebase', 'Dán "Database secret" (Firebase Console → Cài đặt dự án → Service accounts → Database secrets):', ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  var v = String(r.getResponseText() || '').trim(); if (!v) return;
+  PropertiesService.getScriptProperties().setProperty('FB_SECRET', v);
+  try { var n = publish_(); ui.alert('Đã kết nối Firebase và đẩy ' + n + ' bài thi + danh sách học sinh lên.'); }
+  catch (e) { PropertiesService.getScriptProperties().deleteProperty('FB_SECRET'); ui.alert('Khóa chưa đúng: ' + e.message); }
+}
+function capNhatFirebase() { var n = publish_(); SpreadsheetApp.getUi().alert(fbOn_() ? 'Đã đẩy ' + n + ' bài thi + danh sách học sinh lên Firebase.' : 'Chưa cài khóa Firebase.'); }
+function layDiemVeSheet() { var n = pull_(); SpreadsheetApp.getUi().alert('Đã chép ' + n + ' bài nộp mới về trang KetQua.'); }
+
 /* ---------- Tạo mẫu ---------- */
 function taoMau() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -348,5 +425,5 @@ function taoMau() {
 }
 function datLaiMatKhau() { setConfig_('mat_khau_gv', ''); }
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addToUi();
+  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addToUi();
 }

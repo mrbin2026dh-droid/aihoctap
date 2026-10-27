@@ -4,6 +4,8 @@ import { api, ApiError } from './api.js';
 import { el, icon, confirmBox, renderMarkdown } from './dom.js';
 import * as examFb from './exam-fb.js';
 import * as fb from './fb.js';
+import * as thiApp from './thi-app.js';
+import * as thiStore from './thi-store.js';
 
 /** @typedef {{exam_id:string,title:string,mode:'trial'|'real',kind:string,minutes:number|null,opens_at:number|null,closes_at:number|null,state:string,question_count:number,total_points:number,attempts_used:number,attempts_left:number|null,best_score:number|null,in_progress:boolean,backend?:'firebase'|'worker',has_practice?:boolean,practice_file?:string|null,upload_open?:boolean}} ExamItem */
 /** @typedef {{id:string,kind:string,prompt:string,options?:Record<string,string>,hint?:string,topic?:string,points:number}} ExamQuestion */
@@ -12,9 +14,10 @@ const KIND_LABEL = { '15m': 'Kiểm tra 15 phút', period: 'Kiểm tra 1 tiết'
 const AUTOSAVE_MS = 1500;
 const HEARTBEAT_MS = 30000;
 
-/** @type {{getToken:()=>string|null,getUid:()=>string,onClose:()=>void}|null} */
+/** @typedef {{getToken:()=>string|null,getUid:()=>string,onClose:()=>void,getIdentity?:()=>any}} Host */
+/** @type {Host|null} */
 let host = null;
-/** Thiết lập nguồn token/uid của học sinh. @param {{getToken:()=>string|null,getUid:()=>string,onClose:()=>void}} h */
+/** Thiết lập nguồn token/uid của học sinh. @param {Host} h */
 export function initExams(h) { host = h; }
 
 /** @param {number|null} ms */
@@ -46,6 +49,9 @@ export async function renderExamList(target, loggedIn) {
     const box = el('div', '', 'empty'); box.append(icon('exam', 'ic empty-ic'), el('h2', title), el('p', body)); target.append(box);
   };
   // Bài thi lấy từ Google Sheet: học sinh đã đăng nhập thì đề hiện thẳng trong tab Thi (không hỏi lại, không nút phụ).
+  // Bài thi chạy thẳng trên Firebase (nhanh, tức thì): vẽ ngay trong tab Thi.
+  const identity = host?.getIdentity?.();
+  if (loggedIn && identity && thiStore.enabled()) { thiApp.render(target, identity); return; }
   if (SHEET_EXAM) {
     let cred = ''; try { cred = sessionStorage.getItem('thi-cred') || ''; } catch { /* bỏ qua */ }
     if (!loggedIn || !cred) { note('Đăng nhập để thi', 'Đăng nhập bằng Mã học sinh và Mã PIN, rồi chọn mục Thi.'); return; }

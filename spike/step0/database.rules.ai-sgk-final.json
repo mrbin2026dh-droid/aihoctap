@@ -11,10 +11,10 @@
       ".write": false
     },
     "presence": {
-      ".read": "auth != null && auth.token.role === 'teacher'",
-      ".write": "auth != null && auth.token.role === 'teacher'",
+      ".read": true,
+      ".write": false,
       "$uid": {
-        ".write": "auth != null && auth.uid === $uid && auth.token.role === 'student'",
+        ".write": "$uid.length <= 64",
         ".validate": "!newData.exists() || (newData.hasChildren(['state', 'at']) && newData.child('state').isString() && newData.child('state').val().length <= 20 && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000)",
         "name": {
           ".validate": "newData.isString() && newData.val().length <= 100"
@@ -30,6 +30,68 @@
         },
         "$other": {
           ".validate": false
+        }
+      }
+    },
+    "thi_hs": {
+      ".read": true,
+      ".write": false
+    },
+    "thi_bai": {
+      ".read": true,
+      ".write": false
+    },
+    "thi_de": {
+      ".read": true,
+      ".write": false
+    },
+    "thi_vao": {
+      ".read": true,
+      "$ma_de": {
+        "$ma": {
+          ".write": "root.child('thi_bai').child($ma_de).exists() && $ma.length <= 64",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      }
+    },
+    "thi_nop": {
+      ".read": true,
+      "$ma_de": {
+        "$ma": {
+          ".write": "newData.exists() && root.child('thi_bai').child($ma_de).child('trang_thai').val() === 'mo' && (!data.exists() || root.child('thi_bai').child($ma_de).child('che_do').val() === 'thu') && $ma.length <= 64",
+          ".validate": "newData.hasChildren(['ma','diem','tong','at']) && newData.child('diem').isNumber() && newData.child('tong').isNumber() && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000",
+          "ma": {
+            ".validate": "newData.isString() && newData.val().length <= 64"
+          },
+          "ten": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "lop": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "dung": {
+            ".validate": "newData.isNumber()"
+          },
+          "so_cau": {
+            ".validate": "newData.isNumber()"
+          },
+          "diem": {
+            ".validate": true
+          },
+          "tong": {
+            ".validate": true
+          },
+          "at": {
+            ".validate": true
+          },
+          "tra_loi": {
+            "$q": {
+              ".validate": "newData.isString() && newData.val().length <= 4"
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     }

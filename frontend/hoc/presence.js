@@ -40,7 +40,8 @@ async function fresh(key) {
   const n = { ...s, idToken: d.id_token, refreshToken: d.refresh_token || s.refreshToken, exp: Date.now() + Number(d.expires_in || 3600) * 1000 };
   save(key, n); return n;
 }
-const url = (/** @type {string} */ path, /** @type {string} */ tok) => `${FB_CONFIG.dbUrl}/${path}.json?auth=${encodeURIComponent(tok)}`;
+/** Có vé thì kèm ?auth=, không có vé (chế độ nhanh: luật cho ghi presence không cần vé) thì bỏ. */
+const url = (/** @type {string} */ path, /** @type {string} */ tok) => `${FB_CONFIG.dbUrl}/${path}.json` + (tok ? `?auth=${encodeURIComponent(tok)}` : '');
 
 /* ---------------- Học sinh ---------------- */
 let beat = 0;
@@ -67,6 +68,13 @@ export async function startStudent(fbToken, identity) {
     const s = await exchange(fbToken);
     save(KEY_HS, { ...s, name: String(identity?.name || identity?.student_name || ''), lop: String(identity?.class_code || '') });
   } catch { save(KEY_HS, null); return false; }
+  resumeStudent('hoc');
+  return true;
+}
+/** Chế độ nhanh: không cần vé Worker — ghi thẳng presence/{mã}. @param {{uid:string,student_name?:string,name?:string,class_code?:string}} identity */
+export function startStudentLite(identity) {
+  if (!ENABLED() || !identity?.uid) return false;
+  save(KEY_HS, { uid: String(identity.uid), idToken: '', refreshToken: 'lite', exp: Number.MAX_SAFE_INTEGER, name: String(identity.student_name || identity.name || ''), lop: String(identity.class_code || '') });
   resumeStudent('hoc');
   return true;
 }
@@ -107,10 +115,9 @@ let retry = 0;
 export async function watch(onChange, onStatus) {
   stopWatch();
   if (!ENABLED()) { onStatus('off', 'Chưa cài dự án Firebase cho trạng thái trực tuyến (presence-config.js).'); return; }
-  const s = await fresh(KEY_GV);
-  if (!s) { onStatus('off', 'Chưa có vé Firebase của giáo viên. Đăng xuất rồi đăng nhập lại.'); return; }
+  const s = await fresh(KEY_GV);   // có vé thì dùng; không có vé vẫn nghe được (luật cho đọc presence công khai)
   /** @type {Record<string, any>} */ let map = {};
-  const src = new EventSource(url('presence', s.idToken));
+  const src = new EventSource(url('presence', s ? s.idToken : ''));
   es = src;
   const apply = (/** @type {string} */ path, /** @type {any} */ data, /** @type {boolean} */ merge) => {
     const parts = path.split('/').filter(Boolean);

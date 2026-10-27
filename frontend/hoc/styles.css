@@ -1212,3 +1212,34 @@ body.exam-open{overflow:hidden}
 /* Sửa banner chào ở chế độ tối: thuộc tính background rút gọn làm hình lặp lại khắp khung */
 .student-app .dash-hero{background-repeat:no-repeat;background-position:right 24px center,0 0;background-size:190px auto,auto}
 @media(max-width:760px){.student-app .dash-hero{background-position:0 0;background-size:auto}}
+/* ---------- Tab Thi (Firebase, thi-app.js): cùng màu, chữ, khung câu hỏi với phần luyện tập ---------- */
+.student-app .thi-wrap{max-width:760px;margin:0 auto;padding:8px 0 32px}
+.student-app .thi-head{margin:0 0 16px}.student-app .thi-head h2{margin:0 0 4px;font-size:clamp(22px,4vw,28px);line-height:1.25}
+.student-app .thi-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.student-app .thi-card{width:100%;display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left;padding:16px 18px;min-height:72px;border:1px solid var(--line);border-radius:var(--radius-card,16px);background:var(--surface);color:var(--ink);cursor:pointer;transition:border-color .15s,transform .15s}
+.student-app .thi-card:hover{border-color:var(--brand-text,var(--blue))}
+.student-app .thi-card:active{transform:scale(.99)}
+.student-app .thi-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.student-app .thi-card-top strong{font-size:var(--fs-body,17px);line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.student-app .thi-card-meta.is-open{color:var(--brand-text,var(--blue));font-weight:700}
+.student-app .thi-chip{flex:none;padding:3px 10px;border-radius:999px;font-size:var(--fs-label,13px);font-weight:700}
+.student-app .thi-chip.is-real{background:var(--amber-bg,#fef0d4);color:var(--amber-fg,#9a4306)}
+.student-app .thi-chip.is-trial{background:var(--teal-bg,#d9f2ee);color:var(--teal-fg,#0f766e)}
+.student-app .thi-waitbox{display:flex;align-items:center;gap:14px;padding:20px;margin-bottom:16px;border:1px solid var(--line);border-radius:var(--radius-card,16px);background:var(--surface)}
+.student-app .thi-waitbox p{margin:0}
+.student-app .thi-pulse{flex:none;width:14px;height:14px;border-radius:50%;background:var(--brand-text,var(--blue));animation:thi-pulse 1.4s ease-in-out infinite}
+@keyframes thi-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+.student-app .thi-form .question{margin:0 0 14px;background:var(--surface)}
+.student-app .thi-pts{color:var(--muted);font-weight:400}
+.student-app .thi-bar{position:sticky;bottom:0;z-index:2;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:var(--paper)}
+.student-app .thi-count{flex:1;min-width:120px}
+.student-app .thi-submit,.student-app .thi-back,.student-app .thi-actions button{min-height:48px;padding:10px 20px}
+.student-app .thi-lock:empty{display:none}.student-app .thi-lock{margin:0 0 14px;padding:12px 16px;border-radius:12px;background:var(--amber-bg,#fef0d4);color:var(--amber-fg,#9a4306);font-weight:600}
+.student-app .thi-error{color:var(--danger,#b3261e);min-height:1.2em;margin:6px 0}
+.student-app .thi-result{text-align:center;padding:28px 20px;margin-bottom:16px;border:1px solid var(--line);border-radius:var(--radius-card,16px);background:var(--surface)}
+.student-app .thi-result:focus{outline:none}
+.student-app .thi-score{margin:0;font-size:clamp(40px,9vw,56px);font-weight:800;line-height:1.1;color:var(--brand-text,var(--blue))}
+.student-app .thi-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.student-app .thi-loading{padding:24px 0}
+@media(max-width:760px){.student-app .thi-bar{bottom:calc(66px + env(safe-area-inset-bottom))}.student-app .thi-card{padding:14px 16px}}
+@media (prefers-reduced-motion:reduce){.student-app .thi-pulse{animation:none}.student-app .thi-card{transition:none}}

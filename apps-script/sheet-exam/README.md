@@ -1,5 +1,7 @@
 # Bài thi từ một file Google Sheet (bản đơn giản — dùng từ 27/10/2026)
 
+> **Mới (27/10 tối): thi nhanh qua Firebase** — học sinh đăng nhập, lấy đề, nộp bài trực tiếp trên Firebase. Cài theo `docs/huong-dan-thi-firebase-nhanh.md` (dán Code.gs mới, dán luật Firebase, menu **Bài thi → Cài khóa Firebase**).
+
 ## Cài một lần (5 phút)
 1. Tạo một Google Sheet mới (ví dụ "Bai thi Tin hoc").
 2. **Tiện ích mở rộng → Apps Script** → xóa nội dung có sẵn → dán toàn bộ `Code.gs` này → **Lưu**.
