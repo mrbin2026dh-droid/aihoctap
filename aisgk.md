@@ -1808,5 +1808,5 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Lỗi thật: đăng xuất sau khi mở Tổng quan → em sau không đăng nhập được (nút #sync bị xóa). Đã sửa + test hồi quy FAIL-first.
 - Đổi PIN ở ứng dụng nay đổi luôn PIN hệ thống thi; tab Thi báo khi không vào được hệ thống thi.
 - Apps Script: soạn đề ở tab DE_ trong sổ điểm, tích B9 để phát hành; chặn sửa đề đã có HS vào; ngày giờ kiểu Việt Nam.
-- Test: apps_script_gradebook 35, fb_pin_sync 8, hồi quy xanh. Kế hoạch: docs/plans/cong5-thi-thu-phong-may.md. Handoff: docs/handoff/claude-antigravity-truoc-cong5.md.
+- Test: apps_script_gradebook 32, fb_pin_sync 8, hồi quy xanh. Kế hoạch: docs/plans/cong5-thi-thu-phong-may.md. Handoff: docs/handoff/claude-antigravity-truoc-cong5.md.
 - Rủi ro còn: tài khoản phải có ở cả hai hệ thống cùng PIN (đặt lại PIN ở trang giáo viên/Sheet không tự đồng bộ) → bước sau Cổng 5: Firebase làm đăng nhập chính.

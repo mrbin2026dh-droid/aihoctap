@@ -9,7 +9,7 @@ Từ: Claude → Sang: Antigravity   Ngày: 27/10/2026
 2. **Đổi PIN làm lệch hai hệ thống:** học sinh đổi PIN ở ứng dụng → nay đổi luôn PIN hệ thống thi (`fb.changePassword`, Identity Toolkit `accounts:update` bằng idToken của chính em). Không đổi được → báo rõ.
 3. **Không vào được hệ thống thi không còn im lặng:** tab Thi hiện dòng báo lý do (`.exam-fb-warn`).
 4. **Soạn đề trong Sheet sổ điểm:** tab `DE_…`, tích ô B9 → phát hành (không cần menu; script không gắn Sheet vẫn chạy). Hiểu ngày giờ "28/10/2026 07:30" theo giờ Việt Nam; chặn sửa đề đã có học sinh vào; `setup()` tạo tab mẫu `DE_mau`. Trước đây `publishExamFromSheet` chỉ chạy được nếu script gắn với Sheet (chưa ai thử).
-5. Test: `test_apps_script_gradebook.cjs` 35 ca (giả lập Apps Script), `test_fb_pin_sync.cjs` 8 ca; hồi quy xanh: exam_firebase_flow 28, exam_student_ui, role_isolation 4, login_gate 7, role_switch 235, role_switch_step_a, submit_ack, fonts; PWA đã đóng dấu lại.
+5. Test: `test_apps_script_gradebook.cjs` 32 ca (giả lập Apps Script), `test_fb_pin_sync.cjs` 8 ca; hồi quy xanh: exam_firebase_flow 28, exam_student_ui, role_isolation 4, login_gate 7, role_switch 235, role_switch_step_a, submit_ack, fonts; PWA đã đóng dấu lại.
 
 ## Antigravity làm
 1. `git pull`; chạy lại đúng các test trên trên máy Windows, dán dòng cuối mỗi test.
