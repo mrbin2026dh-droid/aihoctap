@@ -10,20 +10,11 @@ Chào Thầy! Claude đã chính thức phê chuẩn **CỔNG 4 ĐẠT** (commit
 
 ---
 
-### Bước 1: Mở Google Sheet "So diem bai thi" và gõ thử điểm thực hành
-1. Mở [Google Drive](https://drive.google.com/) bằng tài khoản `mr.bin2026dh@gmail.com`.
-2. Tìm và mở file Google Sheet có tên: **`So diem bai thi`**.
-3. Bấm vào tab đề thi gần nhất (tên tab có dạng `pilot_tin9_...`).
-4. Thầy sẽ thấy 2 hàng học sinh thật:
-   - **Hàng 1:** `hs_pilot01` | `Nguyễn Văn An` | Lớp `9TEST` | Điểm TN: `4` | Điểm TH (cột F): đang trống | Tổng: `4`.
-   - **Hàng 2:** `hs_pilot02` | `Trần Thị Bình` | Lớp `9TEST` | Điểm TN: `2` | Điểm TH: `—` | Tổng: `2`.
-5. **Thao tác thử nghiệm:** 
-   - Thầy gõ số **`5`** vào ô **F2** (cột "Điểm TH (GV nhập)" của em Nguyễn Văn An) rồi bấm Enter.
-   - Chờ 1–2 giây, Thầy sẽ thấy ô **Tổng** (cột H) tự động nhảy thành **`9`** (và thang 10 nhảy thành **`9`**).
-   - File minh chứng Drive của em An cũng tự động cập nhật lại nội dung tổng điểm 9.
-6. Thầy chụp ảnh màn hình bảng tính này (hoặc copy nội dung 2 dòng) để dán cho Claude.
-
----
+### Bước 1 (Claude sửa lại): Tự kiểm tra sổ điểm bằng hàm `thuSoDiem`
+> Bản hướng dẫn cũ (gõ 5 vào ô F2 của tab `pilot_tin9_...`) **sẽ không chạy**: bài thi thử đã bị xóa khỏi Firebase khi dọn dẹp, nên sổ điểm không còn đề để cập nhật. Ngoài ra bảng không có cột "thang 10".
+1. Dán lại `Code.gs` mới nhất từ GitHub vào dự án Apps Script chấm thi, bấm Lưu (không cần Deploy lại cho bước này; nhưng vẫn nên Deploy New version vì có sửa lỗi dán nhiều điểm cùng lúc).
+2. Chọn hàm **`thuSoDiem`** → **Run ▶**. Hàm tự tạo đề và 2 học sinh giả (không hiện cho học sinh), chốt điểm, gõ thử điểm thực hành 5, thử điểm sai 99, thử dán 2 điểm cùng lúc, kiểm Tổng và phiếu minh chứng, rồi tự dọn sạch.
+3. Phải thấy dòng cuối `=== SỔ ĐIỂM + MINH CHỨNG: ĐẠT TOÀN BỘ ===`. Copy toàn bộ nhật ký dán cho Claude.
 
 ### Bước 2: Chạy `kiemTraHeThong()` trong Google Apps Script
 1. Mở trình soạn thảo Google Apps Script (chứa dự án đường thi `Code.gs`).

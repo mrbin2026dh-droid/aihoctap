@@ -317,8 +317,10 @@ function finalizeExam_(id, m, t0) {
   });
   if (done) db_('exam_meta/' + id + '/finalized_at', 'put', { '.sv': 'timestamp' });
 }
-function hasPractice_(m) { return (m.parts || []).some(function (p) { return p.key === 'practice'; }); }
-function practiceMax_(m) { var p = (m.parts || []).filter(function (x) { return x.key === 'practice'; })[0]; return p ? Number(p.max) || 0 : 0; }
+// RTDB trả mảng nếu khóa 0..n liên tục, trả object nếu có khoảng trống → chuẩn hóa về mảng.
+function partsOf_(m) { var p = (m && m.parts) || []; return (Array.isArray(p) ? p : Object.keys(p).map(function (k) { return p[k]; })).filter(Boolean); }
+function hasPractice_(m) { return partsOf_(m).some(function (p) { return p.key === 'practice'; }); }
+function practiceMax_(m) { var p = partsOf_(m).filter(function (x) { return x.key === 'practice'; })[0]; return p ? Number(p.max) || 0 : 0; }
 
 function evidenceText_(id, m, uid, att, g, practice, prev) {
   var s = db_('students/' + uid) || {}, sess = db_('sessions/' + id + '/' + uid) || {}, pack = examPack_(id), L = [], line = '='.repeat(70);
@@ -364,24 +366,95 @@ function writeGradebookRow_(examId, m, uid, record, prev) {
   var vals = [uid, s.student_id || '', s.name || '', s.class_code || '', record.theory_score, prev.practice_score != null ? prev.practice_score : '', prev.practice_comment || '', record.total_score, record.status === 'graded' ? 'Đã chấm' : 'Chờ chấm thực hành/tự luận', prev.practice_file ? prev.practice_file.url : '', record.evidence_url || ''];
   if (row > 0) sh.getRange(row, 1, 1, vals.length).setValues([vals]); else sh.appendRow(vals);
 }
-/** Trigger "khi sửa" sổ điểm: GV gõ điểm thực hành (cột F) hoặc nhận xét (cột G) → cập nhật results + tổng + minh chứng. */
+/**
+ * Trigger "khi sửa" sổ điểm: GV gõ điểm thực hành (cột F) hoặc nhận xét (cột G) → cập nhật results + tổng + minh chứng.
+ * Xử lý cả khi GV dán cả cột điểm một lúc (vùng sửa nhiều hàng), không chỉ ô đầu tiên.
+ */
 function onGradebookEdit(e) {
-  var r = e.range; if (!r || r.getRow() < 2 || (r.getColumn() !== 6 && r.getColumn() !== 7)) return;
-  var sh = r.getSheet(), examId = sh.getName(), uid = sh.getRange(r.getRow(), 1).getValue(); if (!uid) return;
-  var m = db_('exam_meta/' + examId); if (!m) return;
-  var raw = sh.getRange(r.getRow(), 6).getValue(), comment = String(sh.getRange(r.getRow(), 7).getValue() || '');
+  var r = e && e.range; if (!r) return;
+  var c1 = r.getColumn(), c2 = r.getLastColumn(); if (c2 < 6 || c1 > 7) return;
+  var sh = r.getSheet(), examId = sh.getName(), m = db_('exam_meta/' + examId);
+  var first = Math.max(2, r.getRow()), last = r.getLastRow(); if (last < first) return;
+  if (!m) { sh.getRange(first, 6, last - first + 1, 1).setNote('Đề "' + examId + '" không còn trên hệ thống — điểm này KHÔNG được lưu.').setBackground('#fde2e1'); return; }
+  for (var row = first; row <= last; row++) { try { gbApplyRow_(sh, row, examId, m); } catch (err) { sh.getRange(row, 6).setNote('Lỗi lưu điểm: ' + err.message).setBackground('#fde2e1'); } }
+}
+function gbApplyRow_(sh, row, examId, m) {
+  var uid = sh.getRange(row, 1).getValue(); if (!uid) return;
+  var raw = sh.getRange(row, 6).getValue(), comment = String(sh.getRange(row, 7).getValue() || '');
   var practice = raw === '' ? null : Number(raw), max = practiceMax_(m);
-  if (practice != null && (!(practice >= 0) || practice > max)) { sh.getRange(r.getRow(), 6).setNote('Điểm phải từ 0 đến ' + max).setBackground('#fde2e1'); return; }
-  sh.getRange(r.getRow(), 6).setNote('').setBackground(null);
+  if (practice != null && (!(practice >= 0) || practice > max)) { sh.getRange(row, 6).setNote('Điểm phải từ 0 đến ' + max).setBackground('#fde2e1'); return; }
+  sh.getRange(row, 6).setNote('').setBackground(null);
   var prev = db_('results/' + examId + '/' + uid) || {}, theory = Number(prev.theory_score) || 0;
   var total = round2_(theory + (practice || 0));
   db_('results/' + examId + '/' + uid, 'patch', { practice_score: practice, practice_comment: comment, total_score: total, status: practice == null ? 'needs_review' : 'graded', graded_at: { '.sv': 'timestamp' } });
-  sh.getRange(r.getRow(), 8, 1, 2).setValues([[total, practice == null ? 'Chờ chấm thực hành/tự luận' : 'Đã chấm']]);
+  sh.getRange(row, 8, 1, 2).setValues([[total, practice == null ? 'Chờ chấm thực hành/tự luận' : 'Đã chấm']]);
   if (prev.finalized) { // cập nhật phiếu minh chứng
     var atts = db_('attempts/' + examId + '/' + uid) || {}, a = atts[prev.attempt || '1'] || {};
     prev.practice_score = practice; prev.practice_comment = comment;
     upsertText_(studentFolder_(uid), safeName_('minh-chung_' + examId + '.txt'), evidenceText_(examId, m, uid, a, grade_(examId, a.answers), practice, prev));
   }
+}
+
+/**
+ * Tự kiểm tra sổ điểm + minh chứng trên hệ thống thật, không cần học sinh thật: tạo đề/học sinh giả (không hiện cho học sinh),
+ * chốt điểm, gõ điểm thực hành 5 (và thử dán 2 hàng, thử điểm sai 99), kiểm Tổng + phiếu minh chứng, rồi dọn sạch.
+ */
+function thuSoDiem() {
+  var id = 'selftest_' + Date.now(), uidA = id + '_a', uidB = id + '_b', now = Date.now(), ok = true, sh = null;
+  function check(c, msg) { Logger.log((c ? 'ĐẠT  ' : 'LỖI  ') + msg); if (!c) ok = false; }
+  var m = { title: 'Tự kiểm tra sổ điểm', grade: 9, minutes: 10, opens_at: now - 20 * 60000, closes_at: now - 10 * 60000, max_attempts: 1, backend: 'selftest',
+    parts: [{ key: 'theory', label: 'Trắc nghiệm', max: 4 }, { key: 'practice', label: 'Thực hành', max: 6 }] };
+  try {
+    db_('students/' + uidA, 'put', { student_id: 'SELFTEST_A', name: 'Kiểm tra A', class_code: '9SELFTEST', grade: 9 });
+    db_('students/' + uidB, 'put', { student_id: 'SELFTEST_B', name: 'Kiểm tra B', class_code: '9SELFTEST', grade: 9 });
+    db_('exam_meta/' + id, 'put', m);
+    db_('exam_questions/' + id, 'put', { q1: { order: 1, kind: 'choice', prompt: 'CPU là gì?', options: { A: 'Bộ xử lý', B: 'Bộ nhớ' }, points: 2 }, q2: { order: 2, kind: 'choice', prompt: 'RAM là gì?', options: { A: 'Bộ xử lý', B: 'Bộ nhớ' }, points: 2 } });
+    db_('exam_secrets/' + id, 'put', { q1: 'A', q2: 'B' });
+    var sess = {}; sess[uidA] = { started_at: now - 15 * 60000, extra_ms: 0 }; sess[uidB] = { started_at: now - 15 * 60000, extra_ms: 0 };
+    db_('sessions/' + id, 'put', sess);
+    db_('attempts/' + id + '/' + uidA + '/1', 'put', { submitted_at: now - 12 * 60000, answers: { q1: 'A', q2: 'A' } }); // A: 2 điểm
+    db_('drafts/' + id + '/' + uidB, 'put', { updated_at: now - 13 * 60000, answers: { q1: 'A', q2: 'B' }, leaves: 0 }); // B: không nộp → tự nộp nháp, 4 điểm
+
+    finalizeExam_(id, m, Date.now());
+    var rA = db_('results/' + id + '/' + uidA) || {}, rB = db_('results/' + id + '/' + uidB) || {};
+    check(rA.finalized === true && rA.theory_score === 2 && rA.evidence_url, 'Chốt HS A: 2 điểm trắc nghiệm, có phiếu minh chứng ' + (rA.evidence_url || ''));
+    check(rB.finalized === true && rB.theory_score === 4 && rB.auto_from_draft === true, 'Chốt HS B: tự nộp từ nháp, 4 điểm');
+    check(Boolean(db_('exam_meta/' + id + '/finalized_at')), 'Đề có finalized_at');
+
+    sh = gradebook_().getSheetByName(safeName_(id).slice(0, 90));
+    var uids = sh ? sh.getRange(1, 1, sh.getLastRow(), 1).getValues().map(function (x) { return x[0]; }) : [];
+    var rowA = uids.indexOf(uidA) + 1, rowB = uids.indexOf(uidB) + 1;
+    check(rowA > 1 && rowB > 1, 'Sổ điểm có tab "' + id + '" với 2 hàng (hàng ' + rowA + ', ' + rowB + ')');
+    if (rowA > 1) {
+      Logger.log('      Hàng A: ' + JSON.stringify(sh.getRange(rowA, 2, 1, 9).getValues()[0]));
+      // 1) Gõ 5 vào ô Thực hành của A
+      sh.getRange(rowA, 6).setValue(5); onGradebookEdit({ range: sh.getRange(rowA, 6) });
+      rA = db_('results/' + id + '/' + uidA) || {};
+      check(rA.total_score === 7 && rA.status === 'graded' && sh.getRange(rowA, 8).getValue() === 7, 'Gõ 5 điểm thực hành cho A → Tổng = 7 (Firebase + cột Tổng)');
+      var ev = DriveApp.getFileById(rA.evidence_id).getBlob().getDataAsString();
+      check(ev.indexOf('Điểm giáo viên chấm: 5 / 6') >= 0 && ev.indexOf('TỔNG ĐIỂM: 7 / 10') >= 0, 'Phiếu minh chứng A cập nhật "5 / 6" và "TỔNG ĐIỂM: 7 / 10"');
+      // 2) Điểm sai 99 → bị chặn, không đổi
+      sh.getRange(rowA, 6).setValue(99); onGradebookEdit({ range: sh.getRange(rowA, 6) });
+      check((db_('results/' + id + '/' + uidA) || {}).total_score === 7 && sh.getRange(rowA, 6).getNote().indexOf('0 đến 6') >= 0, 'Gõ 99 (quá 6) → bị chặn, Tổng giữ 7, ô có ghi chú đỏ');
+      // 3) Dán cùng lúc 2 hàng (giống GV dán cả cột)
+      var top = Math.min(rowA, rowB), bottom = Math.max(rowA, rowB);
+      if (bottom - top === 1) {
+        sh.getRange(top, 6, 2, 1).setValues([[3], [6]]); onGradebookEdit({ range: sh.getRange(top, 6, 2, 1) });
+        var tA = (db_('results/' + id + '/' + uidA) || {}).total_score, tB = (db_('results/' + id + '/' + uidB) || {}).total_score;
+        var expA = 2 + (rowA === top ? 3 : 6), expB = 4 + (rowB === top ? 3 : 6);
+        check(tA === expA && tB === expB, 'Dán 2 điểm cùng lúc → cả 2 hàng cập nhật (A=' + tA + ', B=' + tB + ')');
+      }
+    }
+  } catch (err) { check(false, 'Lỗi kịch bản: ' + err.message); }
+  finally {
+    ['exam_meta', 'exam_questions', 'exam_secrets', 'sessions', 'drafts', 'attempts', 'results'].forEach(function (p) { try { db_(p + '/' + id, 'delete'); } catch (e) { /* bỏ qua */ } });
+    [uidA, uidB].forEach(function (u) { try { db_('students/' + u, 'delete'); } catch (e) { /* bỏ qua */ } });
+    try { if (sh) gradebook_().deleteSheet(sh); } catch (e) { /* bỏ qua */ }
+    try { var it = rootFolder_().getFoldersByName('9SELFTEST'); while (it.hasNext()) it.next().setTrashed(true); } catch (e) { /* bỏ qua */ }
+    try { CacheService.getScriptCache().remove('pack:' + id); } catch (e) { /* bỏ qua */ }
+    Logger.log('Đã dọn đề, học sinh giả, tab sổ điểm và thư mục Drive 9SELFTEST.');
+  }
+  Logger.log(ok ? '=== SỔ ĐIỂM + MINH CHỨNG: ĐẠT TOÀN BỘ ===' : '=== SỔ ĐIỂM + MINH CHỨNG: CHƯA ĐẠT ===');
 }
 
 // ---------------------------------------------------------------------------- cài đặt

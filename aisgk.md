@@ -1757,3 +1757,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: docs/handoff/antigravity-nguoidung-cong4-con-mo.md, aisgk.md.
 - Kiểm thực tế: git status sạch, commit và push thành công lên origin/main.
 - Việc tiếp: Người dùng làm theo hướng dẫn tại docs/handoff/antigravity-nguoidung-cong4-con-mo.md rồi chuyển dữ liệu thật cho Claude.
+
+### 27/10/2026 — Claude: sửa hướng dẫn "còn mở" Cổng 4 + sửa lỗi sổ điểm
+- Hướng dẫn cũ (gõ 5 vào F2 tab pilot) sẽ không chạy vì pilot đã bị xóa khỏi Firebase → thay bằng hàm `thuSoDiem()` tự tạo đề/HS giả, chốt, gõ điểm, kiểm Tổng + minh chứng, tự dọn.
+- Sửa lỗi: GV dán cả cột điểm chỉ hàng đầu được lưu → nay lưu mọi hàng; sửa điểm của đề đã xóa → ghi chú đỏ thay vì im lặng; `parts` dạng object không còn làm sập (Apps Script + exam-fb.js).
+- Thêm `tests/test_apps_script_gradebook.cjs` (chạy Code.gs trên giả lập Apps Script): OK.

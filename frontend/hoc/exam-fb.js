@@ -12,7 +12,7 @@ const GRACE_MS = 30000;
 const UPLOAD_AFTER_CLOSE_MS = 10 * 60 * 1000; // khớp apps-script/exam/Code.gs
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const ALLOWED_EXT = ['xlsx', 'pptx', 'docx', 'pdf'];
-/** @param {any} m */ const hasPractice = m => Array.isArray(m?.parts) && m.parts.some(/** @param {any} p */ p => p && p.key === 'practice');
+/** RTDB trả object thay vì mảng nếu chỉ số có khoảng trống. @param {any} m */ const hasPractice = m => Object.values(m?.parts || {}).some(/** @param {any} p */ p => p && p.key === 'practice');
 
 /** @param {any} v */ const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
