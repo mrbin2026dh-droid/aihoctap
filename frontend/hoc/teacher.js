@@ -4,6 +4,7 @@ import * as db from './db.js';
 import * as ui from './teacher-ui.js';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
+import './teacher-thi.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */

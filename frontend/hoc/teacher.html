@@ -56,7 +56,9 @@
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v16H4z M13 4h7v16h-7z"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Soạn bài</span><span class="t-nav-mobile">Soạn bài</span></span></button><button type="button" id="nav-exams" class="t-nav-item" data-view="exams" aria-controls="view-exams">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6z M9 8h6 M9 12h6 M9 16h4"/>
-</svg><span class="t-nav-label"><span class="t-nav-desktop">Kiểm tra</span><span class="t-nav-mobile">Kiểm tra</span></span></button><button type="button" id="nav-materials" class="t-nav-item" data-view="materials" aria-controls="view-materials">
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Về nhà</span><span class="t-nav-mobile">Về nhà</span></span></button><button type="button" id="nav-sheetexam" class="t-nav-item" data-view="sheetexam" aria-controls="view-sheetexam">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z M8 9l2 2l3-4 M8 16h8"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Thi</span><span class="t-nav-mobile">Thi</span></span></button><button type="button" id="nav-materials" class="t-nav-item" data-view="materials" aria-controls="view-materials">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4z M4 7V3h7l3 4"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Tài liệu</span><span class="t-nav-mobile">Tài liệu</span></span></button><button type="button" id="nav-accounts" class="t-nav-item" data-view="accounts" aria-controls="view-accounts">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21v-3a8 8 0 0 1 16 0v3"/>
@@ -153,7 +155,7 @@
 <section id="view-exams" hidden>
 <section id="list-exams" class="t-list">
 <h2 class="visually-hidden">Đề kiểm tra</h2>
-<div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-exams-new" class="t-button t-primary" data-action="new-exams" >Thêm đề kiểm tra</button></div>
+<div class="t-toolbar t-toolbar-actions-only"><button type="button" id="act-exams-new" class="t-button t-primary" data-action="new-exams" >Thêm bài về nhà</button></div>
 <table class="t-table ">
 <caption>Danh sách đề kiểm tra</caption>
 <thead>
@@ -224,6 +226,25 @@
 <table class="t-table"><caption>Tỉ lệ đúng</caption><thead><tr><th scope="col">Câu</th><th scope="col">Chủ đề</th><th scope="col" class="t-number">Tỉ lệ đúng</th><th scope="col">Đáp án sai nhiều nhất</th></tr></thead><tbody id="exam-stats-questions"></tbody></table>
 <div class="t-heading"><div><h2>Bảng xếp hạng</h2></div></div>
 <table class="t-table"><caption>Bảng xếp hạng</caption><thead><tr><th scope="col" class="t-number">Hạng</th><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col" class="t-number">Điểm</th></tr></thead><tbody id="exam-stats-rank"></tbody></table>
+</section>
+</section>
+<section id="view-sheetexam" hidden>
+<section id="list-sheetexam" class="t-list">
+<h2 class="visually-hidden">Thi từ Google Sheet</h2>
+<form id="thi-gv-form" class="t-card t-form" novalidate>
+<div class="t-field"><label for="thi-gv-pass">Mật khẩu giáo viên của bài thi</label><input id="thi-gv-pass" type="password" autocomplete="off" inputmode="numeric" maxlength="64"><p class="t-hint">Ô mat_khau_gv trong trang CauHinh của Google Sheet.</p></div>
+<div class="t-actions"><button type="submit" id="thi-gv-load" class="t-button t-primary">Tải thông tin thi</button><p class="t-hint" id="thi-gv-status" role="status"></p></div>
+</form>
+<section id="thi-gv-panel" class="t-card" hidden>
+<div class="t-heading"><div><h2>Điều khiển thi</h2><p class="t-muted" id="thi-gv-sub"></p></div></div>
+<div class="t-form">
+<div class="t-field"><label for="thi-gv-mode">Hình thức</label><select id="thi-gv-mode"><option value="thu">Thi thử (làm nhiều lần)</option><option value="that">Thi thật (mỗi em một lần)</option></select></div>
+<div class="t-actions"><button type="button" id="thi-gv-open" class="t-button t-primary">Mở thi</button><button type="button" id="thi-gv-lock" class="t-button">Khóa thi</button><button type="button" id="thi-gv-refresh" class="t-button">Làm mới</button></div>
+<p class="t-hint">Học sinh vào <a id="thi-gv-link" href="./thi.html">trang thi</a> bằng Mã học sinh + PIN trong Google Sheet.</p>
+</div>
+<dl class="t-metrics" id="thi-gv-metrics"></dl>
+<table class="t-table" id="thi-gv-table"><caption>Học sinh đăng nhập thi</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Lớp</th><th scope="col">Vào thi gần nhất</th><th scope="col">Trạng thái</th><th scope="col" class="t-number">Điểm</th><th scope="col">Thao tác</th></tr></thead><tbody id="thi-gv-body"><tr><td colspan="6" class="t-muted">Chưa có dữ liệu.</td></tr></tbody></table>
+</section>
 </section>
 </section>
 <section id="view-materials" hidden>

@@ -1,9 +1,10 @@
 // @ts-check
 // Bài thi lấy thẳng từ Google Sheet (apps-script/sheet-exam/Code.gs). Đăng nhập Mã học sinh + PIN → Lấy đề → Nộp → Điểm.
-export const SHEET_API = 'https://script.google.com/macros/s/AKfycbwOStBHPAZfMUOyOJEWX4ALrpKiCnJG88u0wElu5fdYvb6scqNDDDq8NpsSpC6h0UbdtA/exec';
+import { SHEET_API } from './sheet-config.js';
+export { SHEET_API };
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
-/** @type {{ma:string,pin:string,student:any,questions:any[]}|null} */ let state = null;
+/** @type {{ma:string,pin:string,mode?:string,student:any,questions:any[]}|null} */ let state = null;
 const draftKey = () => 'thi-nhap-' + (state ? state.ma.toLowerCase() : '');
 
 /** Gọi Apps Script; thử lại 3 lần khi mạng/Apps Script bận. @param {Record<string,unknown>} body */
@@ -42,7 +43,7 @@ function show(/** @type {'login'|'exam'|'result'} */ v) { $('login').hidden = v 
 function renderExam() {
   if (!state) return;
   const s = state.student;
-  $('who').textContent = `${s.name} — Lớp ${s.lop} — ${state.questions.length} câu`;
+  $('who').textContent = `${s.name} — Lớp ${s.lop} — ${state.questions.length} câu` + (state.mode === 'thu' ? ' — THI THỬ (làm được nhiều lần)' : '');
   const draft = readDraft(), list = $('questions'); list.replaceChildren();
   state.questions.forEach((q, i) => {
     const li = document.createElement('li'); li.className = 'q';
@@ -78,9 +79,9 @@ $('login').addEventListener('submit', async ev => {
   await busy(btn, 'Đang lấy đề…', async () => {
     try {
       const data = await call({ action: 'exam', ma: ma.value.trim(), pin: pin.value.trim() });
-      state = { ma: ma.value.trim(), pin: pin.value.trim(), student: data.student, questions: data.questions || [] };
+      state = { ma: ma.value.trim(), pin: pin.value.trim(), mode: data.mode, student: data.student, questions: data.questions || [] };
       pin.value = '';
-      if (data.student.done) { renderResult(null, 'Em đã nộp bài này rồi'); return; }
+      if (data.student.done && data.mode !== 'thu') { renderResult(null, 'Em đã nộp bài này rồi'); return; }
       renderExam();
     } catch (e) { err.textContent = e instanceof Error ? e.message : 'Chưa lấy được đề.'; }
   });
@@ -89,7 +90,7 @@ $('login').addEventListener('submit', async ev => {
 $('submit').addEventListener('click', () => {
   if (!state) return;
   const n = Object.keys(answers()).length, total = state.questions.length;
-  $('confirm-text').textContent = n < total ? `Em mới làm ${n}/${total} câu. Nộp rồi thì không làm lại được.` : `Em đã làm đủ ${total} câu. Nộp rồi thì không làm lại được.`;
+  $('confirm-text').textContent = n < total ? `Em mới làm ${n}/${total} câu. ${state.mode === 'thu' ? 'Đây là thi thử, em làm lại được.' : 'Nộp rồi thì không làm lại được.'}` : `Em đã làm đủ ${total} câu. ${state.mode === 'thu' ? 'Đây là thi thử, em làm lại được.' : 'Nộp rồi thì không làm lại được.'}`;
   /** @type {HTMLDialogElement} */ ($('confirm')).showModal();
 });
 $('confirm-cancel').addEventListener('click', () => /** @type {HTMLDialogElement} */ ($('confirm')).close());

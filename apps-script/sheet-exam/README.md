@@ -15,3 +15,12 @@
 - Kết quả tự ghi vào trang **KetQua** (giờ nộp, mã, họ tên, lớp, điểm, số câu đúng, bài làm từng câu); cột Trạng thái của em thành **Đã thi**.
 - Cho em làm lại: xóa chữ "Đã thi" ở cột Trạng thái của em đó.
 - Đổi đề: sửa hoặc xóa dòng trong DeThi — không cần triển khai lại. Chỉ khi Claude gửi `Code.gs` mới mới cần: dán → Lưu → Triển khai → Quản lý triển khai → ✏️ → Phiên bản mới.
+
+## Menu "Thi" của giáo viên (bản cập nhật)
+1. Dán lại `Code.gs` mới → Triển khai → **Quản lý bản triển khai → Sửa → Phiên bản mới** (giữ nguyên địa chỉ /exec).
+2. Mở Sheet → menu **Bài thi → Tạo mẫu**: tạo thêm trang `CauHinh` (che_do, trang_thai, mat_khau_gv ngẫu nhiên 6 số). Không ghi đè dữ liệu cũ.
+3. Trong app giáo viên → menu **Thi** → nhập `mat_khau_gv` → chọn Thi thử / Thi thật → **Mở thi** hoặc **Khóa thi**.
+- Mặc định **khóa**: học sinh vẫn đăng nhập học bình thường nhưng chưa lấy được đề.
+- Thi thử: làm nhiều lần, không đánh dấu "Đã thi". Thi thật: mỗi em một lần; bấm "Cho thi lại" để mở lại cho em đó.
+- Bảng giáo viên hiện: lần vào thi gần nhất (cột G của HocSinh), trạng thái, điểm.
+- Trang KetQua có thêm cột "Hình thức" (Thi thử / Thi thật).

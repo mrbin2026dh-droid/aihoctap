@@ -60,7 +60,7 @@ assert(await pg.isVisible('#msg-dialog'),T+'phải hỏi khi bỏ thay đổi ch
 await pg.click('#msg-cancel');await pg.waitForTimeout(200);
 assert(await pg.isVisible('#detail-lessons'),T+'Hủy = ở lại');assert.strictEqual(await pg.inputValue('#field-publish-form-title'),'Bài đang gõ');
 await pg.click('#nav-exams');await pg.waitForTimeout(300);await pg.click('#msg-ok');await pg.waitForTimeout(300);
-assert(await pg.isVisible('#view-exams'));assert.strictEqual(await pg.textContent('#workspace-title'),'Kiểm tra');
+assert(await pg.isVisible('#view-exams'));assert.strictEqual(await pg.textContent('#workspace-title'),'Về nhà');
 assert(!(await pg.isVisible('#exams-preview-note')),T+'đã bỏ ghi chú dữ liệu minh họa');
 await pg.click('#act-exams-new');await pg.waitForTimeout(200);assert(!(await pg.isDisabled('#form-exams button[type=submit]')),T+'nút Lưu đề hoạt động');
 if(SHOTS)await pg.screenshot({path:`${SHOTS}/${vp.n}-3-exams.png`,fullPage:true});
