@@ -156,29 +156,69 @@ function publishExam_(exam) {
 }
 
 /**
- * Phát hành từ tab Sheet đang mở. Mẫu tab (tên tùy ý):
- *  Hàng 1–8 (cột A nhãn, cột B giá trị): Mã đề | Tiêu đề | Khối | Số phút | Mở lúc (ngày giờ) | Đóng lúc | Số lượt (1/2) | Điểm thực hành tối đa (0 nếu không có)
- *  Hàng 10: tiêu đề cột câu hỏi: Mã câu | Loại (choice/text) | Câu hỏi | A | B | C | D | Đáp án | Điểm | Chủ đề
- *  Hàng 11+: mỗi hàng một câu.
+ * Soạn đề trong chính file Sheet sổ điểm, tab tên bắt đầu bằng "DE_" (tạo mẫu bằng taoMauDe()). Bố cục:
+ *  Hàng 1–8 (cột A nhãn, cột B giá trị): Mã đề | Tiêu đề | Khối | Số phút | Mở lúc | Đóng lúc | Số lượt (1/2) | Điểm thực hành tối đa (0 nếu không có)
+ *  Hàng 9: "Phát hành" | ô tích ☐ | (kết quả ghi ở C9)
+ *  Hàng 10: Mã câu | Loại (choice/text) | Câu hỏi | A | B | C | D | Đáp án | Điểm | Chủ đề — hàng 11+ mỗi hàng một câu.
+ * Tích ô B9 → trigger "khi sửa" phát hành lên Firebase, ghi kết quả vào C9, tự bỏ tích. Không cần menu (script không gắn Sheet vẫn chạy).
  */
-function publishExamFromSheet() {
-  var sh = SpreadsheetApp.getActiveSheet(), v = sh.getDataRange().getValues(), ui = SpreadsheetApp.getUi();
-  var cell = function (r) { return v[r] ? v[r][1] : ''; };
-  var toMs = function (x) { return x instanceof Date ? x.getTime() : new Date(x).getTime(); };
-  var practiceMax = Number(cell(7)) || 0;
-  var qs = [];
+var DE_PREFIX = 'DE_';
+function toMsVN_(x) {
+  if (x instanceof Date) return x.getTime();
+  var m = String(x || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T]+(\d{1,2}):(\d{2}))?$/); // 28/10/2026 07:30
+  if (m) return new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], (+m[4] || 0) - 7, +m[5] || 0)).getTime(); // giờ Việt Nam (UTC+7)
+  var t = new Date(x).getTime(); return isNaN(t) ? NaN : t;
+}
+function examFromSheet_(sh) {
+  var v = sh.getDataRange().getValues(), cell = function (r) { return v[r] ? v[r][1] : ''; };
+  var practiceMax = Number(cell(7)) || 0, qs = [];
   for (var r = 10; r < v.length; r++) {
     var row = v[r]; if (!String(row[2] || '').trim()) continue;
-    var opts = {}; ['A', 'B', 'C', 'D'].forEach(function (k, i) { var t = String(row[3 + i] || '').trim(); if (t) opts[k] = t; });
-    qs.push({ id: String(row[0] || '').trim() || ('q' + (qs.length + 1)), kind: String(row[1]).trim() === 'text' ? 'text' : 'choice', prompt: String(row[2]), options: opts, answer: String(row[7] || ''), points: Number(row[8]) || 1, topic: String(row[9] || '') });
+    var opts = {}; ['A', 'B', 'C', 'D'].forEach(function (k, i) { var t = String(row[3 + i] === undefined ? '' : row[3 + i]).trim(); if (t) opts[k] = t; });
+    qs.push({ id: String(row[0] || '').trim() || ('q' + (qs.length + 1)), kind: String(row[1]).trim().toLowerCase() === 'text' ? 'text' : 'choice', prompt: String(row[2]), options: opts, answer: String(row[7] === undefined ? '' : row[7]), points: Number(row[8]) || 1, topic: String(row[9] || '') });
   }
+  var opens = toMsVN_(cell(4)), closes = toMsVN_(cell(5));
+  if (isNaN(opens) || isNaN(closes)) throw new Error('Ô "Mở lúc"/"Đóng lúc" phải là ngày giờ, ví dụ 28/10/2026 07:30.');
   var theoryMax = qs.reduce(function (s, q) { return s + (Number(q.points) || 1); }, 0);
   var parts = [{ key: 'theory', label: 'Trắc nghiệm', max: theoryMax, grader: 'auto' }];
   if (practiceMax > 0) parts.push({ key: 'practice', label: 'Thực hành', max: practiceMax, grader: 'teacher' });
-  try {
-    var res = publishExam_({ id: cell(0), title: cell(1), grade: cell(2), minutes: cell(3), opens_at: toMs(cell(4)), closes_at: toMs(cell(5)), max_attempts: cell(6), parts: parts, questions: qs });
-    ui.alert('Đã phát hành đề ' + res.exam_id + ': ' + res.question_count + ' câu, ' + res.total_points + ' điểm trắc nghiệm' + (practiceMax ? ' + ' + practiceMax + ' điểm thực hành.' : '.'));
-  } catch (err) { ui.alert('Chưa phát hành được: ' + err.message); }
+  return { id: String(cell(0)).trim(), title: cell(1), grade: cell(2), minutes: cell(3), opens_at: opens, closes_at: closes, max_attempts: cell(6), parts: parts, questions: qs };
+}
+/** Không cho sửa đề đã có học sinh vào thi (đổi câu/đáp án giữa chừng làm sai điểm). */
+function assertEditable_(id) {
+  var old = db_('exam_meta/' + id);
+  if (old && Date.now() >= Number(old.opens_at) && db_('sessions/' + id))
+    throw new Error('Đề "' + id + '" đã có học sinh vào thi — không sửa được. Hãy đặt Mã đề mới.');
+}
+function publishTab_(sh) {
+  var exam = examFromSheet_(sh); assertEditable_(String(exam.id || '').trim());
+  var res = publishExam_(exam);
+  return 'Đã phát hành ' + res.exam_id + ': ' + res.question_count + ' câu, ' + res.total_points + ' điểm' + (exam.parts.length > 1 ? ' + thực hành ' + exam.parts[1].max : '') + ' — ' + fmt_(Date.now());
+}
+/** Bản có menu (khi script gắn với Sheet): phát hành tab đang mở. */
+function publishExamFromSheet() {
+  var ui = SpreadsheetApp.getUi();
+  try { ui.alert(publishTab_(SpreadsheetApp.getActiveSheet())); } catch (err) { ui.alert('Chưa phát hành được: ' + err.message); }
+}
+/** Tạo tab mẫu "DE_mau" trong file sổ điểm (chạy một lần, hoặc khi cần thêm mẫu). */
+function taoMauDe() {
+  var ss = gradebook_(); try { ss.setSpreadsheetTimeZone('Asia/Bangkok'); } catch (e) { /* bỏ qua */ }
+  var name = DE_PREFIX + 'mau', sh = ss.getSheetByName(name);
+  if (sh) { Logger.log('Đã có tab mẫu: ' + name + ' — ' + ss.getUrl()); return sh; }
+  sh = ss.insertSheet(name, 0);
+  var t = new Date(Date.now() + 24 * 3600000);
+  sh.getRange(1, 1, 9, 2).setValues([['Mã đề', 'thu-tin9-01'], ['Tiêu đề', 'Kiểm tra thử Tin học 9'], ['Khối', 9], ['Số phút', 15],
+    ['Mở lúc', Utilities.formatDate(t, 'Asia/Bangkok', 'dd/MM/yyyy') + ' 07:30'], ['Đóng lúc', Utilities.formatDate(t, 'Asia/Bangkok', 'dd/MM/yyyy') + ' 08:00'],
+    ['Số lượt (1 hoặc 2)', 1], ['Điểm thực hành tối đa (0 = không có)', 0], ['Phát hành (tích ô)', false]]);
+  sh.getRange('B5:B6').setNumberFormat('@'); sh.getRange('B9').insertCheckboxes();
+  sh.getRange(10, 1, 3, 10).setValues([
+    ['Mã câu', 'Loại (choice/text)', 'Câu hỏi', 'A', 'B', 'C', 'D', 'Đáp án', 'Điểm', 'Chủ đề'],
+    ['q1', 'choice', 'Thiết bị nào là bộ xử lý trung tâm?', 'CPU', 'RAM', 'Ổ cứng', 'Màn hình', 'A', 5, 'Phần cứng'],
+    ['q2', 'choice', 'Phần mềm nào là bảng tính?', 'Word', 'Excel', 'PowerPoint', 'Paint', 'B', 5, 'Ứng dụng']]);
+  sh.getRange('A1:A9').setFontWeight('bold'); sh.getRange(10, 1, 1, 10).setFontWeight('bold'); sh.setFrozenRows(10);
+  sh.getRange('C9').setValue('← Sửa nội dung rồi tích ô này để phát hành. Muốn đề mới: nhân bản tab, đổi tên thành DE_<tên>, đổi Mã đề.');
+  Logger.log('Đã tạo tab mẫu ' + name + ' trong ' + ss.getUrl());
+  return sh;
 }
 
 // ---------------------------------------------------------------------------- Drive
@@ -399,11 +439,19 @@ function writeGradebookRow_(examId, m, uid, record, prev) {
  */
 function onGradebookEdit(e) {
   var r = e && e.range; if (!r) return;
+  if (r.getSheet().getName().indexOf(DE_PREFIX) === 0) return onExamTabEdit_(r);
   var c1 = r.getColumn(), c2 = r.getLastColumn(); if (c2 < 6 || c1 > 7) return;
   var sh = r.getSheet(), examId = sh.getName(), m = db_('exam_meta/' + examId);
   var first = Math.max(2, r.getRow()), last = r.getLastRow(); if (last < first) return;
   if (!m) { sh.getRange(first, 6, last - first + 1, 1).setNote('Đề "' + examId + '" không còn trên hệ thống — điểm này KHÔNG được lưu.').setBackground('#fde2e1'); return; }
   for (var row = first; row <= last; row++) { try { gbApplyRow_(sh, row, examId, m); } catch (err) { sh.getRange(row, 6).setNote('Lỗi lưu điểm: ' + err.message).setBackground('#fde2e1'); } }
+}
+/** Tab soạn đề: chỉ phản ứng khi tích ô B9. */
+function onExamTabEdit_(r) {
+  if (r.getRow() > 9 || r.getLastRow() < 9 || r.getColumn() > 2 || r.getLastColumn() < 2) return;
+  var sh = r.getSheet(); if (sh.getRange(9, 2).getValue() !== true) return;
+  var msg; try { msg = '✔ ' + publishTab_(sh); } catch (err) { msg = '✘ Chưa phát hành: ' + err.message; }
+  sh.getRange(9, 3).setValue(msg); sh.getRange(9, 2).setValue(false);
 }
 function gbApplyRow_(sh, row, examId, m) {
   var uid = sh.getRange(row, 1).getValue(); if (!uid) return;
@@ -495,6 +543,7 @@ function setup() {
   } catch (eUrl) {
     Logger.log('UrlFetch: ' + eUrl.message);
   }
+  try { taoMauDe(); } catch (eTpl) { Logger.log('Tạo tab mẫu: ' + eTpl.message); }
   var driveInfo = rootFolder_().getUrl(); // lỗi quyền Drive thì dừng ngay, không báo "thành công" giả
   Logger.log('Đã cài trigger thành công. Sổ điểm: ' + gradebook_().getUrl() + ' — Thư mục Drive: ' + driveInfo);
   Logger.log('Bước tiếp: chạy hàm kiemTraHeThong() và dán toàn bộ nhật ký cho Antigravity.');

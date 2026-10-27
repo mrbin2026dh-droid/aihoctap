@@ -185,7 +185,7 @@ function identityUI() {
   if (openSettingsBtn) openSettingsBtn.hidden = !session;
   if (session) /** @type {HTMLSelectElement} */ (node('grade')).value = String(session.identity.grade);
   /** @type {HTMLSelectElement} */ (node('grade')).disabled = Boolean(session);
-  /** @type {HTMLButtonElement} */ (node('sync')).disabled = !session || !navigator.onLine;
+  const syncEl = /** @type {HTMLButtonElement|null} */ (document.getElementById('sync')); if (syncEl) syncEl.disabled = !session || !navigator.onLine;
 }
 /** @param {string} name */
 function show(name) {
@@ -754,6 +754,8 @@ on('logout', async () => {
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
+  // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.
+  const syncBtn = document.getElementById('sync'); if (syncBtn) node('progress-view').prepend(syncBtn);
   node('questions').replaceChildren(); node('result').replaceChildren(); node('progress').replaceChildren(); node('draft-status').textContent = '';
   notify('Đã đăng xuất. Nháp được giữ riêng theo tài khoản.');
 });
@@ -864,6 +866,11 @@ form('student-change-pin-form')?.addEventListener('submit', async event => {
       });
       statusNode.textContent = 'Đã đổi mã PIN.';
       statusNode.className = 'notice success status';
+      // Hệ thống thi (Firebase) dùng cùng PIN → đổi theo, nếu không lần đăng nhập sau sẽ không thấy đề thi.
+      if (!isLocalhostBackend) {
+        try { await fb.changePassword(oldPin, newPin); }
+        catch { statusNode.textContent = 'Đã đổi mã PIN học tập, nhưng CHƯA đổi được PIN hệ thống thi. Hãy báo thầy cô trước buổi kiểm tra.'; statusNode.className = 'notice error status'; }
+      }
       formEl.reset();
       if (session) {
         session.identity.must_change_pin = false;

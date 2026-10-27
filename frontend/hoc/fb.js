@@ -26,12 +26,40 @@ function store(s) { try { if (s) localStorage.setItem(STORE, JSON.stringify(s));
 
 export function hasSession() { return Boolean(load()); }
 export function uid() { return load()?.uid || ''; }
-export function clear() { store(null); offsetMs = 0; }
+const ERR = 'aisgk-fb-err', CODE = 'aisgk-fb-code';
+/** @param {string} k @param {string|null} v */ function keep(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* bỏ qua */ } }
+/** @param {string} k */ function read(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } }
+/** Lý do lần đăng nhập hệ thống thi gần nhất thất bại ('' nếu ổn) — để tab Thi báo cho học sinh thay vì im lặng. */
+export function lastError() { return read(ERR); }
+export function clear() { store(null); offsetMs = 0; keep(ERR, null); keep(CODE, null); }
 
 /** Đăng nhập Firebase bằng mã học sinh + PIN. Trả về uid; ném lỗi nếu sai/chưa có tài khoản. @param {string} code @param {string} pin */
 export function signIn(code, pin) {
-  inflight = doSignIn(code, pin).finally(() => { inflight = null; });
+  keep(CODE, code);
+  inflight = doSignIn(code, pin)
+    .then(u => { keep(ERR, null); return u; }, err => { keep(ERR, err instanceof Error ? err.message : 'Chưa đăng nhập được hệ thống thi.'); throw err; })
+    .finally(() => { inflight = null; });
   return inflight;
+}
+
+/**
+ * Đổi PIN học sinh ở hệ thống thi cho khớp PIN mới vừa đổi ở hệ thống học (nếu không, lần đăng nhập sau sẽ không vào được đề thi).
+ * Học sinh tự đổi mật khẩu của chính mình bằng idToken (Identity Toolkit accounts:update). @param {string} oldPin @param {string} newPin
+ */
+export async function changePassword(oldPin, newPin) {
+  if (!load()) { const code = read(CODE); if (!code) throw new ApiError(401, 'Chưa đăng nhập hệ thống thi.'); await signIn(code, oldPin); }
+  const idToken = await token();
+  let res;
+  try {
+    res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${FB_CONFIG.apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'omit',
+      body: JSON.stringify({ idToken, password: newPin, returnSecureToken: true })
+    });
+  } catch { throw new ApiError(0, 'Mất kết nối khi đổi PIN hệ thống thi.'); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.idToken) throw new ApiError(res.status || 0, 'Chưa đổi được PIN ở hệ thống thi.', data?.error?.message);
+  store({ uid: data.localId || uid(), idToken: data.idToken, refreshToken: data.refreshToken, exp: Date.now() + Number(data.expiresIn || 3600) * 1000 });
+  keep(ERR, null);
 }
 /** @type {Promise<string>|null} */ let inflight = null;
 /** Chờ lượt đăng nhập đang chạy (nếu có) — tránh mở tab Thi ngay sau đăng nhập mà chưa thấy đề Firebase. */

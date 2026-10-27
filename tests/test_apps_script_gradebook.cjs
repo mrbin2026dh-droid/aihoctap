@@ -31,13 +31,14 @@ function makeEnv(opts = {}) {
     setValues(v) { v.forEach((row, i) => row.forEach((x, j) => this.sh.put(this.r + i, this.c + j, x))); return this; }
     setValue(x) { this.sh.put(this.r, this.c, x); return this; }
     setNote(n) { for (let i = 0; i < this.nr; i++) this.sh.notes[`${this.r + i},${this.c}`] = n; return this; } getNote() { return this.sh.notes[`${this.r},${this.c}`] || ''; }
-    setBackground() { return this; } setFontWeight() { return this; } }
+    setBackground() { return this; } setFontWeight() { return this; } setNumberFormat() { return this; } insertCheckboxes() { this.setValue(false); return this; } }
   class Sheet { constructor(name) { this.name = name; this.rows = []; this.notes = {}; }
     cell(r, c) { return (this.rows[r - 1] || [])[c - 1] ?? ''; } put(r, c, x) { (this.rows[r - 1] ||= [])[c - 1] = x; }
     getName() { return this.name; } getLastRow() { return this.rows.length; } appendRow(v) { this.rows.push([...v]); }
     getRange(a, c, nr, nc) { return typeof a === 'string' ? new Range(this, 1, 6) : new Range(this, a, c, nr, nc); }
+    getDataRange() { const nc = Math.max(1, ...this.rows.map(r => (r || []).length)); return new Range(this, 1, 1, this.rows.length, nc); }
     setFrozenRows() {} hideColumns() {} }
-  const ss = { sheets: [], getSheetByName(n) { return this.sheets.find(s => s.name === n) || null; }, insertSheet(n) { const s = new Sheet(n); this.sheets.push(s); return s; }, deleteSheet(s) { this.sheets = this.sheets.filter(x => x !== s); }, getId: () => 'ss1', getUrl: () => 'https://sheet' };
+  const ss = { setSpreadsheetTimeZone() {}, sheets: [], getSheetByName(n) { return this.sheets.find(s => s.name === n) || null; }, insertSheet(n) { const s = new Sheet(n); this.sheets.push(s); return s; }, deleteSheet(s) { this.sheets = this.sheets.filter(x => x !== s); }, getId: () => 'ss1', getUrl: () => 'https://sheet' };
   // Drive giả
   const files = {}; let fid = 0;
   class Folder { constructor(name) { this.name = name; this.kids = []; this.files = []; this.trashed = false; this.id = 'd' + (++fid); }
@@ -54,7 +55,7 @@ function makeEnv(opts = {}) {
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => { props[k] = v; } }) },
     ScriptApp: { getOAuthToken: () => 't', getProjectTriggers: () => [{ getHandlerFunction: () => 'tick' }, { getHandlerFunction: () => 'onGradebookEdit' }] }, CacheService: { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; } }) },
     SpreadsheetApp: { openById: () => ss, create: () => ss }, DriveApp: { getFolderById: () => root, getFileById: id => files[id], createFolder: n => root.createFolder(n) },
-    Utilities: { formatDate: d => d.toISOString(), base64Decode: b => [...Buffer.from(b, 'base64')], newBlob: (data, mime, name) => ({ data, mime, name }) }, MimeType: { PLAIN_TEXT: 'text/plain' }, ContentService: { createTextOutput: t => ({ setMimeType() { return JSON.parse(t); } }), MimeType: { JSON: 'json' } }, HtmlService: {}
+    Utilities: { formatDate: (d, tz, f) => { const x = new Date(d.getTime() + 7 * 3600000), z = n => String(n).padStart(2, '0'); return f.replace('dd', z(x.getUTCDate())).replace('MM', z(x.getUTCMonth() + 1)).replace('yyyy', x.getUTCFullYear()).replace('HH', z(x.getUTCHours())).replace('mm', z(x.getUTCMinutes())).replace('ss', z(x.getUTCSeconds())); }, base64Decode: b => [...Buffer.from(b, 'base64')], newBlob: (data, mime, name) => ({ data, mime, name }) }, MimeType: { PLAIN_TEXT: 'text/plain' }, ContentService: { createTextOutput: t => ({ setMimeType() { return JSON.parse(t); } }), MimeType: { JSON: 'json' } }, HtmlService: {}
   };
   vm.createContext(ctx); vm.runInContext(src, ctx);
   return { ctx, db, logs, ss, root, calls };
@@ -138,6 +139,42 @@ function makeEnv(opts = {}) {
   const r = ctx.doPost({ postData: { contents: JSON.stringify({ idToken: 'tok:u1', action: 'upload_practice', exam_id: 'e1', name: 'moi.xlsx', b64: Buffer.from('x').toString('base64') }) } });
   ok(r.ok === false && r.retry === true, 'Drive lỗi → ok:false, retry:true');
   ok(!trashed, 'Drive lỗi khi nộp lại → bản đã nộp trước KHÔNG bị bỏ vào thùng rác');
+}
+// 8) Soạn đề trong tab DE_ của sổ điểm, tích ô B9 → phát hành
+{
+  const env = makeEnv(); const { ctx, db, ss } = env;
+  const sh = ss.insertSheet('DE_thu');
+  [['Mã đề', 'thu-01'], ['Tiêu đề', 'Thử'], ['Khối', 9], ['Số phút', 15], ['Mở lúc', '28/10/2030 07:30'], ['Đóng lúc', '28/10/2030 08:00'], ['Số lượt', 1], ['Điểm TH', 6], ['Phát hành', true],
+   ['Mã câu', 'Loại', 'Câu hỏi', 'A', 'B', 'C', 'D', 'Đáp án', 'Điểm', 'Chủ đề'],
+   ['q1', 'choice', 'CPU?', 'CPU', 'RAM', '', '', 'A', 2, ''], ['q2', 'choice', 'Excel?', 'Word', 'Excel', '', '', 'b', 2, '']].forEach(r => sh.appendRow(r));
+  ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  const m = db.exam_meta?.['thu-01'];
+  ok(m && m.backend === 'firebase' && m.question_count === 2 && m.parts.length === 2 && m.parts[1].max === 6, 'tích B9 → đề lên Firebase (2 câu, thực hành 6)');
+  ok(m && m.opens_at === Date.UTC(2030, 9, 28, 0, 30), '"28/10/2030 07:30" hiểu đúng giờ Việt Nam');
+  ok(db.exam_secrets['thu-01'].q2 === 'B' && !JSON.stringify(db.exam_questions['thu-01']).includes('"answer"'), 'đáp án vào exam_secrets (chữ thường → hoa), không lộ trong exam_questions');
+  ok(String(sh.cell(9, 3)).startsWith('✔') && sh.cell(9, 2) === false, 'C9 ghi kết quả ✔, ô tích tự bỏ');
+  // Sửa ô F (phương án C) trong tab đề → không bị coi là sổ điểm
+  ctx.onGradebookEdit({ range: sh.getRange(11, 6) });
+  ok(!sh.notes['11,6'], 'sửa phương án trong tab đề không gắn ghi chú sổ điểm');
+  // Đáp án không có trong phương án → báo ✘
+  sh.put(12, 8, 'D'); sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  ok(String(sh.cell(9, 3)).startsWith('✘') && /đáp án "D"/.test(sh.cell(9, 3)), 'đáp án sai → C9 báo ✘ rõ câu nào');
+  // Đề đã mở và có học sinh vào → không cho phát hành đè
+  sh.put(12, 8, 'B'); ctx.db_('exam_meta/thu-01/opens_at', 'put', Date.now() - 60000); ctx.db_('sessions/thu-01/u1', 'put', { started_at: Date.now() });
+  sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  ok(/đã có học sinh vào thi/.test(sh.cell(9, 3)), 'đề đã có học sinh vào thi → không cho sửa');
+  // Ngày giờ sai định dạng
+  const sh2 = ss.insertSheet('DE_sai'); [['Mã đề', 'x-02'], ['Tiêu đề', 'x'], ['Khối', 9], ['Số phút', 15], ['Mở lúc', 'sáng mai'], ['Đóng lúc', ''], ['', 1], ['', 0], ['', true], [], ['q1', 'choice', 'p', 'a', 'b', '', '', 'A', 1]].forEach(r => sh2.appendRow(r));
+  ctx.onGradebookEdit({ range: sh2.getRange(9, 2) });
+  ok(/ngày giờ/.test(sh2.cell(9, 3)), 'ngày giờ sai → hướng dẫn định dạng 28/10/2026 07:30');
+}
+// 9) Tab mẫu do taoMauDe() tạo phát hành được ngay
+{
+  const { ctx, db, ss } = makeEnv(); const sh = ctx.taoMauDe();
+  ok(ss.getSheetByName('DE_mau') === sh, 'taoMauDe() tạo tab DE_mau');
+  sh.put(9, 2, true); ctx.onGradebookEdit({ range: sh.getRange(9, 2) });
+  ok(String(sh.cell(9, 3)).startsWith('✔') && db.exam_meta['thu-tin9-01']?.question_count === 2, 'tab mẫu phát hành được ngay (2 câu)');
+  ok(ctx.taoMauDe() === sh, 'chạy lại taoMauDe() không tạo trùng');
 }
 console.log(failures ? `APPS SCRIPT GRADEBOOK: ${failures} lỗi` : 'APPS SCRIPT GRADEBOOK OK');
 process.exit(failures ? 1 : 0);

@@ -1803,3 +1803,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: spike/step0/database.rules.live-backup-2026-10-27.json, docs/evidence/*.log, docs/handoff/antigravity-claude-luat-nhanh-cu-xong.md, aisgk.md.
 - Kiểm thực tế: 45+42 ca emulator PASS; load_gate4.mjs in "=== CỔNG 4 ĐẠT ==="; RTDB live xác nhận có rule mới.
 - Việc tiếp: Chuyển Claude nghiệm thu theo docs/handoff/antigravity-claude-luat-nhanh-cu-xong.md.
+
+### 27/10/2026 — Claude: ACCEPT luật 7 nhánh cũ; sửa lỗi máy dùng chung, đồng bộ PIN, soạn đề trong Sheet; kịch bản Cổng 5
+- Lỗi thật: đăng xuất sau khi mở Tổng quan → em sau không đăng nhập được (nút #sync bị xóa). Đã sửa + test hồi quy FAIL-first.
+- Đổi PIN ở ứng dụng nay đổi luôn PIN hệ thống thi; tab Thi báo khi không vào được hệ thống thi.
+- Apps Script: soạn đề ở tab DE_ trong sổ điểm, tích B9 để phát hành; chặn sửa đề đã có HS vào; ngày giờ kiểu Việt Nam.
+- Test: apps_script_gradebook 35, fb_pin_sync 8, hồi quy xanh. Kế hoạch: docs/plans/cong5-thi-thu-phong-may.md. Handoff: docs/handoff/claude-antigravity-truoc-cong5.md.
+- Rủi ro còn: tài khoản phải có ở cả hai hệ thống cùng PIN (đặt lại PIN ở trang giáo viên/Sheet không tự đồng bộ) → bước sau Cổng 5: Firebase làm đăng nhập chính.

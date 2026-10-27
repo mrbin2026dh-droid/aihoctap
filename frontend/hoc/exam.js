@@ -61,6 +61,10 @@ export async function renderExamList(target, loggedIn) {
   ] };
   target.replaceChildren();
   if (w.status === 'rejected') target.append(el('p', 'Một số bài kiểm tra chưa tải được. Hãy mở lại mục này sau.', 'muted'));
+  if (!fb.hasSession() && fb.lastError()) {
+    const warn = el('p', `Chưa vào được hệ thống thi mới (${fb.lastError()}). Nếu thầy cô báo lớp em thi trên hệ thống mới mà em không thấy đề, hãy đăng xuất rồi đăng nhập lại; vẫn không được thì báo thầy cô kiểm tra mã PIN thi.`, 'notice exam-fb-warn');
+    warn.setAttribute('role', 'status'); target.append(warn);
+  }
   if (!data.exams.length) { note('Chưa có bài kiểm tra', 'Khi giáo viên mở bài kiểm tra cho lớp của em, bài sẽ hiện ở đây. Bài luyện tập vẫn nằm ở mục Luyện tập.'); return; }
   const list = el('div', '', 'exam-list');
   for (const e of data.exams) list.append(examCard(e, target));
