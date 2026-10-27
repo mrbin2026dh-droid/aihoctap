@@ -143,7 +143,7 @@
 @media(max-width:760px){.teacher-app .t-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-app .t-toolbar>.t-field:first-child{grid-column:1/-1}}
 /* Mobile viewport shell: intrinsic nav row reserves its real height, including two-line labels. */
 @media(max-width:760px){
- .teacher-app{height:100dvh;display:grid;grid-template-rows:var(--t-header-height) minmax(0,1fr);overflow:hidden}
+ .teacher-app{height:100vh;height:var(--app-h,100dvh);display:grid;grid-template-rows:var(--t-header-height) minmax(0,1fr);overflow:hidden}
  .teacher-app .t-main{display:flex;flex-direction:column;min-height:0;overflow:auto}
  .teacher-app:has(.t-editor:not([hidden])) .t-main{overflow:hidden}
  .teacher-app .t-global-status{flex:0 0 auto}
@@ -361,7 +361,9 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 .teacher-app .t-field-error{color:var(--danger);margin:4px 0 0;font-size:var(--t-small)}
 .teacher-app .t-field-error:empty{display:none}
 /* Giáo viên lớp: Thi, Tài liệu (khối mình, qua Google Sheet), Tài khoản. Về nhà cần Worker cập nhật — giai đoạn 2 */
-body.is-class-teacher #nav-overview,body.is-class-teacher #nav-lessons,body.is-class-teacher #nav-exams,body.is-class-teacher #open-settings,body.is-class-teacher #thi-publish{display:none!important}
+body.is-class-teacher #nav-overview,body.is-class-teacher #nav-lessons,body.is-class-teacher #nav-exams,body.is-class-teacher #thi-publish,body.is-class-teacher #act-profile-pin,body.is-class-teacher #act-profile-ai,body.is-class-teacher #act-profile-keys{display:none!important}
+body:not(.is-class-teacher) #act-gv-pin{display:none!important}
+.teacher-app .t-profile-who{margin:0 0 4px;padding:8px 12px;font-weight:600;color:var(--muted);font-size:var(--t-small);border-bottom:1px solid var(--line)}
 .teacher-app .read-report{margin-top:24px}
 .teacher-app .read-mini-wrap{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .teacher-app .read-mini{position:relative;display:inline-block;width:72px;height:8px;border-radius:99px;background:var(--brand-soft);overflow:hidden}

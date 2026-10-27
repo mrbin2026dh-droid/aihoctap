@@ -8,6 +8,7 @@ import * as thiStore from './thi-store.js';
 import * as thiApp from './thi-app.js';
 import { typeOut } from './typing.js';
 import * as readProgress from './read-progress.js';
+import * as support from './support.js';
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -211,6 +212,7 @@ function gateUI() {
   if (gate) gate.hidden = !gated;
 }
 function identityUI() {
+  support.setClass(session?.identity?.class_code || '');
   gateUI();
   node('login').hidden = Boolean(session);
   node('account').hidden = !session;
@@ -347,11 +349,33 @@ async function refreshCatalog() {
     const changed = next.revision !== catalog?.revision;
     await db.put('meta', 'catalog', next); catalog = next;
     if (changed) {renderCatalog(); if (currentView === 'practice') renderPractice();}
+    void prefetchLessons();
   } catch (error) { if (!catalog) {catalogUnavailable('Chưa kết nối được máy chủ. Em có thể thử lại.'); report(error instanceof Error ? error : new Error('Chưa tải được danh mục.'));} }
   finally {
     refreshing = false;
     if (refreshAgain) {refreshAgain = false; refreshCatalog().catch(report);}
   }
+}
+let prefetching = false;
+/** Có mạng: tải ngầm mọi bài của khối em về máy (từng bài, nhẹ nhàng) → mất mạng vẫn học được. Bản cũ của bài đã đổi phiên bản được thay. */
+async function prefetchLessons() {
+  if (prefetching || !navigator.onLine || !session || !catalog) return;
+  prefetching = true;
+  try {
+    const have = new Set(/** @type {Lesson[]} */ (await db.all('packages')).map(l => db.packageKey(l)));
+    const grade = session.identity.grade;
+    for (const course of catalog.courses.filter(c => c.grade === grade)) for (const summary of course.lessons) {
+      const key = `${course.id}/${summary.id}/${summary.version}`;
+      if (have.has(key)) continue;
+      if (!navigator.onLine || !session) return;
+      try {
+        const lesson = /** @type {Lesson} */ (await api(`/pwa/lessons/${course.id}/${summary.id}/${summary.version}`));
+        await verifyPackage(lesson); await db.put('packages', db.packageKey(lesson), lesson);
+        for (const old of have) if (old.startsWith(`${course.id}/${summary.id}/`)) void db.remove('packages', old);
+      } catch { /* bài lỗi: bỏ qua, lần sau thử lại */ }
+      await new Promise(r => setTimeout(r, 300));
+    }
+  } finally { prefetching = false; }
 }
 /** @param {string} courseId @param {string} lessonId @param {string} version @param {boolean} [exerciseOnly] */
 async function loadLesson(courseId, lessonId, version, exerciseOnly = false) {
@@ -364,9 +388,12 @@ async function loadLesson(courseId, lessonId, version, exerciseOnly = false) {
   if (saved) { await openLesson(saved.lesson, saved, generation, owner, exerciseOnly); return; }
   const key = `${courseId}/${lessonId}/${version}`;
   let lesson = /** @type {Lesson|undefined} */ (await db.get('packages', key));
+  if (!lesson && !navigator.onLine) { notify('Bài này chưa có trên máy. Kết nối mạng một lần để tải bài, sau đó học được cả khi mất mạng.', true); return; }
+  const fresh = !lesson;
   if (!lesson) lesson = /** @type {Lesson} */ (await api(`/pwa/lessons/${courseId}/${lessonId}/${version}`));
   if (generation !== viewGeneration || owner !== session) return;
   await verifyPackage(lesson);
+  if (fresh) void db.put('packages', db.packageKey(lesson), lesson).catch(() => {});   // đã mở một lần là học lại được khi mất mạng
   await openLesson(lesson, null, generation, owner, exerciseOnly);
 }
 /** @param {Lesson} lesson @param {Draft|null} [saved] @param {number} [generation] @param {Session|null} [owner] @param {boolean} [exerciseOnly] */
@@ -878,7 +905,7 @@ form('login-form').addEventListener('submit', async event => {
       await db.put('meta', 'session', next); session = next;
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
       if (quick) { presence.startStudentLite(next.identity); void workerToken(code, pin); }
-      clearTeacherSession(); startThiBadge();
+      clearTeacherSession(); startThiBadge(); void prefetchLessons();
       // Hệ thống thi Firebase cũ (đề do Worker quản lý): chỉ dùng ở đường đăng nhập cũ.
       fb.clear(); if (!quick && !isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});
       draft = null; locked = false; identityUI(); renderCatalog();
@@ -1205,6 +1232,7 @@ form('tutor-form').addEventListener('submit', async event => {
 });
 installState(); updateConnection();
 start().catch(error => {catalogUnavailable('Kiểm tra quyền lưu trữ của trình duyệt rồi thử lại.'); report(error);});
+void support.init();
 
 
 // ==========================================

@@ -136,6 +136,10 @@
     "tai_lieu": {
       ".read": true,
       ".write": false
+    },
+    "ho_tro": {
+      ".read": true,
+      ".write": false
     }
   }
 }

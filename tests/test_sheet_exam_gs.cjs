@@ -199,6 +199,13 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   ok(c({ action: 'gv_teacher_save', moi: true, ma: 'gv01', ten: 'X', lop: '9B', pin: '222222' }).error.includes('đã có'), 'trùng mã giáo viên → báo');
   { const nb = E.fbCalls.length; c({ action: 'gv_student_save', moi: true, ma: 'hs8z77', ten: 'Em Mới', lop: '8Z', pin: '777777' }); const pc = E.fbCalls.slice(nb).filter(x => x.method === 'patch');
     ok(pc.length === 1 && E.fbdb.thi_hs.hs8z77 && E.fbdb.thi_hs.hs8z77.ten === 'Em Mới', 'sửa tài khoản: chỉ đẩy phần tài khoản lên Firebase (nhanh khi nhiều bài thi)'); }
+  { const z0 = c({ action: 'gv_support_save', zalo: 'zalo.com/abc' }); ok(z0.error && z0.error.includes('Zalo'), 'Zalo sai dạng → báo');
+    const z1 = c({ action: 'gv_support_save', zalo: '+84 912 345 678', ten: 'Thầy Hải' });
+    ok(z1.ok && z1.zalo === 'https://zalo.me/0912345678' && E.fbdb.ho_tro.zalo === 'https://zalo.me/0912345678' && E.fbdb.ho_tro.ten === 'Thầy Hải', 'quản trị lưu Zalo chung → đường dẫn zalo.me, đẩy lên Firebase ho_tro');
+    const z2 = call({ gv: '111111', gv_ma: 'GV01', action: 'gv_support_save', zalo: '0987654321' });
+    ok(z2.ok && E.fbdb.ho_tro.lop['9a'].zalo === 'https://zalo.me/0987654321' && E.fbdb.ho_tro.lop['9a'].ten === 'Cô Hoa' && E.fbdb.ho_tro.zalo === 'https://zalo.me/0912345678', 'giáo viên lớp lưu Zalo riêng → học sinh lớp 9A thấy Zalo cô Hoa, Zalo chung giữ nguyên');
+    ok(call({ gv: '111111', gv_ma: 'GV01', action: 'gv_support' }).zalo === 'https://zalo.me/0987654321', 'giáo viên lớp đọc lại Zalo của mình');
+    c({ action: 'gv_support_save', zalo: '' }); ok(!E.fbdb.ho_tro.zalo, 'để trống → ẩn Zalo chung'); }
   ok(call({ action: 'gv_login', ma: 'GV01', pin: '111111' }).teacher.lop[0] === '9A' && call({ action: 'gv_login', ma: 'GV01', pin: 'sai' }).error.includes('chưa đúng'), 'gv_login: đúng/sai PIN');
   c({ action: 'gv_create', tieu_de: 'Bài 9A', che_do: 'that', khoi: 9, lop: '9A' }); c({ action: 'gv_create', tieu_de: 'Bài 9B', che_do: 'that', khoi: 9, lop: '9B' }); c({ action: 'gv_create', tieu_de: 'Bài khối 9', che_do: 'that', khoi: 9, lop: '' });
   const g = p => call({ gv: '111111', gv_ma: 'GV01', ...p });

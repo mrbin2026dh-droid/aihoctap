@@ -18,7 +18,7 @@ var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Đi
 /** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
 var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
 var SH_TL = 'TaiLieu', TL_HEAD = ['Mã tài liệu', 'Tiêu đề', 'Khối', 'Mô tả', 'File ID', 'Tên file', 'Kích thước', 'Cập nhật lúc', 'Người đăng'];
-var SH_GV = 'GiaoVien', GV_HEAD = ['Mã giáo viên', 'Họ tên', 'Mã PIN', 'Lớp phụ trách', 'Trạng thái'];
+var SH_GV = 'GiaoVien', GV_HEAD = ['Mã giáo viên', 'Họ tên', 'Mã PIN', 'Lớp phụ trách', 'Trạng thái', 'Zalo'];
 /** Lớp giáo viên đang đăng nhập được phụ trách (chữ thường); null = quản trị (thấy mọi lớp). */
 var SCOPE_ = null;
 var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm', 'Năm học', 'Hình thức', 'Nội dung'];
@@ -273,6 +273,13 @@ function teacher_(p) {
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT) || !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_DD) || cfgGet_('ma_de')) schema_();
   var a = p.action;
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); if (me) setTeacherPin_(me.ma, np); else setConfig_('mat_khau_gv', np); return { ok: true }; }
+  if (a === 'gv_support') return { ok: true, zalo: me ? (me.zalo || '') : cfgGet_('ho_tro_zalo'), ten: me ? me.ten : cfgGet_('ho_tro_ten') };
+  if (a === 'gv_support_save') {                          // Zalo hỗ trợ: quản trị = chung cả trường; giáo viên lớp = riêng các lớp mình
+    var z = normZalo_(p.zalo), tn = String(p.ten || '').trim().slice(0, 40);
+    if (me) { var shg = ensure_(SH_GV, GV_HEAD); if (String(shg.getRange(1, 6).getValue()).trim() !== 'Zalo') shg.getRange(1, 6).setValue('Zalo'); shg.getRange(me.row, 6).setValue(z); }
+    else { setConfig_('ho_tro_zalo', z); setConfig_('ho_tro_ten', tn); }
+    var resz = { ok: true, zalo: z, ten: me ? me.ten : tn }; try { publish_(['ho_tro']); } catch (e) { resz.fb_error = e.message; } return resz;
+  }
   if (a === 'gv_whoami') return { ok: true, me: me ? { ma: me.ma, ten: me.ten, lop: me.lop } : null, admin: !me };
   if (/^gv_(teachers|teacher_save|teacher_delete|students|student_save|student_delete)$/.test(a)) return accounts_(a, p, me);
   if (/^gv_doc(s|_save|_delete)$/.test(a)) return docs_(a, p, me);
@@ -413,7 +420,7 @@ function teachers_() {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_GV), out = [];
   if (!sh) return out;
   var v = sh.getDataRange().getValues();
-  for (var r = 1; r < v.length; r++) { var ma = String(v[r][0] || '').trim(); if (ma) out.push({ row: r + 1, ma: ma, ten: String(v[r][1] || '').trim(), pin: String(v[r][2]).trim(), lop: lopList_(v[r][3]), trang_thai: /^khóa$/i.test(String(v[r][4] || '').trim()) ? 'Khóa' : 'Hoạt động' }); }
+  for (var r = 1; r < v.length; r++) { var ma = String(v[r][0] || '').trim(); if (ma) out.push({ row: r + 1, ma: ma, ten: String(v[r][1] || '').trim(), pin: String(v[r][2]).trim(), lop: lopList_(v[r][3]), trang_thai: /^khóa$/i.test(String(v[r][4] || '').trim()) ? 'Khóa' : 'Hoạt động', zalo: String(v[r][5] || '').trim() }); }
   return out;
 }
 function findTeacher_(ma, pin) {
@@ -424,12 +431,12 @@ function findTeacher_(ma, pin) {
   if (t.trang_thai === 'Khóa') throw new Error('Tài khoản giáo viên đang bị khóa.');
   return t;
 }
-function setTeacherPin_(ma, pin) { var t = teachers_().filter(function (x) { return norm_(x.ma) === norm_(ma); })[0]; if (!t) throw new Error('Không tìm thấy giáo viên.'); sheet_(SH_GV).getRange(t.row, 3).setValue(pin); try { publish_(); } catch (e) { /* lần sau */ } }
+function setTeacherPin_(ma, pin) { var t = teachers_().filter(function (x) { return norm_(x.ma) === norm_(ma); })[0]; if (!t) throw new Error('Không tìm thấy giáo viên.'); sheet_(SH_GV).getRange(t.row, 3).setValue(pin); try { publish_(['gv', 'ho_tro']); } catch (e) { /* lần sau */ } }
 /** Quản lý tài khoản: giáo viên (chỉ quản trị) và học sinh (quản trị: mọi lớp; giáo viên lớp: lớp mình). */
 function accounts_(a, p, me) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), CODE = /^[A-Za-z0-9_-]{2,32}$/;
   var pinOk = function (x) { x = String(x || '').trim(); if (x.length < 6 || x.length > 16) throw new Error('Mã PIN từ 6 đến 16 ký tự.'); return x; };
-  var done = function (res) { try { publish_(['hs', 'gv']); } catch (e) { res.fb_error = e.message; } return res; };   // chỉ đẩy tài khoản (nhanh)
+  var done = function (res) { try { publish_(['hs', 'gv', 'ho_tro']); } catch (e) { res.fb_error = e.message; } return res; };   // chỉ đẩy tài khoản (nhanh)
   if (/^gv_teacher/.test(a) && me) throw new Error('Chỉ quản trị viên được quản lý tài khoản giáo viên.');
   if (a === 'gv_teachers') return { ok: true, teachers: teachers_().map(function (t) { return { ma: t.ma, ten: t.ten, lop: t.lop, trang_thai: t.trang_thai }; }) };
   if (a === 'gv_teacher_save') {
@@ -566,9 +573,23 @@ function publish_(only) {
     body.thi_bai = bai; body.thi_de = de; n = list.length;
   }
   if (want('gv')) { var gvs = {}; teachers_().forEach(function (t) { if (t.trang_thai !== 'Khóa') gvs[fbKey_(t.ma)] = { ma: t.ma, ten: t.ten, lop: t.lop, h: sha256_(norm_(t.ma) + ':' + t.pin) }; }); body.thi_gv = gvs; }
+  if (want('ho_tro')) {
+    var ht = { zalo: cfgGet_('ho_tro_zalo'), ten: cfgGet_('ho_tro_ten'), lop: {} };
+    teachers_().forEach(function (t) { if (t.trang_thai !== 'Khóa' && t.zalo) t.lop.forEach(function (l) { ht.lop[fbKey_(l)] = { zalo: t.zalo, ten: t.ten }; }); });
+    body.ho_tro = ht;
+  }
   if (want('tl')) { var tl = {}; docList_().forEach(function (d) { tl[d.id] = { tieu_de: d.tieu_de, khoi: d.khoi, mo_ta: d.mo_ta, file_id: d.file_id, ten_file: d.ten_file, size: d.size, at: d.at }; }); body.tai_lieu = tl; }
   fb_('patch', '', body);
   return n;
+}
+/** Số điện thoại Zalo (0912345678, +84 912…) hoặc đường dẫn https://zalo.me/… → đường dẫn zalo.me; rỗng = gỡ. */
+function normZalo_(x) {
+  x = String(x || '').trim(); if (!x) return '';
+  if (/^https:\/\/zalo\.me\/[A-Za-z0-9\/_-]{3,80}$/.test(x)) return x;
+  var d = x.replace(/[\s.\-()]/g, '');
+  if (/^\+?84\d{9,10}$/.test(d)) d = '0' + d.replace(/^\+?84/, '');
+  if (/^0\d{9,10}$/.test(d)) return 'https://zalo.me/' + d;
+  throw new Error('Nhập số điện thoại Zalo (ví dụ 0912345678) hoặc đường dẫn https://zalo.me/…');
 }
 /** Bài đã khóa và đã chép xong (không tải lại từ Firebase mỗi lần mở menu Thi). */
 function pullDone_() { try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('PULL_DONE') || '{}'); } catch (e) { return {}; } }

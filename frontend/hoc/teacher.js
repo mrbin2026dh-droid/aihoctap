@@ -51,6 +51,9 @@ function on(id, action) {node(id).addEventListener('click', () => {
 /** Giáo viên lớp (Mã giáo viên + PIN, kiểm trên Firebase): không có token Worker, chỉ dùng Thi và Tài khoản. */
 function classTeacher() { try { return JSON.parse(sessionStorage.getItem('aisgk-gv-info') || 'null'); } catch { return null; } }
 function clearClassTeacher() { for (const k of ['aisgk-gv-info', 'thi-gv-ma']) sessionStorage.removeItem(k); }
+/** Điện thoại/WebView cũ không hiểu 100dvh: đo chiều cao thật để thanh menu dưới luôn hiện. */
+const setAppH = () => document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+setAppH(); window.addEventListener('resize', setAppH); window.addEventListener('orientationchange', setAppH);
 function updateAuth() {
   const gv = classTeacher(), signed = Boolean(token) || Boolean(gv);
   document.body.classList.toggle('is-class-teacher', Boolean(gv) && !token);
@@ -60,7 +63,8 @@ function updateAuth() {
   node('editor').hidden = !signed || (Boolean(token) && mustChangePin);
   node('teacher-logout').hidden = !signed;
   const openSettingsBtn = document.getElementById('open-settings');
-  if (openSettingsBtn) openSettingsBtn.hidden = !token || mustChangePin;
+  if (openSettingsBtn) openSettingsBtn.hidden = !signed || (Boolean(token) && mustChangePin);   // giáo viên lớp cũng có Cài đặt: Đổi mã PIN, Đăng xuất
+  const who = document.getElementById('gv-who'); if (who) { who.hidden = !(gv && !token); who.textContent = gv && !token ? `${gv.ten || gv.ma} · Lớp ${(gv.lop || []).join(', ')}` : ''; }
 }
 /** @param {string} name @returns {HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement} */
 function field(name) {return /** @type {HTMLInputElement} */ (form.elements.namedItem(name));}

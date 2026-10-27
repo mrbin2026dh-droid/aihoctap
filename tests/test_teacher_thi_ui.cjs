@@ -156,6 +156,19 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   ok((await pg.textContent('#workspace-title'))==='Thi'&&calls.some(c=>c.action==='gv_list'&&c.gv_ma==='GV01'&&c.gv==='246810'),'vào thẳng Thi, gửi Mã giáo viên để Sheet lọc theo lớp');
   await pg.click('#tab-thi-new');ok((await pg.$$eval('#thi-new-lop option',o=>o.map(x=>x.textContent))).join('|')==='Chỉ lớp 9A','tạo đề: chỉ chọn được lớp mình (không có Cả khối)');
   await pg.click('#nav-accounts');await pg.waitForSelector('#acc-hs-body tr');ok(await pg.isHidden('#tab-acc-gv')&&(await pg.textContent('#acc-hs-count')).includes('lớp thầy cô phụ trách'),'Tài khoản: chỉ học sinh lớp mình, không có tab Giáo viên');
+  ok(await pg.evaluate(()=>{const r=document.querySelector('.t-nav').getBoundingClientRect();return r.height>40&&Math.abs(r.bottom-innerHeight)<=2&&getComputedStyle(document.documentElement).getPropertyValue('--app-h').trim()===innerHeight+'px'}),'điện thoại: thanh menu dưới luôn hiện (đo chiều cao thật, không phụ thuộc 100dvh)');
+  ok(await pg.isVisible('#open-settings'),'giáo viên lớp có nút Cài đặt');await pg.click('#open-settings');await pg.waitForTimeout(150);
+  ok(await pg.isVisible('#act-gv-pin')&&await pg.isVisible('#teacher-logout')&&await pg.isHidden('#act-profile-ai')&&await pg.isHidden('#act-profile-keys')&&(await pg.textContent('#gv-who')).includes('Cô Hoa'),'Cài đặt giáo viên lớp: tên, Đổi mã PIN, Đăng xuất (không có mục quản trị)');
+  await pg.click('#act-gv-pin');await pg.waitForSelector('#gv-pin-dialog[open]');
+  await pg.fill('#gv-pin-old','246810');await pg.fill('#gv-pin-new','135791');await pg.fill('#gv-pin-again','135790');await pg.click('#gv-pin-save');
+  ok((await pg.getAttribute('#gv-pin-again','aria-invalid'))==='true'&&(await pg.textContent('#gv-pin-again-err')).includes('chưa khớp')&&!calls.some(c=>c.action==='gv_repin'),'nhập lại sai → báo dưới trường, không gửi');
+  await pg.fill('#gv-pin-again','135791');await pg.click('#gv-pin-save');await pg.waitForSelector('#msg-dialog[open]');
+  const rp=calls.find(c=>c.action==='gv_repin');ok(rp&&rp.gv==='246810'&&rp.new_gv==='135791'&&rp.gv_ma==='GV01'&&await pg.evaluate(()=>sessionStorage.getItem('thi-gv-mk'))==='135791','đổi mã PIN: gửi PIN cũ + mới lên Sheet, phiên dùng PIN mới');
+  await pg.click('#msg-ok');
+  await pg.click('#open-settings');await pg.waitForTimeout(150);await pg.click('#act-support');await pg.waitForSelector('#support-dialog[open]');await pg.waitForTimeout(200);
+  ok(await pg.isHidden('#support-ten-field'),'giáo viên lớp: Zalo riêng, dùng tên trong tài khoản');
+  await pg.fill('#support-zalo','abc');await pg.click('#support-save');ok((await pg.getAttribute('#support-zalo','aria-invalid'))==='true'&&!calls.some(c=>c.action==='gv_support_save'),'Zalo sai dạng → báo dưới trường, không gửi');
+  await pg.fill('#support-zalo','0912 345 678');await pg.click('#support-save');await pg.waitForSelector('#msg-dialog[open]');ok(calls.some(c=>c.action==='gv_support_save'&&c.zalo==='0912 345 678'&&c.gv_ma==='GV01'),'lưu Zalo hỗ trợ lên Google Sheet');await pg.click('#msg-ok');
   await pg.reload();await pg.waitForSelector('#workspace:not([hidden])');await pg.waitForTimeout(500);ok((await pg.textContent('#workspace-title'))==='Thi','tải lại trang: vẫn đăng nhập, vào Thi');
   await pg.evaluate(()=>document.getElementById('teacher-logout').click());await pg.waitForSelector('#auth-section:not([hidden])');ok(!(await pg.evaluate(()=>sessionStorage.getItem('thi-gv-ma'))),'đăng xuất xóa phiên giáo viên lớp');
   ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}

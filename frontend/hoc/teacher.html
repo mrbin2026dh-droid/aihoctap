@@ -11,7 +11,7 @@
 </head>
 <body class="teacher-app"><a class="t-skip" href="#main">Đến nội dung</a>
 <header class="t-topbar"><a class="t-wordmark" href="./" aria-label="SGK — Góc giáo viên">sgk<span>GÓC GIÁO VIÊN</span></a><button type="button" id="open-settings" class="t-icon-btn" data-icon="gear" popovertarget="nav-profile" aria-controls="nav-profile" aria-label="Hồ sơ" title="Hồ sơ và cài đặt" hidden></button>
-<nav id="nav-profile" class="t-profile-menu" popover="auto" aria-label="Hồ sơ giáo viên"><button type="button" id="act-profile-pin" class="t-button" data-action="profile-pin" >Đổi mã PIN</button><button type="button" id="act-profile-ai" class="t-button" data-action="profile-ai" >Gia sư AI và hạn mức</button><button type="button" id="act-profile-keys" class="t-button" data-action="profile-keys" >Khóa API</button><a class="t-button" href="./">Về Góc học tập</a><button type="button" class="t-button t-danger" id="teacher-logout" hidden>Đăng xuất</button>
+<nav id="nav-profile" class="t-profile-menu" popover="auto" aria-label="Hồ sơ giáo viên"><p class="t-profile-who" id="gv-who" hidden></p><button type="button" id="act-profile-pin" class="t-button" data-action="profile-pin" >Đổi mã PIN</button><button type="button" id="act-gv-pin" class="t-button">Đổi mã PIN</button><button type="button" id="act-support" class="t-button">Hỗ trợ học sinh qua Zalo</button><button type="button" id="act-profile-ai" class="t-button" data-action="profile-ai" >Gia sư AI và hạn mức</button><button type="button" id="act-profile-keys" class="t-button" data-action="profile-keys" >Khóa API</button><a class="t-button" href="./">Về Góc học tập</a><button type="button" class="t-button t-danger" id="teacher-logout" hidden>Đăng xuất</button>
 </nav>
 </header>
 
@@ -340,6 +340,22 @@
 <div class="t-toolbar t-toolbar-actions-only"><p class="t-muted acc-note">Giáo viên được cấp tài khoản đăng nhập bằng Mã giáo viên + PIN, chỉ quản lý các lớp phụ trách.</p><button type="button" id="acc-gv-add" class="t-button t-primary">Thêm giáo viên</button></div>
 <table class="t-table" id="acc-gv-table"><caption>Tài khoản giáo viên (trang GiaoVien trong Google Sheet)</caption><thead><tr><th scope="col">Mã giáo viên</th><th scope="col">Họ và tên</th><th scope="col">Lớp phụ trách</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="acc-gv-body"></tbody></table>
 </div>
+<dialog id="support-dialog" class="t-dialog" aria-labelledby="support-title"><form id="support-form" class="t-form" method="dialog" novalidate>
+<h2 id="support-title">Hỗ trợ học sinh qua Zalo</h2>
+<p class="t-muted" id="support-sub">Học sinh thấy nút "Hỏi thầy cô" ở góc màn hình, bấm vào là mở Zalo nhắn cho thầy cô.</p>
+<div class="t-field"><label for="support-zalo">Số điện thoại Zalo hoặc đường dẫn zalo.me</label><input id="support-zalo" type="text" inputmode="tel" maxlength="90" autocomplete="off" placeholder="0912345678" aria-describedby="support-zalo-err support-zalo-hint"><p id="support-zalo-hint" class="t-hint">Để trống rồi Lưu để ẩn nút.</p><p id="support-zalo-err" class="t-field-error"></p></div>
+<div class="t-field" id="support-ten-field"><label for="support-ten">Tên hiển thị</label><input id="support-ten" type="text" maxlength="40" autocomplete="off" placeholder="Thầy Hải" aria-describedby="support-ten-hint"><p id="support-ten-hint" class="t-hint">Học sinh thấy "Hỏi Thầy Hải".</p></div>
+<p id="support-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="support-cancel" class="t-button">Hủy</button><button type="submit" id="support-save" class="t-button t-primary">Lưu</button></div>
+</form></dialog>
+<dialog id="gv-pin-dialog" class="t-dialog" aria-labelledby="gv-pin-title"><form id="gv-pin-form" class="t-form" method="dialog" novalidate>
+<h2 id="gv-pin-title">Đổi mã PIN</h2>
+<div class="t-field"><label for="gv-pin-old">Mã PIN hiện tại</label><input id="gv-pin-old" type="password" inputmode="numeric" required minlength="6" maxlength="16" autocomplete="current-password" aria-describedby="gv-pin-old-err"><p id="gv-pin-old-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="gv-pin-new">Mã PIN mới</label><input id="gv-pin-new" type="password" inputmode="numeric" required minlength="6" maxlength="16" autocomplete="new-password" aria-describedby="gv-pin-new-err gv-pin-hint"><p id="gv-pin-hint" class="t-hint">Từ 6 đến 16 ký tự.</p><p id="gv-pin-new-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="gv-pin-again">Nhập lại mã PIN mới</label><input id="gv-pin-again" type="password" inputmode="numeric" required minlength="6" maxlength="16" autocomplete="new-password" aria-describedby="gv-pin-again-err"><p id="gv-pin-again-err" class="t-field-error"></p></div>
+<p id="gv-pin-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="gv-pin-cancel" class="t-button">Hủy</button><button type="submit" id="gv-pin-save" class="t-button t-primary">Đổi mã PIN</button></div>
+</form></dialog>
 <dialog id="acc-dialog" class="t-dialog" aria-labelledby="acc-dlg-title"><form id="acc-form" class="t-form" method="dialog" novalidate>
 <h2 id="acc-dlg-title">Thêm học sinh</h2>
 <div class="t-field"><label for="acc-ma">Mã</label><input id="acc-ma" required pattern="[A-Za-z0-9_-]{2,32}" maxlength="32" autocomplete="off" aria-describedby="acc-ma-err"><p id="acc-ma-err" class="t-field-error"></p></div>

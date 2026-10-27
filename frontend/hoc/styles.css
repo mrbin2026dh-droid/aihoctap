@@ -1384,3 +1384,18 @@ body.student-app #lesson-content.reading-paper{max-width:none}
 /* Nút đồng bộ ở Tổng quan: chỉ xoay biểu tượng, không vẽ lại trắng trang */
 #sync.is-spinning svg{animation:spin .8s linear infinite}
 @media (prefers-reduced-motion:reduce){#sync.is-spinning svg{animation:none}}
+/* Nút nổi "Hỏi thầy cô" qua Zalo: góc phải dưới, có vòng sáng nhịp nhàng để học sinh dễ thấy */
+.zalo-fab{position:fixed;right:20px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:30;display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 20px 0 16px;border-radius:999px;background:#0068ff;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(0,104,255,.35);transition:transform .15s ease-out,box-shadow .15s ease-out}
+.zalo-fab[hidden]{display:none}
+.zalo-fab:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,104,255,.45);color:#fff}
+.zalo-fab:focus-visible{outline:3px solid #1e3a8a;outline-offset:3px}
+.zalo-fab .zalo-ic{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;animation:zalo-wiggle 4s ease-in-out infinite}
+.zalo-fab .zalo-ring{position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 0 rgba(0,104,255,.55);animation:zalo-pulse 2.2s ease-out infinite;pointer-events:none}
+@keyframes zalo-pulse{0%{box-shadow:0 0 0 0 rgba(0,104,255,.5)}70%{box-shadow:0 0 0 16px rgba(0,104,255,0)}100%{box-shadow:0 0 0 0 rgba(0,104,255,0)}}
+@keyframes zalo-wiggle{0%,86%,100%{transform:rotate(0)}89%{transform:rotate(-14deg)}92%{transform:rotate(12deg)}95%{transform:rotate(-8deg)}}
+@media(prefers-reduced-motion:reduce){.zalo-fab .zalo-ring,.zalo-fab .zalo-ic{animation:none}}
+/* Trong app (có thanh menu dưới trên điện thoại): đặt cao hơn thanh menu; chỉ hiện biểu tượng cho gọn */
+@media(max-width:760px){body.student-app:not(:has(#gate:not([hidden]))) .zalo-fab{bottom:calc(84px + env(safe-area-inset-bottom));right:16px;padding:0;width:56px;justify-content:center}body.student-app:not(:has(#gate:not([hidden]))) .zalo-fab .zalo-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
+/* Không che khi đang làm bài thi hoặc đang mở Gia sư AI */
+body:has(#exams-view:not([hidden]) .thi-exam) .zalo-fab,body.tutor-open .zalo-fab,body:has(dialog[open]:modal) .zalo-fab{display:none}
+:where(:root[data-theme=dark]) .zalo-fab{background:#2b7bff}
