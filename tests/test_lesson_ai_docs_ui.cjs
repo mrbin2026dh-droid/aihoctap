@@ -32,13 +32,17 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
  const mid=Number((await pg.textContent('#read-bar .read-pct')).match(/\d+/)?.[0]||0);ok(mid>0&&mid<100,'đang đọc giữa bài: '+mid+'%');
  await pg.evaluate(()=>scrollTo(0,document.body.scrollHeight));await pg.waitForTimeout(500);
  ok((await pg.textContent('#read-bar .read-pct')).includes('Đã đọc hết'),'cuộn hết bài → "Đã đọc hết"');
+ await pg.evaluate(()=>scrollTo(0,0));await pg.waitForTimeout(150);
+ const fillPct=await pg.evaluate(()=>{const f=document.querySelector('#read-bar .read-fill').getBoundingClientRect(),t=document.querySelector('#read-bar .read-track').getBoundingClientRect();return Math.round(100*f.width/t.width)});ok(fillPct>=99,'thanh và chữ cùng số: "Đã đọc hết" thì thanh đầy kể cả khi cuộn lên ('+fillPct+'%)');
+ ok((await pg.textContent('#ask-tutor')).trim()==='AI'&&(await pg.getAttribute('#ask-tutor','aria-label'))==='Gia sư AI','nút công cụ ghi gọn "AI" (tên truy cập vẫn là Gia sư AI)');
+ ok(await pg.evaluate(()=>[...document.querySelectorAll('.lesson-tools button')].every(b=>b.scrollHeight<=b.clientHeight+2&&getComputedStyle(b).whiteSpace==='nowrap')),'4 nút công cụ chữ một dòng');
  const dr=writes.filter(w=>w.path.includes('/doc_read/tin-hoc-9~b1/hs01'));ok(dr.length>=2&&dr.at(-1).v.pct===100&&dr.at(-1).v.ten==='Nguyễn Văn Nam'&&dr.at(-1).v.lop==='9A'&&dr.every((w,i)=>!i||w.v.pct>dr[i-1].v.pct),'ghi % đọc lên Firebase theo mốc 10% (chỉ tăng)');
  // Gia sư AI
  await pg.evaluate(()=>scrollTo(0,0));await pg.click('#ask-tutor');await pg.waitForSelector('#tutor-dialog[open]');await pg.waitForTimeout(300);
  const dlg=await pg.evaluate(()=>{const d=document.getElementById('tutor-dialog');const r=d.getBoundingClientRect();return {modal:d.matches(':modal'),right:innerWidth-r.right,bottom:innerHeight-r.bottom,w:r.width,h:r.height}});
  ok(!dlg.modal,'khung chat không che trang (không phải hộp thoại chặn)');
  ok(mobile?(dlg.w>=vp.width-2&&dlg.bottom>=60):(Math.abs(dlg.right)<=1&&Math.abs(dlg.bottom)<=1&&dlg.w<=421&&dlg.h>=vp.height-100),mobile?'điện thoại: tấm chat trượt lên, nằm trên thanh menu dưới':'máy tính: khung chat thành cột bên phải cao hết màn hình');
- if(!mobile){const lay=await pg.evaluate(()=>{const c=document.getElementById('lesson-content').getBoundingClientRect(),d=document.getElementById('tutor-dialog').getBoundingClientRect();return {cr:c.right,dl:d.left}});ok(lay.cr<=lay.dl+1,`nội dung dịch sang trái, không bị khung chat che (${Math.round(lay.cr)} ≤ ${Math.round(lay.dl)})`);}
+ if(!mobile){const lay=await pg.evaluate(()=>{const c=document.getElementById('lesson-content').getBoundingClientRect(),d=document.getElementById('tutor-dialog').getBoundingClientRect();return {cr:c.right,dl:d.left}});ok(lay.cr<=lay.dl+1,`nội dung dịch sang trái, không bị khung chat che (${Math.round(lay.cr)} ≤ ${Math.round(lay.dl)})`);ok(lay.dl-lay.cr<=48,`nội dung lấp tới sát khung chat, không còn khoảng trống (${Math.round(lay.dl-lay.cr)}px)`);}
  ok(await pg.isVisible('#lesson-content'),'vẫn đọc được bài khi đang mở chat');
  await pg.fill('#tutor-input','Dữ liệu số là gì?');await pg.click('#tutor-submit');
  await pg.waitForSelector('#tutor-messages .tutor-bot .typing',{timeout:5000});ok(true,'câu trả lời hiện dần (hiệu ứng gõ chữ, có con trỏ)');
@@ -60,5 +64,10 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
  await pg.click('.doc-card button:has-text("Mở xem")');await pg.click('.doc-card button:has-text("Tải về")');const op=await pg.evaluate(()=>window.__opened);
  ok(op[0]==='https://drive.google.com/file/d/F9/view'&&op[1].includes('uc?export=download&id=F9'),'Mở xem → trang xem Google Drive; Tải về → tải file');
  ok(await pg.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'không tràn ngang '+vp.width);
+ // Tổng quan: bấm nút đồng bộ không xóa trắng trang (không giật)
+ await pg.click('[data-tab=progress]');await pg.waitForSelector('#progress .dash-hero #sync');
+ await pg.evaluate(()=>{window.__minKids=99;new MutationObserver(()=>{window.__minKids=Math.min(window.__minKids,document.getElementById('progress').childElementCount)}).observe(document.getElementById('progress'),{childList:true})});
+ await pg.click('#sync');await pg.waitForFunction(()=>!document.getElementById('sync').classList.contains('is-spinning'),null,{timeout:8000});
+ ok(await pg.evaluate(()=>window.__minKids>0&&!!document.querySelector('#progress .dash-hero #sync')),'đồng bộ Tổng quan: thay nội dung một lần, không xóa trắng trang (không giật)');
  ok(errs.length===0,'không lỗi JS '+errs.join('|'));await ctx.close()}
  console.log('LESSON AI DOCS UI OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});

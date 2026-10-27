@@ -1,13 +1,13 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
-import * as ui from './teacher-ui.js?v=20261027m';
+import * as ui from './teacher-ui.js?v=20261028a';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
-import './teacher-thi.js?v=20261027m';
-import './teacher-accounts.js?v=20261027m';
-import './teacher-read.js?v=20261027m';
-import './teacher-docs.js?v=20261027m';
+import './teacher-thi.js?v=20261028a';
+import './teacher-accounts.js?v=20261028a';
+import './teacher-read.js?v=20261028a';
+import './teacher-docs.js?v=20261028a';
 import * as thiStore from './thi-store.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';

@@ -83,8 +83,16 @@ await pg.locator('#docs-body tr:first-child .t-icon-btn').nth(1).click();await p
 // tài khoản (Google Sheet): tab Học sinh + tab Giáo viên
 await pg.click('#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===3);
 assert.strictEqual((await pg.textContent('#nav-accounts')).includes('Tài khoản'),true,T+'menu đổi tên Tài khoản');
-assert.deepStrictEqual(await pg.$$eval('#acc-root > .t-tabs [role=tab]',a=>a.map(x=>x.textContent)),['Học sinh','Giáo viên'],T+'hai tab Học sinh / Giáo viên');
-await pg.fill('#acc-hs-search','thử 02');assert.strictEqual(await pg.locator('#acc-hs-body tr').count(),1,T+'tìm học sinh');await pg.fill('#acc-hs-search','');
+assert.deepStrictEqual(await pg['$$eval']('#acc-root > .t-tabs [role=tab]',a=>a.map(x=>x.textContent)),['Học sinh','Giáo viên'],T+'hai tab Học sinh / Giáo viên');
+await pg.fill('#acc-hs-search','thử 02');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===1);await pg.fill('#acc-hs-search','');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===3);
+// 1000 học sinh không treo: vẽ 50 dòng/lần + "Hiện thêm"
+for(let i=4;i<=1000;i++)STU.push({ma:'hs'+String(i).padStart(4,'0'),ten:'Học sinh số '+i,lop:i%2?'9A':'9B',trang_thai:'Hoạt động'});
+await pg.click('#nav-overview');await pg.click('#nav-accounts');await pg.waitForFunction(()=>document.querySelector('#acc-hs-count').textContent.startsWith('1000'));
+assert.strictEqual(await pg.locator('#acc-hs-body tr').count(),50,T+'1000 học sinh: chỉ vẽ 50 dòng');
+assert((await pg.textContent('#acc-hs-table + .t-more')).includes('Đang hiện 50/1000'),T+'báo đang hiện 50/1000');
+await pg.click('#acc-hs-table + .t-more button');assert.strictEqual(await pg.locator('#acc-hs-body tr').count(),100,T+'Hiện thêm → 100 dòng');
+await pg.fill('#acc-hs-search','số 999');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===1);assert(await pg.locator('#acc-hs-table + .t-more').isHidden(),T+'lọc còn 1 dòng → ẩn Hiện thêm');await pg.fill('#acc-hs-search','');
+STU.splice(3);await pg.click('#nav-overview');await pg.click('#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===3);
 const R='#acc-hs-body tr:nth-child(1) .t-icon-btn';assert.strictEqual(await pg.locator(R).count(),4,T+'mỗi dòng 4 nút biểu tượng');
 for(const b of await pg.locator(R).all()){assert(await b.getAttribute('aria-label'),T+'nút có tên truy cập');const bb=await b.boundingBox();assert(bb.width>=47&&bb.height>=47,T+'vùng chạm 48px')}
 let n1=sheetCalls.length;await pg.locator(R).nth(2).click();await pg.waitForSelector('#msg-dialog[open]');assert((await pg.textContent('#msg-dialog')).includes('Khóa tài khoản học sinh?'),T+'Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);

@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã deploy thành công Worker bản 675db789 (lưu rollback 2ea55f4e); 100% test Gia sư AI, Sheet, UI PASS. Chuyển Người dùng kiểm tay theo bàn giao.
+- Yêu cầu mới nhất: Antigravity hướng dẫn Người dùng dán Code.gs mới (hiệu năng 1000 học sinh, pull_ theo bài, lưu Drive theo lô 15 bài, tự động tạo TaiLieu) theo docs/handoff/claude-antigravity-cap-nhat-gs-hieu-nang.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1904,3 +1904,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/merge: worker/index.js, frontend/hoc/app.js, frontend/hoc/read-progress.js, frontend/hoc/styles.css, frontend/hoc/sw.js, tests/test_lesson_ai_docs_ui.cjs, tests/test_tutor_accuracy.mjs, aisgk.md.
 - Kiểm thực tế: 5 bộ test Gia sư AI PASS 100% (test_tutor_accuracy 17/17, test_worker_tutor_guardrails, test_tutor_grounding, test_tutor_questions, test_tutor_exam_review); test_sheet_exam_gs 80/80 PASS; test_lesson_ai_docs_ui 39/39 PASS; test_worker_teacher_scope 7/7 PASS; live worker smoke test HTTP OK.
 - Việc tiếp: Chuyển Người dùng thử tay (hỏi 'Dữ liệu số là gì?', hỏi 'Câu này chọn gì?', nộp bài thi thử xem nhận xét AI).
+
+## 28/10/2026 00:12 — Claude: AI cột phải + rà soát lỗi logic, hiệu năng 1000 học sinh
+- Học sinh: nút "AI" gọn; bài học lấp tới sát khung chat (khung rộng 380–540px theo màn); thanh đọc bài hiện đúng % cao nhất (hết "Đã đọc hết" mà thanh 1/3); Tổng quan bấm đồng bộ không xóa trắng (hết giật), đăng nhập nhanh vẫn tải tiến độ; AI tạm nghỉ khi đang làm bài thi (cả thi thử) và tự đóng khi vào bài; làm lại luôn tải đề mới; thi thật kiểm đã nộp trước khi vào; báo lỗi nộp rõ (đã nộp / bài khóa).
+- Giáo viên: Tài khoản + Học sinh đọc bài vẽ 50 dòng/lần (Hiện thêm), tìm kiếm chờ ngừng gõ; Đọc bài nghe đúng 1 bài, chỉ khối của bài, giáo viên lớp chỉ thấy lớp mình; thống kê Thi nghe theo từng bài (không tải cả cây thi_nop). Module teacher-ui cùng ?v=20261028a.
+- Code.gs: pull_ theo từng bài, bỏ qua bài khóa đã chép, 2 phút/lần, khóa chống trùng; Drive 15 bài/lần (cột "Lưu Drive"); Cho thi lại chép trước rồi Hủy; Xóa bài chép điểm trước; sửa tài khoản/tài liệu chỉ đẩy phần đó. Cần người dùng dán lại: docs/handoff/claude-antigravity-cap-nhat-gs-hieu-nang.md.
+- Test PASS: 35/36 .cjs (audit_settings_behavior lỗi sẵn từ trước, bản gốc cũng lỗi), test_sheet_exam_gs, tutor/worker .mjs.

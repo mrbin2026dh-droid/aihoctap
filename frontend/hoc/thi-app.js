@@ -70,6 +70,8 @@ export function watchBadge(identity, cb) {
   else updateBadge();
 }
 /** Có bài THI THẬT đang mở cho em mà em chưa nộp → Gia sư AI tạm nghỉ (tự động, không cần thầy cô bật). */
+/** Em đang ở màn làm bài (thi thử hoặc thi thật, tab Thi đang hiện) → Gia sư AI tạm nghỉ để kết quả phản ánh đúng sức em. */
+export function inExam() { return cur.phase === 'exam' && !!root && root.isConnected && !root.closest('[hidden]'); }
 export function realExamOpen() { return visible().some(([id, b]) => b.che_do === 'that' && b.trang_thai === 'mo' && !mine[id]); }
 /** @type {null|((review:any)=>Promise<string>)} */ let reviewer = null;
 /** app.js cung cấp hàm gọi Gia sư AI nhận xét bài thi thử (cần token Worker). @param {(review:any)=>Promise<string>} fn */
@@ -161,7 +163,10 @@ function drawList() {
 /** @param {string} id */
 async function openExam(id) {
   const b = bai[id]; if (!b || !me) return;
-  if (b.che_do === 'that' && mine[id]) { if (b.xem_diem) await showStats(id); return; }
+  if (b.che_do === 'that') {   // thi thật: chắc chắn em chưa nộp (dữ liệu có thể chưa tải xong) rồi mới cho vào
+    if (!mine[id]) { const v = await store.get(`thi_nop/${id}/${store.keyOf(me.ma)}`).catch(() => null); if (v) mine[id] = v; }
+    if (mine[id]) { if (b.xem_diem) await showStats(id); else drawList(); return; }
+  }
   if (b.trang_thai !== 'mo') return;   // chỉ vào được khi thầy cô đã mở
   void store.put(`thi_vao/${id}/${store.keyOf(me.ma)}`, store.SERVER_TIME).catch(() => {});   // điểm danh
   await startExam(id);
@@ -183,11 +188,11 @@ const backBtn = (/** @type {string} */ text) => { const b = el('button', text, '
 async function startExam(id) {
   const b = bai[id]; if (!b || !root) return;
   cur = { phase: 'exam', id, qs: [] };
-  if (!deCache[id]) {
-    const w = page(b.tieu_de, 'Đang tải đề…'); w.append(el('p', 'Đang tải đề…', 'meta thi-loading'));
-    try { const d = await store.get('thi_de/' + id); deCache[id] = (Array.isArray(d) ? d : Object.values(d || {})).filter(Boolean); }
-    catch (e) { const w2 = page(b.tieu_de, ''); w2.append(el('p', (e instanceof Error ? e.message : 'Chưa tải được đề.'), 'thi-error'), backBtn('Về danh sách')); return; }
-  }
+  // Luôn tải đề mới (thầy cô có thể vừa sửa câu hỏi/đáp án); mất mạng thì dùng bản đã tải trước đó.
+  if (!deCache[id]) { const w = page(b.tieu_de, 'Đang tải đề…'); w.append(el('p', 'Đang tải đề…', 'meta thi-loading')); }
+  try { const d = await store.get('thi_de/' + id); deCache[id] = (Array.isArray(d) ? d : Object.values(d || {})).filter(Boolean); }
+  catch (e) { if (!deCache[id]) { const w2 = page(b.tieu_de, ''); w2.append(el('p', (e instanceof Error ? e.message : 'Chưa tải được đề.'), 'thi-error'), backBtn('Về danh sách')); return; } }
+  if (cur.id === id && cur.phase === 'exam' && !deCache[id].length) { const w3 = page(b.tieu_de, ''); w3.append(el('p', 'Bài thi chưa có câu hỏi. Em báo thầy cô nhé.', 'thi-error'), backBtn('Về danh sách')); return; }
   if (cur.id !== id || cur.phase !== 'exam') return;
   cur.qs = deCache[id];
   drawExam(); void presence('dang_thi');
@@ -203,6 +208,7 @@ window.addEventListener('resize', () => { if (cur.phase === 'exam') syncTop(); }
 function drawExam() {
   const b = bai[cur.id]; if (!b || !me) return;
   root?.replaceChildren(); syncTop();
+  window.dispatchEvent(new CustomEvent('thi:exam'));   // app.js đóng khung Gia sư AI
   const w = el('div', '', 'thi-wrap thi-exam'); root?.append(w);
   // Thanh neo: tên bài, loại thi, tiến độ, bảng số câu 1…N (bấm để nhảy tới câu; câu đã làm được tô).
   const head = el('div', '', 'thi-sticky');
@@ -305,7 +311,11 @@ async function doSubmit(btn, err) {
     if (b.xem_diem) await showStats(cur.id, true);
     else { cur = { phase: 'result', id: cur.id, qs: cur.qs, result: rec, fresh: true }; drawResult(); }
   } catch (e) {
-    err.textContent = (e instanceof Error ? e.message : 'Chưa nộp được.') + ' Bài làm vẫn còn trên máy, bấm Nộp bài lần nữa.';
+    const msg = e instanceof Error ? e.message : '';
+    // Luật Firebase từ chối: thi thật đã nộp, hoặc thầy cô vừa khóa bài.
+    const status = Number(/** @type {any} */ (e)?.status) || 0;
+    if (status === 401 || status === 403) err.textContent = b.che_do === 'that' && mine[cur.id] ? 'Em đã nộp bài này rồi.' : (bai[cur.id]?.trang_thai !== 'mo' ? 'Thầy cô đang khóa bài thi. Bài làm vẫn còn trên máy, chờ mở lại rồi bấm Nộp bài.' : 'Chưa nộp được. Bài làm vẫn còn trên máy, bấm Nộp bài lần nữa.');
+    else err.textContent = (msg || 'Chưa nộp được.') + ' Bài làm vẫn còn trên máy, bấm Nộp bài lần nữa.';
     btn.disabled = false; btn.textContent = 'Nộp bài';
   }
 }

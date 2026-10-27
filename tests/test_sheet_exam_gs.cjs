@@ -2,6 +2,7 @@
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '../apps-script/sheet-exam/Code.gs'), 'utf8');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
+const LOCK = { held: false };
 function env() {
   const sheets = {}, cacheMap = {}, props = {}, fbdb = {}, fbCalls = [], drive = [];
   const mk = name => { const sh = { name, rows: [], appendRow(r) { this.rows.push([...r]); }, deleteRow(i) { this.rows.splice(i - 1, 1); }, clear() { this.rows.length = 0; }, setFrozenRows() {}, getLastRow() { return this.rows.length; },
@@ -10,7 +11,7 @@ function env() {
     sheets[name] = sh; return sh; };
   const ss = { getSheetByName: n => sheets[n] || null, insertSheet: n => mk(n) };
   const ctx = { SpreadsheetApp: { getActiveSpreadsheet: () => ss, getUi: () => ({}) }, ContentService: { createTextOutput: t => ({ setMimeType: () => JSON.parse(t) }), MimeType: { JSON: 'j' } },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ waitLock() { LOCK.held = true; }, tryLock() { LOCK.held = true; return true; }, hasLock() { return !!LOCK.held; }, releaseLock() { LOCK.held = false; } }) },
     CacheService: { getScriptCache: () => ({ get: k => cacheMap[k] ?? null, put: (k, v) => { cacheMap[k] = v; }, remove: k => { delete cacheMap[k]; } }) }, Date,
     console, MimeType: { PLAIN_TEXT: 'text/plain' },
     DriveApp: (() => { const files = {}; const mkF = (name, path) => { const f = { name, path, folders: {}, files: [], getId: () => path, getFoldersByName: n => { const x = f.folders[n]; let used = false; return { hasNext: () => !!x && !used, next: () => { used = true; return x; } }; }, createFolder: n => (f.folders[n] = mkF(n, path + '/' + n)),
@@ -155,6 +156,37 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === 'B', 'lưu câu hỏi đã sửa → Sheet và Firebase');
   ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
 }
+// ---------- Lấy điểm về Sheet khi nhiều học sinh: nhanh, không chép trùng, đúng thứ tự khi cho thi lại ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
+  const id = c({ action: 'gv_create', tieu_de: 'Lớn', che_do: 'that', khoi: 9, lop: '9A' }).exams[0].ma_de; c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' });
+  const sub = (k, at) => ({ ma: k, ten: 'Em ' + k, lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, tra_loi: { r2: 'A' }, at });
+  E.fbdb.thi_nop = { [id]: {} }; for (let i = 1; i <= 20; i++) E.fbdb.thi_nop[id]['k' + i] = sub('k' + i, 1761550000000 + i);
+  c({ action: 'gv_list' });
+  const kqOf = () => E.sheets.KetQua.rows.filter(r => r[9] === id);
+  ok(kqOf().length === 20, '20 bài nộp chép về KetQua');
+  const txts = () => E.drive.filter(f => f.path.includes('Khác - Lớn/') && f.path.endsWith('.txt') && !f.trashed).length;
+  ok(txts() === 15, 'lưu Drive tối đa 15 bài mỗi lần (không quá giờ chạy Apps Script)');
+  E.fbdb.thi_nop[id].k21 = sub('k21', 1761550000999);
+  c({ action: 'gv_list' });
+  ok(kqOf().length === 20, 'mở menu Thi lần nữa trong 2 phút → không tải lại Firebase (nhanh)');
+  E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
+  ok(kqOf().length === 21 && txts() === 21, 'quá 2 phút → chép bài mới + lưu Drive phần còn lại');
+  // cho thi lại: bài chưa chép về phải được chép rồi mới đánh Hủy
+  E.fbdb.thi_nop[id].k22 = sub('k22', 1761550001111);
+  c({ action: 'gv_reset', ma_de: id, ma: 'k22' });
+  const k22 = kqOf().filter(r => r[1] === 'k22');
+  ok(k22.length === 1 && k22[0][10] === 'Hủy' && !E.fbdb.thi_nop[id].k22, 'cho thi lại: chép bài về trước rồi đánh Hủy (không còn bài cũ tính điểm)');
+  // bài đã khóa và đã chép xong → lần sau không tải lại
+  c({ action: 'gv_set', ma_de: id, trang_thai: 'khoa' }); E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
+  const before = E.fbCalls.filter(x => x.method === 'get' && x.path === `/thi_nop/${id}.json`).length;
+  E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
+  ok(E.fbCalls.filter(x => x.method === 'get' && x.path === `/thi_nop/${id}.json`).length === before, 'bài đã khóa và đã chép xong → không tải lại từ Firebase');
+  ok(!E.fbCalls.some(x => x.method === 'get' && x.path === '/thi_nop.json'), 'không bao giờ tải cả cây thi_nop');
+  c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' }); E.fbdb.thi_nop[id].k23 = sub('k23', 1761550002222); E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
+  ok(kqOf().some(r => r[1] === 'k23'), 'mở lại bài → lại chép bài mới');
+  E.fbdb.thi_nop[id].k24 = sub('k24', 1761550003333); c({ action: 'gv_delete', ma_de: id });
+  ok(kqOf().some(r => r[1] === 'k24'), 'xóa bài: chép điểm còn trên Firebase về trước khi ẩn');
+}
 // ---------- Tài khoản: giáo viên lớp (trang GiaoVien), học sinh (trang HocSinh), phạm vi lớp ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
   const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
@@ -165,6 +197,8 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   ok(t1.ok && t1.teachers.length === 1 && t1.teachers[0].lop.join() === '9A' && !JSON.stringify(t1).includes('111111'), 'quản trị thêm giáo viên lớp 9A (không trả PIN)');
   ok(E.fbdb.thi_gv.gv01.h === require('crypto').createHash('sha256').update('gv01:111111').digest('hex') && E.fbdb.thi_gv.gv01.lop[0] === '9A', 'tài khoản giáo viên đẩy lên Firebase (PIN băm) để đăng nhập nhanh');
   ok(c({ action: 'gv_teacher_save', moi: true, ma: 'gv01', ten: 'X', lop: '9B', pin: '222222' }).error.includes('đã có'), 'trùng mã giáo viên → báo');
+  { const nb = E.fbCalls.length; c({ action: 'gv_student_save', moi: true, ma: 'hs8z77', ten: 'Em Mới', lop: '8Z', pin: '777777' }); const pc = E.fbCalls.slice(nb).filter(x => x.method === 'patch');
+    ok(pc.length === 1 && E.fbdb.thi_hs.hs8z77 && E.fbdb.thi_hs.hs8z77.ten === 'Em Mới', 'sửa tài khoản: chỉ đẩy phần tài khoản lên Firebase (nhanh khi nhiều bài thi)'); }
   ok(call({ action: 'gv_login', ma: 'GV01', pin: '111111' }).teacher.lop[0] === '9A' && call({ action: 'gv_login', ma: 'GV01', pin: 'sai' }).error.includes('chưa đúng'), 'gv_login: đúng/sai PIN');
   c({ action: 'gv_create', tieu_de: 'Bài 9A', che_do: 'that', khoi: 9, lop: '9A' }); c({ action: 'gv_create', tieu_de: 'Bài 9B', che_do: 'that', khoi: 9, lop: '9B' }); c({ action: 'gv_create', tieu_de: 'Bài khối 9', che_do: 'that', khoi: 9, lop: '' });
   const g = p => call({ gv: '111111', gv_ma: 'GV01', ...p });
