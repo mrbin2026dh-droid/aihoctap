@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity chạy emulator PASS (69/69 và 45/45); phát hiện lỗi CREDENTIAL_MISMATCH tại bước 5 (Worker service account ai-sgk-tinhoc khác Firebase project day-hoc-tuong-tac-7ee69); đã rollback Worker về 70b4a7cd và bàn giao Claude.
+- Yêu cầu mới nhất: Người dùng đề xuất tạo mới một dự án Firebase hoàn toàn để làm sạch và đồng bộ 100% hệ thống; Antigravity bàn giao Claude tại docs/handoff/antigravity-claude-du-an-firebase-moi.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1854,3 +1854,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc tiếp: Chuyển Claude xử lý Service Account / Firebase Project hoặc cấu hình theo handoff.
 - 2026-10-27 Claude: sửa lỗi menu Thi với phiên giáo viên cũ (thiếu PIN, vé Firebase TOKEN_EXPIRED 400): báo đúng lý do + nút Đăng nhập lại; test_presence_ui 26 PASS.
 - 2026-10-27 Claude: sửa CREDENTIAL_MISMATCH — Worker ký vé presence bằng khóa riêng dự án day-hoc (PRESENCE_CLIENT_EMAIL/PRIVATE_KEY/PRIVATE_KEY_ID), /teacher/auth trả fb_token; giao diện báo rõ khi chưa có khóa. Test PASS. Chờ người dùng cài 3 secret, Antigravity deploy.
+
+### 27/10/2026 — Antigravity — Người dùng đề xuất tạo mới dự án Firebase để làm mới & đồng bộ sạch 100%
+- Đã thực hiện: Tạo tệp bàn giao docs/handoff/antigravity-claude-du-an-firebase-moi.md chuyển Claude tổng hợp quy trình tạo dự án Firebase mới (Region asia-southeast1, Realtime Database, Authentication), tối giản luật bảo mật (không gánh 7 nhánh cũ), và đồng bộ duy nhất 1 bộ Service Account cho cả Worker lẫn Frontend.
+- Tệp đổi/tạo: aisgk.md, docs/handoff/antigravity-claude-du-an-firebase-moi.md.
+- Việc tiếp: Chuyển Claude lên checklist chi tiết cho Người dùng và Antigravity triển khai.
