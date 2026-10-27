@@ -35,7 +35,9 @@ export function validateExamInput(body, existingId = null) {
   const kind = EXAM_KINDS.includes(body.kind) ? body.kind : '15m';
   const reveal = REVEAL_MODES.includes(body.reveal) ? body.reveal : 'after-submit';
   const status = EXAM_STATUSES.includes(body.status) ? body.status : 'draft';
-  const classCodes = Array.isArray(body.class_codes) ? [...new Set(body.class_codes.map(c => str(c, 16)).filter(Boolean))].slice(0, 30) : [];
+  const classCodes = Array.isArray(body.class_codes)
+    ? [...new Set(body.class_codes.map(c => str(c, 16)).filter(Boolean))].slice(0, 30)
+    : (body?.class_code ? [str(body.class_code, 16)] : []);
   let minutes = null, opensAt = null, closesAt = null, maxAttempts = null;
   if (mode === 'real') {
     minutes = int(body.minutes);

@@ -79,7 +79,7 @@ function ensure_(name, head) {
   return sh;
 }
 function schema_() {
-  ensure_(SH_BT, BT_HEAD); ensure_(SH_DD, DD_HEAD);
+  ensure_(SH_BT, BT_HEAD); ensure_(SH_DD, DD_HEAD); ensure_(SH_TL, TL_HEAD);
   var dt = ensure_(SH_DT, DT_HEAD);
   if (!String(dt.getRange(1, 10).getValue()).trim()) dt.getRange(1, 10).setValue('Mã bài thi');
   migrate_();
@@ -650,6 +650,7 @@ function taoMau() {
   } else if (String(ss.getSheetByName(SH_DE).getRange(1, 2).getValue()).trim() === 'Lớp') ss.getSheetByName(SH_DE).getRange(1, 2).setValue('Khối');
   if (!ss.getSheetByName(SH_CH)) { var c = ss.insertSheet(SH_CH); c.appendRow(['Khóa', 'Giá trị']); c.getRange('B:B').setNumberFormat('@'); c.setFrozenRows(1); }
   ensure_(SH_GV, GV_HEAD).getRange('C:C').setNumberFormat('@');
+  ensure_(SH_TL, TL_HEAD);
   schema_();
 }
 function datLaiMatKhau() { setConfig_('mat_khau_gv', ''); }

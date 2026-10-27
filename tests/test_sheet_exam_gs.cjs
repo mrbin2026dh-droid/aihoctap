@@ -22,7 +22,7 @@ function env() {
     UrlFetchApp: { fetch: (url, opt) => {
       const u = new URL(url); fbCalls.push({ method: opt.method, path: u.pathname, auth: u.searchParams.get('auth') });
       const parts = u.pathname.replace(/\.json$/, '').split('/').filter(Boolean);
-      const getAt = () => parts.reduce((o, k) => (o == null ? undefined : o[k]), fbdb);
+      const getAt = () => parts.reduce((o, k) => (o === null || o === undefined ? undefined : o[k]), fbdb);
       const setAt = v => { if (!parts.length) { Object.keys(fbdb).forEach(k => delete fbdb[k]); Object.assign(fbdb, v); return; } let o = fbdb; parts.slice(0, -1).forEach(k => { o = o[k] ||= {}; }); if (v === undefined) delete o[parts.at(-1)]; else o[parts.at(-1)] = v; };
       const body = opt.payload ? JSON.parse(opt.payload) : undefined; let out = null;
       if (opt.method === 'get') out = getAt() ?? null;
@@ -39,7 +39,7 @@ const GV = 'pin-giao-vien-123';
 const gv = p => call({ gv: GV, ...p });
 ok(call({ action: 'login', ma: 'x', pin: '1' }).error.includes('Tạo mẫu'), 'chưa có trang → báo dùng menu Tạo mẫu');
 ctx.taoMau();
-ok(sheets.DeThi.rows[0][1] === 'Khối' && sheets.DeThiThu && sheets.CauHinh && sheets.BaiThi && sheets.DiemDanh, 'Tạo mẫu: DeThi cột Khối, có DeThiThu, CauHinh, BaiThi, DiemDanh');
+ok(sheets.DeThi.rows[0][1] === 'Khối' && sheets.DeThiThu && sheets.CauHinh && sheets.BaiThi && sheets.DiemDanh && sheets.TaiLieu && sheets.TaiLieu.rows[0][0] === 'Mã tài liệu', 'Tạo mẫu: DeThi cột Khối, có DeThiThu, CauHinh, BaiThi, DiemDanh, TaiLieu');
 sheets.HocSinh.appendRow([3, 'Lê Chi', '9B', 'HS9B01', 12345, '']);
 sheets.HocSinh.appendRow([4, 'Phạm Dũng', '8A', 'hs8a01', '111111', '']);
 sheets.DeThi.appendRow([3, '9A', 'Câu ghi khối kiểu 9A vẫn là khối 9?', 'Đúng', 'Sai', '', '', 'a', 2]);
