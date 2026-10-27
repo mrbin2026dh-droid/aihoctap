@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng dán apps-script/exam/Code.gs (commit 4cc24b7) vào Apps Script, chạy thuOAuth() để kiểm tra quyền OAuth, sau đó gửi thông tin lớp/ngày thi thử phòng máy cho Claude.
+- Yêu cầu mới nhất: Người dùng thực hiện 6 bước cập nhật Code.gs mới (commit aff5e6c), deploy New version, xóa DB_SECRET để chuyển sang 100% OAuth và dán nhật ký kiemTraHeThong cho Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1785,3 +1785,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - `db_` ưu tiên OAuth, chỉ dùng DB_SECRET khi OAuth bị 401/403 (thuOAuth đạt ngày 27/10 với mr.bin2026dh@gmail.com).
 - Sửa: nộp lại file mà Drive lỗi từng bỏ bản cũ vào thùng rác trước → nay chỉ bỏ sau khi bản mới lưu xong; nộp file muộn (sau chốt, trong 10 phút) nay cập nhật sổ điểm + minh chứng; grade_my_attempt gọi muộn không ghi đè trạng thái đã chốt.
 - `tests/test_apps_script_gradebook.cjs`: 21 kiểm tra OK.
+
+
+### 27/10/2026 — Antigravity — Hướng dẫn 6 bước triển khai New version & chuyển sang 100% OAuth
+- Đã thực hiện: Kéo commit aff5e6c; kiểm thử test_apps_script_gradebook.cjs (21/21 PASS), package_student_pwa, test_exam_firebase_flow (28/28) PASS; soạn hướng dẫn chi tiết từng bước cho Người dùng thao tác Apps Script.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: test suite xanh 100%; sẵn sàng cho Người dùng deploy New version và xóa DB_SECRET.
+- Việc tiếp: Người dùng thao tác 6 bước theo hướng dẫn và dán nhật ký kiemTraHeThong cho Claude.
