@@ -386,3 +386,21 @@ body:not(.is-class-teacher) #act-gv-pin{display:none!important}
 .teacher-app .ai-q-matrix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:12px 0}
 .teacher-app .ai-q-matrix legend{font-weight:700;padding:0 6px}
 .teacher-app .ai-q-matrix .t-hint,.teacher-app .ai-q-matrix .t-field-error{grid-column:1/-1;margin:0}
+/* Bài thực hành: tiêu chí chấm và hộp thoại chấm */
+.teacher-app .thi-th-wrap{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:var(--t-card-radius,12px);background:var(--surface)}
+.teacher-app .thi-th-wrap h3{margin:0 0 8px}.teacher-app .thi-th-wrap h4{margin:0}
+.teacher-app .thi-th-row{display:grid;grid-template-columns:minmax(0,2fr) 110px minmax(0,1.6fr) 48px;gap:12px;align-items:end;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.teacher-app .thi-th-row legend{font-weight:700;padding:0 6px}
+.teacher-app .thi-th-row .th-fa,.teacher-app .thi-th-row .th-fb{grid-column:1/-2}
+.teacher-app .thi-th-row .th-fa[hidden],.teacher-app .thi-th-row .th-fb[hidden]{display:none}
+@media(max-width:760px){.teacher-app .thi-th-row{grid-template-columns:minmax(0,1fr) 96px}.teacher-app .thi-th-row .th-fkt,.teacher-app .thi-th-row .th-fa,.teacher-app .thi-th-row .th-fb{grid-column:1/-1}}
+.teacher-app .th-dialog{width:min(760px,calc(100% - 24px))}
+.teacher-app .th-preview{max-height:260px;overflow:auto;white-space:pre-wrap;font:13px/1.5 ui-monospace,Consolas,monospace;background:var(--paper,#f5f5f2);padding:12px;border-radius:10px}
+.teacher-app .th-item{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:10px 12px;margin:10px 0}
+.teacher-app .th-item.is-ok{border-left-color:#15803d}.teacher-app .th-item.is-bad{border-left-color:#b42318}.teacher-app .th-item.is-manual{border-left-color:#a15c07}.teacher-app .th-item.is-ai{border-left-color:#6d28d9}
+.teacher-app .th-item-title{margin:0;font-weight:700}
+.teacher-app .th-item-auto{margin:4px 0 8px;font-size:var(--t-small);color:var(--muted)}
+.teacher-app .th-item.is-ok .th-item-auto{color:#15803d}.teacher-app .th-item.is-bad .th-item-auto{color:#b42318}
+.teacher-app .th-item-line{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px}
+.teacher-app .th-sum{font-weight:700;font-size:16px}
+.teacher-app .th-grade-btn{margin-left:auto;min-height:40px;padding:6px 12px;font-size:var(--t-small)}

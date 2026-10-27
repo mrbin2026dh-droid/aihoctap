@@ -1427,3 +1427,5 @@ body:has(#exams-view:not([hidden]) .thi-exam) .zalo-fab,body.tutor-open .zalo-fa
 .student-app .mastery-empty{margin:12px 0 0;color:var(--muted)}
 /* Thi thật: nhắc rời màn hình */
 .student-app .thi-leave{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:var(--amber-bg,#fdf3e1);color:var(--amber-fg,#a15c07);font-size:14px}
+.student-app .thi-th-task{margin:4px 0 12px;padding:12px 14px;border-left:3px solid var(--blue);background:var(--soft,#f1f5ef);border-radius:8px;white-space:pre-wrap}
+.student-app .thi-th-score{font-weight:700;font-size:16px;text-align:center}

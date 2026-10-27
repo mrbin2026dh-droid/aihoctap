@@ -285,8 +285,11 @@ function drawExam() {
 function practical(id) {
   const box = el('section', '', 'thi-practical'); box.setAttribute('aria-labelledby', 'thi-th-title');
   const h = el('h3', 'Bài thực hành'); h.id = 'thi-th-title';
+  const b0 = bai[id], kind = b0?.loai_th;
+  const task = b0?.de_th ? el('p', b0.de_th, 'thi-th-task') : null;
   const inp = /** @type {HTMLInputElement} */ (el('input')); inp.type = 'file'; inp.id = 'thi-th-file';
-  const lab = el('label', 'Chọn file bài làm (tối đa 10 MB)'); lab.setAttribute('for', 'thi-th-file');
+  if (kind === 'excel') inp.accept = '.xlsx'; else if (kind === 'python') inp.accept = '.py,.txt';
+  const lab = el('label', kind === 'excel' ? 'Chọn file Excel bài làm (.xlsx, tối đa 10 MB)' : kind === 'python' ? 'Chọn file chương trình Python (.py, tối đa 10 MB)' : 'Chọn file bài làm (tối đa 10 MB)'); lab.setAttribute('for', 'thi-th-file');
   const st = el('p', '', 'meta thi-th-status'); st.setAttribute('role', 'status');
   const done = (() => { try { return localStorage.getItem(`thi-th-${store.keyOf(me?.ma || '')}-${id}`) || ''; } catch { return ''; } })();
   if (done) st.textContent = `Đã nộp file: ${done}. Có thể nộp lại file khác.`;
@@ -305,7 +308,7 @@ function practical(id) {
     } catch (e) { st.textContent = (e instanceof Error ? e.message : 'Chưa tải lên được.'); st.classList.add('is-bad'); }
     finally { up.disabled = false; up.removeAttribute('aria-busy'); up.textContent = old; }
   });
-  box.append(h, lab, inp, up, st); return box;
+  box.append(h, ...(task ? [task] : []), lab, inp, up, st); return box;
 }
 function lockBanner() {
   const box = root?.querySelector('.thi-lock'); const b = bai[cur.id]; if (!box) return;
@@ -407,6 +410,10 @@ function drawResult(all) {
       ol.append(li);
     }
     board.append(ol); w.append(board);
+  }
+  if (b && b.noi_dung === 'tn_th') {   // điểm thực hành do thầy cô chấm (máy + AI gợi ý, thầy cô quyết định)
+    const thp = el('p', 'Bài thực hành: thầy cô đang chấm.', 'meta thi-th-score'); thp.setAttribute('role', 'status'); w.append(thp);
+    void store.get(`thi_th/${cur.id}/${store.keyOf(me?.ma || '')}`).then(v => { if (!thp.isConnected) return; thp.textContent = !v ? 'Em chưa nộp bài thực hành.' : (typeof v.diem_th === 'number' ? `Điểm thực hành: ${v.diem_th} / ${v.tong_th ?? '?'}` : 'Bài thực hành: thầy cô đang chấm.'); }).catch(() => {});
   }
   if (b && b.che_do === 'thu' && cur.fresh && reviewData && reviewData.id === cur.id) w.append(reviewBox(reviewData));
   actions(w, b); hero.tabIndex = -1; hero.focus?.();

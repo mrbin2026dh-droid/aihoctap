@@ -10,6 +10,7 @@ import * as presence from './presence.js?v=20261028a';
 import * as ui from './teacher-ui.js?v=20261028a';
 import * as store from './thi-store.js';
 import { api } from './api.js';
+import { KT_LABELS, autoGrade } from './practical.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -122,6 +123,7 @@ function fillClasses() {
 function bankHint() {
   const that = select('thi-new-mode').value === 'that', k = select('thi-new-khoi').value;
   $('thi-new-file-row').hidden = that; $('thi-that-fields').hidden = !that;
+  $('thi-th-fields').hidden = !(that && select('thi-new-nd').value === 'tn_th'); thTotal();
   const n = info?.bank?.[k] ?? null;
   $('thi-new-bank').textContent = that
     ? (n === null ? 'Câu hỏi lấy từ trang DeThi của Google Sheet theo khối đã chọn.' : `Trang DeThi trong Google Sheet có ${n} câu cho khối ${k}.` + (n ? '' : ' Thêm câu vào Sheet trước khi tạo bài.'))
@@ -273,7 +275,11 @@ function renderTrack() {
     const h = document.createElement('h3'); h.append(title); const n = document.createElement('span'); n.textContent = String(list.length); h.append(n); sec.append(h);
     const ul = document.createElement('ul');
     if (!list.length) { const li = document.createElement('li'); li.className = 't-muted'; li.textContent = 'Không có'; ul.append(li); }
-    for (const s of list) { const li = document.createElement('li'); const a = document.createElement('span'); a.textContent = `${s.name} · ${s.lop}`; const b = document.createElement('small'); b.textContent = note(s); li.append(a, b); ul.append(li); }
+    for (const s of list) {
+      const li = document.createElement('li'); const a = document.createElement('span'); a.textContent = `${s.name} · ${s.lop}`; const b = document.createElement('small'); b.textContent = note(s); li.append(a, b);
+      if (th && s.th) { const g = document.createElement('button'); g.type = 'button'; g.className = 't-button th-grade-btn'; g.textContent = s.th.diem_th !== undefined ? `Thực hành ${s.th.diem_th}/${s.th.tong_th ?? '?'} · Chấm lại` : 'Chấm thực hành'; g.addEventListener('click', () => void openTh(ex, s)); li.append(g); }
+      ul.append(li);
+    }
     sec.append(ul); return sec;
   };
   box.replaceChildren(
@@ -317,6 +323,7 @@ function startEdit(e) {
   $('thi-form-title').textContent = 'Chỉnh sửa bài thi';
   $('thi-form-sub').textContent = 'Sửa thông tin và câu hỏi, đáp án bên dưới rồi bấm Lưu thay đổi.' + (e.che_do === 'thu' ? ' Hoặc tải file Excel mới để thay cả đề.' : '');
   fillYears(e.nam_hoc || ''); if (e.hinh_thuc) select('thi-new-ht').value = e.hinh_thuc; select('thi-new-nd').value = e.noi_dung === 'tn_th' ? 'tn_th' : 'tn';
+  thLoad(e.thuc_hanh);
   button('thi-new-create').textContent = 'Lưu thay đổi'; $('thi-new-cancel').hidden = false; bankHint(); tab('new'); input('thi-new-title').focus();
   void qeLoad(e);
 }
@@ -324,7 +331,7 @@ function endEdit() {
   editing = ''; trialQuestions = []; input('thi-new-title').value = ''; input('thi-new-file').value = ''; select('thi-new-mode').disabled = false;
   $('thi-form-title').textContent = 'Tạo đề thi'; $('thi-form-sub').textContent = 'Bài mới luôn ở trạng thái khóa cho đến khi bấm Mở thi. Có thể tạo nhiều bài cho nhiều lớp cùng lúc.';
   button('thi-new-create').textContent = 'Tạo bài thi'; $('thi-new-cancel').hidden = true; bankHint();
-  $('thi-q-editor').hidden = true; $('thi-qe-list').replaceChildren(); qeLoaded = false; fillYears(); select('thi-new-nd').value = 'tn';
+  $('thi-q-editor').hidden = true; $('thi-qe-list').replaceChildren(); qeLoaded = false; fillYears(); select('thi-new-nd').value = 'tn'; thLoad(null); bankHint();
 }
 
 /** @param {HTMLButtonElement|null} btn @param {() => Promise<any>} fn @param {string} okMsg */
@@ -420,6 +427,125 @@ input('thi-new-file').addEventListener('change', async () => {
   bankHint();
 });
 
+/* ---------- Tiêu chí chấm thực hành (khi tạo/sửa bài thi thật Trắc nghiệm + Thực hành) ---------- */
+/** @param {{mo_ta?:string,diem?:number,kt?:{type:string,a:string,b:string}|null}} [t] */
+function thRow(t = {}) {
+  const row = document.createElement('fieldset'); row.className = 'thi-th-row';
+  const lg = document.createElement('legend'); row.append(lg);
+  const uid = Math.random().toString(36).slice(2, 8);
+  const field = (/** @type {string} */ label, /** @type {HTMLElement} */ ctl, cls = '') => { const w = document.createElement('div'); w.className = 't-field ' + cls; const l = document.createElement('label'); l.textContent = label; ctl.id = 'th-' + uid + '-' + cls; l.htmlFor = ctl.id; w.append(l, ctl); return w; };
+  const mo = document.createElement('input'); mo.className = 'th-mo'; mo.maxLength = 200; mo.value = t.mo_ta || ''; mo.placeholder = 'Ví dụ: Ô D11 dùng hàm SUM tính tổng';
+  const dm = document.createElement('input'); dm.className = 'th-diem'; dm.type = 'number'; dm.min = '0.25'; dm.step = '0.25'; dm.max = '100'; dm.value = String(t.diem || 1); dm.addEventListener('input', thTotal);
+  const kt = document.createElement('select'); kt.className = 'th-kt'; kt.append(new Option('Không (chấm tay / AI gợi ý)', ''));
+  for (const [k, v] of Object.entries(KT_LABELS)) kt.append(new Option(v.label, k));
+  kt.value = t.kt?.type || '';
+  const a = document.createElement('input'); a.className = 'th-a'; a.maxLength = 200; a.value = t.kt?.a || '';
+  const b = document.createElement('textarea'); b.className = 'th-b'; b.maxLength = 2000; b.rows = 2; b.value = t.kt?.b || '';
+  const fa = field('Tham số', a, 'th-fa'), fb = field('Mong đợi', b, 'th-fb');
+  const sync = () => { const L = KT_LABELS[/** @type {keyof typeof KT_LABELS} */ (kt.value)]; fa.hidden = !L; fb.hidden = !L || !L.b; if (L) { /** @type {HTMLElement} */ (fa.querySelector('label')).textContent = L.a; /** @type {HTMLElement} */ (fb.querySelector('label')).textContent = L.b; } };
+  kt.addEventListener('change', sync);
+  const del = ui.iconButton({ icon: 'trash', label: 'Xóa tiêu chí này', danger: true, onClick: () => { row.remove(); thNumber(); thTotal(); } });
+  row.append(field('Mô tả tiêu chí', mo, 'th-fmo'), field('Điểm', dm, 'th-fdm'), field('Kiểm tra tự động', kt, 'th-fkt'), fa, fb, del); sync();
+  return row;
+}
+function thNumber() { $('thi-th-list').querySelectorAll('.thi-th-row').forEach((f, i) => { const lg = f.querySelector('legend'); if (lg) lg.textContent = `Tiêu chí ${i + 1}`; }); }
+function thTotal() { let t = 0; $('thi-th-list').querySelectorAll('.th-diem').forEach(n => { t += Number(/** @type {HTMLInputElement} */ (n).value) || 0; }); $('thi-th-total').textContent = t ? `Tổng điểm thực hành: ${Math.round(t * 100) / 100}` : ''; }
+/** @param {any} th */
+function thLoad(th) {
+  select('thi-th-loai').value = th?.loai || 'excel'; input('thi-th-de').value = th?.de || '';
+  const list = $('thi-th-list'); list.replaceChildren(...(th?.tieu_chi?.length ? th.tieu_chi : [{}]).map((/** @type {any} */ t) => thRow(t))); thNumber(); thTotal();
+}
+/** @returns {{error?:string, value?:any}} */
+function thCollect() {
+  const de = input('thi-th-de'); de.removeAttribute('aria-invalid'); $('thi-th-de-err').textContent = '';
+  if (!de.value.trim()) { de.setAttribute('aria-invalid', 'true'); $('thi-th-de-err').textContent = 'Nhập đề bài thực hành cho học sinh.'; de.focus(); return { error: 'Nhập đề bài thực hành.' }; }
+  const tieu_chi = []; let i = 0;
+  for (const f of $('thi-th-list').querySelectorAll('.thi-th-row')) {
+    i++; f.querySelectorAll('[aria-invalid]').forEach(n => n.removeAttribute('aria-invalid'));
+    const q = (/** @type {string} */ c) => /** @type {HTMLInputElement} */ (f.querySelector(c));
+    const mo = q('.th-mo').value.trim(), diem = Number(q('.th-diem').value) || 0, type = q('.th-kt').value, a = q('.th-a').value.trim(), b = q('.th-b').value;
+    if (!mo) { q('.th-mo').setAttribute('aria-invalid', 'true'); q('.th-mo').focus(); return { error: `Tiêu chí ${i}: nhập mô tả.` }; }
+    if (diem <= 0) { q('.th-diem').setAttribute('aria-invalid', 'true'); q('.th-diem').focus(); return { error: `Tiêu chí ${i}: điểm phải lớn hơn 0.` }; }
+    if (type && !a && type !== 'py_test') { q('.th-a').setAttribute('aria-invalid', 'true'); q('.th-a').focus(); return { error: `Tiêu chí ${i}: nhập ${KT_LABELS[/** @type {keyof typeof KT_LABELS} */ (type)].a.toLowerCase()}.` }; }
+    if ((type === 'excel_value' || type === 'py_test') && !b.trim()) { q('.th-b').setAttribute('aria-invalid', 'true'); q('.th-b').focus(); return { error: `Tiêu chí ${i}: nhập kết quả mong đợi.` }; }
+    tieu_chi.push({ mo_ta: mo, diem, kt: type ? { type, a, b } : null });
+  }
+  if (!tieu_chi.length) return { error: 'Thêm ít nhất một tiêu chí chấm thực hành.' };
+  return { value: { loai: select('thi-th-loai').value, de: de.value.trim(), tieu_chi } };
+}
+$('thi-th-add').addEventListener('click', () => { const r = thRow(); $('thi-th-list').append(r); thNumber(); thTotal(); /** @type {HTMLElement} */ (r.querySelector('.th-mo')).focus(); });
+select('thi-new-nd').addEventListener('change', bankHint);
+thLoad(null);
+
+/* ---------- Chấm thực hành: máy kiểm tra → AI gợi ý → giáo viên quyết định ---------- */
+const thDlg = /** @type {HTMLDialogElement} */ ($('th-dialog'));
+/** @type {{ex:any, s:any, th:any, auto:any, file:any}|null} */ let thCur = null;
+function thSum() { if (!thCur) return; let d = 0; $('th-items').querySelectorAll('.th-score').forEach(n => { d += Number(/** @type {HTMLInputElement} */ (n).value) || 0; }); const max = thCur.th.tieu_chi.reduce((/** @type {number} */ a, /** @type {any} */ t) => a + t.diem, 0); $('th-sum').textContent = `Tổng: ${Math.round(d * 100) / 100} / ${max} điểm`; }
+/** @param {any} ex @param {any} s */
+async function openTh(ex, s) {
+  thCur = null; $('th-items').replaceChildren(); $('th-err').textContent = ''; input('th-nhanxet').value = ''; $('th-preview').textContent = ''; $('th-sum').textContent = '';
+  $('th-sub').textContent = `${s.name} · Lớp ${s.lop} · ${ex.tieu_de}`; $('th-status').textContent = 'Đang tải bài làm…';
+  button('th-save').disabled = true; button('th-ai').disabled = true; thDlg.showModal();
+  try {
+    const r = await call({ action: 'gv_th_get', ma_de: ex.ma_de, ma: s.ma });
+    const th = r.thuc_hanh || { loai: 'khac', tieu_chi: [] };
+    if (!th.tieu_chi.length) { $('th-status').textContent = 'Bài thi chưa có tiêu chí chấm thực hành. Sửa bài thi để thêm tiêu chí.'; return; }
+    $('th-status').textContent = /\.(py|txt)$/i.test(r.file.ten) ? 'Đang chạy chương trình Python của em (lần đầu mất 10–20 giây)…' : 'Máy đang kiểm tra bài làm…';
+    const auto = await autoGrade(th, r.file);
+    thCur = { ex, s, th, auto, file: r.file };
+    $('th-preview').textContent = auto.preview; $('th-status').textContent = `File: ${r.file.ten}. Máy đã kiểm tra ${auto.results.filter((/** @type {any} */ x) => x.ok !== null).length}/${th.tieu_chi.length} tiêu chí.`;
+    const box = $('th-items');
+    th.tieu_chi.forEach((/** @type {any} */ t, i) => {
+      const res = auto.results[i], prev = r.cham?.chi_tiet?.[i];
+      const row = document.createElement('div'); row.className = 'th-item ' + (res.ok === true ? 'is-ok' : res.ok === false ? 'is-bad' : 'is-manual');
+      const h = document.createElement('p'); h.className = 'th-item-title'; h.textContent = `${i + 1}. ${t.mo_ta} (tối đa ${t.diem} điểm)`;
+      const badge = document.createElement('p'); badge.className = 'th-item-auto'; badge.textContent = (res.ok === true ? 'Máy kiểm tra: ĐẠT — ' : res.ok === false ? 'Máy kiểm tra: CHƯA ĐẠT — ' : '') + res.detail;
+      const sc = document.createElement('input'); sc.type = 'number'; sc.className = 'th-score'; sc.min = '0'; sc.max = String(t.diem); sc.step = '0.25'; sc.id = 'th-sc-' + i; sc.setAttribute('aria-label', `Điểm tiêu chí ${i + 1}`);
+      sc.value = prev ? String(prev.diem) : res.ok === true ? String(t.diem) : res.ok === false ? '0' : ''; sc.addEventListener('input', thSum);
+      const nx = document.createElement('input'); nx.className = 'th-nx'; nx.maxLength = 300; nx.placeholder = 'Nhận xét ngắn'; nx.value = prev?.nhan_xet || ''; nx.setAttribute('aria-label', `Nhận xét tiêu chí ${i + 1}`);
+      const line = document.createElement('div'); line.className = 'th-item-line'; line.append(sc, nx);
+      row.append(h, badge, line); box.append(row);
+    });
+    if (r.cham?.nhan_xet) input('th-nhanxet').value = r.cham.nhan_xet;
+    thSum(); button('th-save').disabled = false; button('th-ai').disabled = false;
+  } catch (e) { $('th-status').textContent = ''; $('th-err').textContent = e instanceof Error ? e.message : 'Chưa tải được bài làm.'; }
+}
+$('th-cancel').addEventListener('click', () => thDlg.close());
+$('th-ai').addEventListener('click', async () => {
+  if (!thCur) return; const btn = button('th-ai'), label = btn.textContent; btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.textContent = 'AI đang đọc bài…'; $('th-err').textContent = '';
+  try {
+    const tok = (() => { try { return sessionStorage.getItem('aisgk-pwa-teacher') || ''; } catch { return ''; } })();
+    const th = thCur.th, auto = thCur.auto;
+    const r = await api('/teacher/ai-practical', { method: 'POST', token: tok || undefined, timeout: 60000, body: { kind: auto.kind, task: th.de, rubric: th.tieu_chi.map((/** @type {any} */ t) => ({ mo_ta: t.mo_ta, diem: t.diem })), evidence: auto.evidence, auto: th.tieu_chi.map((/** @type {any} */ t, /** @type {number} */ i) => auto.results[i].ok === null ? null : { mo_ta: t.mo_ta, ok: auto.results[i].ok }).filter(Boolean), ...(tok ? {} : { gv_ma: getMa(), gv_pin: getPass() }) } });
+    $('th-items').querySelectorAll('.th-item').forEach((row, i) => {
+      const it = r.items?.[i]; if (!it) return;
+      const sc = /** @type {HTMLInputElement} */ (row.querySelector('.th-score')), nx = /** @type {HTMLInputElement} */ (row.querySelector('.th-nx'));
+      if (auto.results[i].ok === null) { sc.value = String(it.diem); row.classList.add('is-ai'); }   // máy đã kiểm tra thì giữ kết quả máy
+      if (!nx.value) nx.value = it.nhan_xet || '';
+    });
+    if (!input('th-nhanxet').value.trim() && r.tong_ket) input('th-nhanxet').value = r.tong_ket;
+    thSum(); $('th-status').textContent = 'AI đã gợi ý điểm cho các tiêu chí chấm tay (viền tím). Thầy cô xem lại, sửa nếu cần rồi bấm Lưu.';
+  } catch (e) { $('th-err').textContent = e instanceof Error ? e.message : 'AI chưa gợi ý được.'; }
+  finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
+});
+$('th-form').addEventListener('submit', async ev => {
+  ev.preventDefault(); if (!thCur) return; $('th-err').textContent = '';
+  const items = []; let i = 0;
+  for (const row of $('th-items').querySelectorAll('.th-item')) {
+    const sc = /** @type {HTMLInputElement} */ (row.querySelector('.th-score')), max = thCur.th.tieu_chi[i].diem; sc.removeAttribute('aria-invalid');
+    const v = sc.value.trim() === '' ? NaN : Number(sc.value);
+    if (!Number.isFinite(v) || v < 0 || v > max) { sc.setAttribute('aria-invalid', 'true'); sc.focus(); $('th-err').textContent = `Tiêu chí ${i + 1}: nhập điểm từ 0 đến ${max}.`; return; }
+    items.push({ diem: v, nhan_xet: /** @type {HTMLInputElement} */ (row.querySelector('.th-nx')).value.trim() }); i++;
+  }
+  const btn = button('th-save'), label = btn.textContent; btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Đang lưu…';
+  try {
+    const r = await call({ action: 'gv_th_save', ma_de: thCur.ex.ma_de, ma: thCur.s.ma, chi_tiet: items, nhan_xet: input('th-nhanxet').value.trim() });
+    const id = thCur.ex.ma_de, k = store.keyOf(thCur.s.ma); fbTh[id] = { ...(fbTh[id] || {}), [k]: { ...((fbTh[id] || {})[k] || {}), diem_th: r.diem, tong_th: r.tong } };
+    thDlg.close(); status(`Đã lưu điểm thực hành của ${thCur.s.name}: ${r.diem}/${r.tong}.`, 'success'); if (useFb() && current) { stats = fbStats(current); if (stats) renderStats(); }
+  } catch (e) { $('th-err').textContent = e instanceof Error ? e.message : 'Chưa lưu được.'; }
+  finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
+});
+
 /* ---------- AI soạn đề theo ma trận (giáo viên duyệt từng câu trước khi lưu) ---------- */
 function qeNote() { if (!editing) $('thi-qe-note').textContent = 'Xem lại, sửa câu hỏi rồi bấm Tạo bài thi. Câu do AI soạn cần đánh dấu "Đã duyệt".'; }
 /** @type {{key:string,title:string,grade:number,course_id:string,lesson_id:string}[]} */ let aiLessons = [];
@@ -474,6 +600,7 @@ $('thi-new-form').addEventListener('submit', async ev => {
   title.removeAttribute('aria-invalid');
   const base = { tieu_de: title.value.trim(), khoi: Number(select('thi-new-khoi').value), lop: select('thi-new-lop').value,
     ...(mode === 'that' ? { nam_hoc: select('thi-new-nam').value, hinh_thuc: select('thi-new-ht').value, noi_dung: select('thi-new-nd').value } : {}) };
+  if (mode === 'that' && select('thi-new-nd').value === 'tn_th') { const th = thCollect(); if (th.error) { status(th.error, 'error'); return; } /** @type {any} */ (base).thuc_hanh = th.value; }
   if (editing) {
     let questions;
     if (qeLoaded) { const r = qeCollect(); if (r.error) { status(r.error, 'error'); return; } questions = r.questions; }

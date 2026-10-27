@@ -8,7 +8,7 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
  r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml'}[path.extname(f)]||'x');r.end(body)}).listen(8198);
 const h=(ma,pin)=>crypto.createHash('sha256').update(ma.toLowerCase()+':'+pin).digest('hex');
 const seed=()=>({thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:h('hs01','123456')}},
- thi_bai:{b1:{tieu_de:'Giữa kỳ 9A',che_do:'that',khoi:9,lop:'9A',trang_thai:'khoa',so_cau:2,noi_dung:'tn_th'},b2:{tieu_de:'Ôn tập khối 9',che_do:'thu',khoi:9,lop:'',trang_thai:'mo',so_cau:1,xem_diem:true},
+ thi_bai:{b1:{tieu_de:'Giữa kỳ 9A',che_do:'that',khoi:9,lop:'9A',trang_thai:'khoa',so_cau:2,noi_dung:'tn_th',loai_th:'excel',de_th:'Tính tổng cột D vào ô D11'},b2:{tieu_de:'Ôn tập khối 9',che_do:'thu',khoi:9,lop:'',trang_thai:'mo',so_cau:1,xem_diem:true},
   b3:{tieu_de:'Bài của 9B',che_do:'that',khoi:9,lop:'9B',trang_thai:'mo',so_cau:1},b4:{tieu_de:'Thử đang khóa',che_do:'thu',khoi:9,lop:'',trang_thai:'khoa',so_cau:1}},
  thi_nop:{b2:{hs02:{ma:'hs02',ten:'Bạn 9A',lop:'9A',diem:8,tong:10,dung:1,so_cau:1,lan:1,cao_nhat:8,at:1},hs03:{ma:'hs03',ten:'Bạn 9B',lop:'9B',diem:10,tong:10,dung:1,so_cau:1,lan:1,cao_nhat:10,at:2}}},
  thi_de:{b1:[{id:'r2',stt:1,text:'CPU là gì?',options:{A:'Bộ xử lý',B:'Bộ nhớ'},answer:'A',points:5,topic:'Phần cứng'},{id:'r3',stt:2,text:'Excel là?',options:{A:'Soạn thảo',B:'Bảng tính'},answer:'B',points:5,topic:'Bảng tính'}],
@@ -59,6 +59,7 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
  await pg.click('.thi-card:has-text("Giữa kỳ 9A") button:has-text("Vào thi")');await pg.waitForSelector('.thi-form .question');
  await pg.waitForTimeout(200);ok(await pg.locator('.thi-form .question').count()===2&&writes.some(w=>w.path.endsWith('/thi_vao/b1/hs01.json')),'vào bài: điểm danh thi_vao, hiện đề');
  ok(await pg.isVisible('.thi-practical')&&(await pg.textContent('.thi-practical')).includes('Bài thực hành'),'thi thật Trắc nghiệm + Thực hành: có phần nộp bài thực hành');
+ ok((await pg.textContent('.thi-th-task')).includes('Tính tổng cột D')&&(await pg.getAttribute('#thi-th-file','accept'))==='.xlsx','học sinh thấy đề thực hành; chỉ chọn được file Excel');
  ok(await pg.isHidden('#zalo-help'),'đang làm bài thi: ẩn nút Zalo (không che nút Nộp bài)');
  ok((await pg.textContent('.thi-leave')).includes('thứ tự câu và phương án'),'thi thật: báo thứ tự câu/phương án mỗi bạn khác nhau');
  ok(await pg.evaluate(()=>[...document.querySelectorAll('.thi-form .question')].every(fs=>[...fs.querySelectorAll('.option')].map(o=>o.textContent.trim()[0]).join('')==='AB')),'thi thật: nhãn A, B theo vị trí hiển thị (giá trị chấm vẫn là phương án gốc)');
