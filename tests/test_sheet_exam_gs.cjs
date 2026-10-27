@@ -4,7 +4,7 @@ const src = fs.readFileSync(path.join(__dirname, '../apps-script/sheet-exam/Code
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 function env() {
   const sheets = {}, cacheMap = {}, props = {}, fbdb = {}, fbCalls = [], drive = [];
-  const mk = name => { const sh = { name, rows: [], appendRow(r) { this.rows.push([...r]); }, clear() { this.rows.length = 0; }, setFrozenRows() {}, getLastRow() { return this.rows.length; },
+  const mk = name => { const sh = { name, rows: [], appendRow(r) { this.rows.push([...r]); }, deleteRow(i) { this.rows.splice(i - 1, 1); }, clear() { this.rows.length = 0; }, setFrozenRows() {}, getLastRow() { return this.rows.length; },
     getDataRange() { const rows = this.rows; return { getValues: () => rows.map(r => [...r]) }; },
     getRange(r, c) { if (typeof r === 'string') return { setNumberFormat() {} }; const rows = this.rows; return { getValue: () => (rows[r - 1] || [])[c - 1] ?? '', setValue: v => { (rows[r - 1] ||= [])[c - 1] = v; }, setValues: vs => vs.forEach((row, i) => row.forEach((v, j) => { (rows[r - 1 + i] ||= [])[c - 1 + j] = v; })) }; } };
     sheets[name] = sh; return sh; };
@@ -154,6 +154,41 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Câu mới?', options: { A: 'x', B: 'y' }, answer: 'B', points: 4 }] });
   ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === 'B', 'lưu câu hỏi đã sửa → Sheet và Firebase');
   ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
+}
+// ---------- Tài khoản: giáo viên lớp (trang GiaoVien), học sinh (trang HocSinh), phạm vi lớp ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
+  const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
+  E.sheets.HocSinh.appendRow([3, 'Lê Chi', '9B', 'hs9b01', '345678', '']);
+  ok(E.sheets.GiaoVien && E.sheets.GiaoVien.rows[0][0] === 'Mã giáo viên', 'Tạo mẫu: có trang GiaoVien');
+  ok(c({ action: 'gv_teacher_save', moi: true, ma: 'gv 01', ten: 'Cô Hoa', lop: '9A', pin: '111111' }).error.includes('Mã giáo viên'), 'mã giáo viên sai dạng → báo');
+  const t1 = c({ action: 'gv_teacher_save', moi: true, ma: 'GV01', ten: 'Cô Hoa', lop: '9A', pin: '111111' });
+  ok(t1.ok && t1.teachers.length === 1 && t1.teachers[0].lop.join() === '9A' && !JSON.stringify(t1).includes('111111'), 'quản trị thêm giáo viên lớp 9A (không trả PIN)');
+  ok(E.fbdb.thi_gv.gv01.h === require('crypto').createHash('sha256').update('gv01:111111').digest('hex') && E.fbdb.thi_gv.gv01.lop[0] === '9A', 'tài khoản giáo viên đẩy lên Firebase (PIN băm) để đăng nhập nhanh');
+  ok(c({ action: 'gv_teacher_save', moi: true, ma: 'gv01', ten: 'X', lop: '9B', pin: '222222' }).error.includes('đã có'), 'trùng mã giáo viên → báo');
+  ok(call({ action: 'gv_login', ma: 'GV01', pin: '111111' }).teacher.lop[0] === '9A' && call({ action: 'gv_login', ma: 'GV01', pin: 'sai' }).error.includes('chưa đúng'), 'gv_login: đúng/sai PIN');
+  c({ action: 'gv_create', tieu_de: 'Bài 9A', che_do: 'that', khoi: 9, lop: '9A' }); c({ action: 'gv_create', tieu_de: 'Bài 9B', che_do: 'that', khoi: 9, lop: '9B' }); c({ action: 'gv_create', tieu_de: 'Bài khối 9', che_do: 'that', khoi: 9, lop: '' });
+  const g = p => call({ gv: '111111', gv_ma: 'GV01', ...p });
+  const gl = g({ action: 'gv_list' });
+  ok(gl.ok && gl.exams.length === 1 && gl.exams[0].tieu_de === 'Bài 9A' && Object.keys(gl.classes).join() === '9A', 'giáo viên lớp: chỉ thấy bài và lớp mình phụ trách');
+  const id9b = c({ action: 'gv_list' }).exams.find(e => e.tieu_de === 'Bài 9B').ma_de;
+  ok(g({ action: 'gv_set', ma_de: id9b, trang_thai: 'mo' }).error.includes('không thuộc lớp'), 'không mở/khóa được bài lớp khác');
+  ok(g({ action: 'gv_create', tieu_de: 'X', che_do: 'that', khoi: 9, lop: '9B' }).error.includes('lớp thầy cô phụ trách') && g({ action: 'gv_create', tieu_de: 'X', che_do: 'that', khoi: 9, lop: '' }).error.includes('lớp thầy cô phụ trách'), 'chỉ tạo bài cho lớp mình (không tạo cả khối)');
+  ok(g({ action: 'gv_create', tieu_de: 'Bài cô Hoa', che_do: 'that', khoi: 9, lop: '9A' }).exams.length === 2, 'giáo viên lớp tạo bài cho lớp mình');
+  ok(g({ action: 'gv_teachers' }).error.includes('Chỉ quản trị'), 'giáo viên lớp không quản lý được tài khoản giáo viên');
+  const sl = g({ action: 'gv_students' });
+  ok(sl.students.every(x => x.lop === '9A') && sl.students.length === 2, 'giáo viên lớp: chỉ thấy học sinh lớp mình');
+  ok(g({ action: 'gv_student_save', moi: true, ma: 'hs9b09', ten: 'A', lop: '9B', pin: '123456' }).error.includes('lớp thầy cô phụ trách'), 'không thêm học sinh vào lớp khác');
+  const add = g({ action: 'gv_student_save', moi: true, ma: 'hs9a09', ten: 'Học Sinh Mới', lop: '9A', pin: '654321' });
+  ok(add.students.some(x => x.ma === 'hs9a09') && E.fbdb.thi_hs.hs9a09 && call({ action: 'login', ma: 'hs9a09', pin: '654321' }).ok, 'thêm học sinh → đăng nhập được ngay (Sheet + Firebase)');
+  c({ action: 'gv_student_save', ma: 'hs9a09', ten: 'Học Sinh Mới', lop: '9A', trang_thai: 'Khóa' });
+  ok(call({ action: 'login', ma: 'hs9a09', pin: '654321' }).error.includes('khóa') && !E.fbdb.thi_hs.hs9a09, 'khóa học sinh → không đăng nhập được, gỡ khỏi Firebase');
+  c({ action: 'gv_student_save', ma: 'hs9a09', ten: 'Học Sinh Mới', lop: '9A', pin: '777777', trang_thai: 'Hoạt động' });
+  ok(call({ action: 'login', ma: 'hs9a09', pin: '777777' }).ok, 'đặt lại PIN + mở khóa');
+  const del = c({ action: 'gv_student_delete', ma: 'hs9a09' }); ok(!del.students.some(x => x.ma === 'hs9a09'), 'xóa học sinh');
+  ok(g({ action: 'gv_repin', new_gv: '999999' }).ok && call({ action: 'gv_login', ma: 'GV01', pin: '999999' }).ok, 'giáo viên lớp tự đổi PIN của mình');
+  c({ action: 'gv_teacher_save', ma: 'GV01', ten: 'Cô Hoa', lop: '9A', trang_thai: 'Khóa' });
+  ok(g({ action: 'gv_list', gv: '999999' }).error.includes('khóa') && !E.fbdb.thi_gv.gv01, 'khóa giáo viên → không vào được');
+  ok(c({ action: 'gv_teacher_delete', ma: 'GV01' }).teachers.length === 0, 'xóa giáo viên');
 }
 for (let i = 0; i < 10; i++) call({ action: 'gv_list', gv: 'x' });
 ok(gv({ action: 'gv_list' }).error.includes('quá nhiều'), 'dò PIN giáo viên → khóa 10 phút');

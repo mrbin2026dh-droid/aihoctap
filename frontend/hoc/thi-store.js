@@ -94,3 +94,17 @@ export async function login(ma, pin) {
   if (sha256(keyOf(ma) + ':' + String(pin).trim()) !== rec.h) throw new Error('Mã học sinh hoặc PIN không chính xác');
   return { ma: String(rec.ma || ma), ten: String(rec.ten || ma), lop: String(rec.lop || ''), khoi: Number(rec.khoi) || 0 };
 }
+
+/**
+ * Đăng nhập giáo viên lớp (tài khoản quản trị cấp trong menu Tài khoản, đẩy lên thi_gv).
+ * Trả {ma, ten, lop:string[]} nếu đúng; null nếu Firebase chưa có tài khoản; ném lỗi nếu sai PIN.
+ * @param {string} ma @param {string} pin
+ */
+export async function teacherLogin(ma, pin) {
+  if (!enabled()) return null;
+  let rec = null;
+  try { rec = await req('thi_gv/' + keyOf(ma), {}, 5000); } catch { return null; }
+  if (!rec || !rec.h) return null;
+  if (sha256(keyOf(ma) + ':' + String(pin).trim()) !== rec.h) throw new Error('Mã giáo viên hoặc PIN chưa đúng.');
+  return { ma: String(rec.ma || ma), ten: String(rec.ten || ma), lop: Array.isArray(rec.lop) ? rec.lop.map(String) : Object.values(rec.lop || {}).map(String) };
+}

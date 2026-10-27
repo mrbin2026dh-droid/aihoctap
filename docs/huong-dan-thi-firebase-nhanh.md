@@ -38,6 +38,12 @@
 - Lưu trữ Google Drive: thư mục **Bài thi - Góc học tập / Năm học / Lớp … / Hình thức - Tiêu đề**: mỗi học sinh một file chữ (từng câu, đáp án đúng, em chọn, đúng/sai, điểm) + file thực hành. File chữ được tạo khi điểm chép về Sheet (mở menu Thi hoặc menu Sheet **Lấy điểm về Sheet**).
   Lần đầu sau khi dán Code.gs mới, Google hỏi thêm quyền **Google Drive** → Cho phép.
 
+## Tài khoản (menu Tài khoản trong app giáo viên)
+- Tab **Học sinh**: danh sách trang HocSinh của Google Sheet — thêm, sửa, đặt lại mã PIN, khóa/mở, xóa (có hộp thoại xác nhận). Lưu là học sinh đăng nhập được ngay; tài khoản khóa không đăng nhập được.
+- Tab **Giáo viên** (chỉ quản trị thấy): thêm giáo viên dạy lớp — Mã giáo viên, Họ tên, Lớp phụ trách (ví dụ `9A, 9B`), Mã PIN. Lưu ở trang **GiaoVien** của Sheet.
+- Giáo viên lớp đăng nhập trang giáo viên: chọn **Giáo viên lớp** → Mã giáo viên + PIN. Họ chỉ thấy menu **Thi** (tạo/mở/khóa/sửa thi thử, thi thật, thống kê) và **Tài khoản** (học sinh lớp mình). **Về nhà**, **Tài liệu** cho giáo viên lớp sẽ bật sau khi Worker được cập nhật (giai đoạn 2).
+- Quản trị đăng nhập như cũ (chọn **Quản trị**, nhập PIN giáo viên).
+
 ## Nếu có sự cố
 - Học sinh báo "Mã học sinh hoặc mã PIN chưa đúng" dù đúng: thầy cô vừa đổi PIN trong Sheet nhưng chưa bấm **Cập nhật lên Firebase**.
 - Học sinh mới chưa có trên Firebase vẫn đăng nhập được (đường cũ qua Worker, chậm hơn) nhưng tab Thi dùng bài thi Google Sheet cũ → bấm Cập nhật lên Firebase.

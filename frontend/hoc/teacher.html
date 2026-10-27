@@ -22,6 +22,8 @@
 <h2 id="teacher-login-title">Đăng nhập</h2>
 <nav class="role-switch" aria-label="Chọn vai trò đăng nhập"><a href="./">Học sinh</a><span aria-current="page">Giáo viên</span></nav>
 <form id="teacher-login" class="t-form">
+<fieldset class="t-seg" id="teacher-role"><legend class="visually-hidden">Loại tài khoản</legend><label class="t-seg-item"><input type="radio" name="role" value="admin" checked><span>Quản trị</span></label><label class="t-seg-item"><input type="radio" name="role" value="gv"><span>Giáo viên lớp</span></label></fieldset>
+<div class="t-field" id="teacher-code-field" hidden><label for="teacher-code">Mã giáo viên</label><input id="teacher-code" name="code" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" aria-describedby="teacher-login-error"></div>
 <div class="t-field"><label for="teacher-pin">Mã PIN giáo viên</label>
 <div class="t-pin t-input-icon"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="teacher-pin" name="pin" type="password" autocomplete="current-password" required><button type="button" class="t-reveal" data-reveal="teacher-pin" aria-controls="teacher-pin" aria-pressed="false" aria-label="Hiện mã PIN"><svg class="ic ic-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg><svg class="ic ic-eyeoff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18 M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8 M6.5 7.6A16.6 16.6 0 0 0 2 12s4 7 10 7c1.6 0 3-.4 4.3-1 M9.9 10a2.5 2.5 0 0 0 3.1 3.1"/></svg></button>
 </div>
@@ -62,7 +64,7 @@
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4z M4 7V3h7l3 4"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Tài liệu</span><span class="t-nav-mobile">Tài liệu</span></span></button><button type="button" id="nav-accounts" class="t-nav-item" data-view="accounts" aria-controls="view-accounts">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21v-3a8 8 0 0 1 16 0v3"/>
-</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản học sinh</span><span class="t-nav-mobile">Học sinh</span></span></button>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản</span><span class="t-nav-mobile">Tài khoản</span></span></button>
 </nav>
 <section id="workspace" class="t-workspace" aria-labelledby="workspace-title">
 <header class="t-workspace-head">
@@ -302,7 +304,30 @@
 </section>
 </section>
 <section id="view-accounts" hidden>
-<section id="students-section">
+<section id="acc-root" class="t-list" aria-labelledby="acc-title">
+<h2 id="acc-title" class="visually-hidden">Tài khoản</h2>
+<div class="notice status thi-alert" id="acc-alert" role="status" hidden><span id="acc-status"></span></div>
+<div class="t-tabs" role="tablist" aria-label="Loại tài khoản"><button type="button" id="tab-acc-hs" role="tab" aria-selected="true" aria-controls="tabpanel-acc-hs" tabindex="0">Học sinh</button><button type="button" id="tab-acc-gv" role="tab" aria-selected="false" aria-controls="tabpanel-acc-gv" tabindex="-1">Giáo viên</button></div>
+<div role="tabpanel" id="tabpanel-acc-hs" aria-labelledby="tab-acc-hs">
+<div class="t-toolbar acc-toolbar"><div class="t-field"><label for="acc-hs-search">Tìm theo tên hoặc mã</label><input id="acc-hs-search" type="search" autocomplete="off"></div><div class="t-field"><label for="acc-hs-lop">Lớp</label><select id="acc-hs-lop"><option value="">Tất cả các lớp</option></select></div><button type="button" id="acc-hs-add" class="t-button t-primary">Thêm học sinh</button></div>
+<p class="t-muted" id="acc-hs-count" role="status">Đang tải…</p>
+<table class="t-table" id="acc-hs-table"><caption>Tài khoản học sinh (trang HocSinh trong Google Sheet)</caption><thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ và tên</th><th scope="col">Lớp</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="acc-hs-body"></tbody></table>
+</div>
+<div role="tabpanel" id="tabpanel-acc-gv" aria-labelledby="tab-acc-gv" hidden>
+<div class="t-toolbar t-toolbar-actions-only"><p class="t-muted acc-note">Giáo viên được cấp tài khoản đăng nhập bằng Mã giáo viên + PIN, chỉ quản lý các lớp phụ trách.</p><button type="button" id="acc-gv-add" class="t-button t-primary">Thêm giáo viên</button></div>
+<table class="t-table" id="acc-gv-table"><caption>Tài khoản giáo viên (trang GiaoVien trong Google Sheet)</caption><thead><tr><th scope="col">Mã giáo viên</th><th scope="col">Họ và tên</th><th scope="col">Lớp phụ trách</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="acc-gv-body"></tbody></table>
+</div>
+<dialog id="acc-dialog" class="t-dialog" aria-labelledby="acc-dlg-title"><form id="acc-form" class="t-form" method="dialog" novalidate>
+<h2 id="acc-dlg-title">Thêm học sinh</h2>
+<div class="t-field"><label for="acc-ma">Mã</label><input id="acc-ma" required pattern="[A-Za-z0-9_-]{2,32}" maxlength="32" autocomplete="off" aria-describedby="acc-ma-err"><p id="acc-ma-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="acc-ten">Họ và tên</label><input id="acc-ten" required maxlength="100" autocomplete="off" aria-describedby="acc-ten-err"><p id="acc-ten-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="acc-lop" id="acc-lop-label">Lớp</label><input id="acc-lop" required maxlength="60" autocomplete="off" aria-describedby="acc-lop-err acc-lop-hint"><p id="acc-lop-hint" class="t-hint"></p><p id="acc-lop-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="acc-pin" id="acc-pin-label">Mã PIN</label><input id="acc-pin" type="text" inputmode="numeric" minlength="6" maxlength="16" autocomplete="off" aria-describedby="acc-pin-err acc-pin-hint"><p id="acc-pin-hint" class="t-hint">Từ 6 đến 16 ký tự.</p><p id="acc-pin-err" class="t-field-error"></p></div>
+<p id="acc-form-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="acc-cancel" class="t-button">Hủy</button><button type="submit" id="acc-save" class="t-button t-primary">Lưu</button></div>
+</form></dialog>
+</section>
+<section id="students-section" hidden>
 <section id="list-accounts" class="t-list">
 <h2 class="visually-hidden">Danh sách học sinh</h2>
 <div class="t-toolbar t-toolbar-students">
@@ -468,6 +493,6 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261027k"></script>
+<script type="module" src="./teacher.js?v=20261027l"></script>
 </body>
 </html>

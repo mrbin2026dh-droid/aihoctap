@@ -104,6 +104,10 @@
     "thi_th": {
       ".read": true,
       ".write": false
+    },
+    "thi_gv": {
+      ".read": true,
+      ".write": false
     }
   }
 }

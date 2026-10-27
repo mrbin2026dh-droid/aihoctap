@@ -9,6 +9,8 @@ const STUDENTS=[{id:'hs01',name:'Học sinh Thử 01',grade:9,class_code:'9A',di
 (async()=>{const b=await chromium.launch();try{
 for(const vp of [{width:1280,height:800,n:'d'},{width:390,height:800,n:'m'}]){
 const ctx=await b.newContext({viewport:{width:vp.width,height:vp.height},serviceWorkers:'block'});const pg=await ctx.newPage();const reqs=[];const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+const sheetCalls=[];const STU=[{ma:'hs01',ten:'Học sinh thử 01',lop:'9A',trang_thai:'Hoạt động'},{ma:'hs02',ten:'Học sinh thử 02',lop:'9A',trang_thai:'Hoạt động'},{ma:'hs03',ten:'Học sinh thử 03',lop:'9B',trang_thai:'Hoạt động'}];
+await pg.route('https://script.google.com/**',r=>{const p=JSON.parse(r.request().postData());sheetCalls.push(p);const t=[{ma:'GV01',ten:'Cô Hoa',lop:['9A','9B'],trang_thai:'Hoạt động'}];r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action.startsWith('gv_teacher')?{ok:true,teachers:t}:p.action.startsWith('gv_student')?{ok:true,admin:true,students:STU,classes:{'9A':9,'9B':9}}:{ok:true,exams:[],bank:{},classes:{}})})});
 await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;const m=r.request().method();let body={};let post=null;try{post=r.request().postDataJSON()}catch{}
 reqs.push({m,u,post});
 let status=200;
@@ -73,27 +75,27 @@ await pg.selectOption('#field-material-form-material_course_id','tin-hoc-9');awa
 const before=reqs.length;await pg.click('#material-form button[type=submit]');await pg.waitForTimeout(500);
 const posts=reqs.slice(before).filter(r=>r.u.endsWith('/pwa/teacher/materials'));assert.strictEqual(posts.length,1,T+'một yêu cầu đăng tài liệu');assert.strictEqual(posts[0].post.course_id,'tin-hoc-9');assert(await pg.isVisible('#msg-dialog'),T+'kết quả báo bằng hộp thoại');await ack();
 assert(await pg.isVisible('#list-materials'),T+'về danh sách sau khi lưu');
-// học sinh
-await pg.click('#nav-accounts');await pg.waitForTimeout(500);
-assert.strictEqual(await pg.locator('#students-tbody tr').count(),3);
-await pg.fill('#field-student_search','thử 02');assert.strictEqual(await pg.locator('#students-tbody tr').count(),1,T+'tìm học sinh');await pg.fill('#field-student_search','');
-const R='#students-tbody tr:nth-child(1) .t-icon-btn';assert.strictEqual(await pg.locator(R).count(),5,T+'mỗi dòng 5 nút biểu tượng');assert.strictEqual(await pg.locator('#students-tbody details').count(),0,T+'không còn thanh thả xuống');
+// tài khoản (Google Sheet): tab Học sinh + tab Giáo viên
+await pg.click('#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===3);
+assert.strictEqual((await pg.textContent('#nav-accounts')).includes('Tài khoản'),true,T+'menu đổi tên Tài khoản');
+assert.deepStrictEqual(await pg.$$eval('#acc-root > .t-tabs [role=tab]',a=>a.map(x=>x.textContent)),['Học sinh','Giáo viên'],T+'hai tab Học sinh / Giáo viên');
+await pg.fill('#acc-hs-search','thử 02');assert.strictEqual(await pg.locator('#acc-hs-body tr').count(),1,T+'tìm học sinh');await pg.fill('#acc-hs-search','');
+const R='#acc-hs-body tr:nth-child(1) .t-icon-btn';assert.strictEqual(await pg.locator(R).count(),4,T+'mỗi dòng 4 nút biểu tượng');
 for(const b of await pg.locator(R).all()){assert(await b.getAttribute('aria-label'),T+'nút có tên truy cập');const bb=await b.boundingBox();assert(bb.width>=47&&bb.height>=47,T+'vùng chạm 48px')}
-await pg.locator(R).nth(0).click();await pg.waitForTimeout(200);assert(await pg.isVisible('#msg-dialog'),T+'Xem chi tiết mở hộp thoại');await pg.click('#msg-ok');await pg.waitForTimeout(200);
-let n1=reqs.length;await pg.locator(R).nth(3).click();await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'),T+'biểu tượng Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);
-assert.strictEqual(reqs.slice(n1).filter(r=>r.m==='POST').length,0,T+'Hủy = 0 yêu cầu');
-await pg.check('#students-tbody tr:nth-child(1) input[type=checkbox]');await pg.check('#students-tbody tr:nth-child(2) input[type=checkbox]');
-assert(await pg.isVisible('[data-bulk]'));assert.strictEqual(await pg.textContent('[data-selection-count]'),'2');
-let n0=reqs.length;await pg.click('#act-accounts-bulk-lock');await pg.waitForTimeout(250);assert(await pg.isVisible('#msg-dialog'));
-await pg.click('#msg-cancel');await pg.waitForTimeout(200);assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST').length,0,T+'Hủy = 0 yêu cầu');
-await pg.click('#act-accounts-bulk-lock');await pg.waitForTimeout(250);await pg.click('#msg-ok');await pg.waitForTimeout(800);
-assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST'&&r.u.endsWith('/lock')).length,2,T+'khóa đúng 2 học sinh');
-assert(await pg.isVisible('#msg-dialog'));assert.strictEqual((await pg.textContent('#msg-title')).trim(),'Chưa thực hiện được',T+'một học sinh lỗi → một hộp thoại lỗi');await ack();
+let n1=sheetCalls.length;await pg.locator(R).nth(2).click();await pg.waitForSelector('#msg-dialog[open]');assert((await pg.textContent('#msg-dialog')).includes('Khóa tài khoản học sinh?'),T+'Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);
+assert.strictEqual(sheetCalls.slice(n1).length,0,T+'Hủy = 0 yêu cầu');
+await pg.locator(R).nth(2).click();await pg.click('#msg-ok');await pg.waitForTimeout(400);assert.strictEqual(sheetCalls.at(-1).action,'gv_student_save');assert.strictEqual(sheetCalls.at(-1).trang_thai,'Khóa',T+'khóa đúng học sinh');
 if(SHOTS)await pg.screenshot({path:`${SHOTS}/${vp.n}-4-accounts.png`,fullPage:true});
-await pg.click('#act-accounts-new');await pg.waitForTimeout(200);assert(await pg.isVisible('#detail-accounts'));
-await pg.fill('#field-add-student-form-name','Học sinh Mới');await pg.fill('#field-add-student-form-class_code','9C');
-n0=reqs.length;await pg.click('#add-student-form button[type=submit]');await pg.waitForTimeout(700);
-assert(await pg.isVisible('#msg-dialog'),T+'PIN hiện trong hộp thoại');assert((await pg.textContent('#msg-body')).includes('Mã PIN'));await pg.click('#msg-cancel');await pg.waitForTimeout(200);assert.strictEqual(reqs.slice(n0).filter(r=>r.m==='POST'&&r.u.endsWith('/teacher/students')).length,1,T+'thêm 1 lần');assert(await pg.isVisible('#list-accounts'));
+await pg.click('#acc-hs-add');await pg.waitForSelector('#acc-dialog[open]');await pg.click('#acc-save');await pg.waitForTimeout(150);
+assert.strictEqual(await pg.getAttribute('#acc-ma','aria-invalid'),'true',T+'bỏ trống mã → báo dưới trường');
+await pg.fill('#acc-ma','hs9c01');await pg.fill('#acc-ten','Học sinh Mới');await pg.fill('#acc-lop','9C');await pg.fill('#acc-pin','123');await pg.click('#acc-save');await pg.waitForTimeout(150);
+assert((await pg.textContent('#acc-pin-err')).includes('6 đến 16'),T+'PIN ngắn → báo');
+await pg.fill('#acc-pin','246810');await pg.click('#acc-save');await pg.waitForFunction(()=>!document.getElementById('acc-dialog').open);
+const sv=sheetCalls.at(-1);assert(sv.action==='gv_student_save'&&sv.moi===true&&sv.ma==='hs9c01'&&sv.lop==='9C'&&sv.pin==='246810',T+'thêm học sinh gửi đúng');
+await pg.click('#tab-acc-gv');await pg.waitForSelector('#acc-gv-body tr');assert((await pg.textContent('#acc-gv-body')).includes('Cô Hoa')&&(await pg.textContent('#acc-gv-body')).includes('9A, 9B'),T+'tab Giáo viên: danh sách, lớp phụ trách');
+await pg.click('#acc-gv-add');await pg.fill('#acc-ma','GV02');await pg.fill('#acc-ten','Thầy Nam');await pg.fill('#acc-lop','8A, 8B');await pg.fill('#acc-pin','135790');await pg.click('#acc-save');await pg.waitForFunction(()=>!document.getElementById('acc-dialog').open);
+assert(sheetCalls.at(-1).action==='gv_teacher_save'&&sheetCalls.at(-1).lop==='8A, 8B',T+'thêm giáo viên lớp');
+await pg.click('#tab-acc-hs');
 // Hồ sơ
 await pg.click('#open-settings');await pg.waitForTimeout(200);assert(await pg.isVisible('#nav-profile'),T+'popover Hồ sơ');
 await pg.click('#act-profile-ai');await pg.waitForTimeout(300);

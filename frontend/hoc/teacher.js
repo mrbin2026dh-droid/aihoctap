@@ -1,10 +1,12 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
-import * as ui from './teacher-ui.js?v=20261027k';
+import * as ui from './teacher-ui.js?v=20261027l';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
-import './teacher-thi.js?v=20261027k';
+import './teacher-thi.js?v=20261027l';
+import './teacher-accounts.js?v=20261027l';
+import * as thiStore from './thi-store.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
@@ -44,12 +46,17 @@ function on(id, action) {node(id).addEventListener('click', () => {
   const captured = generation;
   Promise.resolve(action()).catch(error => {if (captured === generation) fail(error);});
 });}
+/** Giáo viên lớp (Mã giáo viên + PIN, kiểm trên Firebase): không có token Worker, chỉ dùng Thi và Tài khoản. */
+function classTeacher() { try { return JSON.parse(sessionStorage.getItem('aisgk-gv-info') || 'null'); } catch { return null; } }
+function clearClassTeacher() { for (const k of ['aisgk-gv-info', 'thi-gv-ma']) sessionStorage.removeItem(k); }
 function updateAuth() {
-  node('auth-section').hidden = Boolean(token);
+  const gv = classTeacher(), signed = Boolean(token) || Boolean(gv);
+  document.body.classList.toggle('is-class-teacher', Boolean(gv) && !token);
+  node('auth-section').hidden = signed;
   const mustChangeSec = node('teacher-must-change-section');
   if (mustChangeSec) mustChangeSec.hidden = !token || !mustChangePin;
-  node('editor').hidden = !token || mustChangePin;
-  node('teacher-logout').hidden = !token;
+  node('editor').hidden = !signed || (Boolean(token) && mustChangePin);
+  node('teacher-logout').hidden = !signed;
   const openSettingsBtn = document.getElementById('open-settings');
   if (openSettingsBtn) openSettingsBtn.hidden = !token || mustChangePin;
 }
@@ -587,6 +594,28 @@ node('teacher-login').addEventListener('submit', async event => {
 
   pinInput.addEventListener('input', () => setFieldError(pinInput, ''));
   const pin = pinInput.value.trim();
+  const role = /** @type {HTMLInputElement|null} */ (loginForm.querySelector('[name=role]:checked'))?.value || 'admin';
+  if (role === 'gv') {
+    const codeInput = /** @type {HTMLInputElement} */ (loginForm.querySelector('[name=code]'));
+    const code = codeInput.value.trim();
+    codeInput.addEventListener('input', () => setFieldError(codeInput, ''), {once: true});
+    if (!/^[A-Za-z0-9_-]{2,32}$/.test(code)) { setFieldError(codeInput, 'Nhập Mã giáo viên (chữ, số, - và _).'); if (loginErr) loginErr.textContent = 'Nhập Mã giáo viên.'; codeInput.focus(); return; }
+    if (pin.length < 6) { setFieldError(pinInput, 'Mã PIN tối thiểu 6 ký tự.'); if (loginErr) loginErr.textContent = 'Mã PIN tối thiểu 6 ký tự.'; pinInput.focus(); return; }
+    await withBusy(submit, 'Đang đăng nhập…', async () => {
+      try {
+        const t = await thiStore.teacherLogin(code, pin);
+        if (!t) throw new Error('Chưa có tài khoản giáo viên này. Nhờ quản trị thêm trong menu Tài khoản.');
+        await db.remove('meta', 'session').catch(() => {});   // một máy một vai trò: đăng xuất học sinh
+        token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); mustChangePin = false; generation++;
+        sessionStorage.setItem('aisgk-gv-info', JSON.stringify(t)); sessionStorage.setItem('thi-gv-ma', t.ma); sessionStorage.setItem('thi-gv-mk', pin);
+        sessionStorage.setItem('aisgk-presence-gv-ticket', '');
+        window.dispatchEvent(new CustomEvent('thi-gv-login', {detail: {token: ''}}));
+        loginForm.reset(); syncRole(); updateAuth(); ui.reset();
+        document.getElementById('nav-sheetexam')?.click();
+      } catch (error) { if (loginErr) loginErr.textContent = error instanceof Error && /Mã giáo viên|tài khoản giáo viên/.test(error.message) ? error.message : mapErrorMessage(error); }
+    });
+    return;
+  }
 
   if (pin.length < 8) {
     setFieldError(pinInput, 'Mã PIN tối thiểu 8 ký tự.');
@@ -604,7 +633,7 @@ node('teacher-login').addEventListener('submit', async event => {
       generation++;
       await db.remove('meta', 'session').catch(() => {});   // đăng nhập giáo viên thì đăng xuất học sinh trên máy này
       try { localStorage.removeItem('aisgk-fb'); } catch { /* bỏ qua */ }   // và cả phiên thi Firebase của học sinh
-      sessionStorage.setItem('aisgk-pwa-teacher', token); try { sessionStorage.setItem('thi-gv-mk', pin); } catch { /* bỏ qua */ } try { sessionStorage.setItem('aisgk-presence-gv-ticket', response.fb_token || ''); } catch { /* bỏ qua */ } window.dispatchEvent(new CustomEvent('thi-gv-login', {detail: {token: response.fb_token || ''}}));
+      clearClassTeacher(); sessionStorage.setItem('aisgk-pwa-teacher', token); try { sessionStorage.setItem('thi-gv-mk', pin); } catch { /* bỏ qua */ } try { sessionStorage.setItem('aisgk-presence-gv-ticket', response.fb_token || ''); } catch { /* bỏ qua */ } window.dispatchEvent(new CustomEvent('thi-gv-login', {detail: {token: response.fb_token || ''}}));
       loginForm.reset();
       updateAuth();
       ui.reset();
@@ -880,9 +909,9 @@ form.addEventListener('submit', async event => {
   catch (error) {if (captured === generation) fail(error instanceof Error ? error : new Error('Chưa xuất bản được.'));} finally {submit.disabled = false;}
 });
 on('teacher-logout', async () => {
-  const oldToken = token; token = ''; mustChangePin = false; generation++; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); sessionStorage.removeItem('aisgk-presence-gv-ticket'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); updateAuth();
+  const oldToken = token; token = ''; mustChangePin = false; generation++; clearClassTeacher(); sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); sessionStorage.removeItem('aisgk-presence-gv-ticket'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); updateAuth();
   form.reset(); lessonDirty = false; quotaDirty = false; try {localStorage.removeItem(DRAFT_KEY);} catch {/* không có bộ nhớ */} ui.reset(); node('question-editors').replaceChildren(); node('preview').replaceChildren(); node('teacher-results').replaceChildren(); node('published').replaceChildren(); node('lesson-list').replaceChildren(); allStudents = []; node('students-tbody').replaceChildren();
-  try {await api('/teacher/logout', {method:'POST',token:oldToken});} catch {notify('Đã đăng xuất trên máy. Phiên máy chủ chưa xác nhận thu hồi.', true);}
+  if (oldToken) { try {await api('/teacher/logout', {method:'POST',token:oldToken});} catch {notify('Đã đăng xuất trên máy. Phiên máy chủ chưa xác nhận thu hồi.', true);} }
 });
 on('load-lesson', async () => {
   const value = /** @type {HTMLSelectElement} */ (node('published')).value;
@@ -1488,7 +1517,16 @@ node('teacher-regular-change-pin-form')?.addEventListener('submit', async event 
   });
 });
 
+/** Ô Mã giáo viên chỉ hiện khi chọn "Giáo viên lớp". */
+function syncRole() {
+  const gv = /** @type {HTMLInputElement|null} */ (document.querySelector('#teacher-login [name=role][value=gv]'))?.checked;
+  const f = document.getElementById('teacher-code-field'); if (f) f.hidden = !gv;
+  const lab = document.querySelector('label[for=teacher-pin]'); if (lab) lab.textContent = gv ? 'Mã PIN' : 'Mã PIN giáo viên';
+}
+document.querySelectorAll('#teacher-login [name=role]').forEach(r => r.addEventListener('change', () => { syncRole(); if (/** @type {HTMLInputElement} */ (r).checked && /** @type {HTMLInputElement} */ (r).value === 'gv') document.getElementById('teacher-code')?.focus(); }));
+syncRole();
 updateAuth();
+if (!token && classTeacher()) setTimeout(() => document.getElementById('nav-sheetexam')?.click(), 0);   // mở lại trang: giáo viên lớp vào thẳng Thi
 if (token && !mustChangePin) {
   const captured = generation;
   refresh().then(() => {

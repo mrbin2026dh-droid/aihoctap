@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027k';
-import * as ui from './teacher-ui.js?v=20261027k';
+import * as presence from './presence.js?v=20261027l';
+import * as ui from './teacher-ui.js?v=20261027l';
 import * as store from './thi-store.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -15,6 +15,8 @@ const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(i
 const select = (/** @type {string} */ id) => /** @type {HTMLSelectElement} */ ($(id));
 const button = (/** @type {string} */ id) => /** @type {HTMLButtonElement} */ ($(id));
 const getPass = () => { try { return sessionStorage.getItem('thi-gv-mk') || ''; } catch { return ''; } };
+/** Giáo viên lớp: kèm Mã giáo viên để Google Sheet chỉ cho thấy các lớp phụ trách. */
+const getMa = () => { try { return sessionStorage.getItem('thi-gv-ma') || ''; } catch { return ''; } };
 const STATE = { chua: 'Chưa vào', vao: 'Đã vào', nop: 'Đã nộp' };
 
 /** @type {any} */ let info = null;   // danh sách bài thi (gv_list)
@@ -67,7 +69,7 @@ async function call(body) {
   let last = 'Chưa kết nối được Google Sheet. Thử lại.';
   for (let i = 0; i < 3; i++) {
     try {
-      const res = await fetch(SHEET_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ gv: getPass(), ...body }) });
+      const res = await fetch(SHEET_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ gv: getPass(), ...(getMa() ? { gv_ma: getMa() } : {}), ...body }) });
       const data = await res.json();
       if (data && data.ok) return data;
       throw Object.assign(new Error(data && data.error ? data.error : last), { final: true });
@@ -93,8 +95,9 @@ const td = (/** @type {string} */ label, /** @type {string|Node} */ v, cls = '')
 
 /** Danh sách lớp theo khối đang chọn (lấy từ trang HocSinh). */
 function fillClasses() {
+  if (getMa()) { const ks = [...new Set(Object.values(info?.classes || {}).map(Number))]; if (ks.length && !ks.includes(Number(select('thi-new-khoi').value))) select('thi-new-khoi').value = String(ks[0]); }
   const k = Number(select('thi-new-khoi').value), sel = select('thi-new-lop'), keep = sel.value;
-  sel.replaceChildren(new Option('Cả khối ' + k, ''));
+  sel.replaceChildren(...(getMa() ? [] : [new Option('Cả khối ' + k, '')]));   // giáo viên lớp: chỉ chọn lớp mình
   const classes = Object.entries(info?.classes || {}).filter(([, g]) => g === k).map(([c]) => c).sort();
   for (const c of classes) sel.append(new Option('Chỉ lớp ' + c, c));
   if (classes.includes(keep)) sel.value = keep;

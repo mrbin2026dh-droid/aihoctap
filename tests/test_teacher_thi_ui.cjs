@@ -120,4 +120,24 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   ok((await pg.textContent('#thi-gv-table thead')).includes('Số lần thi')&&(await pg.textContent('#thi-gv-body')).includes('3 lần')&&!(await pg.textContent('#thi-gv-body')).includes('Cho thi lại')&&await pg.isHidden('#thi-st-tabs'),'thi thử: cột Số lần thi thay cho Cho thi lại, không có tab theo dõi');
   await pg.click('#act-sheetexam-back');await pg.click('#thi-publish');await pg.waitForFunction(()=>document.getElementById('thi-gv-status').textContent.includes('Đã cập nhật lên Firebase'));ok(calls.includes('gv_publish'),'nút Cập nhật lên Firebase');
   ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}
+ // ---------- Giáo viên lớp: Mã giáo viên + PIN kiểm trên Firebase, chỉ Thi + Tài khoản lớp mình ----------
+ {const FDB='https://test-gv-default-rtdb.asia-southeast1.firebasedatabase.app';const h=require('crypto').createHash('sha256').update('gv01:246810').digest('hex');
+  const calls=[];const ctx=await b.newContext({viewport:{width:390,height:800},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));const worker=[];
+  await pg.route(FDB+'/**',r=>{const u=new URL(r.request().url()).pathname;if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'retry: 1000\nevent: put\ndata: {"path":"/","data":null}\n\n'});
+   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/thi_gv/gv01.json')?{ma:'GV01',ten:'Cô Hoa',lop:['9A'],h}:null)})});
+  await pg.route(API,r=>{const p=JSON.parse(r.request().postData());calls.push(p);r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action==='gv_students'?{ok:true,admin:false,students:[{ma:'hs01',ten:'An',lop:'9A',trang_thai:'Hoạt động'}],classes:{'9A':9}}:{ok:true,fb:true,exams:[],bank:{9:2},classes:{'9A':9}})})});
+  await pg.route('**/api/**',r=>{worker.push(new URL(r.request().url()).pathname);r.fulfill({status:200,contentType:'application/json',body:'{}'})});
+  await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);
+  await pg.check('#teacher-login [name=role][value=gv]');ok(await pg.isVisible('#teacher-code'),'chọn Giáo viên lớp → hiện ô Mã giáo viên');
+  await pg.fill('#teacher-code','GV01');await pg.fill('#teacher-login [name=pin]','000000');await pg.click('#teacher-login button[type=submit]');
+  await pg.waitForFunction(()=>document.getElementById('teacher-login-error').textContent.includes('chưa đúng'));ok(true,'sai PIN → báo ngay');
+  await pg.fill('#teacher-login [name=pin]','246810');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');await pg.waitForTimeout(500);
+  ok(!worker.some(u=>u.endsWith('/teacher/auth')),'đăng nhập giáo viên lớp không qua Worker');
+  ok(await pg.evaluate(()=>document.body.classList.contains('is-class-teacher'))&&await pg.isHidden('#nav-overview')&&await pg.isHidden('#nav-lessons')&&await pg.isVisible('#nav-sheetexam')&&await pg.isVisible('#nav-accounts'),'giáo viên lớp: chỉ menu Thi và Tài khoản');
+  ok((await pg.textContent('#workspace-title'))==='Thi'&&calls.some(c=>c.action==='gv_list'&&c.gv_ma==='GV01'&&c.gv==='246810'),'vào thẳng Thi, gửi Mã giáo viên để Sheet lọc theo lớp');
+  await pg.click('#tab-thi-new');ok((await pg.$$eval('#thi-new-lop option',o=>o.map(x=>x.textContent))).join('|')==='Chỉ lớp 9A','tạo đề: chỉ chọn được lớp mình (không có Cả khối)');
+  await pg.click('#nav-accounts');await pg.waitForSelector('#acc-hs-body tr');ok(await pg.isHidden('#tab-acc-gv')&&(await pg.textContent('#acc-hs-count')).includes('lớp thầy cô phụ trách'),'Tài khoản: chỉ học sinh lớp mình, không có tab Giáo viên');
+  await pg.reload();await pg.waitForSelector('#workspace:not([hidden])');await pg.waitForTimeout(500);ok((await pg.textContent('#workspace-title'))==='Thi','tải lại trang: vẫn đăng nhập, vào Thi');
+  await pg.evaluate(()=>document.getElementById('teacher-logout').click());await pg.waitForSelector('#auth-section:not([hidden])');ok(!(await pg.evaluate(()=>sessionStorage.getItem('thi-gv-ma'))),'đăng xuất xóa phiên giáo viên lớp');
+  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));await ctx.close()}
 console.log('TEACHER THI UI OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});

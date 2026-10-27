@@ -17,6 +17,9 @@ var DT_HEAD = DE_HEAD.concat(['Mã bài thi']);
 var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy', 'Mã nộp'];
 /** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
 var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
+var SH_GV = 'GiaoVien', GV_HEAD = ['Mã giáo viên', 'Họ tên', 'Mã PIN', 'Lớp phụ trách', 'Trạng thái'];
+/** Lớp giáo viên đang đăng nhập được phụ trách (chữ thường); null = quản trị (thấy mọi lớp). */
+var SCOPE_ = null;
 var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm', 'Năm học', 'Hình thức', 'Nội dung'];
 var HINH_THUC = ['15 phút', 'Giữa kỳ I', 'Cuối kỳ I', 'Giữa kỳ II', 'Cuối kỳ II', 'Khác'];
 var DD_HEAD = ['Mã bài thi', 'Mã học sinh', 'Vào lúc'];
@@ -29,6 +32,7 @@ function doPost(e) {
 function route_(p) {
   try {
     if (p.action === 'ping') return out_({ ok: true });
+    if (p.action === 'gv_login') { var t = findTeacher_(p.ma, p.pin); return out_({ ok: true, teacher: { ma: t.ma, ten: t.ten, lop: t.lop } }); }
     if (/^gv_/.test(String(p.action || ''))) return out_(teacher_(p));
     if ((p.action === 'exams' || p.action === 'exam' || p.action === 'submit') && !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT)) schema_();
     var hs = findStudent_(p.ma, p.pin);
@@ -59,6 +63,7 @@ function findStudent_(ma, pin) {
   for (var r = 1; r < v.length; r++) {
     if (norm_(v[r][3]) === ma) {
       if (String(v[r][4]).trim() !== pin) throw new Error('Mã PIN chưa đúng.');
+      if (/^khóa$/i.test(String(v[r][5] || '').trim())) throw new Error('Tài khoản đang bị khóa. Báo thầy cô.');
       return { row: r + 1, name: String(v[r][1]).trim(), lop: String(v[r][2]).trim(), ma: String(v[r][3]).trim(), status: String(v[r][5] || '').trim() };
     }
   }
@@ -252,14 +257,24 @@ function submit_(hs, maDe, answers) {
 function teacher_(p) {
   var cache = CacheService.getScriptCache(), fails = Number(cache.get('gvfail') || 0);
   if (fails >= 10) throw new Error('Nhập sai quá nhiều lần. Chờ 10 phút rồi thử lại.');
-  var stored = cfgGet_('mat_khau_gv'), sent = String(p.gv === undefined ? '' : p.gv).trim();
+  var sent = String(p.gv === undefined ? '' : p.gv).trim(), me = null;
   if (!sent) throw new Error('Đăng xuất rồi đăng nhập lại tài khoản giáo viên để dùng menu Thi.');
-  if (!stored) setConfig_('mat_khau_gv', sent);
-  else if (sent !== stored) { cache.put('gvfail', String(fails + 1), 600); throw new Error('PIN giáo viên chưa khớp với Google Sheet. Mở Sheet → menu Bài thi → Đặt lại mật khẩu giáo viên.'); }
+  SCOPE_ = null;
+  if (String(p.gv_ma || '').trim()) {                     // giáo viên lớp: Mã giáo viên + PIN trong trang GiaoVien
+    try { me = findTeacher_(p.gv_ma, sent); } catch (e) { cache.put('gvfail', String(fails + 1), 600); throw e; }
+    SCOPE_ = me.lop.map(norm_);
+  } else {                                                // quản trị: PIN giáo viên của app (ghi nhớ lần đầu)
+    var stored = cfgGet_('mat_khau_gv');
+    if (!stored) setConfig_('mat_khau_gv', sent);
+    else if (sent !== stored) { cache.put('gvfail', String(fails + 1), 600); throw new Error('PIN giáo viên chưa khớp với Google Sheet. Mở Sheet → menu Bài thi → Đặt lại mật khẩu giáo viên.'); }
+  }
   cache.remove('gvfail');
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT) || !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_DD) || cfgGet_('ma_de')) schema_();
   var a = p.action;
-  if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); setConfig_('mat_khau_gv', np); return { ok: true }; }
+  if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); if (me) setTeacherPin_(me.ma, np); else setConfig_('mat_khau_gv', np); return { ok: true }; }
+  if (a === 'gv_whoami') return { ok: true, me: me ? { ma: me.ma, ten: me.ten, lop: me.lop } : null, admin: !me };
+  if (/^gv_(teachers|teacher_save|teacher_delete|students|student_save|student_delete)$/.test(a)) return accounts_(a, p, me);
+  if (p.ma_de && a !== 'gv_create') ownExam_(String(p.ma_de));
   if (a === 'gv_stats') return stats_(String(p.ma_de || ''));
   if (a === 'gv_questions') { var exq = exam_(String(p.ma_de || '')); return { ok: true, ma_de: exq.ma_de, che_do: exq.che_do, khoi: exq.khoi, questions: questionsFor_(exq) }; }
   if (a === 'gv_publish') { var n = publish_(); var info = info_(); info.published = n; return info; }
@@ -289,7 +304,10 @@ function create_(p) {
   var che = p.che_do === 'that' ? 'that' : 'thu', khoi = Number(p.khoi) || 0, lop = String(p.lop || '').trim(), title = String(p.tieu_de || '').trim();
   if (!title) throw new Error('Nhập tiêu đề bài thi.');
   if (!khoi) throw new Error('Chọn khối.');
-  var ex = { che_do: che, khoi: khoi, ma_de: String(new Date().getTime()) };
+  if (SCOPE_ && (!lop || SCOPE_.indexOf(norm_(lop)) < 0)) throw new Error('Chọn một lớp thầy cô phụ trách.');
+  var used = {}; ensure_(SH_BT, BT_HEAD).getDataRange().getValues().forEach(function (r) { used[String(r[0])] = 1; });
+  var id = new Date().getTime(); while (used[String(id)]) id++;   // mã bài không trùng kể cả khi tạo liên tiếp
+  var ex = { che_do: che, khoi: khoi, ma_de: String(id) };
   if (che === 'that') { if (!countBank_(ex)) throw new Error('Trang DeThi trong Google Sheet chưa có câu cho khối ' + khoi + '.'); }
   else { if (!(p.questions || []).length) throw new Error('Tải file Excel đề thi thử lên trước.'); writeQuestions_(ex.ma_de, khoi, p.questions); }
   var nam = String(p.nam_hoc || '').trim() || namHoc_(), ht = HINH_THUC.indexOf(String(p.hinh_thuc || '')) >= 0 ? String(p.hinh_thuc) : (che === 'that' ? 'Khác' : '');
@@ -300,6 +318,7 @@ function update_(p) {
   var title = String(p.tieu_de === undefined ? ex.tieu_de : p.tieu_de).trim(), khoi = p.khoi === undefined ? ex.khoi : (Number(p.khoi) || 0), lop = String(p.lop === undefined ? ex.lop : p.lop).trim();
   if (!title) throw new Error('Nhập tiêu đề bài thi.');
   if (!khoi) throw new Error('Chọn khối.');
+  if (SCOPE_ && (!lop || SCOPE_.indexOf(norm_(lop)) < 0)) throw new Error('Chọn một lớp thầy cô phụ trách.');
   if (p.questions && p.questions.length) saveQuestions_(ex, khoi, p.questions);
   sh.getRange(ex.row, 2).setValue(title); sh.getRange(ex.row, 4).setValue(khoi); sh.getRange(ex.row, 5).setValue(lop);
   if (ex.che_do === 'that') {
@@ -356,8 +375,9 @@ function students_() {
 /** Danh sách bài thi + số liệu tóm tắt. */
 function info_() {
   var st = students_(), classes = {}, list = [], allRes = allResults_(), allVis = allVisited_(), bc = bankCounts_();
-  st.forEach(function (s) { classes[s.lop] = khoiOf_(s.lop); });
-  exams_().forEach(function (ex) {
+  st.forEach(function (s) { if (!SCOPE_ || SCOPE_.indexOf(norm_(s.lop)) >= 0) classes[s.lop] = khoiOf_(s.lop); });
+  if (SCOPE_) SCOPE_.forEach(function (l, i) { var real = Object.keys(classes).filter(function (c) { return norm_(c) === l; })[0]; if (!real) classes[l.toUpperCase()] = khoiOf_(l); });
+  exams_().filter(inScope_).forEach(function (ex) {
     var res = allRes[ex.ma_de] || {}, vis = allVis[ex.ma_de] || {}, n = 0, vao = 0, nop = 0;
     st.forEach(function (s) { if (!allowed_(s, ex)) return; n++; var k = norm_(s.ma); if (res[k]) nop++; else if (vis[k]) vao++; });
     list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
@@ -377,6 +397,71 @@ function stats_(maDe) {
     out.push({ name: s.name, lop: s.lop, ma: s.ma, state: r ? 'nop' : (vis[k] ? 'vao' : 'chua'), last: vis[k] || '', score: r ? r.score : null, total: r ? r.total : null, lan: lan[k] || 0 });
   });
   return { ok: true, exam: { ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, questions: countBank_(ex) }, students: out };
+}
+
+/* ---------- Giáo viên lớp & quản lý tài khoản ---------- */
+/** Bài thi nằm trong lớp giáo viên đang đăng nhập phụ trách (quản trị: mọi bài). */
+function inScope_(ex) { return !SCOPE_ || (!!ex.lop && SCOPE_.indexOf(norm_(ex.lop)) >= 0); }
+function ownExam_(maDe) { var ex = exam_(maDe); if (!inScope_(ex)) throw new Error('Bài thi này không thuộc lớp thầy cô phụ trách.'); return ex; }
+function lopList_(s) { return String(s || '').split(/[,;\s]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+function teachers_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_GV), out = [];
+  if (!sh) return out;
+  var v = sh.getDataRange().getValues();
+  for (var r = 1; r < v.length; r++) { var ma = String(v[r][0] || '').trim(); if (ma) out.push({ row: r + 1, ma: ma, ten: String(v[r][1] || '').trim(), pin: String(v[r][2]).trim(), lop: lopList_(v[r][3]), trang_thai: /^khóa$/i.test(String(v[r][4] || '').trim()) ? 'Khóa' : 'Hoạt động' }); }
+  return out;
+}
+function findTeacher_(ma, pin) {
+  ma = norm_(ma); pin = String(pin === undefined ? '' : pin).trim();
+  if (!ma || !pin) throw new Error('Nhập Mã giáo viên và Mã PIN.');
+  var t = teachers_().filter(function (x) { return norm_(x.ma) === ma; })[0];
+  if (!t || t.pin !== pin) throw new Error('Mã giáo viên hoặc PIN chưa đúng.');
+  if (t.trang_thai === 'Khóa') throw new Error('Tài khoản giáo viên đang bị khóa.');
+  return t;
+}
+function setTeacherPin_(ma, pin) { var t = teachers_().filter(function (x) { return norm_(x.ma) === norm_(ma); })[0]; if (!t) throw new Error('Không tìm thấy giáo viên.'); sheet_(SH_GV).getRange(t.row, 3).setValue(pin); try { publish_(); } catch (e) { /* lần sau */ } }
+/** Quản lý tài khoản: giáo viên (chỉ quản trị) và học sinh (quản trị: mọi lớp; giáo viên lớp: lớp mình). */
+function accounts_(a, p, me) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), CODE = /^[A-Za-z0-9_-]{2,32}$/;
+  var pinOk = function (x) { x = String(x || '').trim(); if (x.length < 6 || x.length > 16) throw new Error('Mã PIN từ 6 đến 16 ký tự.'); return x; };
+  var done = function (res) { try { publish_(); } catch (e) { res.fb_error = e.message; } return res; };
+  if (/^gv_teacher/.test(a) && me) throw new Error('Chỉ quản trị viên được quản lý tài khoản giáo viên.');
+  if (a === 'gv_teachers') return { ok: true, teachers: teachers_().map(function (t) { return { ma: t.ma, ten: t.ten, lop: t.lop, trang_thai: t.trang_thai }; }) };
+  if (a === 'gv_teacher_save') {
+    var sh = ss.getSheetByName(SH_GV) || ensure_(SH_GV, GV_HEAD), ma = String(p.ma || '').trim(), ten = String(p.ten || '').trim(), lop = lopList_(p.lop);
+    if (!CODE.test(ma)) throw new Error('Mã giáo viên 2–32 ký tự, chỉ gồm chữ, số, - và _.');
+    if (!ten) throw new Error('Nhập họ tên giáo viên.');
+    if (!lop.length) throw new Error('Nhập ít nhất một lớp phụ trách, ví dụ 9A.');
+    var t = teachers_().filter(function (x) { return norm_(x.ma) === norm_(ma); })[0];
+    if (p.moi && t) throw new Error('Mã giáo viên này đã có.');
+    if (!t) { sh.getRange('C:C').setNumberFormat('@'); sh.appendRow([ma, ten, pinOk(p.pin), lop.join(', '), 'Hoạt động']); }
+    else { sh.getRange(t.row, 2).setValue(ten); sh.getRange(t.row, 4).setValue(lop.join(', ')); if (p.pin) sh.getRange(t.row, 3).setValue(pinOk(p.pin)); if (p.trang_thai === 'Khóa' || p.trang_thai === 'Hoạt động') sh.getRange(t.row, 5).setValue(p.trang_thai); }
+    return done(accounts_('gv_teachers', p, me));
+  }
+  if (a === 'gv_teacher_delete') { var td = teachers_().filter(function (x) { return norm_(x.ma) === norm_(p.ma); })[0]; if (!td) throw new Error('Không tìm thấy giáo viên.'); sheet_(SH_GV).deleteRow(td.row); return done(accounts_('gv_teachers', p, me)); }
+  // ----- học sinh (trang HocSinh)
+  var hs = sheet_(SH_HS), hv = hs.getDataRange().getValues(), list = [];
+  for (var r = 1; r < hv.length; r++) { var m = String(hv[r][3] || '').trim(); if (m) list.push({ row: r + 1, ma: m, ten: String(hv[r][1] || '').trim(), lop: String(hv[r][2] || '').trim(), trang_thai: /^khóa$/i.test(String(hv[r][5] || '').trim()) ? 'Khóa' : 'Hoạt động' }); }
+  var mine = function (lop) { return !SCOPE_ || SCOPE_.indexOf(norm_(lop)) >= 0; };
+  var find = function (ma) { var x = list.filter(function (y) { return norm_(y.ma) === norm_(ma); })[0]; if (x && !mine(x.lop)) throw new Error('Học sinh này không thuộc lớp thầy cô phụ trách.'); return x; };
+  if (a === 'gv_students') {
+    var cls = {}; list.forEach(function (x) { if (mine(x.lop)) cls[x.lop] = khoiOf_(x.lop); });
+    return { ok: true, admin: !me, scope: SCOPE_, students: list.filter(function (x) { return mine(x.lop); }).map(function (x) { return { ma: x.ma, ten: x.ten, lop: x.lop, trang_thai: x.trang_thai }; }), classes: cls };
+  }
+  if (a === 'gv_student_save') {
+    var sma = String(p.ma || '').trim(), sten = String(p.ten || '').trim(), slop = String(p.lop || '').trim();
+    if (!CODE.test(sma)) throw new Error('Mã học sinh 2–32 ký tự, chỉ gồm chữ, số, - và _.');
+    if (!sten) throw new Error('Nhập họ tên học sinh.');
+    if (!slop || !khoiOf_(slop)) throw new Error('Lớp phải bắt đầu bằng khối, ví dụ 9A.');
+    if (!mine(slop)) throw new Error('Chỉ thêm học sinh vào lớp thầy cô phụ trách.');
+    var x = find(sma);
+    if (p.moi && x) throw new Error('Mã học sinh này đã có.');
+    if (!x) { hs.getRange('E:E').setNumberFormat('@'); hs.appendRow([list.length + 1, sten, slop, sma, pinOk(p.pin), 'Hoạt động']); }
+    else { hs.getRange(x.row, 2).setValue(sten); hs.getRange(x.row, 3).setValue(slop); if (p.pin) hs.getRange(x.row, 5).setValue(pinOk(p.pin)); if (p.trang_thai === 'Khóa' || p.trang_thai === 'Hoạt động') hs.getRange(x.row, 6).setValue(p.trang_thai); }
+    return done(accounts_('gv_students', p, me));
+  }
+  if (a === 'gv_student_delete') { var xd = find(p.ma); if (!xd) throw new Error('Không tìm thấy học sinh.'); hs.deleteRow(xd.row); return done(accounts_('gv_students', p, me)); }
+  throw new Error('Yêu cầu không hợp lệ.');
 }
 
 /* ---------- Firebase: đẩy đề lên, lấy điểm về ---------- */
@@ -401,7 +486,7 @@ function publish_() {
   if (!fbOn_()) return 0;
   var hv = sheet_(SH_HS).getDataRange().getValues(), hs = {};
   for (var r = 1; r < hv.length; r++) {
-    var ma = String(hv[r][3] || '').trim(); if (!ma) continue;
+    var ma = String(hv[r][3] || '').trim(); if (!ma || /^khóa$/i.test(String(hv[r][5] || '').trim())) continue;   // tài khoản khóa: không đẩy lên → không đăng nhập được
     var lop = String(hv[r][2] || '').trim();
     hs[fbKey_(ma)] = { ma: ma, ten: String(hv[r][1] || '').trim(), lop: lop, khoi: khoiOf_(lop), h: sha256_(norm_(ma) + ':' + String(hv[r][4]).trim()) };
   }
@@ -411,7 +496,8 @@ function publish_() {
     bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung };
     de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
   });
-  fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de });
+  var gvs = {}; teachers_().forEach(function (t) { if (t.trang_thai !== 'Khóa') gvs[fbKey_(t.ma)] = { ma: t.ma, ten: t.ten, lop: t.lop, h: sha256_(norm_(t.ma) + ':' + t.pin) }; });
+  fb_('patch', '', { thi_hs: hs, thi_bai: bai, thi_de: de, thi_gv: gvs });
   return list.length;
 }
 /** Chép bài nộp trên Firebase (thi_nop) về trang KetQua, mỗi lần nộp một dòng, không chép trùng. */
@@ -506,6 +592,7 @@ function taoMau() {
     d.setFrozenRows(1);
   } else if (String(ss.getSheetByName(SH_DE).getRange(1, 2).getValue()).trim() === 'Lớp') ss.getSheetByName(SH_DE).getRange(1, 2).setValue('Khối');
   if (!ss.getSheetByName(SH_CH)) { var c = ss.insertSheet(SH_CH); c.appendRow(['Khóa', 'Giá trị']); c.getRange('B:B').setNumberFormat('@'); c.setFrozenRows(1); }
+  ensure_(SH_GV, GV_HEAD).getRange('C:C').setNumberFormat('@');
   schema_();
 }
 function datLaiMatKhau() { setConfig_('mat_khau_gv', ''); }
