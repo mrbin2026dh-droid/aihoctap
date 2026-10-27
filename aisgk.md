@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity chuẩn bị deploy Worker mới (Gia sư AI chính xác hơn, chống cụt câu, chống chặn nhầm, RAG bài dài) theo docs/handoff/claude-antigravity-deploy-worker-ai-chinh-xac.md.
+- Yêu cầu mới nhất: Antigravity đã deploy thành công Worker bản 675db789 (lưu rollback 2ea55f4e); 100% test Gia sư AI, Sheet, UI PASS. Chuyển Người dùng kiểm tay theo bàn giao.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1898,3 +1898,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Desktop ≥1100px: mở Gia sư AI → khung chat thành cột phải, nội dung bài tự thu hẹp sang trái. Thanh % đọc bài thẳng hàng với nội dung.
 - Worker: sửa bộ lọc chặn nhầm (nguyên nhân chính AI "trả lời sai"), câu cụt (geminiText, 2048 token), bài dài (pickLessonContext), văn phong. Cần deploy: docs/handoff/claude-antigravity-deploy-worker-ai-chinh-xac.md.
 - Phân tích AI + "bộ não thứ hai": docs/phan-tich-ai-gia-su.md.
+
+### 28/10/2026 — Antigravity — Deploy Worker bản 675db789 (Gia sư AI chính xác hơn)
+- Đã thực hiện: Hợp nhất tính năng Gia sư AI chính xác hơn (chống chặn nhầm câu hỏi khái niệm, chống cụt câu bằng geminiText 2048 token, RAG chọn ngữ cảnh bài dài pickLessonContext, khung chat cột phải desktop); lưu version cũ 2ea55f4e và deploy thành công Cloudflare Worker version 675db789-800d-406f-aba6-bc0706694629.
+- Tệp đổi/merge: worker/index.js, frontend/hoc/app.js, frontend/hoc/read-progress.js, frontend/hoc/styles.css, frontend/hoc/sw.js, tests/test_lesson_ai_docs_ui.cjs, tests/test_tutor_accuracy.mjs, aisgk.md.
+- Kiểm thực tế: 5 bộ test Gia sư AI PASS 100% (test_tutor_accuracy 17/17, test_worker_tutor_guardrails, test_tutor_grounding, test_tutor_questions, test_tutor_exam_review); test_sheet_exam_gs 80/80 PASS; test_lesson_ai_docs_ui 39/39 PASS; test_worker_teacher_scope 7/7 PASS; live worker smoke test HTTP OK.
+- Việc tiếp: Chuyển Người dùng thử tay (hỏi 'Dữ liệu số là gì?', hỏi 'Câu này chọn gì?', nộp bài thi thử xem nhận xét AI).
