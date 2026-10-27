@@ -499,6 +499,14 @@ function kiemTraHeThong() {
   });
   Logger.log(ok ? '=== KẾT QUẢ: ĐẠT TOÀN BỘ — có thể triển khai New version và chạy thi thử ===' : '=== KẾT QUẢ: CHƯA ĐẠT — sửa các dòng LỖI rồi chạy lại ===');
 }
+/** Thử đọc RTDB bằng OAuth chủ dự án (bỏ qua DB_SECRET). ĐẠT → xóa DB_SECRET trong Script properties rồi chạy kiemTraHeThong(). */
+function thuOAuth() {
+  var url = P_('DB_URL').replace(/\/$/, '') + '/exam_meta.json?shallow=true';
+  var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } });
+  var code = r.getResponseCode();
+  Logger.log('Tài khoản chạy: ' + Session.getEffectiveUser().getEmail() + ' — HTTP ' + code + ' ' + r.getContentText().slice(0, 120));
+  Logger.log(code === 200 ? '=== OAUTH ĐẠT: vào Project Settings > Script properties, XÓA DB_SECRET (và FIREBASE_DB_SECRET nếu có), rồi chạy kiemTraHeThong() ===' : '=== OAUTH CHƯA ĐẠT: tài khoản này chưa có quyền trên dự án Firebase (cần vai trò Editor/Owner ở GCP 628267818434). GIỮ NGUYÊN DB_SECRET ===');
+}
 function testDrive() { Logger.log(rootFolder_().getUrl()); }
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('📝 Bài thi (Firebase)').addItem('Phát hành đề từ tab này', 'publishExamFromSheet').addToUi();

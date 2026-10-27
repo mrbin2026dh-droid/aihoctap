@@ -1768,3 +1768,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: test_apps_script_gradebook.cjs PASS; git status sạch; sẵn sàng cho Người dùng dán Code.gs và chạy thuSoDiem().
 - Việc tiếp: Người dùng dán Code.gs vào Google Apps Script, chạy thuSoDiem() và kiemTraHeThong() rồi dán nhật ký cho Claude.
+
+### 27/10/2026 — Claude: người dùng chạy thật thuSoDiem() + kiemTraHeThong() → ĐẠT TOÀN BỘ
+- Sổ điểm, gõ điểm thực hành, chặn điểm sai, dán nhiều hàng, phiếu minh chứng cập nhật: đạt trên Google thật (nhật ký người dùng dán 27/10 07:59).
+- Còn dùng DB_SECRET → thêm `thuOAuth()`; đạt thì xóa DB_SECRET. Cổng 3 coi như đóng hoàn toàn.
