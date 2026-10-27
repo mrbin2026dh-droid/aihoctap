@@ -404,3 +404,19 @@ body:not(.is-class-teacher) #act-gv-pin{display:none!important}
 .teacher-app .th-item-line{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px}
 .teacher-app .th-sum{font-weight:700;font-size:16px}
 .teacher-app .th-grade-btn{margin-left:auto;min-height:40px;padding:6px 12px;font-size:var(--t-small)}
+/* Menu dưới trên điện thoại: số cột theo số mục đang hiện (quản trị 7, giáo viên lớp 4) */
+@media(max-width:760px){.teacher-app .t-nav{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}.teacher-app .t-nav-item{font-size:11px}}
+/* Hiệu quả */
+.teacher-app .eff-note{margin:4px 0 0;font-size:var(--t-tiny,12px)}
+.teacher-app .eff-card{margin:16px 0;padding:16px 20px}
+.teacher-app .eff-card h3{margin:0 0 4px}
+.teacher-app .eff-topics,.teacher-app .eff-help{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.teacher-app .eff-topic{display:grid;grid-template-columns:minmax(120px,1.2fr) minmax(80px,2fr) 56px minmax(120px,1fr);align-items:center;gap:12px;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.teacher-app .eff-topic.is-good{--c:#15803d}.teacher-app .eff-topic.is-mid{--c:#a15c07}.teacher-app .eff-topic.is-weak{--c:#b42318}
+.teacher-app .eff-topic strong{color:var(--c);font-variant-numeric:tabular-nums}
+.teacher-app .eff-topic small{color:var(--muted)}
+.teacher-app .eff-bar{height:10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,transparent);position:relative;overflow:hidden}
+.teacher-app .eff-bar::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--pct);background:var(--c);border-radius:inherit}
+@media(max-width:760px){.teacher-app .eff-topic{grid-template-columns:minmax(0,1fr) 56px}.teacher-app .eff-bar,.teacher-app .eff-topic small{grid-column:1/-1}}
+.teacher-app .eff-help li{display:flex;flex-wrap:wrap;gap:4px 12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.teacher-app .eff-help li span{color:var(--muted)}

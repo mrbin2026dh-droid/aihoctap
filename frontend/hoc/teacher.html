@@ -64,7 +64,9 @@
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4z M4 7V3h7l3 4"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Tài liệu</span><span class="t-nav-mobile">Tài liệu</span></span></button><button type="button" id="nav-accounts" class="t-nav-item" data-view="accounts" aria-controls="view-accounts">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21v-3a8 8 0 0 1 16 0v3"/>
-</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản</span><span class="t-nav-mobile">Tài khoản</span></span></button>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản</span><span class="t-nav-mobile">Tài khoản</span></span></button><button type="button" id="nav-effect" class="t-nav-item" data-view="effect" aria-controls="view-effect">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16 M6 16l4-5 3 3 5-7 M15 7h3v3"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Hiệu quả</span><span class="t-nav-mobile">Hiệu quả</span></span></button>
 </nav>
 <section id="workspace" class="t-workspace" aria-labelledby="workspace-title">
 <header class="t-workspace-head">
@@ -331,6 +333,17 @@
 </details><button type="submit" class="t-button t-primary" data-action="save-material">Lưu tài liệu</button>
 </form>
 </section>
+</section>
+</section>
+<section id="view-effect" hidden>
+<section id="list-effect" class="t-list" aria-labelledby="eff-title">
+<h2 id="eff-title" class="visually-hidden">Hiệu quả học tập</h2>
+<p class="t-muted">Số liệu thật từ bài thi thử, bài thi, đọc bài và Bản đồ năng lực của học sinh (máy tính, không dùng AI). Dùng làm minh chứng hiệu quả.</p>
+<div class="t-toolbar acc-toolbar"><div class="t-field"><label for="eff-lop">Lớp</label><select id="eff-lop"><option value="">Tất cả lớp</option></select></div><p class="t-muted acc-note" id="eff-status" role="status">Đang tải…</p><button type="button" id="eff-csv" class="t-button t-primary" disabled>Tải báo cáo CSV</button></div>
+<dl class="t-metrics eff-metrics" id="eff-metrics"></dl>
+<section class="t-card eff-card" aria-labelledby="eff-topics-title"><h3 id="eff-topics-title">Bản đồ năng lực của lớp</h3><p class="t-muted">Tỉ lệ câu đúng theo chủ đề (luyện tập + thi). Chủ đề đỏ là nên dạy lại.</p><ul class="eff-topics" id="eff-topics"></ul></section>
+<section class="t-card eff-card" aria-labelledby="eff-exams-title"><h3 id="eff-exams-title">Tiến bộ qua thi thử</h3><p class="t-muted">So điểm lần làm đầu tiên với điểm cao nhất của mỗi em.</p><div class="t-table-wrap"><table class="t-table" id="eff-exams"><thead><tr><th scope="col">Bài thi thử</th><th scope="col">Số em làm</th><th scope="col">Lần đầu TB</th><th scope="col">Cao nhất TB</th><th scope="col">Tiến bộ</th></tr></thead><tbody id="eff-exams-body"></tbody></table></div></section>
+<section class="t-card eff-card" aria-labelledby="eff-help-title"><h3 id="eff-help-title">Học sinh cần hỗ trợ</h3><p class="t-muted">Em có Bản đồ năng lực dưới 50% hoặc điểm thi thử cao nhất dưới 50%.</p><ul class="eff-help" id="eff-help"></ul></section>
 </section>
 </section>
 <section id="view-accounts" hidden>

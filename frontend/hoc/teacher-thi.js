@@ -63,7 +63,7 @@ function fbStats(id) {
   const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === id); if (!e) return null;
   const vao = fbVao[id] || {}, nop = fbNop[id] || {};
   const students = Object.entries(fbHs || {}).filter(([, s]) => s && inScope(e, s)).map(([k, s]) => {
-    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null, lan: n ? (Number(n.lan) || 1) : 0, th: (fbTh[id] || {})[k] || null };
+    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null, lan: n ? (Number(n.lan) || 1) : 0, roi: n ? Number(n.roi_tab) || 0 : 0, th: (fbTh[id] || {})[k] || null };
   }).sort((a, b) => (a.lop + a.name).localeCompare(b.lop + b.name, 'vi'));
   return { ok: true, exam: e, students };
 }
@@ -285,7 +285,7 @@ function renderTrack() {
   box.replaceChildren(
     col('Chưa vào', sts.filter((/** @type {any} */ s) => s.state === 'chua'), 'is-wait', () => ''),
     col('Đang làm', sts.filter((/** @type {any} */ s) => s.state === 'vao'), 'is-doing', s => s.last ? 'vào ' + time(s.last) : ''),
-    col('Đã nộp', sts.filter((/** @type {any} */ s) => s.state === 'nop'), 'is-done', s => (s.score !== null ? `${s.score}/${s.total}` : '') + (th ? (s.th ? ' · đã nộp thực hành' : ' · chưa nộp thực hành') : '')));
+    col('Đã nộp', sts.filter((/** @type {any} */ s) => s.state === 'nop'), 'is-done', s => (s.score !== null ? `${s.score}/${s.total}` : '') + (s.roi ? ` · rời màn hình ${s.roi} lần` : '') + (th ? (s.th ? ' · đã nộp thực hành' : ' · chưa nộp thực hành') : '')));
 }
 /** @param {'kq'|'td'} t */
 function stTab(t) { for (const k of ['kq', 'td']) { const b = button('tab-thi-' + k), on = k === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; $('tabpanel-thi-' + k).hidden = !on; } }

@@ -2,7 +2,7 @@
 // Khung giao diện giáo viên: menu 4 phân hệ, danh sách → chi tiết, tab, Hồ sơ/Cài đặt, lịch sử trình duyệt.
 // Không gọi máy chủ. Dữ liệu và nghiệp vụ nằm ở teacher.js; tệp này chỉ điều khiển hiển thị và focus.
 
-const TITLES = {overview: 'Tổng quan', lessons: 'Soạn bài', exams: 'Về nhà', sheetexam: 'Thi', materials: 'Tài liệu', accounts: 'Tài khoản'};
+const TITLES = {overview: 'Tổng quan', lessons: 'Soạn bài', exams: 'Về nhà', sheetexam: 'Thi', materials: 'Tài liệu', accounts: 'Tài khoản', effect: 'Hiệu quả'};
 const PANEL_TITLES = {pin: 'Đổi mã PIN', ai: 'Gia sư AI và hạn mức', keys: 'Khóa API'};
 
 /** @type {() => Promise<boolean>} */
