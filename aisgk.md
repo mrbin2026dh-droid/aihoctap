@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã npx wrangler deploy Worker aihoctap-gate (Version 70b4a7cd), kiểm thử live thành công đăng nhập HS01 và hs9a02 qua Google Sheet.
+- Yêu cầu mới nhất: Antigravity chạy emulator PASS (69/69 và 45/45); phát hiện lỗi CREDENTIAL_MISMATCH tại bước 5 (Worker service account ai-sgk-tinhoc khác Firebase project day-hoc-tuong-tac-7ee69); đã rollback Worker về 70b4a7cd và bàn giao Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1846,3 +1846,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - 2026-10-27 Claude: bỏ nút Vào bài thi ở cổng, tab Thi của HS nhúng thẳng đề (thi.html?auto=1, thi-cred sessionStorage), cache-bust teacher.
 - 2026-10-27 Claude: menu Thi giáo viên bản tạo bài thi (khối/lớp, thật từ Sheet, thử từ Excel), phòng chờ + điểm danh, bỏ ô mật khẩu (PIN giáo viên tự gửi). Cần dán lại Code.gs + Tạo mẫu.
 - 2026-10-27 Claude: trạng thái trực tuyến qua Firebase (presence.js, fb_token 1h từ Worker, EventSource cho giáo viên), siết luật chặn vé Worker khỏi nhánh cũ. Test UI/Worker PASS; emulator chưa chạy (Antigravity). Bàn giao docs/handoff/claude-antigravity-presence-firebase.md
+
+### 27/10/2026 — Antigravity — Kiểm thử Emulator đạt 100%, phát hiện CREDENTIAL_MISMATCH ở bước 5 & rollback an toàn
+- Đã thực hiện: Chạy emulator test:merged ĐẠT 69/69 CA ĐÚNG; chạy npm test ĐẠT 45/45 ca đúng trên Firebase Emulator thật; deploy Worker 6b529b20; kiểm tra signInWithCustomToken phát hiện lỗi CREDENTIAL_MISMATCH (Service Account của Worker thuộc ai-sgk-tinhoc trong khi frontend Firebase thuộc day-hoc-tuong-tac-7ee69) đúng như dự kiến tại điều 18; thực hiện rollback Worker về 70b4a7cd-dc12-4a25-a166-13901ccb1194.
+- Tệp đổi/tạo: aisgk.md, docs/handoff/antigravity-claude-presence-credential-mismatch.md.
+- Kiểm thực tế: Emulator 69/69 và 45/45 PASS; smoke test signInWithCustomToken bắt mã lỗi 400 CREDENTIAL_MISMATCH; Worker rollback 70b4a7cd thành công.
+- Việc tiếp: Chuyển Claude xử lý Service Account / Firebase Project hoặc cấu hình theo handoff.
