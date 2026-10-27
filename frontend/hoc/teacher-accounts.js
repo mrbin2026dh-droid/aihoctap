@@ -5,7 +5,7 @@
 // Mỗi thay đổi Sheet tự đẩy lên Firebase, nên học sinh/giáo viên đăng nhập được ngay.
 import { SHEET_API } from './sheet-config.js';
 import { confirmBox } from './dom.js';
-import * as ui from './teacher-ui.js?v=20261027m';
+import * as ui from './teacher-ui.js?v=20261028a';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -13,8 +13,8 @@ const cred = () => { try { return { gv: sessionStorage.getItem('thi-gv-mk') || '
 /** Đang đăng nhập bằng tài khoản giáo viên lớp (không phải quản trị). */
 export const isClassTeacher = () => !!cred().gv_ma;
 
-/** @type {{students:any[],teachers:any[],classes:Record<string,number>,admin:boolean,loaded:boolean}} */
-const st = { students: [], teachers: [], classes: {}, admin: true, loaded: false };
+/** @type {{students:any[],teachers:any[],classes:Record<string,number>,admin:boolean,loaded:boolean,limit:number}} */
+const st = { students: [], teachers: [], classes: {}, admin: true, loaded: false, limit: ui.PAGE };
 /** @type {{kind:'hs'|'gv', moi:boolean, ma:string}|null} */ let editing = null;
 
 /** @param {Record<string, unknown>} body */
@@ -64,15 +64,19 @@ function render() {
   $('acc-hs-count').textContent = `${rows.length} học sinh` + (st.admin ? '' : ' của lớp thầy cô phụ trách');
   const body = $('acc-hs-body'); body.replaceChildren();
   if (!rows.length) { const tr = document.createElement('tr'); const c = td('', st.students.length ? 'Không có học sinh khớp bộ lọc.' : 'Chưa có học sinh. Bấm "Thêm học sinh".'); c.colSpan = 5; c.className = 't-muted'; tr.append(c); body.append(tr); }
-  for (const s of rows) {
+  // Vẽ từng trang 50 dòng (1000 học sinh × 4 nút = 4000 nút → treo nếu vẽ hết mỗi lần gõ tìm kiếm).
+  const frag = document.createDocumentFragment();
+  for (const s of rows.slice(0, st.limit)) {
     const tr = document.createElement('tr'), acts = document.createElement('div'); acts.className = 't-icon-actions';
     acts.append(
       ui.iconButton({ icon: 'edit', label: `Sửa: ${s.ten}`, onClick: () => openForm('hs', s) }),
       ui.iconButton({ icon: 'key', label: `Đặt lại mã PIN: ${s.ten}`, onClick: () => openForm('hs', s, true) }),
       ui.iconButton({ icon: s.trang_thai === 'Khóa' ? 'unlock' : 'lock', label: (s.trang_thai === 'Khóa' ? 'Mở khóa: ' : 'Khóa: ') + s.ten, onClick: () => void toggleLock('hs', s) }),
       ui.iconButton({ icon: 'trash', label: `Xóa: ${s.ten}`, danger: true, onClick: () => void remove('hs', s) }));
-    tr.append(td('Mã học sinh', s.ma), td('Họ và tên', s.ten), td('Lớp', s.lop), td('Trạng thái', badge(s.trang_thai)), td('Thao tác', acts)); body.append(tr);
+    tr.append(td('Mã học sinh', s.ma), td('Họ và tên', s.ten), td('Lớp', s.lop), td('Trạng thái', badge(s.trang_thai)), td('Thao tác', acts)); frag.append(tr);
   }
+  body.append(frag);
+  ui.moreRows($('acc-hs-table'), Math.min(st.limit, rows.length), rows.length, () => { st.limit += ui.PAGE; render(); });
   // Giáo viên
   const gb = $('acc-gv-body'); gb.replaceChildren();
   if (!st.teachers.length) { const tr = document.createElement('tr'); const c = td('', 'Chưa có giáo viên. Bấm "Thêm giáo viên".'); c.colSpan = 5; c.className = 't-muted'; tr.append(c); gb.append(tr); }
@@ -156,7 +160,8 @@ async function remove(kind, x) {
 $('acc-hs-add').addEventListener('click', () => openForm('hs'));
 $('acc-gv-add').addEventListener('click', () => openForm('gv'));
 for (const k of /** @type {const} */ (['hs', 'gv'])) $('tab-acc-' + k).addEventListener('click', () => tab(k));
-$('acc-hs-search').addEventListener('input', render);
-$('acc-hs-lop').addEventListener('change', render);
+const refilter = () => { st.limit = ui.PAGE; render(); };
+$('acc-hs-search').addEventListener('input', ui.debounce(refilter));
+$('acc-hs-lop').addEventListener('change', refilter);
 $('nav-accounts').addEventListener('click', () => void load());
 document.getElementById('teacher-logout')?.addEventListener('click', () => { st.students = []; st.teachers = []; st.loaded = false; status(''); });

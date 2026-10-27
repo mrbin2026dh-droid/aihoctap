@@ -75,7 +75,7 @@ async function refreshTutorQuota() {
   }
   try {
     /** @type {{ used: number, limit: number, remaining: number, locked: boolean, exam_mode: boolean }} */
-    if (thiApp.realExamOpen()) { badge.textContent = 'Đang thi'; badge.className = 'tutor-quota-badge is-locked'; badge.title = 'Lớp em đang có bài thi thật đang mở'; return; }
+    if (thiApp.realExamOpen() || thiApp.inExam()) { badge.textContent = 'Đang thi'; badge.className = 'tutor-quota-badge is-locked'; badge.title = thiApp.inExam() ? 'Em đang làm bài thi' : 'Lớp em đang có bài thi thật đang mở'; return; }
     const quota = await api('/pwa/ai-quota', { token: session.token });
     if (quota.exam_mode) {
       badge.textContent = 'Giờ thi';
@@ -136,6 +136,7 @@ function openTutor(questionId = null) {
   if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
+window.addEventListener('thi:exam', () => { if (/** @type {HTMLDialogElement} */ (node('tutor-dialog')).open) closeTutor(); });
 function closeTutor() {
   /** @type {HTMLDialogElement} */ (node('tutor-dialog')).close();
   document.body.classList.remove('tutor-open'); queueMicrotask(readProgress.refresh);
@@ -590,21 +591,33 @@ function dateLabel(stamp) {
 }
 /** @param {Ack} item */
 function percentOf(item) { return item.total ? Math.round(100 * item.correct / item.total) : 0; }
+/** Vẽ Tổng quan ngoài màn hình rồi thay một lần (không xóa trắng trước → không giật khi bấm đồng bộ). */
 async function progress() {
-  show('progress'); const syncButton = node('sync'); node('progress-view').prepend(syncButton); const target = node('progress'); target.replaceChildren();
-  const generation = viewGeneration;
-  if (!session) {const card = empty(target, 'Tổng quan học tập', 'Đăng nhập để xem tiến độ và lộ trình của em.', 'chart'); card.append(button('Đăng nhập', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal(), 'primary')); return;}
+  show('progress'); const syncButton = node('sync'), shown = node('progress');
+  if (!shown.childElementCount) node('progress-view').prepend(syncButton);
+  const generation = viewGeneration, frag = document.createDocumentFragment(), focused = document.activeElement === syncButton;
+  syncButton.classList.add('is-spinning'); syncButton.setAttribute('aria-busy', 'true');
+  try {
+    if (await progressBuild(frag, syncButton, generation) && generation === viewGeneration) { shown.replaceChildren(frag); if (focused) syncButton.focus({ preventScroll: true }); }
+  } finally { syncButton.classList.remove('is-spinning'); syncButton.removeAttribute('aria-busy'); }
+}
+/** @param {DocumentFragment} target @param {HTMLElement} syncButton @param {number} generation @returns {Promise<boolean>} */
+async function progressBuild(target, syncButton, generation) {
+  if (!session) {node('progress-view').prepend(syncButton); const card = empty(/** @type {any} */ (target), 'Tổng quan học tập', 'Đăng nhập để xem tiến độ và lộ trình của em.', 'chart'); card.append(button('Đăng nhập', () => /** @type {HTMLDialogElement} */ (node('login-dialog')).showModal(), 'primary')); return true;}
   const captured = session;
   const queue = /** @type {Outbox[]} */ (await db.all('outbox'));
   let attempts = queue.filter(item => item.uid === captured.identity.uid && item.ack).map(item => /** @type {Ack} */ (item.ack));
   let fresh = false;
   /** @type {{course_id:string,lesson_id:string,lesson_title:string,topic:string,correct:number,total:number,percent:number}[]} */
   let review = [];
+  // Đăng nhập nhanh: token Worker đang lấy ở nền → chờ tối đa 8 giây rồi mới tải tiến độ (trước đây bỏ qua → hiện 0 lượt).
+  if (navigator.onLine && captured.pin && !captured.token) await Promise.race([workerToken(captured.identity.uid, captured.pin), new Promise(r => setTimeout(r, 8000))]);
+  if (session !== captured || generation !== viewGeneration) return false;
   if (navigator.onLine && (captured.token || !captured.pin)) {
     try { const data = await api('/pwa/progress', {token:captured.token}); attempts = data.attempts; review = Array.isArray(data.review) ? data.review : []; fresh = true; }
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
-  if (session !== captured || generation !== viewGeneration) return;
+  if (session !== captured || generation !== viewGeneration) return false;
   const rejected = queue.filter(item => item.uid === captured.identity.uid && !item.ack && item.rejected);
   const waiting = queue.filter(item => item.uid === captured.identity.uid && !item.ack && !item.rejected);
   const name = String(captured.identity.student_name || '').trim().split(/\s+/).pop() || 'em';
@@ -745,6 +758,7 @@ async function progress() {
   const how = el('details', '', 'how-calc'); how.append(el('summary', 'Cách tính số liệu'),
     el('p', `Số liệu lấy từ các bài máy chủ đã nhận. "Thành thạo" là bài có lượt làm đạt từ ${MASTERED_PERCENT}% câu đúng; "Đang học" là đã làm nhưng chưa đạt. Điểm trung bình là trung bình kết quả tốt nhất của mỗi bài. Tỉ lệ câu đúng tính trên mọi lượt làm. Ngày học liên tiếp đếm các ngày có nộp bài.`, 'meta'));
   target.append(how);
+  return true;
 }
 /** @param {{course_id:string,lesson_id:string}} item */
 function lessonTitle(item) {return catalog?.courses.find(course => course.id === item.course_id)?.lessons.find(lesson => lesson.id === item.lesson_id)?.title || 'Bài học đã nộp';}
@@ -1126,7 +1140,7 @@ form('tutor-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (!navigator.onLine) { notify('Cần kết nối mạng để gửi câu hỏi.', true); return; }
   if (!tutorLesson || tutorPending) return;
-  if (thiApp.realExamOpen()) { const m = el('div', '', 'tutor-msg tutor-bot'); m.append(el('p', 'Lớp em đang có bài thi thật đang mở. Gia sư tạm nghỉ đến khi em nộp bài hoặc thầy cô khóa bài thi.')); node('tutor-messages').append(m); return; }
+  if (thiApp.realExamOpen() || thiApp.inExam()) { const m = el('div', '', 'tutor-msg tutor-bot'); m.append(el('p', thiApp.inExam() ? 'Em đang làm bài thi. Gia sư tạm nghỉ đến khi em nộp bài để điểm phản ánh đúng sức em.' : 'Lớp em đang có bài thi thật đang mở. Gia sư tạm nghỉ đến khi em nộp bài hoặc thầy cô khóa bài thi.')); node('tutor-messages').append(m); return; }
   const input = /** @type {HTMLInputElement} */ (node('tutor-input'));
   const text = input.value.trim();
   if (!text) return;

@@ -30,7 +30,7 @@
 - Thêm/sửa học sinh trong trang HocSinh hoặc sửa đề trong DeThi → bấm **Cập nhật lên Firebase** (trong app, hoặc menu Sheet).
 - Tạo/sửa/mở/khóa/xóa bài trong app: tự cập nhật, không cần bấm thêm.
 - Thống kê từng bài: hiện tức thì ai chưa vào / đã vào / đã nộp + điểm.
-- Điểm vào trang KetQua khi mở menu Thi hoặc menu Sheet **Bài thi → Lấy điểm về Sheet** (cột "Mã nộp" giúp không chép trùng).
+- Điểm vào trang KetQua khi mở menu Thi (tối đa 2 phút một lần) hoặc menu Sheet **Bài thi → Lấy điểm về Sheet** (chép ngay). Cột "Mã nộp" giúp không chép trùng; bài đã khóa và đã chép xong không tải lại; file Drive lưu dần 15 bài mỗi lần (cột "Lưu Drive").
 - Cho thi lại (thi thật): trang Thống kê → nút "Cho thi lại" (có hộp thoại xác nhận). Thi thử: cột **Số lần thi** thay cho nút này.
 - Thi thật: trang Thống kê có tab **Theo dõi nộp bài** (Chưa vào / Đang làm / Đã nộp, có cả trạng thái nộp bài thực hành).
 - **Chỉnh sửa** bài: sửa được cả câu hỏi, phương án, đáp án đúng, điểm; thêm/xóa câu. Thi thật: câu hỏi dùng chung trang DeThi của khối đó.
@@ -45,13 +45,14 @@
 - Giáo viên lớp thấy và đăng tài liệu cho khối của các lớp mình phụ trách.
 
 ## Gia sư AI và đọc bài
-- Khung chat Gia sư AI neo góc phải dưới (điện thoại: tấm trượt từ dưới lên), không che bài; câu trả lời hiện dần như đang gõ.
+- Máy tính màn rộng: mở Gia sư AI (nút **AI**) → khung chat thành cột bên phải, bài học tự thu hẹp sát cạnh. Điện thoại: tấm trượt từ dưới lên. Câu trả lời hiện dần như đang gõ.
+- Đang làm bài thi (cả thi thử) → Gia sư AI tạm nghỉ đến khi nộp bài, để điểm phản ánh đúng sức em; nộp thi thử xong AI tự nhận xét.
 - Gia sư **tự tạm nghỉ** khi lớp em có bài **thi thật** đang mở (chưa nộp). Ô **"Khóa AI trong khi kiểm tra"** (Hồ sơ → Gia sư AI) khóa AI cho mọi học sinh mọi lúc — chỉ bật khi thật cần.
 - Nộp bài **thi thử** (có Cho xem điểm): Gia sư AI tự nhận xét — nhận xét chung, em làm tốt, cần ôn thêm (không nêu đáp án). Cần Worker bản mới.
 - Bài học có thanh **tên bài + % đã đọc** dính trên cùng khi cuộn. Giáo viên xem ở **Tổng quan → Học sinh đọc bài** (chọn bài, lớp; ai đã đọc hết / đang đọc / chưa đọc).
 
 ## Tài khoản (menu Tài khoản trong app giáo viên)
-- Tab **Học sinh**: danh sách trang HocSinh của Google Sheet — thêm, sửa, đặt lại mã PIN, khóa/mở, xóa (có hộp thoại xác nhận). Lưu là học sinh đăng nhập được ngay; tài khoản khóa không đăng nhập được.
+- Tab **Học sinh**: danh sách trang HocSinh của Google Sheet — thêm, sửa, đặt lại mã PIN, khóa/mở, xóa (có hộp thoại xác nhận). Lưu là học sinh đăng nhập được ngay; tài khoản khóa không đăng nhập được. Danh sách dài hiện 50 em mỗi lần (nút **Hiện thêm**), tìm theo tên/mã hoặc lọc theo lớp.
 - Tab **Giáo viên** (chỉ quản trị thấy): thêm giáo viên dạy lớp — Mã giáo viên, Họ tên, Lớp phụ trách (ví dụ `9A, 9B`), Mã PIN. Lưu ở trang **GiaoVien** của Sheet.
 - Giáo viên lớp đăng nhập trang giáo viên: chọn **Giáo viên lớp** → Mã giáo viên + PIN. Họ thấy menu **Thi** (tạo/mở/khóa/sửa thi thử, thi thật, thống kê), **Tài liệu** (khối mình) và **Tài khoản** (học sinh lớp mình). **Về nhà** cho giáo viên lớp sẽ bật sau khi Worker được cập nhật (giai đoạn 2).
 - Quản trị đăng nhập như cũ (chọn **Quản trị**, nhập PIN giáo viên).

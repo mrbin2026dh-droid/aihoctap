@@ -34,8 +34,8 @@ function update() {
   const t = /** @type {HTMLElement|null} */ (document.querySelector('.topbar')), pos = t ? getComputedStyle(t).position : '';
   b.style.setProperty('--read-top', `${t && (pos === 'sticky' || pos === 'fixed') ? Math.round(t.getBoundingClientRect().height) : 0}px`);
   const p = Math.max(percent(), 0); if (p > cur.max) { cur.max = p; try { localStorage.setItem(lsKey(cur.uid, cur.key), String(p)); } catch { /* bỏ qua */ } }
-  const shown = Math.max(p, 0);
-  /** @type {HTMLElement} */ (b.querySelector('.read-fill')).style.width = shown + '%';
+  // Thanh và chữ cùng một số (% đọc cao nhất) — trước đây thanh theo vị trí cuộn còn chữ theo mức cao nhất → "Đã đọc hết" mà thanh mới 1/3.
+  /** @type {HTMLElement} */ (b.querySelector('.read-fill')).style.width = cur.max + '%';
   /** @type {HTMLElement} */ (b.querySelector('.read-pct')).textContent = (cur.max >= 100 ? 'Đã đọc hết' : `Đã đọc ${cur.max}%`);
   b.querySelector('.read-track')?.setAttribute('aria-valuenow', String(cur.max));
   b.classList.toggle('is-done', cur.max >= 100);

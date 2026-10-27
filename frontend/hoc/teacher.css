@@ -366,3 +366,6 @@ body.is-class-teacher #nav-overview,body.is-class-teacher #nav-lessons,body.is-c
 .teacher-app .read-mini-wrap{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .teacher-app .read-mini{position:relative;display:inline-block;width:72px;height:8px;border-radius:99px;background:var(--brand-soft);overflow:hidden}
 .teacher-app .read-mini::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--pct,0%);background:var(--brand);border-radius:99px}
+/* Bảng dài: "Đang hiện 50/1000 · Hiện thêm" */
+.teacher-app .t-more{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 0}
+.teacher-app .t-more[hidden]{display:none}

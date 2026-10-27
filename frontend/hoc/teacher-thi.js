@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027m';
-import * as ui from './teacher-ui.js?v=20261027m';
+import * as presence from './presence.js?v=20261028a';
+import * as ui from './teacher-ui.js?v=20261028a';
 import * as store from './thi-store.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -33,12 +33,27 @@ let busyCount = 0;
 /** @type {Array<() => void>} */ let fbStops = [];
 /** Dùng Firebase khi Google Sheet đã cài khóa Firebase và đã có danh sách học sinh trên Firebase. */
 const useFb = () => !!info?.fb && fbHs !== null && Object.keys(fbHs).length > 0;
+const fbRefresh = () => { if (!useFb() || busyCount) return; renderList(); if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
 function startFb() {
   if (fbStops.length || !store.enabled()) return;
-  const refresh = () => { if (!useFb() || busyCount) return; renderList(); if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
-  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; refresh(); }), store.listen('thi_vao', d => { fbVao = d || {}; refresh(); }), store.listen('thi_nop', d => { fbNop = d || {}; refresh(); }), store.listen('thi_th', d => { fbTh = d || {}; refresh(); })];
+  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; fbRefresh(); })];
+  syncExamFb();
 }
-function stopFb() { fbStops.forEach(f => f()); fbStops = []; fbHs = null; fbVao = {}; fbNop = {}; fbTh = {}; }
+/** Theo từng bài (không tải cả cây thi_nop của mọi bài — có cả câu trả lời của từng em, rất nặng khi 1000 học sinh):
+ *  bài đang mở hoặc đang xem thống kê → nghe tức thì; bài đã khóa → tải một lần. @type {Record<string, {live:boolean, stop:()=>void}>} */
+let examFb = {};
+function syncExamFb() {
+  if (!fbStops.length) return;
+  const want = new Map((info?.exams || []).map((/** @type {any} */ e) => [e.ma_de, e.trang_thai === 'mo' || e.ma_de === current]));
+  for (const [id, w] of Object.entries(examFb)) if (!want.has(id) || w.live !== want.get(id)) { w.stop(); delete examFb[id]; }
+  for (const [id, live] of want) {
+    if (examFb[id]) continue;
+    /** @type {Array<[string, Record<string, any>]>} */ const parts = [['thi_nop', fbNop], ['thi_vao', fbVao], ['thi_th', fbTh]];
+    if (live) { const stops = parts.map(([branch, into]) => store.listen(`${branch}/${id}`, d => { into[id] = d || {}; fbRefresh(); })); examFb[id] = { live, stop: () => stops.forEach(f => f()) }; }
+    else { let dead = false; examFb[id] = { live, stop: () => { dead = true; } }; for (const [branch, into] of parts) void store.get(`${branch}/${id}`).then(d => { if (!dead) { into[id] = d || {}; fbRefresh(); } }).catch(() => {}); }
+  }
+}
+function stopFb() { fbStops.forEach(f => f()); fbStops = []; Object.values(examFb).forEach(w => w.stop()); examFb = {}; fbHs = null; fbVao = {}; fbNop = {}; fbTh = {}; }
 /** @param {any} e @param {any} s */
 const inScope = (e, s) => e.lop ? String(s.lop || '').trim().toLowerCase() === String(e.lop).trim().toLowerCase() : Number(s.khoi) === Number(e.khoi);
 /** Thống kê một bài từ Firebase: ai chưa vào / đã vào / đã nộp + điểm. @param {string} id */
@@ -260,7 +275,7 @@ const onDetail = () => { const d = document.getElementById('detail-sheetexam'); 
 
 /** Mở trang thống kê NGAY (dùng số liệu sẵn có của thẻ), rồi tải chi tiết từng em từ Google Sheet ở nền. */
 async function openStats(/** @type {string} */ maDe) {
-  current = maDe; stats = null; stTab('kq');
+  current = maDe; stats = null; stTab('kq'); syncExamFb();
   const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === maDe);
   if (e) {
     $('thi-gv-title').textContent = e.tieu_de;
@@ -305,7 +320,7 @@ async function run(btn, fn, okMsg) {
   busyCount++; if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
   try {
     const r = await fn();
-    if (r.students) stats = r; else { info = r; if (stats && !r.exams.some((/** @type {any} */ x) => x.ma_de === stats.exam.ma_de)) stats = null; }
+    if (r.students) stats = r; else { info = r; if (stats && !r.exams.some((/** @type {any} */ x) => x.ma_de === stats.exam.ma_de)) stats = null; syncExamFb(); }
     if (useFb() && current && onDetail()) stats = fbStats(current);
     render();
     if (r.fb_error) status('Đã lưu vào Google Sheet nhưng chưa đẩy được lên Firebase: ' + r.fb_error, 'error');

@@ -244,6 +244,23 @@ export function iconButton({icon, label, danger = false, onClick}) {
   return btn;
 }
 
+/** Dòng "Đang hiện 50/1000 · Hiện thêm" ngay sau bảng (bảng dài không vẽ hết một lúc → không treo trình duyệt).
+ * @param {HTMLElement} table @param {number} shown @param {number} total @param {() => void} onMore */
+export function moreRows(table, shown, total, onMore) {
+  let box = /** @type {HTMLElement|null} */ (table.nextElementSibling);
+  if (!box || !box.classList.contains('t-more')) { box = document.createElement('div'); box.className = 't-more'; table.after(box); }
+  box.replaceChildren(); box.hidden = total <= shown;
+  if (box.hidden) return;
+  const p = document.createElement('p'); p.className = 't-muted'; p.textContent = `Đang hiện ${shown}/${total}`;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 't-button'; b.textContent = `Hiện thêm ${Math.min(PAGE, total - shown)}`;
+  b.addEventListener('click', onMore);
+  box.append(p, b);
+}
+/** Số dòng mỗi lần vẽ bảng dài. */
+export const PAGE = 50;
+/** Chạy fn sau khi ngừng gõ ms mili giây. @param {() => void} fn @param {number} [ms] */
+export function debounce(fn, ms = 180) { let t = 0; return () => { clearTimeout(t); t = window.setTimeout(fn, ms); }; }
+
 /** Chuyển nút chữ có sẵn thành nút biểu tượng (giữ nguyên trình xử lý).
  * @param {HTMLButtonElement} btn @param {keyof typeof ICONS} icon @param {string} label @param {boolean} [danger] */
 export function toIcon(btn, icon, label, danger = false) {

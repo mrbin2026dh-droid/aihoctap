@@ -89,7 +89,14 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
  const rv=reviews.at(-1);ok(rv.mode==='exam_review'&&rv.review.items.length===1&&rv.review.items[0].dung===true&&!JSON.stringify(rv).includes('"answer"'),'gửi AI câu hỏi + đúng/sai, không gửi đáp án');
  const stx=await pg.textContent('.thi-stats');ok(stx.includes('1/2')&&!(await pg.textContent('.thi-board')).includes('Bạn 9B'),'xếp hạng: hạng 1/2 trong lớp 9A, không tính bạn lớp khác');
  ok(await pg.locator('.thi-rank-row').count()===2&&(await pg.textContent('.thi-rank-row.is-me')).includes('(em)'),'bảng xếp hạng lớp, tô sáng dòng của em');
- await pg.click('.thi-actions button:has-text("Làm lại")');await pg.waitForSelector('.thi-form .question');await pg.click('.thi-form .option:has-text("Ổ cứng")');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForFunction(()=>(document.querySelector('.thi-score')?.textContent||'').includes('0 / 10'));
+ await pg.evaluate(()=>document.getElementById('open-tutor').click());await pg.waitForFunction(()=>document.getElementById('tutor-dialog').open);
+ db.thi_de.b2[0].text='RAM là gì? (đã sửa)';
+ await pg.evaluate(()=>[...document.querySelectorAll('.thi-actions button')].find(b=>b.textContent.includes('Làm lại')).click());await pg.waitForSelector('.thi-form .question');
+ ok((await pg.textContent('.thi-form legend')).includes('(đã sửa)'),'làm lại: tải đề mới (thầy cô vừa sửa câu hỏi/đáp án)');
+ ok(!(await pg.evaluate(()=>document.getElementById('tutor-dialog').open)),'vào làm bài → khung Gia sư AI tự đóng');
+ await pg.evaluate(()=>document.getElementById('open-tutor').click());await pg.waitForFunction(()=>document.getElementById('tutor-quota-badge').textContent==='Đang thi',null,{timeout:4000});ok(true,'đang làm bài thi thử → Gia sư AI tạm nghỉ ("Đang thi")');
+ await pg.evaluate(()=>document.getElementById('close-tutor').click());
+ await pg.click('.thi-form .option:has-text("Ổ cứng")');await pg.click('.thi-submit');await pg.click('#msg-dialog button:has-text("Nộp bài")');await pg.waitForFunction(()=>(document.querySelector('.thi-score')?.textContent||'').includes('0 / 10'));
  const st2=await pg.textContent('.thi-stats');ok(st2.includes('Số lần thi')&&db.thi_nop.b2.hs01.lan===2&&db.thi_nop.b2.hs01.cao_nhat===10&&st2.includes('1/2'),'làm lại: lần 2, giữ điểm cao nhất 10 để xếp hạng');
  if(vp.width<500)await pg.screenshot({path:process.env.SHOT||'/dev/null'}).catch(()=>{});
  ok(await pg.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'trang kết quả không tràn ngang '+vp.width);

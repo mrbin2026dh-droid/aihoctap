@@ -1366,9 +1366,21 @@ body.student-app dialog.tutor-dialog::backdrop{background:transparent}
 
 /* Máy tính rộng: mở Gia sư AI → khung chat thành cột bên phải cao hết màn hình, nội dung dịch sang trái vừa khít */
 @media(min-width:1100px){
-  body.student-app.tutor-open dialog.tutor-dialog{inset:var(--tb-h,0px) 0 0 auto;width:min(420px,32vw);height:auto;border-radius:0;border-width:0 0 0 1px;box-shadow:-8px 0 24px rgba(0,0,0,.06);animation:tutor-side .2s ease-out}
-  body.student-app.tutor-open .workspace{margin-right:min(420px,32vw);transition:margin-right .2s ease-out}
+  body.student-app.tutor-open dialog.tutor-dialog{inset:var(--tb-h,0px) 0 0 auto;width:var(--tutor-w);height:auto;border-radius:0;border-width:0 0 0 1px;box-shadow:-8px 0 24px rgba(0,0,0,.06);animation:tutor-side .2s ease-out}
+  body.student-app.tutor-open .workspace{margin-right:var(--tutor-w);transition:margin-right .2s ease-out}
   body.student-app.tutor-open main{max-width:none}
 }
 @keyframes tutor-side{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){body.student-app.tutor-open .workspace{transition:none}}
+
+/* 28/10: nội dung bài lấp đầy tới khung chat (không còn khoảng trống), khung chat rộng ra trên màn lớn */
+body.student-app{--tutor-w:min(36vw,clamp(380px,calc(100vw - 1180px),540px))}
+body.student-app #lesson-content.reading-paper{max-width:none}
+/* 4 nút công cụ: 3 nút chữ + nút AI gọn như tab */
+.student-app .lesson-tools{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(96px,.55fr)}
+.student-app .lesson-tools button{white-space:nowrap}
+.student-app .lesson-tools button span{overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){.student-app .lesson-tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Nút đồng bộ ở Tổng quan: chỉ xoay biểu tượng, không vẽ lại trắng trang */
+#sync.is-spinning svg{animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){#sync.is-spinning svg{animation:none}}

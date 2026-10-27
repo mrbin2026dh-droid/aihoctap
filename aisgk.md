@@ -1880,3 +1880,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Desktop ≥1100px: mở Gia sư AI → khung chat thành cột phải, nội dung bài tự thu hẹp sang trái. Thanh % đọc bài thẳng hàng với nội dung.
 - Worker: sửa bộ lọc chặn nhầm (nguyên nhân chính AI "trả lời sai"), câu cụt (geminiText, 2048 token), bài dài (pickLessonContext), văn phong. Cần deploy: docs/handoff/claude-antigravity-deploy-worker-ai-chinh-xac.md.
 - Phân tích AI + "bộ não thứ hai": docs/phan-tich-ai-gia-su.md.
+
+## 28/10/2026 00:12 — Claude: AI cột phải + rà soát lỗi logic, hiệu năng 1000 học sinh
+- Học sinh: nút "AI" gọn; bài học lấp tới sát khung chat (khung rộng 380–540px theo màn); thanh đọc bài hiện đúng % cao nhất (hết "Đã đọc hết" mà thanh 1/3); Tổng quan bấm đồng bộ không xóa trắng (hết giật), đăng nhập nhanh vẫn tải tiến độ; AI tạm nghỉ khi đang làm bài thi (cả thi thử) và tự đóng khi vào bài; làm lại luôn tải đề mới; thi thật kiểm đã nộp trước khi vào; báo lỗi nộp rõ (đã nộp / bài khóa).
+- Giáo viên: Tài khoản + Học sinh đọc bài vẽ 50 dòng/lần (Hiện thêm), tìm kiếm chờ ngừng gõ; Đọc bài nghe đúng 1 bài, chỉ khối của bài, giáo viên lớp chỉ thấy lớp mình; thống kê Thi nghe theo từng bài (không tải cả cây thi_nop). Module teacher-ui cùng ?v=20261028a.
+- Code.gs: pull_ theo từng bài, bỏ qua bài khóa đã chép, 2 phút/lần, khóa chống trùng; Drive 15 bài/lần (cột "Lưu Drive"); Cho thi lại chép trước rồi Hủy; Xóa bài chép điểm trước; sửa tài khoản/tài liệu chỉ đẩy phần đó. Cần người dùng dán lại: docs/handoff/claude-antigravity-cap-nhat-gs-hieu-nang.md.
+- Test PASS: 35/36 .cjs (audit_settings_behavior lỗi sẵn từ trước, bản gốc cũng lỗi), test_sheet_exam_gs, tutor/worker .mjs.
