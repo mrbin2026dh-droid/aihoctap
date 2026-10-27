@@ -3,6 +3,7 @@
 // Thầy cô nhập số Zalo trong trang giáo viên (Cài đặt → Hỗ trợ Zalo) → Google Sheet → Firebase ho_tro (ai cũng đọc được).
 // Giáo viên lớp nhập Zalo riêng → học sinh lớp đó thấy Zalo của thầy cô lớp mình; không có thì dùng Zalo chung của trường.
 import * as store from './thi-store.js';
+import { SUPPORT_CONFIG } from './support-config.js';
 
 const LS = 'ho-tro-cache';
 /** @type {{zalo?:string,ten?:string,lop?:Record<string,{zalo?:string,ten?:string}>}|null} */ let data = null;
@@ -21,10 +22,11 @@ export async function init() {
   try { data = (await store.get('ho_tro')) || null; try { localStorage.setItem(LS, JSON.stringify(data)); } catch { /* bỏ qua */ } paint(); } catch { /* ngoại tuyến: dùng bản đã lưu */ }
 }
 function pick() {
-  if (!data) return null;
+  const fallback = safeZalo(SUPPORT_CONFIG.zalo) ? SUPPORT_CONFIG : null;
+  if (!data) return fallback;
   const mine = cls && data.lop ? data.lop[store.keyOf(cls)] : null;
   if (mine && safeZalo(mine.zalo)) return mine;
-  return safeZalo(data.zalo) ? data : null;
+  return safeZalo(data.zalo) ? data : fallback;
 }
 function paint() {
   let a = /** @type {HTMLAnchorElement|null} */ (document.getElementById('zalo-help'));

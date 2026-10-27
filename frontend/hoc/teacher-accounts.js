@@ -218,7 +218,7 @@ document.getElementById('teacher-logout')?.addEventListener('click', () => { st.
     try {
       const r = await call({ action: 'gv_support_save', zalo: z, ten: inp('support-ten').value.trim() });
       dlg.close();
-      void noticeBox({ title: r.zalo ? 'Đã lưu Zalo hỗ trợ' : 'Đã ẩn nút Zalo', body: r.fb_error ? 'Đã lưu vào Google Sheet nhưng chưa đẩy được lên Firebase: ' + r.fb_error : (r.zalo ? 'Học sinh thấy nút "Hỏi thầy cô" ngay khi mở lại ứng dụng.' : 'Học sinh không còn thấy nút Zalo.'), okText: 'Đóng' });
+      void noticeBox({ title: r.zalo ? 'Đã lưu Zalo hỗ trợ' : 'Đã bỏ Zalo riêng', body: r.fb_error ? 'Đã lưu vào Google Sheet nhưng chưa đẩy được lên Firebase: ' + r.fb_error : (r.zalo ? 'Học sinh thấy nút "Hỏi thầy cô" ngay khi mở lại ứng dụng.' : 'Học sinh thấy Zalo mặc định của ứng dụng.'), okText: 'Đóng' });
     } catch (e) { $('support-err').textContent = e instanceof Error ? e.message : 'Chưa lưu được.'; }
     finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
   });

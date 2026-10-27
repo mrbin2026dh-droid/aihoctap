@@ -1893,3 +1893,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Worker: /api/teacher/ai-questions, /api/teacher/ai-practical (quản trị hoặc giáo viên lớp qua Sheet gv_login, 40 lượt/ngày), progress trả mastery, tutor weak_topics, exam_review theo chủ đề. Code.gs: chủ đề/mức độ câu hỏi, thuc_hanh + ChamThucHanh, Zalo, publish_ từng phần. Luật: nang_luc, ho_tro, thi_nop thêm chu_de/dau/roi_tab.
 - Test PASS: 38/39 .cjs (audit_settings_behavior lỗi sẵn), test_sheet_exam_gs, test_teacher_ai, test_practical_grading (Pyodide thật), test_offline_learning (service worker thật), worker .mjs. Emulator luật chưa chạy được ở đây (không tải được jar) → Antigravity chạy.
 - Bàn giao: docs/handoff/claude-antigravity-4-tinh-nang-thi.md
+
+## 28/10/2026 06:55 — Claude: Zalo mặc định + phân tích "bộ não thứ hai" trên Render
+- Thêm frontend/hoc/support-config.js (Zalo mặc định https://zalo.me/0818810007); Zalo nhập ở trang giáo viên vẫn ưu tiên. Test lesson/thi/teacher/offline PASS.
+- Phân tích Render free cho bộ não thứ hai bằng Python: trả lời trong chat (không triển khai).

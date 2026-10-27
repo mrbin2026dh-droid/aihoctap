@@ -23,6 +23,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:844}]){const mobi
   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
  await pg.goto('http://localhost:8174/');await pg.waitForTimeout(500);
  await pg.click('#gate-student');await pg.fill('#student-code','hs01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForTimeout(1000);
+ await pg.waitForSelector('#zalo-help:not([hidden])');ok((await pg.getAttribute('#zalo-help','href'))==='https://zalo.me/0818810007','chưa nhập Zalo trong trang giáo viên → dùng Zalo mặc định của ứng dụng');
  await pg.click('[data-tab=catalog]');await pg.waitForTimeout(300);await pg.locator('.lesson-open').first().click();await pg.waitForSelector('#read-bar:not([hidden])');
  ok((await pg.textContent('#read-bar .read-title')).includes('Thế giới kĩ thuật số')&&(await pg.textContent('#read-bar .read-pct')).includes('Đã đọc'),'bài học: thanh neo tên bài + % đã đọc');
  await pg.evaluate(()=>scrollTo(0,900));await pg.waitForTimeout(300);
