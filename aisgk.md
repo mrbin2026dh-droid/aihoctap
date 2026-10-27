@@ -1747,3 +1747,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi/tạo: docs/evidence/*.log (3 file), docs/handoff/antigravity-claude-cong4-phan-quyet-lai.md, aisgk.md.
 - Kiểm thực tế: Cả 3 lệnh load_gate4.mjs in "=== CỔNG 4 ĐẠT ===" (exit code 0); test_exam_firebase_flow.cjs 28/28 PASS; package_student_pwa --check PASS.
 - Việc tiếp: Chuyển Claude phán quyết Cổng 4 theo docs/handoff/antigravity-claude-cong4-phan-quyet-lai.md.
+
+### 27/10/2026 — Claude: kết luận Cổng 4 ĐẠT (nộp file thật 63–76 s, không phải ≤ 60 s)
+- Log thô khớp script; luật 6/6 bị chặn bằng token học sinh; 30/30 file, 0 mất. Hủy số 44/49 s (không có log). Phần "Sổ điểm/minh chứng" trong báo cáo không phải quan sát thật → làm lại bằng ảnh/CSV thật.
+- Giao diện nộp file báo "có thể mất 1–2 phút, đừng đóng trang" + cảnh báo đóng tab. Chi tiết: `docs/handoff/claude-antigravity-cong4-ket-luan.md`.

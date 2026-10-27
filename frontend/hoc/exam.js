@@ -393,13 +393,15 @@ function practiceUploader(examId, already) {
   input.addEventListener('change', async () => {
     const file = input.files?.[0]; if (!file) return;
     pick.disabled = true; status.classList.remove('bad');
+    const guard = /** @param {BeforeUnloadEvent} ev */ ev => { ev.preventDefault(); ev.returnValue = ''; }; // chặn lỡ đóng trang khi file chưa nộp xong
+    window.addEventListener('beforeunload', guard);
     try {
       await examFb.uploadPractice(examId, file, msg => { status.textContent = msg; });
       status.textContent = `Đã nộp "${file.name}" (${Math.ceil(file.size / 1024)} KB). Thầy cô sẽ chấm phần thực hành.`;
       pick.textContent = 'Nộp lại file thực hành';
     } catch (err) {
       status.textContent = err instanceof Error ? err.message : 'Chưa nộp được file.'; status.classList.add('bad');
-    } finally { pick.disabled = false; input.value = ''; }
+    } finally { window.removeEventListener('beforeunload', guard); pick.disabled = false; input.value = ''; }
   });
   wrap.append(pick, input, status);
   return wrap;

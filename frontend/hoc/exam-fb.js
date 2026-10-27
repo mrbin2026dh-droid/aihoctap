@@ -121,7 +121,7 @@ export async function uploadPractice(examId, file, onStatus = () => {}) {
   if (!FB_URL()) throw new ApiError(503, 'Hệ thống nhận file chưa được bật. Hãy báo thầy cô.');
   const b64 = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(',')[1] || ''); r.onerror = () => reject(new ApiError(400, 'Không đọc được file.')); r.readAsDataURL(file); });
   for (let attempt = 0; ; attempt++) {
-    onStatus(attempt ? `Hệ thống đang bận, thử lại lần ${attempt + 1}…` : 'Đang nộp file…');
+    onStatus(attempt ? `Hệ thống đang bận, đang thử lại lần ${attempt + 1}. Đừng đóng trang.` : 'Đang nộp file… Nếu cả lớp cùng nộp có thể mất 1–2 phút. Đừng đóng trang.');
     try {
       const res = await fetch(FB_URL(), { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'upload_practice', idToken: await fb.token(), exam_id: examId, name: file.name, mime: file.type, b64 }) });
       const ack = await res.json().catch(() => null);
