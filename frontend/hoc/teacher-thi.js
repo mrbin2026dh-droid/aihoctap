@@ -6,7 +6,7 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261027e';
+import * as presence from './presence.js?v=20261027f';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const input = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -136,6 +136,7 @@ async function startLive() {
   if (watching) return;
   if (!(await ensureTeacherTicket())) {
     const why = presence.lastTeacherError();
+    if (noKey) { $('thi-live-status').textContent = 'Bảng trực tuyến chưa bật: Worker chưa cài khóa Firebase (PRESENCE_*). Học và thi vẫn chạy bình thường.'; button('thi-live-relogin').hidden = true; return; }
     $('thi-live-status').textContent = /CREDENTIAL_MISMATCH|CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND/.test(why)
       ? 'Firebase không nhận vé của Worker (khác dự án Firebase). Báo Antigravity kiểm tra FIREBASE_CLIENT_EMAIL. (' + why + ')'
       : 'Phiên giáo viên đã cũ nên chưa kết nối được Firebase. Bấm Đăng nhập lại.' + (why ? ' (' + why.replace('Firebase từ chối vé: ', '') + ')' : '');
@@ -160,11 +161,14 @@ async function startLive() {
 async function ensureTeacherTicket() {
   try { if (localStorage.getItem('aisgk-presence-gv')) return true; } catch { /* bỏ qua */ }
   if (pendingTicket) return pendingTicket;
-  let t = ''; try { t = sessionStorage.getItem('aisgk-pwa-teacher') || ''; } catch { /* bỏ qua */ }
+  let t = ''; let had = false;
+  try { const v = sessionStorage.getItem('aisgk-presence-gv-ticket'); had = v !== null; t = v || ''; } catch { /* bỏ qua */ }
+  if (had && !t) { noKey = true; return false; }   // Worker đăng nhập được nhưng chưa cài khóa PRESENCE_*
   return t ? presence.startTeacher(t) : false;
 }
 /** @type {Promise<boolean>|null} */ let pendingTicket = null;
-window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; if (t) { watching = false; pendingTicket = presence.startTeacher(t).finally(() => { pendingTicket = null; }); } });
+let noKey = false;
+window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; noKey = !t; if (t) { watching = false; pendingTicket = presence.startTeacher(t).finally(() => { pendingTicket = null; }); } });
 $('thi-relogin').addEventListener('click', relogin);
 document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); watching = false; info = null; live = {}; status(''); });
 $('thi-live-relogin').addEventListener('click', relogin);

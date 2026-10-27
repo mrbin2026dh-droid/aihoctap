@@ -1,10 +1,10 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
 import * as db from './db.js';
-import * as ui from './teacher-ui.js?v=20261027e';
+import * as ui from './teacher-ui.js?v=20261027f';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
-import './teacher-thi.js?v=20261027e';
+import './teacher-thi.js?v=20261027f';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
 /** @typedef {import('./contracts').PublishLesson} PublishLesson */
@@ -18,7 +18,7 @@ let mustChangePin = sessionStorage.getItem('aisgk-pwa-teacher-must-change') === 
 try {
   if (await db.get('meta', 'session')) {
     token = ''; mustChangePin = false;
-    sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change');
+    sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); sessionStorage.removeItem('aisgk-presence-gv-ticket'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change');
   }
 } catch { /* không đọc được bộ nhớ: coi như chưa có phiên học sinh */ }
 /** Thông báo dạng hộp thoại: mỗi thông báo một hộp thoại, hiện lần lượt (không dùng thanh nổi/toast).
@@ -35,7 +35,7 @@ const DRAFT_KEY = 'aisgk-teacher-draft';
 function isAuthError(e) { return e instanceof ApiError && (e.status === 401 || (e.status === 403 && /Token xác thực/.test(e.message))); }
 /** @param {Error} error */
 function fail(error) {
-  if (isAuthError(error)) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); mustChangePin = false; generation++; updateAuth();}
+  if (isAuthError(error)) {token = ''; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); sessionStorage.removeItem('aisgk-presence-gv-ticket'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); mustChangePin = false; generation++; updateAuth();}
   if (isAuthError(error)) { notify('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.', true); return; }
   notify(error instanceof Error ? error.message : 'Thao tác chưa hoàn thành. Hãy thử lại.', true);
 }
@@ -604,7 +604,7 @@ node('teacher-login').addEventListener('submit', async event => {
       generation++;
       await db.remove('meta', 'session').catch(() => {});   // đăng nhập giáo viên thì đăng xuất học sinh trên máy này
       try { localStorage.removeItem('aisgk-fb'); } catch { /* bỏ qua */ }   // và cả phiên thi Firebase của học sinh
-      sessionStorage.setItem('aisgk-pwa-teacher', token); try { sessionStorage.setItem('thi-gv-mk', pin); } catch { /* bỏ qua */ } window.dispatchEvent(new CustomEvent('thi-gv-login', {detail: {token}}));
+      sessionStorage.setItem('aisgk-pwa-teacher', token); try { sessionStorage.setItem('thi-gv-mk', pin); } catch { /* bỏ qua */ } try { sessionStorage.setItem('aisgk-presence-gv-ticket', response.fb_token || ''); } catch { /* bỏ qua */ } window.dispatchEvent(new CustomEvent('thi-gv-login', {detail: {token: response.fb_token || ''}}));
       loginForm.reset();
       updateAuth();
       ui.reset();
@@ -880,7 +880,7 @@ form.addEventListener('submit', async event => {
   catch (error) {if (captured === generation) fail(error instanceof Error ? error : new Error('Chưa xuất bản được.'));} finally {submit.disabled = false;}
 });
 on('teacher-logout', async () => {
-  const oldToken = token; token = ''; mustChangePin = false; generation++; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); updateAuth();
+  const oldToken = token; token = ''; mustChangePin = false; generation++; sessionStorage.removeItem('aisgk-pwa-teacher'); sessionStorage.removeItem('thi-gv-mk'); sessionStorage.removeItem('aisgk-presence-gv-ticket'); try { localStorage.removeItem('aisgk-presence-gv'); } catch { /* bỏ qua */ } sessionStorage.removeItem('aisgk-pwa-teacher-must-change'); updateAuth();
   form.reset(); lessonDirty = false; quotaDirty = false; try {localStorage.removeItem(DRAFT_KEY);} catch {/* không có bộ nhớ */} ui.reset(); node('question-editors').replaceChildren(); node('preview').replaceChildren(); node('teacher-results').replaceChildren(); node('published').replaceChildren(); node('lesson-list').replaceChildren(); allStudents = []; node('students-tbody').replaceChildren();
   try {await api('/teacher/logout', {method:'POST',token:oldToken});} catch {notify('Đã đăng xuất trên máy. Phiên máy chủ chưa xác nhận thu hồi.', true);}
 });

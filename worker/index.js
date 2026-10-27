@@ -176,6 +176,33 @@ export async function hashPinPbkdf2(pin, saltHex) {
 let cachedDevKeyPair = null;
 
 /**
+ * Khóa ký vé Firebase cho TRẠNG THÁI TRỰC TUYẾN (presence).
+ * Presence nằm ở dự án Firebase của app (day-hoc-tuong-tac-7ee69), khác dự án của FIREBASE_PRIVATE_KEY (ai-sgk-tinhoc),
+ * nên cần service account RIÊNG của dự án đó: PRESENCE_CLIENT_EMAIL, PRESENCE_PRIVATE_KEY, PRESENCE_PRIVATE_KEY_ID (wrangler secret).
+ * Thiếu khóa → trả null: app vẫn học/thi bình thường, chỉ tắt bảng trực tuyến.
+ */
+let cachedPresenceKey = null;
+export async function presenceSigner(env = {}) {
+  if (!env.PRESENCE_CLIENT_EMAIL) return null;
+  if (env.PRESENCE_KEYPAIR) return { privateKey: env.PRESENCE_KEYPAIR.privateKey, email: env.PRESENCE_CLIENT_EMAIL, kid: env.PRESENCE_PRIVATE_KEY_ID || '' };
+  if (!env.PRESENCE_PRIVATE_KEY) return null;
+  if (!cachedPresenceKey || cachedPresenceKey.src !== env.PRESENCE_PRIVATE_KEY) {
+    const pem = SecurityConfigContract.cleanPem(env.PRESENCE_PRIVATE_KEY);
+    const der = base64UrlDecode(pem.replace(/-----[^\n]+-----/g, '').replace(/\s+/g, ''));
+    const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+    cachedPresenceKey = { src: env.PRESENCE_PRIVATE_KEY, key };
+  }
+  return { privateKey: cachedPresenceKey.key, email: env.PRESENCE_CLIENT_EMAIL, kid: env.PRESENCE_PRIVATE_KEY_ID || '' };
+}
+/** Vé Firebase 1 giờ cho presence ('' nếu chưa cài khóa hoặc lỗi). */
+export async function makePresenceToken(env, uid, claims) {
+  try {
+    const sg = await presenceSigner(env);
+    return sg ? await createFirebaseCustomToken(uid, claims, sg.privateKey, sg.email, sg.kid, 3600) : '';
+  } catch (e) { console.error('[PRESENCE_TOKEN_ERROR]', e); return ''; }
+}
+
+/**
  * Load or parse Service Account Keypair for RS256 token signing (G2, H2, H3)
  */
 export async function loadOrDeriveServiceAccountKeys(env = {}) {
@@ -2512,11 +2539,7 @@ export default {
       );
 
       // Vé Firebase 1 giờ (Firebase chỉ nhận custom token ≤ 1 giờ): app đổi lấy idToken để ghi trạng thái trực tuyến thẳng lên Firebase, không qua Worker.
-      let fbToken = '';
-      try {
-        fbToken = await createFirebaseCustomToken(uidForToken, { role: 'student', grade: studentCred.grade, class_code: studentCred.class_code, name: studentCred.name },
-          signingKeys.privateKey, env.FIREBASE_CLIENT_EMAIL, env.FIREBASE_PRIVATE_KEY_ID, 3600);
-      } catch (e) { console.error('[FB_TOKEN_ERROR]', e); }
+      const fbToken = await makePresenceToken(env, uidForToken, { role: 'student', grade: studentCred.grade, class_code: studentCred.class_code, name: studentCred.name });
 
       return new Response(JSON.stringify({
         token: token,
@@ -2658,9 +2681,11 @@ export default {
         env.FIREBASE_CLIENT_EMAIL,
         env.FIREBASE_PRIVATE_KEY_ID
       );
+      const teacherFbToken = await makePresenceToken(env, 'teacher_admin', { role: 'teacher' });
       return new Response(JSON.stringify({
         success: true,
         token: token,
+        fb_token: teacherFbToken,
         role: 'teacher',
         must_change: mustChange
       }), {

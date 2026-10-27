@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import worker, {MockDONamespace} from '../worker/index.js';
 const kp = await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['sign','verify']);
+const pkp = await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['sign','verify']);
 const URL_SHEET = 'https://script.google.com/macros/s/TEST/exec';
 const rows = {hs01:{pin:'123456', name:'Nguyễn Văn An', lop:'9A', ma:'HS01'}, hs9a02:{pin:'234567', name:'Trần Thị Bình', lop:'9A', ma:'hs9a02'}};
 let mode = 'ok'; const calls = [];
@@ -18,7 +19,7 @@ globalThis.fetch = async (u, o) => {
   return realFetch(u, o);
 };
 const env = {GATE_DO:new MockDONamespace(), SIGNING_KEYPAIR:kp, MOCK_MODE:true, SHEET_LOGIN_URL:URL_SHEET, ALLOWED_ORIGIN:'https://mrbin2026dh-droid.github.io',
-  FIREBASE_CLIENT_EMAIL:'x@y.iam.gserviceaccount.com', FIREBASE_PRIVATE_KEY_ID:'k', TEACHER_ADMIN_SECRET:'TEST_SECRET_KEY_AT_LEAST_16_CHARS'};
+  FIREBASE_CLIENT_EMAIL:'x@y.iam.gserviceaccount.com', PRESENCE_CLIENT_EMAIL:'p@day-hoc.iam.gserviceaccount.com', PRESENCE_KEYPAIR:pkp, FIREBASE_PRIVATE_KEY_ID:'k', TEACHER_ADMIN_SECRET:'TEST_SECRET_KEY_AT_LEAST_16_CHARS'};
 const call = async (path, o = {}, token) => { const r = await worker.fetch(new Request('http://localhost/api' + path, {method:o.method || 'GET', headers:{'Content-Type':'application/json', ...(token ? {Authorization:'Bearer ' + token} : {})}, body:o.body ? JSON.stringify(o.body) : undefined}), env); return {status:r.status, body:await r.json().catch(() => ({}))}; };
 
 let r = await call('/login', {method:'POST', body:{student_id:'HS01', pin:'123456'}});
@@ -28,6 +29,14 @@ const fbp = JSON.parse(Buffer.from(String(r.body.fb_token).split('.')[1], 'base6
 assert.equal(fbp.exp - fbp.iat, 3600, 'vé Firebase phải ≤ 1 giờ (Firebase từ chối custom token dài hơn)');
 assert.equal(fbp.uid, 'HS01'); assert.equal(fbp.claims.role, 'student'); assert.equal(fbp.claims.class_code, '9A');
 assert.ok(fbp.aud.includes('identitytoolkit'), 'vé Firebase đúng đối tượng Identity Toolkit');
+assert.equal(fbp.iss, 'p@day-hoc.iam.gserviceaccount.com', 'vé Firebase ký bằng service account của dự án presence (không phải FIREBASE_CLIENT_EMAIL)');
+{ const [h, pl, sg] = String(r.body.fb_token).split('.');
+  const okSig = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', pkp.publicKey, Buffer.from(sg, 'base64url'), new TextEncoder().encode(h + '.' + pl));
+  assert.ok(okSig, 'chữ ký vé Firebase khớp khóa PRESENCE'); }
+{ const save = env.PRESENCE_CLIENT_EMAIL; delete env.PRESENCE_CLIENT_EMAIL;
+  const r0 = await call('/login', {method:'POST', body:{student_id:'HS01', pin:'123456'}});
+  assert.equal(r0.status, 200); assert.equal(r0.body.fb_token, '', 'chưa cài khóa presence → fb_token rỗng, đăng nhập vẫn được');
+  env.PRESENCE_CLIENT_EMAIL = save; }
 const me = await call('/pwa/me', {}, r.body.token); assert.equal(me.status, 200, JSON.stringify(me.body)); assert.equal(me.body.grade, 9); assert.equal(me.body.class_code, '9A');
 // viết hoa/thường: gõ hs01 vẫn vào, uid chuẩn theo Sheet
 r = await call('/login', {method:'POST', body:{student_id:'hs01', pin:'123456'}}); assert.equal(r.status, 200); assert.equal(r.body.uid, 'HS01');
@@ -45,4 +54,14 @@ const cp = await call('/pwa/change-pin', {method:'POST', body:{old_pin:'123456',
 for (let i = 0; i < 12; i++) await call('/login', {method:'POST', body:{student_id:'hs9a02', pin:'000000'}});
 r = await call('/login', {method:'POST', body:{student_id:'hs9a02', pin:'234567'}}); assert.equal(r.status, 429, 'dò PIN nhiều lần phải bị khóa');
 assert.ok(calls.every(c => c.action === 'login'));
+// Khóa dạng PEM dán từ file JSON của Firebase (có \n dạng chữ) vẫn nạp được
+{ const { presenceSigner } = await import('../worker/index.js');
+  const der = Buffer.from(await crypto.subtle.exportKey('pkcs8', pkp.privateKey)).toString('base64');
+  const pemLit = '-----BEGIN PRIVATE KEY-----\\n' + der.match(/.{1,64}/g).join('\\n') + '\\n-----END PRIVATE KEY-----\\n';
+  const sg = await presenceSigner({ PRESENCE_CLIENT_EMAIL: 'p@x', PRESENCE_PRIVATE_KEY: pemLit, PRESENCE_PRIVATE_KEY_ID: 'k1' });
+  assert.ok(sg && sg.privateKey && sg.kid === 'k1', 'nạp PRESENCE_PRIVATE_KEY dạng PEM có \\n'); }
+// Giáo viên: /teacher/auth trả thêm fb_token (role teacher) cho bảng trực tuyến
+const ta = await call('/teacher/auth', {method:'POST', body:{pin:env.TEACHER_ADMIN_SECRET}});
+if (ta.status === 200) { const tp = JSON.parse(Buffer.from(String(ta.body.fb_token).split('.')[1], 'base64url').toString()); assert.equal(tp.uid, 'teacher_admin'); assert.equal(tp.claims.role, 'teacher'); assert.equal(tp.exp - tp.iat, 3600); console.log('teacher fb_token ok'); }
+else console.log('(bỏ qua kiểm teacher/auth ở chế độ thử: ' + ta.status + ')');
 console.log('WORKER SHEET LOGIN OK');
