@@ -1886,3 +1886,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Giáo viên: Tài khoản + Học sinh đọc bài vẽ 50 dòng/lần (Hiện thêm), tìm kiếm chờ ngừng gõ; Đọc bài nghe đúng 1 bài, chỉ khối của bài, giáo viên lớp chỉ thấy lớp mình; thống kê Thi nghe theo từng bài (không tải cả cây thi_nop). Module teacher-ui cùng ?v=20261028a.
 - Code.gs: pull_ theo từng bài, bỏ qua bài khóa đã chép, 2 phút/lần, khóa chống trùng; Drive 15 bài/lần (cột "Lưu Drive"); Cho thi lại chép trước rồi Hủy; Xóa bài chép điểm trước; sửa tài khoản/tài liệu chỉ đẩy phần đó. Cần người dùng dán lại: docs/handoff/claude-antigravity-cap-nhat-gs-hieu-nang.md.
 - Test PASS: 35/36 .cjs (audit_settings_behavior lỗi sẵn từ trước, bản gốc cũng lỗi), test_sheet_exam_gs, tutor/worker .mjs.
+
+## 28/10/2026 01:00 — Claude: 4 tính năng thi + PWA + Zalo + menu giáo viên
+- Học sinh: Bản đồ năng lực (chủ đề + mức độ, gộp luyện tập/thi, ghi nang_luc), Gia sư nhận chủ đề yếu, nút Zalo hỏi thầy cô, tự tải bài để học ngoại tuyến, thi thật xáo câu/phương án + đếm rời màn hình, thấy đề + điểm thực hành.
+- Giáo viên: AI soạn đề theo ma trận (duyệt từng câu), chấm thực hành Excel/Python (máy kiểm tra + AI gợi ý + giáo viên quyết định), menu Hiệu quả + CSV, Cài đặt giáo viên lớp (đổi PIN, Zalo), menu dưới điện thoại luôn hiện.
+- Worker: /api/teacher/ai-questions, /api/teacher/ai-practical (quản trị hoặc giáo viên lớp qua Sheet gv_login, 40 lượt/ngày), progress trả mastery, tutor weak_topics, exam_review theo chủ đề. Code.gs: chủ đề/mức độ câu hỏi, thuc_hanh + ChamThucHanh, Zalo, publish_ từng phần. Luật: nang_luc, ho_tro, thi_nop thêm chu_de/dau/roi_tab.
+- Test PASS: 38/39 .cjs (audit_settings_behavior lỗi sẵn), test_sheet_exam_gs, test_teacher_ai, test_practical_grading (Pyodide thật), test_offline_learning (service worker thật), worker .mjs. Emulator luật chưa chạy được ở đây (không tải được jar) → Antigravity chạy.
+- Bàn giao: docs/handoff/claude-antigravity-4-tinh-nang-thi.md

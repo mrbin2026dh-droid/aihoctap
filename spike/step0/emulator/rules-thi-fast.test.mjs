@@ -38,5 +38,14 @@ await c('presence: đọc → được (giáo viên xem)', () => assertSucceeds(
 await c('presence: ghi đè cả nhánh → chặn', () => assertFails(set(ref(anon, 'presence'), null)));
 await c('catalog: đọc công khai, không ghi', async () => { await assertSucceeds(get(ref(anon, 'catalog'))); await assertFails(set(ref(anon, 'catalog/v'), 2)); });
 await c('dữ liệu Worker (students_auth, attempts, gốc) → đóng', async () => { await assertFails(get(ref(anon, 'students_auth'))); await assertFails(get(ref(anon, 'attempts'))); await assertFails(get(ref(anon))); await assertFails(set(ref(anon, 'students_auth/x'), 1)); });
+// 28/10: Bản đồ năng lực, rời màn hình, chủ đề trong bài nộp, Zalo hỗ trợ, đọc bài
+await c('thi_nop: kèm chủ đề, điểm lần đầu, số lần rời màn hình → được', () => assertSucceeds(set(ref(anon, 'thi_nop/thu/hs04'), { ...NOP, ma: 'hs04', dau: 5, roi_tab: 2, chu_de: { ma_nhi_phan: { ten: 'Mã nhị phân', d: 1, n: 2 } } })));
+await c('thi_nop: chủ đề sai khuôn → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs05'), { ...NOP, ma: 'hs05', chu_de: { x: { ten: 1 } } })));
+await c('thi_nop: rời màn hình âm → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs06'), { ...NOP, ma: 'hs06', roi_tab: -1 })));
+await c('nang_luc: học sinh ghi tóm tắt đúng khuôn → được', () => assertSucceeds(set(ref(anon, 'nang_luc/hs01'), { at: serverTimestamp(), ten: 'An', lop: '9A', topics: { ma_nhi_phan: { ten: 'Mã nhị phân', d: 3, n: 10 } } })));
+await c('nang_luc: thiếu topics / trường lạ → chặn', async () => { await assertFails(set(ref(anon, 'nang_luc/hs02'), { at: serverTimestamp() })); await assertFails(set(ref(anon, 'nang_luc/hs02'), { at: serverTimestamp(), topics: {}, hack: 1 })); });
+await c('nang_luc: đọc → được (giáo viên xem Hiệu quả)', () => assertSucceeds(get(ref(anon, 'nang_luc'))));
+await c('ho_tro: đọc → được, ghi → chặn', async () => { await assertSucceeds(get(ref(anon, 'ho_tro'))); await assertFails(set(ref(anon, 'ho_tro/zalo'), 'https://evil')); });
+await c('thi_th: học sinh không tự ghi điểm thực hành', () => assertFails(set(ref(anon, 'thi_th/mo/hs01/diem_th'), 10)));
 await env.cleanup();
 console.log(fail ? `${fail} CA SAI — KHÔNG ĐĂNG LUẬT NÀY` : 'TẤT CẢ CA ĐÚNG'); process.exit(fail ? 1 : 0);

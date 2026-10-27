@@ -405,7 +405,7 @@ body:not(.is-class-teacher) #act-gv-pin{display:none!important}
 .teacher-app .th-sum{font-weight:700;font-size:16px}
 .teacher-app .th-grade-btn{margin-left:auto;min-height:40px;padding:6px 12px;font-size:var(--t-small)}
 /* Menu dưới trên điện thoại: số cột theo số mục đang hiện (quản trị 7, giáo viên lớp 4) */
-@media(max-width:760px){.teacher-app .t-nav{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}.teacher-app .t-nav-item{font-size:11px}}
+@media(max-width:760px){.teacher-app .t-nav{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}}
 /* Hiệu quả */
 .teacher-app .eff-note{margin:4px 0 0;font-size:var(--t-tiny,12px)}
 .teacher-app .eff-card{margin:16px 0;padding:16px 20px}
@@ -420,3 +420,6 @@ body:not(.is-class-teacher) #act-gv-pin{display:none!important}
 @media(max-width:760px){.teacher-app .eff-topic{grid-template-columns:minmax(0,1fr) 56px}.teacher-app .eff-bar,.teacher-app .eff-topic small{grid-column:1/-1}}
 .teacher-app .eff-help li{display:flex;flex-wrap:wrap;gap:4px 12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 .teacher-app .eff-help li span{color:var(--muted)}
+.teacher-app .thi-track li{flex-wrap:wrap}
+.teacher-app .thi-track small{white-space:normal}
+.teacher-app .thi-track .th-grade-btn{flex:1 1 100%;white-space:nowrap;margin:4px 0 0}
