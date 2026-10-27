@@ -1,6 +1,6 @@
 // @ts-check
 // Bài thi lấy thẳng từ Google Sheet (apps-script/sheet-exam/Code.gs). Đăng nhập Mã học sinh + PIN → Lấy đề → Nộp → Điểm.
-export const SHEET_API = ''; // ← dán địa chỉ /exec của Apps Script vào đây
+export const SHEET_API = 'https://script.google.com/macros/s/AKfycbwOStBHPAZfMUOyOJEWX4ALrpKiCnJG88u0wElu5fdYvb6scqNDDDq8NpsSpC6h0UbdtA/exec';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 /** @type {{ma:string,pin:string,student:any,questions:any[]}|null} */ let state = null;
