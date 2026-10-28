@@ -6,6 +6,7 @@
 //  - Học sinh cần hỗ trợ; xuất CSV (UTF-8) để đưa vào hồ sơ.
 // Giáo viên lớp chỉ thấy lớp mình phụ trách.
 import * as store from './thi-store.js';
+import { SHEET_API } from './sheet-config.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const pct = (/** @type {number} */ a, /** @type {number} */ b) => b ? Math.round(100 * a / b) : 0;
@@ -105,12 +106,50 @@ function render() {
   for (const p of r.help.slice(0, 15)) { const li = document.createElement('li'); const a = document.createElement('strong'); a.textContent = `${p.ten} · ${p.lop}`; const b = document.createElement('span'); b.textContent = [p.nang_luc !== null ? `năng lực ${p.nang_luc}%` : '', p.best !== null ? `thi thử ${p.best}%` : '', p.yeu.length ? 'yếu: ' + p.yeu.join(', ') : ''].filter(Boolean).join(' · '); li.append(a, b); hl.append(li); }
   $('eff-status').textContent = `${r.students} học sinh · ${r.exams.length} bài thi thử có kết quả`; /** @type {HTMLButtonElement} */ ($('eff-csv')).disabled = !rows.length;
 }
-$('eff-lop').addEventListener('change', render);
+/* ---------- Bộ não AI (VPS): báo cáo tuần từng lớp, đọc từ Google Sheet (trang NaoAI) ---------- */
+/** @type {any[]|null} */ let brain = null;
+async function loadBrain() {
+  const box = $('eff-brain'); box.replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted', textContent: 'Đang tải báo cáo…' }));
+  try {
+    const c = (() => { try { return { gv: sessionStorage.getItem('thi-gv-mk') || '', gv_ma: sessionStorage.getItem('thi-gv-ma') || '' }; } catch { return { gv: '', gv_ma: '' }; } })();
+    if (!SHEET_API) throw new Error('Chưa cài địa chỉ Google Sheet.');
+    const res = await fetch(SHEET_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'gv_brain', gv: c.gv, ...(c.gv_ma ? { gv_ma: c.gv_ma } : {}) }) });
+    const d = await res.json(); if (!d?.ok) throw new Error(d?.error || 'Google Sheet chưa trả lời.');
+    brain = d.reports || [];
+  } catch (e) { brain = null; box.replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted', textContent: e instanceof Error ? e.message : 'Chưa tải được báo cáo.' })); return; }
+  renderBrain();
+}
+/** Hiển thị markdown đơn giản (in đậm, gạch đầu dòng) bằng DOM, không chèn HTML. @param {HTMLElement} box @param {string} md */
+export function mdInto(box, md) {
+  let ul = null;
+  for (const raw of String(md || '').split(/\n/)) {
+    const line = raw.trim(); if (!line) { ul = null; continue; }
+    const bullet = /^[-*•]\s+/.test(line), text = line.replace(/^[-*•]\s+/, '').replace(/^#+\s*/, '');
+    const node = document.createElement(bullet ? 'li' : 'p');
+    text.split('**').forEach((part, i) => node.append(i % 2 ? Object.assign(document.createElement('strong'), { textContent: part }) : document.createTextNode(part)));
+    if (bullet) { if (!ul) { ul = document.createElement('ul'); box.append(ul); } ul.append(node); } else { ul = null; box.append(node); }
+  }
+}
+function renderBrain() {
+  const box = $('eff-brain'); box.replaceChildren(); if (!brain) return;
+  const lop = /** @type {HTMLSelectElement} */ ($('eff-lop')).value, list = brain.filter(r => !lop || String(r.lop).toLowerCase() === lop.toLowerCase());
+  if (!list.length) { const p = document.createElement('p'); p.className = 't-muted'; p.textContent = brain.length ? 'Chưa có báo cáo cho lớp này.' : 'Chưa có báo cáo. Bộ não AI chạy trên VPS mỗi tối 21:00 (xem docs/huong-dan-vps-bo-nao-ai.md).'; box.append(p); return; }
+  for (const r of list) {
+    const art = document.createElement('article'); art.className = 'brain-report';
+    const h = document.createElement('h4'); h.textContent = `Lớp ${r.lop}`; const t = document.createElement('small'); t.className = 't-muted'; t.textContent = r.at ? ' · cập nhật ' + new Date(r.at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; h.append(t);
+    const body = document.createElement('div'); body.className = 'brain-md'; mdInto(body, r.md);
+    art.append(h, body);
+    const risk = r.facts?.can_chu_y || [];
+    if (risk.length) { const d = document.createElement('details'); const s = document.createElement('summary'); s.textContent = `Học sinh cần chú ý (${risk.length})`; const ul = document.createElement('ul'); for (const x of risk) { const li = document.createElement('li'); li.textContent = `${x.ten}: ${(x.ly_do || []).join(', ')}`; ul.append(li); } d.append(s, ul); art.append(d); }
+    box.append(art);
+  }
+}
+$('eff-lop').addEventListener('change', () => { render(); renderBrain(); });
 $('eff-csv').addEventListener('click', () => {
   const head = ['Mã học sinh', 'Họ tên', 'Lớp', 'Số bài thi thử đã làm', 'Điểm lần đầu TB (%)', 'Điểm cao nhất TB (%)', 'Tiến bộ (điểm %)', 'Đọc bài TB (%)', 'Số bài đọc hết', 'Năng lực chung (%)', 'Chủ đề yếu'];
   const lines = [head, ...rows.map(p => [p.ma, p.ten, p.lop, p.thi, p.dau ?? '', p.best ?? '', p.dau !== null && p.best !== null ? p.best - p.dau : '', p.doc ?? '', p.doc_het, p.nang_luc ?? '', p.yeu.join('; ')])].map(r => r.map(csvCell).join(','));
   const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `hieu-qua-${/** @type {HTMLSelectElement} */ ($('eff-lop')).value || 'tat-ca'}-${new Date().toISOString().slice(0, 10)}.csv`; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 });
-$('nav-effect').addEventListener('click', () => void load());
-document.getElementById('teacher-logout')?.addEventListener('click', () => { data = null; rows = []; });
+$('nav-effect').addEventListener('click', () => { void load(); void loadBrain(); });
+document.getElementById('teacher-logout')?.addEventListener('click', () => { data = null; rows = []; brain = null; });

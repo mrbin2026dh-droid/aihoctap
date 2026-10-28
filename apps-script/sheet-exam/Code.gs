@@ -49,6 +49,7 @@ function doPost(e) {
 function route_(p) {
   try {
     if (p.action === 'ping') return out_({ ok: true });
+    if (p.action === 'brain_save') return out_(brainSave_(p));   // Bộ não AI trên VPS gửi báo cáo (khóa BRAIN_KEY)
     if (p.action === 'gv_login') { var t = findTeacher_(p.ma, p.pin); return out_({ ok: true, teacher: { ma: t.ma, ten: t.ten, lop: t.lop } }); }
     if (/^gv_/.test(String(p.action || ''))) return out_(teacher_(p));
     if ((p.action === 'exams' || p.action === 'exam' || p.action === 'submit') && !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT)) schema_();
@@ -289,6 +290,7 @@ function teacher_(p) {
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT) || !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_DD) || cfgGet_('ma_de')) schema_();
   var a = p.action;
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); if (me) setTeacherPin_(me.ma, np); else setConfig_('mat_khau_gv', np); return { ok: true }; }
+  if (a === 'gv_brain') return brainGet_();
   if (a === 'gv_support') return { ok: true, zalo: me ? (me.zalo || '') : cfgGet_('ho_tro_zalo'), ten: me ? me.ten : cfgGet_('ho_tro_ten') };
   if (a === 'gv_support_save') {                          // Zalo hỗ trợ: quản trị = chung cả trường; giáo viên lớp = riêng các lớp mình
     var z = normZalo_(p.zalo), tn = String(p.ten || '').trim().slice(0, 40);
@@ -733,6 +735,42 @@ function thCham_(a, p, me) {
   return { ok: true, diem: diem, tong: max };
 }
 
+/* ---------- Bộ não AI (Python chạy trên VPS của thầy cô) ---------- */
+var SH_NAO = 'NaoAI', NAO_HEAD = ['Lớp', 'Cập nhật', 'Báo cáo', 'Dữ liệu'];
+/** VPS gửi báo cáo từng lớp: {key, reports:[{lop, md, facts}]}. Khóa nằm trong Script Properties (menu Cài khóa Bộ não AI). */
+function brainSave_(p) {
+  var cache = CacheService.getScriptCache(), fails = Number(cache.get('naofail') || 0);
+  if (fails >= 10) throw new Error('Sai khóa quá nhiều lần. Chờ 10 phút.');
+  var key = PropertiesService.getScriptProperties().getProperty('BRAIN_KEY') || '';
+  if (key.length < 24 || String(p.key || '') !== key) { cache.put('naofail', String(fails + 1), 600); throw new Error('Khóa Bộ não AI chưa đúng.'); }
+  var sh = ensure_(SH_NAO, NAO_HEAD), v = sh.getDataRange().getValues(), rows = {}, n = 0;
+  for (var r = 1; r < v.length; r++) rows[norm_(v[r][0])] = r + 1;
+  (Array.isArray(p.reports) ? p.reports : []).slice(0, 80).forEach(function (x) {
+    var lop = String(x && x.lop || '').trim().slice(0, 20); if (!lop) return;
+    var line = [lop, new Date(), String(x.md || '').slice(0, 20000), JSON.stringify(x.facts || {}).slice(0, 45000)];
+    if (rows[norm_(lop)]) sh.getRange(rows[norm_(lop)], 1, 1, 4).setValues([line]); else { sh.appendRow(line); rows[norm_(lop)] = sh.getLastRow(); }
+    n++;
+  });
+  cache.remove('naofail');
+  return { ok: true, saved: n };
+}
+/** Giáo viên xem báo cáo Bộ não AI (giáo viên lớp: chỉ lớp mình). */
+function brainGet_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_NAO), out = [];
+  if (sh) sh.getDataRange().getValues().slice(1).forEach(function (r) {
+    var lop = String(r[0] || '').trim(); if (!lop || (SCOPE_ && SCOPE_.indexOf(norm_(lop)) < 0)) return;
+    var facts = {}; try { facts = JSON.parse(String(r[3] || '{}')); } catch (e) { facts = {}; }
+    out.push({ lop: lop, at: r[1] instanceof Date ? r[1].toISOString() : String(r[1] || ''), md: String(r[2] || ''), facts: facts });
+  });
+  return { ok: true, reports: out };
+}
+function caiKhoaNaoAI() {
+  var ui = SpreadsheetApp.getUi(), key = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+  if (ui.alert('Cài khóa Bộ não AI', 'Tạo khóa mới cho máy chủ VPS? (Khóa cũ sẽ hết hiệu lực.)', ui.ButtonSet.OK_CANCEL) !== ui.Button.OK) return;
+  PropertiesService.getScriptProperties().setProperty('BRAIN_KEY', key);
+  ui.alert('Khóa Bộ não AI', 'Chép khóa này vào tệp .env trên VPS (dòng SHEET_BRAIN_KEY=...). Không gửi khóa qua chat hay đăng lên mạng:\n\n' + key, ui.ButtonSet.OK);
+}
+
 function caiKhoaFirebase() {
   var ui = SpreadsheetApp.getUi();
   var r = ui.prompt('Cài khóa Firebase', 'Dán "Database secret" (Firebase Console → Cài đặt dự án → Service accounts → Database secrets):', ui.ButtonSet.OK_CANCEL);
@@ -766,5 +804,5 @@ function taoMau() {
 }
 function datLaiMatKhau() { setConfig_('mat_khau_gv', ''); }
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addToUi();
+  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addItem('Cài khóa Bộ não AI', 'caiKhoaNaoAI').addToUi();
 }

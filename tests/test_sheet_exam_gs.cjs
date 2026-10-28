@@ -207,6 +207,18 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   E.fbdb.thi_nop[id].k24 = sub('k24', 1761550003333); c({ action: 'gv_delete', ma_de: id });
   ok(kqOf().some(r => r[1] === 'k24'), 'xóa bài: chép điểm còn trên Firebase về trước khi ẩn');
 }
+// ---------- Bộ não AI: VPS gửi báo cáo bằng khóa riêng; giáo viên lớp chỉ xem lớp mình ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
+  ok(call({ action: 'brain_save', key: 'x', reports: [{ lop: '9A', md: 'a' }] }).error.includes('Khóa'), 'chưa cài khóa → VPS không ghi được');
+  E.props.BRAIN_KEY = 'k'.repeat(32);
+  ok(call({ action: 'brain_save', key: 'sai', reports: [] }).error.includes('Khóa'), 'sai khóa → chặn');
+  const sv = call({ action: 'brain_save', key: 'k'.repeat(32), reports: [{ lop: '9A', md: '**Tóm tắt** lớp 9A', facts: { at_risk: [{ ten: 'An' }] } }, { lop: '9B', md: 'B' }] });
+  ok(sv.ok && sv.saved === 2 && E.sheets.NaoAI.rows.length === 3, 'VPS gửi báo cáo từng lớp → trang NaoAI');
+  call({ action: 'brain_save', key: 'k'.repeat(32), reports: [{ lop: '9a', md: 'mới' }] });
+  ok(E.sheets.NaoAI.rows.length === 3 && E.sheets.NaoAI.rows[1][2] === 'mới', 'gửi lại cùng lớp → cập nhật, không thêm dòng');
+  const all = c({ action: 'gv_brain' }); ok(all.ok && all.reports.length === 2, 'quản trị xem mọi lớp');
+  c({ action: 'gv_teacher_save', moi: true, ma: 'GV09', ten: 'Cô Mai', lop: '9B', pin: '999999' });
+  const mine = call({ gv: '999999', gv_ma: 'GV09', action: 'gv_brain' }); ok(mine.ok && mine.reports.length === 1 && mine.reports[0].lop === '9B', 'giáo viên lớp chỉ xem báo cáo lớp mình'); }
 // ---------- Tài khoản: giáo viên lớp (trang GiaoVien), học sinh (trang HocSinh), phạm vi lớp ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
   const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });

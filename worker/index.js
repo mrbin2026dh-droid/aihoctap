@@ -1055,6 +1055,16 @@ export class GateDurableObject {
       return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
     }
 
+    if (action === '/brain-log') {   // nhật ký câu hỏi Gia sư cho Bộ não AI: giữ 3000 câu gần nhất
+      const e = await request.json().catch(() => null);
+      if (e && e.uid) { const list = (await this.storage.get('brain_log')) || []; list.push({ uid: String(e.uid).slice(0, 64), lop: String(e.lop || '').slice(0, 20), course: String(e.course || '').slice(0, 80), lesson: String(e.lesson || '').slice(0, 80), q: String(e.q || '').slice(0, 300), blocked: !!e.blocked, at: Number(e.at) || Date.now() }); await this.storage.put('brain_log', list.slice(-3000)); }
+      return new Response('{"ok":true}', { headers: { 'Content-Type': 'application/json' } });
+    }
+    if (action === '/brain-export') {
+      const { since } = await request.json().catch(() => ({}));
+      const list = ((await this.storage.get('brain_log')) || []).filter(x => x.at > (Number(since) || 0));
+      return new Response(JSON.stringify({ items: list }), { headers: { 'Content-Type': 'application/json' } });
+    }
     if (action === '/teacher-ai-count') {   // giới hạn AI cho giáo viên: đếm theo ngày
       const { who } = await request.json().catch(() => ({}));
       const k = `tai:${new Date().toISOString().slice(0, 10)}:${String(who || '').slice(0, 80)}`;
@@ -4282,6 +4292,14 @@ export default {
     }
 
     // Teacher AI Usage & Limits Management (A9 / B7)
+    // Bộ não AI chạy trên VPS lấy nhật ký câu hỏi Gia sư (khóa BRAIN_KEY, chỉ máy chủ của thầy cô có).
+    if (url.pathname === '/api/brain/export' && request.method === 'GET') {
+      const k = request.headers.get('X-Brain-Key') || '';
+      if (!env.BRAIN_KEY || String(env.BRAIN_KEY).length < 24 || !TeacherAuthContract.isValidSecret(k, env.BRAIN_KEY)) return new Response(JSON.stringify({ detail: 'Không có quyền.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      const r = await gateStub.fetch('http://do/brain-export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ since: Number(url.searchParams.get('since')) || 0 }) });
+      return new Response(await r.text(), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    }
+
     // AI cho giáo viên: soạn câu hỏi theo ma trận (giáo viên duyệt trước khi lưu) và gợi ý chấm thực hành.
     if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz') && request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
@@ -5013,6 +5031,10 @@ export default {
           }
 
           const driverLabel = modified ? 'rule_fallback' : 'real_gemini';
+          // Bộ não AI (VPS): ghi học sinh hỏi gì (rút gọn) để phân tích theo lớp; không ghi câu trả lời.
+          if (!isExamReview) {
+            await gateStub.fetch('http://do/brain-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: studentUid, lop: String(studentClassId || ''), course: effectiveContext.course_id || '', lesson: effectiveContext.lesson_id || '', q: String(message || '').slice(0, 300), blocked: !!modified, at: Date.now() }) }).catch(() => {});
+          }
 
           // J1: Success! Quota is already accounted for atomically via reservation
           return new Response(JSON.stringify({

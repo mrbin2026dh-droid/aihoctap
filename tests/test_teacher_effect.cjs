@@ -15,7 +15,7 @@ const fdb={thi_hs:{a:{ma:'a',ten:'An',lop:'9A',khoi:9},b:{ma:'b',ten:'=HYPERLINK
 (async()=>{const b=await chromium.launch();let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
 try{for(const role of ['admin','gv']){
  const ctx=await b.newContext({viewport:{width:1280,height:900},serviceWorkers:'block',acceptDownloads:true});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
- await pg.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,fb:true,exams:[],bank:{},classes:{'9A':9}})}));
+ await pg.route(API,r=>{const p=JSON.parse(r.request().postData());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action==='gv_brain'?{ok:true,reports:[{lop:'9A',at:'2026-10-28T14:00:00Z',md:'**Tóm tắt** Lớp 9A cần ôn mã nhị phân.\n- Dạy lại 10 phút\n- <img src=x onerror=alert(1)>',facts:{can_chu_y:[{ten:'Bình',ly_do:['giảm 30 điểm %']}]}},{lop:'9B',md:'B ổn',facts:{}}]}:{ok:true,fb:true,exams:[],bank:{},classes:{'9A':9}})})});
  await pg.route(FDB+'/**',r=>{const parts=new URL(r.request().url()).pathname.replace(/\.json$/,'').split('/').filter(Boolean);const v=parts.reduce((o,k)=>o==null?undefined:o[k],fdb)??null;
   if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`retry: 300\nevent: put\ndata: ${JSON.stringify({path:'/',data:v})}\n\n`});r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(v)})});
  await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.endsWith('/teacher/auth')?{token:'tt',must_change:false}:u.endsWith('/pwa/catalog')?{courses:[]}:u.endsWith('/teacher/students')?[]:{})})});
@@ -30,7 +30,9 @@ try{for(const role of ['admin','gv']){
   const tp=await pg.$$eval('#eff-topics .eff-topic',a=>a.map(x=>({c:x.className,t:x.textContent})));ok(tp[0].t.includes('Mã nhị phân')&&tp[0].t.includes('43%')&&tp[0].t.includes('2 em dưới 50%')&&tp[0].c.includes('is-weak')&&tp[1].t.includes('Dữ liệu số')&&tp[1].c.includes('is-good'),'Bản đồ năng lực lớp: chủ đề yếu nhất lên đầu, đỏ/xanh theo %');
   const ex=await pg.textContent('#eff-exams-body');ok(ex.includes('Ôn tập chương 1')&&ex.includes('43%')&&ex.includes('73%')&&ex.includes('+30 · 2 em')&&!ex.includes('Giữa kỳ'),'bảng tiến bộ theo bài thi thử (không tính thi thật)');
   const hl=await pg.textContent('#eff-help');ok(hl.includes('HYPERLINK')&&!hl.includes('An ·')&&!hl.includes('Dũng'),'học sinh cần hỗ trợ: năng lực hoặc thi thử dưới 50%');
-  await pg.selectOption('#eff-lop','9B');ok((await pg.textContent('#eff-status')).startsWith('1 học sinh')&&(await pg.textContent('#eff-topics')).includes('100%'),'lọc theo lớp 9B');
+  await pg.waitForSelector('#eff-brain .brain-report');const br=await pg.textContent('#eff-brain');
+  ok(br.includes('Lớp 9A')&&br.includes('cần ôn mã nhị phân')&&br.includes('Bình: giảm 30 điểm %')&&await pg.locator('#eff-brain .brain-md li').count()===2&&await pg.locator('#eff-brain img').count()===0,'Bộ não AI: hiện báo cáo tuần từng lớp (in đậm, gạch đầu dòng), học sinh cần chú ý; không chèn HTML lạ');
+  await pg.selectOption('#eff-lop','9B');ok((await pg.textContent('#eff-status')).startsWith('1 học sinh')&&(await pg.textContent('#eff-topics')).includes('100%')&&!(await pg.textContent('#eff-brain')).includes('Lớp 9A'),'lọc theo lớp 9B (cả báo cáo Bộ não AI)');
   await pg.selectOption('#eff-lop','');
   const [dl]=await Promise.all([pg.waitForEvent('download'),pg.click('#eff-csv')]);const csv=fs.readFileSync(await dl.path(),'utf8');
   ok(csv.charCodeAt(0)===0xfeff&&csv.includes('Mã học sinh,Họ tên,Lớp')&&csv.includes('a,An,9A,1,40,90,50,100,1,55,Mã nhị phân (20%)')&&csv.includes(`"'=HYPERLINK(""x"")"`),'xuất CSV UTF-8 (mở được tiếng Việt trong Excel), chặn công thức nguy hiểm trong ô');
