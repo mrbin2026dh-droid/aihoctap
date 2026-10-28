@@ -28,6 +28,7 @@ async function req(path, init = {}, ms = 8000) {
 }
 /** @param {string} path */ export const get = path => req(path);
 /** @param {string} path @param {unknown} val */ export const put = (path, val) => req(path, { method: 'PUT', body: JSON.stringify(val) });
+/** Ghi nhiều chỗ một lần (PATCH ở gốc khi path = ''). @param {string} path @param {Record<string, unknown>} val */ export const patch = (path, val) => req(path, { method: 'PATCH', body: JSON.stringify(val) });
 export const SERVER_TIME = { '.sv': 'timestamp' };
 
 /**

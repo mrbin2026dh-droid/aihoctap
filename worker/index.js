@@ -1382,6 +1382,21 @@ export function buildPracticalPrompt({ kind, task, rubric, evidence, auto }) {
     ...(a.length ? ['KIỂM TRA TỰ ĐỘNG:', ...a] : []), 'BẰNG CHỨNG:', '"""', String(evidence || '').slice(0, 8000), '"""'
   ].join('\n');
 }
+/** Prompt phân tích trò chơi câu hỏi trên lớp: chỉ số liệu tổng hợp (không tên học sinh). */
+export function buildQuizAnalysisPrompt(q) {
+  const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').slice(0, n);
+  const lines = (Array.isArray(q?.questions) ? q.questions : []).slice(0, 40).map((x, i) => {
+    const c = x?.counts || {}, opts = x?.opts || {};
+    const dist = ['A', 'B', 'C', 'D'].filter(k => opts[k] !== undefined).map(k => `${k}${k === x?.ans ? '(đúng)' : ''}="${clip(opts[k], 60)}": ${Number(c[k]) || 0} em`).join('; ');
+    return `Câu ${i + 1}${x?.topic ? ` [${clip(x.topic, 40)}]` : ''}: "${clip(x?.text, 200)}" — đúng ${Number(x?.pct) || 0}% — ${dist}; không trả lời: ${Number(c.none) || 0} em`;
+  });
+  return [
+    'Em là giáo viên Tin học THCS giàu kinh nghiệm. Phân tích kết quả TRÒ CHƠI CÂU HỎI vừa chơi trên lớp để biết lớp có hiểu bài không.',
+    'Dựa đúng số liệu dưới đây (máy đã tính). Chỉ ra: mức hiểu chung; chủ đề/câu lớp nắm tốt; câu nhiều em sai và vì sao (suy ra từ phương án sai được chọn nhiều nhất — đó là hiểu lầm phổ biến); đề xuất dạy lại ngắn gọn (5–10 phút) và 2 câu hỏi kiểm tra lại (không kèm đáp án).',
+    'Trả về DUY NHẤT JSON: {"muc_hieu":"Tốt|Khá|Trung bình|Cần dạy lại","nhan_xet":"markdown tiếng Việt ≤ 220 từ, có các mục in đậm: **Mức hiểu chung**, **Lớp nắm tốt**, **Hiểu lầm cần sửa**, **Đề xuất dạy lại**, **Câu hỏi kiểm tra lại**"}.',
+    '', `BÀI: ${clip(q?.title, 120)} · ${Number(q?.players) || 0} học sinh chơi · điểm đúng trung bình ${Number(q?.avg_pct) || 0}%`, ...lines
+  ].join('\n');
+}
 /** Gọi Gemini một lượt (dùng kho khóa nếu có). Trả chữ; lỗi → ném Error có .status. Kiểm thử: env.MOCK_GEMINI(prompt). */
 export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096, temperature = 0.4 } = {}) {
   if (typeof env.MOCK_GEMINI === 'function' && SecurityConfigContract.isMockModeAllowed(env)) return String(await env.MOCK_GEMINI(prompt));
@@ -4268,7 +4283,7 @@ export default {
 
     // Teacher AI Usage & Limits Management (A9 / B7)
     // AI cho giáo viên: soạn câu hỏi theo ma trận (giáo viên duyệt trước khi lưu) và gợi ý chấm thực hành.
-    if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical') && request.method === 'POST') {
+    if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz') && request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
       const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const who = await authTeacherAny(request, env, signingKeys, body, corsHeaders);
@@ -4290,6 +4305,15 @@ export default {
           const questions = cleanGeneratedQuestions(Array.isArray(parsed) ? parsed : parsed?.questions);
           if (!questions.length) return j(502, { detail: 'AI chưa soạn được câu hợp lệ. Thử lại.' });
           return j(200, { questions, lesson_title: lesson.title, remaining: Math.max(0, LIMIT - cnt.count) });
+        }
+        if (url.pathname === '/api/teacher/ai-quiz') {
+          if (!Array.isArray(body.questions) || !body.questions.length) return j(400, { detail: 'Chưa có kết quả trò chơi để phân tích.' });
+          await spend();
+          const text = await geminiOnce(env, gateStub, buildQuizAnalysisPrompt(body), { maxOutputTokens: 2048, temperature: 0.3 });
+          const parsed = parseJsonLoose(text) || {};
+          const nx = String(parsed.nhan_xet || '').trim();
+          if (!nx) return j(502, { detail: 'AI chưa phân tích được. Thử lại.' });
+          return j(200, { muc_hieu: ['Tốt', 'Khá', 'Trung bình', 'Cần dạy lại'].includes(parsed.muc_hieu) ? parsed.muc_hieu : '', nhan_xet: nx.slice(0, 3000), remaining: Math.max(0, LIMIT - cnt.count) });
         }
         const kind = ['excel', 'python'].includes(body.kind) ? body.kind : 'khac';
         const rubric = (Array.isArray(body.rubric) ? body.rubric : []).slice(0, 12);

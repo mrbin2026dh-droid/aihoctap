@@ -8,11 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent / 'frontend' / 'hoc'
 SHELL_FILES = (
     'index.html', 'styles.css', 'app.js', 'api.js', 'db.js', 'dom.js', 'exam.js', 'fb.js', 'exam-fb.js',
-    'thi-app.js', 'thi-store.js', 'presence.js', 'presence-config.js', 'sheet-config.js', 'typing.js', 'read-progress.js', 'support.js', 'support-config.js', 'mastery.js',
+    'thi-app.js', 'thi-store.js', 'presence.js', 'presence-config.js', 'sheet-config.js', 'typing.js', 'read-progress.js', 'support.js', 'support-config.js', 'mastery.js', 'quiz-play.js',
     'manifest.webmanifest', 'fonts/source-serif-4-latin-wght-normal.woff2', 'fonts/source-serif-4-vietnamese-wght-normal.woff2', 'fonts/nunito-latin-wght-normal.woff2', 'fonts/nunito-vietnamese-wght-normal.woff2', 'icons/icon-192.png', 'icons/icon-512.png',
     'icons/maskable-512.png',
 )
-RELEASE_FILES = SHELL_FILES + ('sw.js', 'teacher.html', 'teacher.js', 'teacher-ui.js', 'teacher.css', 'teacher-thi.js', 'teacher-accounts.js', 'teacher-docs.js', 'teacher-read.js', 'practical.js', 'exam-import.js', 'teacher-effect.js')
+RELEASE_FILES = SHELL_FILES + ('sw.js', 'teacher.html', 'teacher.js', 'teacher-ui.js', 'teacher.css', 'teacher-thi.js', 'teacher-accounts.js', 'teacher-docs.js', 'teacher-read.js', 'practical.js', 'exam-import.js', 'teacher-effect.js', 'teacher-quiz.js')
 CACHE_PATTERN = r"const CACHE = 'aisgk-student-shell-[^']+';"
 
 

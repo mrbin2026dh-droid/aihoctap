@@ -9,6 +9,7 @@ import './teacher-accounts.js?v=20261028a';
 import './teacher-read.js?v=20261028a';
 import './teacher-docs.js?v=20261028a';
 import './teacher-effect.js?v=20261028a';
+import './teacher-quiz.js?v=20261028a';
 import * as thiStore from './thi-store.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';

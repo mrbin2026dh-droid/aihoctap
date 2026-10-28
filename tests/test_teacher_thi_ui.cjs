@@ -28,7 +28,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
  await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);
  await pg.fill('#teacher-login [name=pin]',PIN);await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
  const navs=await pg.$$eval('.t-nav-item',a=>a.map(x=>x.id));
- ok(navs.join()==='nav-overview,nav-lessons,nav-exams,nav-sheetexam,nav-materials,nav-accounts,nav-effect','menu: ... Về nhà, Thi, ..., Hiệu quả');
+ ok(navs.join()==='nav-overview,nav-lessons,nav-exams,nav-sheetexam,nav-materials,nav-accounts,nav-effect,nav-tools','menu: ... Về nhà, Thi, ..., Hiệu quả, Tiện ích');
  ok((await pg.textContent('#nav-exams')).includes('Về nhà'),'menu "Về nhà"');
  await pg.click('#nav-sheetexam');await pg.waitForSelector('#thi-list');await pg.waitForTimeout(400);
  ok(await pg.textContent('#workspace-title')==='Thi','mở menu Thi');

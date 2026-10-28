@@ -10,6 +10,7 @@ import { typeOut } from './typing.js';
 import * as readProgress from './read-progress.js';
 import * as support from './support.js';
 import * as mastery from './mastery.js';
+import * as quiz from './quiz-play.js';
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -18,7 +19,7 @@ function thiBadge(n) {
     else { b?.remove(); btn.removeAttribute('aria-label'); }
   }
 }
-const startThiBadge = () => { if (session && thiStore.enabled()) thiApp.watchBadge(session.identity, thiBadge); };
+const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); } };
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -869,7 +870,7 @@ on('logout', async () => {
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
-  await presence.stopStudent(); thiApp.stopAll();
+  await presence.stopStudent(); thiApp.stopAll(); quiz.stop();
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.

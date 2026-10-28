@@ -3,7 +3,7 @@
 // Chạy: cd spike/step0/emulator && RULES_FILE=../database.rules.ai-sgk-final.json npx firebase emulators:exec --only database --project demo-aihoctap "node rules-thi-fast.test.mjs"
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { ref, get, set, remove, serverTimestamp } from 'firebase/database';
+import { ref, get, set, remove, update, serverTimestamp } from 'firebase/database';
 const file = process.env.RULES_FILE; if (!file) { console.error('Thiếu RULES_FILE'); process.exit(2); }
 const env = await initializeTestEnvironment({ projectId: 'demo-aihoctap', database: { host: '127.0.0.1', port: 9099, rules: readFileSync(file, 'utf8') } });
 await env.withSecurityRulesDisabled(async c => {
@@ -47,5 +47,19 @@ await c('nang_luc: thiếu topics / trường lạ → chặn', async () => { aw
 await c('nang_luc: đọc → được (giáo viên xem Hiệu quả)', () => assertSucceeds(get(ref(anon, 'nang_luc'))));
 await c('ho_tro: đọc → được, ghi → chặn', async () => { await assertSucceeds(get(ref(anon, 'ho_tro'))); await assertFails(set(ref(anon, 'ho_tro/zalo'), 'https://evil')); });
 await c('thi_th: học sinh không tự ghi điểm thực hành', () => assertFails(set(ref(anon, 'thi_th/mo/hs01/diem_th'), 10)));
+// 28/10: Trò chơi câu hỏi — chỉ chủ phòng (có khóa bí mật, không ai đọc được) điều khiển; học sinh vào phòng, trả lời một lần, đúng câu, trong giờ
+const KEY = 'k'.repeat(40);
+await c('quiz_key: tạo khóa phòng → được; tạo lại → chặn; đọc → chặn', async () => { await assertSucceeds(set(ref(anon, 'quiz_key/123456'), KEY)); await assertFails(set(ref(anon, 'quiz_key/123456'), 'x'.repeat(40))); await assertFails(get(ref(anon, 'quiz_key/123456'))); });
+await c('quiz: ghi trạng thái KHÔNG có khóa → chặn', () => assertFails(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby', n: 1 } })));
+await c('quiz: ghi trạng thái với khóa SAI → chặn', () => assertFails(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby' }, 'quiz_proof/123456': 'z'.repeat(40) })));
+await c('quiz: chủ phòng (khóa đúng) mở phòng + gắn lớp → được', () => assertSucceeds(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby', n: 1 }, 'quiz_lop/9a': '123456', 'quiz_proof/123456': KEY })));
+await c('quiz_proof: không đọc được', () => assertFails(get(ref(anon, 'quiz_proof/123456'))));
+await c('quiz: học sinh vào phòng → được; vào lại → chặn', async () => { await assertSucceeds(set(ref(anon, 'quiz/123456/ds/hs01'), { ten: 'An', at: serverTimestamp() })); await assertFails(set(ref(anon, 'quiz/123456/ds/hs01'), { ten: 'An', at: serverTimestamp() })); });
+await c('quiz: trả lời khi chưa hỏi → chặn', () => assertFails(set(ref(anon, 'quiz/123456/ans/q0/hs01'), { a: 'A', t: serverTimestamp() })));
+await assertSucceeds(update(ref(anon), { 'quiz/123456/pub/phase': 'q', 'quiz/123456/pub/q': { k: 'q0', i: 0, text: 'Q', lim: 20, at: serverTimestamp() }, 'quiz_proof/123456': KEY }));
+await c('quiz: trả lời đúng câu đang hỏi → được; lần 2 → chặn', async () => { await assertSucceeds(set(ref(anon, 'quiz/123456/ans/q0/hs01'), { a: 'B', t: serverTimestamp() })); await assertFails(set(ref(anon, 'quiz/123456/ans/q0/hs01'), { a: 'A', t: serverTimestamp() })); });
+await c('quiz: trả lời câu khác / đáp án lạ → chặn', async () => { await assertFails(set(ref(anon, 'quiz/123456/ans/q1/hs02'), { a: 'A', t: serverTimestamp() })); await assertFails(set(ref(anon, 'quiz/123456/ans/q0/hs02'), { a: 'E', t: serverTimestamp() })); });
+await c('quiz: học sinh tự ghi điểm (kq) / sửa trạng thái → chặn', async () => { await assertFails(set(ref(anon, 'quiz/123456/kq/hs01'), { p: 9999 })); await assertFails(set(ref(anon, 'quiz/123456/pub/phase'), 'end')); });
+await c('quiz_lop: gỡ thẻ lớp không có khóa → chặn; có khóa → được', async () => { await assertFails(set(ref(anon, 'quiz_lop/9a'), null)); await assertSucceeds(update(ref(anon), { 'quiz_lop/9a': null, 'quiz_proof/123456': KEY })); });
 await env.cleanup();
 console.log(fail ? `${fail} CA SAI — KHÔNG ĐĂNG LUẬT NÀY` : 'TẤT CẢ CA ĐÚNG'); process.exit(fail ? 1 : 0);

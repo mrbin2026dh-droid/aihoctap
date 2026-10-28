@@ -1,7 +1,7 @@
 // AI cho giáo viên: soạn câu hỏi theo ma trận (bám bài học, câu hợp lệ, xáo đáp án, giáo viên lớp xác minh qua Sheet, giới hạn lượt)
 // và gợi ý chấm thực hành theo tiêu chí; Gia sư biết chủ đề yếu; nhận xét thi thử theo chủ đề.
 import assert from 'node:assert/strict';
-import worker, {MockDONamespace, registerStudentCredential, cleanGeneratedQuestions, parseJsonLoose, buildExamReviewPrompt, weakTopicsLine, buildQuestionGenPrompt} from '../worker/index.js';
+import worker, {MockDONamespace, registerStudentCredential, cleanGeneratedQuestions, parseJsonLoose, buildExamReviewPrompt, weakTopicsLine, buildQuestionGenPrompt, buildQuizAnalysisPrompt} from '../worker/index.js';
 const kp = await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['sign','verify']);
 await registerStudentCredential('hs_ai', '123456', 'a1b2c3d4e5f60718293a4b5c6d7e8f91', {name:'Nguyễn Văn Nam', grade:9, class_code:'9A'});
 let prompts = [], gen = () => '[]';
@@ -56,6 +56,13 @@ ok(r1.status === 200 && r1.body.questions.length === 1 && r1.body.questions[0].t
   ok(prompts.at(-1).includes('D11 có SUM: ĐẠT') && prompts.at(-1).includes('=SUM(D2:D10)') && prompts.at(-1).includes('Giáo viên sẽ duyệt'), 'AI dựa trên bằng chứng + kết quả kiểm tra tự động; giáo viên quyết định');
   ok((await call('/teacher/ai-practical', {kind:'excel', rubric:[]}, ADMIN)).status === 400, 'chưa có tiêu chí → báo');
 
+  // phân tích trò chơi câu hỏi
+  const qp = buildQuizAnalysisPrompt({title:'Bài 1', players:30, avg_pct:55, questions:[{text:'1 byte = ?', opts:{A:'4 bit', B:'8 bit'}, ans:'B', topic:'Mã nhị phân', pct:40, counts:{A:17, B:12, none:1}}]});
+  ok(qp.includes('B(đúng)="8 bit": 12 em') && qp.includes('A="4 bit": 17 em') && qp.includes('không trả lời: 1 em') && qp.includes('30 học sinh'), 'phân tích trò chơi: gửi AI phân bố phương án (suy ra hiểu lầm), không có tên học sinh');
+  gen = () => JSON.stringify({muc_hieu:'Trung bình', nhan_xet:'**Mức hiểu chung** Trung bình. **Hiểu lầm cần sửa** nhầm bit/byte.'});
+  const aq = await call('/teacher/ai-quiz', {title:'Bài 1', players:30, questions:[{text:'1 byte?', opts:{A:'4', B:'8'}, ans:'B', pct:40, counts:{A:17, B:12}}]}, ADMIN);
+  ok(aq.status === 200 && aq.body.muc_hieu === 'Trung bình' && aq.body.nhan_xet.includes('bit/byte'), 'endpoint phân tích trò chơi trả mức hiểu + nhận xét');
+  ok((await call('/teacher/ai-quiz', {questions:[]}, ADMIN)).status === 400, 'chưa có kết quả → báo');
   // Gia sư nhận chủ đề yếu
   delete env.SHEET_LOGIN_URL; const t = (await call('/login', {student_id:'hs_ai', pin:'123456'})).body.token;
   let sys = null; globalThis.fetch = async (u, o) => { if (String(u).includes('generativelanguage')) { sys = JSON.parse(o.body).systemInstruction.parts[0].text; return new Response(JSON.stringify({candidates:[{content:{parts:[{text:'Bit là đơn vị nhỏ nhất của thông tin.'}]}}]}), {status:200}); } return realFetch(u, o); };
