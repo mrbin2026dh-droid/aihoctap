@@ -295,17 +295,18 @@ function drawExam() {
   const err = el('p', '', 'thi-error'); err.setAttribute('role', 'alert');
   const submit = /** @type {HTMLButtonElement} */ (el('button', 'Nộp bài', 'primary thi-submit')); submit.type = 'submit';
   const exit = /** @type {HTMLButtonElement} */ (el('button', 'Thoát', 'thi-back thi-btn-ghost')); exit.type = 'button';
-  exit.addEventListener('click', () => { cur = { phase: 'list', id: '', qs: [] }; void presence('hoc'); draw(); });
+  let typing = 0;   // gõ tự luận: lưu nháp sau khi ngừng gõ 0,4 giây
   const update = () => {
+    if (cur.phase !== 'exam' || !cur.qs || !cur.qs.length) return;
     const a = answers(), n = Object.keys(a).length;
     count.textContent = `Đã làm ${n}/${cur.qs.length}`;
-    nav.querySelectorAll('.thi-qbtn').forEach((x, i) => { const done = !!a[cur.qs[i].id]; x.classList.toggle('is-done', done); if (done) x.classList.remove('is-missing'); x.setAttribute('aria-label', `Câu ${i + 1}, ${done ? 'đã làm' : 'chưa làm'}`); });
+    nav.querySelectorAll('.thi-qbtn').forEach((x, i) => { const q = cur.qs[i]; if (!q) return; const done = !!a[q.id]; x.classList.toggle('is-done', done); if (done) x.classList.remove('is-missing'); x.setAttribute('aria-label', `Câu ${i + 1}, ${done ? 'đã làm' : 'chưa làm'}`); });
     f.querySelectorAll('.thi-q.is-missing').forEach(fs => { const t = /** @type {HTMLTextAreaElement|null} */ (fs.querySelector('textarea')); if (fs.querySelector('input:checked') || (t && t.value.trim())) fs.classList.remove('is-missing'); });
   };
+  exit.addEventListener('click', () => { clearTimeout(typing); cur = { phase: 'list', id: '', qs: [] }; void presence('hoc'); draw(); });
   f.addEventListener('change', () => { saveDraft(cur.id, answers()); update(); });
-  let typing = 0;   // gõ tự luận: lưu nháp sau khi ngừng gõ 0,4 giây
   f.addEventListener('input', ev => { if (!(/** @type {HTMLElement} */ (ev.target)).matches('textarea')) return; clearTimeout(typing); typing = window.setTimeout(() => { saveDraft(cur.id, answers()); update(); }, 400); });
-  f.addEventListener('submit', ev => { ev.preventDefault(); void doSubmit(submit, err); });
+  f.addEventListener('submit', ev => { ev.preventDefault(); clearTimeout(typing); void doSubmit(submit, err); });
   bar.append(exit, submit);
   if (b.noi_dung === 'tn_th') f.append(practical(cur.id));
   f.append(err, bar); w.append(f); update(); lockBanner();

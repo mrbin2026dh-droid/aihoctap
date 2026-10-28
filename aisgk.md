@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã deploy Worker bản 5a82fe25, kiểm thử Emulator 100% PASS; Thầy dán Code.gs bản mới, đăng luật Firebase và thử tính năng AI soạn đề + thi thử tự luận.
+- Yêu cầu mới nhất: Đã tạo 2 đề thi thử Tin 8 & Tin 9 từ đề cương thực tế (Excel + JSON), kiểm thử 8 tình huống AI chấm tự luận đạt 100% PASS, vá lỗi race condition trong thi-app.js và bàn giao cho Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1965,3 +1965,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: Cloudflare Worker live tại 5a82fe25-880d-4d9d-8941-cd61e429a7c6; Firebase Emulator script code 0; PWA release files verified.
 - Việc tiếp: Thầy dán Code.gs mới, đăng luật Firebase mới và thử nghiệm: AI soạn đề → tạo thi thử có tự luận → học sinh làm và nộp bài.
+
+### 28/10/2026 (chiều) — Antigravity — Tạo 2 Đề thi thử Tin 8 & Tin 9 từ đề cương, kiểm thử AI chấm 8 tình huống & vá lỗi thi-app.js
+- Đã thực hiện: Bóc tách file PDF Tin 9 và DOCX Tin 8 tạo 2 bộ đề chuẩn 10 điểm (JSON + Excel); chạy kiểm thử 8 tình huống AI chấm tự luận (học sinh giỏi, thiếu ý, lạc đề, prompt injection, không dấu, bỏ trống, bài dài, AI lỗi mạng); phát hiện và sửa lỗi race condition timer `typing` trong `thi-app.js` gây lỗi `id of undefined` khi nộp bài nhanh; đóng dấu lại SW (`aisgk-student-shell-c5565f7186b34a900a66bedd`).
+- Tệp đổi: frontend/hoc/thi-app.js, frontend/hoc/sw.js, aisgk.md, docs/handoff/antigravity-claude-kiem-thu-decuong-tin8-tin9.md, tests/test_decuong_tin8_tin9_ai.mjs, tests/test_decuong_tin8_tin9_e2e.cjs.
+- Kiểm thực tế: test_decuong_tin8_tin9_ai (20/20 PASS); test_decuong_tin8_tin9_e2e (16/16 PASS); test_thi_tuluan (68/68 PASS); package_student_pwa --check PASS.
+- Việc tiếp: Chuyển Claude thẩm định báo cáo và xem xét đề xuất ký tự tối thiểu.
