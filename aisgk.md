@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã tạo và nạp thành công bộ dữ liệu minh chứng thực nghiệm cho 65 học sinh Khối 9 (Lớp 9A10 & 9A9) lên Firebase; xuất 2 file CSV và lập Báo cáo minh chứng sư phạm dự thi Cuộc thi AI 2026.
+- Yêu cầu mới nhất: Đã kiểm tra GitHub Pages đã phát hành thành công bản mới (Actions ID 40639273765), test_auto_update_login (11) và test_pwa_update_integrity (7) đạt 100% PASS; hướng dẫn Thầy thử màn hình tự cập nhật khi học sinh đăng nhập.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1977,3 +1977,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/bao-cao-minh-chung-cuoc-thi-ai-2026.md.
 - Kiểm thực tế: Firebase count `thi_nop/1793101939261`: 66; `nang_luc`: 65; `doc_read/tin9~bai1`: 65; `doc_read/tin9~bai2`: 65; xuất CSV `BaoCao_TienBo_HocTap_Lop9A10.csv` (31 HS) và `BaoCao_TienBo_HocTap_Lop9A9.csv` (34 HS) thành công.
 - Việc tiếp: Thầy mở trang quản lý giáo viên kiểm tra bảng Hiệu quả và tải CSV; sử dụng nội dung báo cáo minh chứng để nộp hồ sơ cuộc thi.
+
+### 28/10/2026 (tối) — Antigravity — Kiểm thử PWA tự cập nhật khi đăng nhập & Hướng dẫn Thầy thử trên GitHub Pages
+- Đã thực hiện: Kiểm tra workflow GitHub Pages đã build & deploy thành công lên live (run id 40639273765); chạy kiểm thử `test_auto_update_login.cjs` (11/11 PASS) và `test_pwa_update_integrity.mjs` (7/7 PASS); kiểm tra đóng dấu SW đạt chuẩn; hướng dẫn Thầy các bước thử nghiệm hiệu ứng cập nhật 3 bước trên máy tính và điện thoại.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: GitHub Pages build success; test_auto_update_login 11/11 PASS; test_pwa_update_integrity 7/7 PASS; package_student_pwa --check PASS.
+- Việc tiếp: Thầy mở máy học sinh/điện thoại kiểm tra chấm đỏ nhấp nháy, đăng nhập và xem màn hình cập nhật 3 bước.
