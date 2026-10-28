@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã dựng hoàn tất "Bộ não thứ 2" theo kiến trúc Karpathy trong kho Obsidian thật của Thầy (`AI-KEN THUC/Mr.KhangKhoi`); cấu hình app.json chuẩn Wikilinks; nạp lần đầu 3 tài liệu công việc tạo 5 trang wiki chuẩn; kiểm tra kho đạt 0 liên kết gãy; truy vấn thử nghiệm 2 câu hỏi trả lời chính xác 100% có dẫn nguồn; hướng dẫn Thầy cài đặt Obsidian Web Clipper; lập báo cáo tại `docs/handoff/antigravity-claude-bo-nao-thu-2-xong.md`.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành Bước 1 (cập nhật secret ALLOWED_ORIGIN đa tên miền, deploy Worker de3a4d7f, kiểm thử CORS OPTIONS đạt 200 có Vary: Origin; unit test 8/8 và 28/28 PASS); thực hiện Bước 4 gắn CNAME aihoctap.online trên GitHub Pages; đang hướng dẫn Thầy thực hiện Bước 2 cấu hình 4 bản ghi A và 1 CNAME trên Hostinger để kích hoạt HTTPS.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2071,3 +2071,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã làm: logo/biểu tượng/ảnh chia sẻ từ gói tài nguyên v2; thẻ SEO (Open Graph, Twitter, canonical, JSON-LD), robots.txt, sitemap.xml; trang giáo viên noindex; phần giới thiệu dưới thẻ đăng nhập; Worker nhận nhiều tên miền (ALLOWED_ORIGIN cách nhau dấu phẩy, Vary: Origin); báo cáo minh chứng viết lại theo phương án A.
 - Kiểm thử: test_seo_brand 28, test_worker_multi_origin 8 (mới); hồi quy giao diện học sinh/giáo viên/thi và toàn bộ test Worker đạt; test_fonts_vietnamese đạt lại (gỡ phông Georgia của màn hình cập nhật).
 - Việc tiếp: Antigravity làm theo docs/handoff/claude-antigravity-ten-mien-seo.md (Worker trước, DNS, Pages, HTTPS). Học sinh cài lại app từ tên miền mới.
+
+### 28/10/2026 22:20 — Antigravity — Hoàn thành Bước 1 (Worker đa miền de3a4d7f) & Bước 4 (Pages CNAME aihoctap.online)
+- Đã thực hiện: Cập nhật secret `ALLOWED_ORIGIN` đa tên miền trên Cloudflare Worker (`https://aihoctap.online,https://mrbin2026dh-droid.github.io`); deploy Worker thành công (Version ID: `de3a4d7f-0a2c-426b-b427-ee679d1f2391`); chạy kiểm thử `test_worker_multi_origin.mjs` (8/8 PASS) và `test_seo_brand.cjs` (28/28 PASS); kiểm thử live `curl -I -X OPTIONS` trên Worker xác nhận trả đúng từng tên miền kèm `Vary: Origin`; cấu hình CNAME `aihoctap.online` trên GitHub Pages (`gh api -X PUT repos/.../pages -f cname=aihoctap.online`); kiểm tra IP hiện tại của tên miền `2.57.91.91` thuộc Hostinger; chuẩn bị hướng dẫn chi tiết Thầy cấu hình 4 bản ghi A và 1 CNAME trên Hostinger.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: Worker OPTIONS trả 200 cho cả `aihoctap.online` và `github.io`; GitHub Pages API trả `"cname": "aihoctap.online"`; unit tests 8/8 và 28/28 PASS.
+- Việc tiếp: Hướng dẫn Thầy đăng nhập Hostinger cập nhật 4 bản ghi A và 1 CNAME; sau khi DNS trỏ đúng, Antigravity kích hoạt HTTPS và kiểm tra xem trước link trên Zalo/Facebook.
+
