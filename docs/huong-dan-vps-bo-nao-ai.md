@@ -29,7 +29,23 @@ ssh root@ĐỊA_CHỈ_IP              # từ giờ đăng nhập không cần m�
 ```
 Tắt đăng nhập bằng mật khẩu: trong tệp `/etc/ssh/sshd_config`, đặt `PasswordAuthentication no`, sau đó chạy `systemctl restart ssh`.
 
-## 2. Cập nhật và khóa máy chủ (chạy trên VPS)
+## Cách cài siêu tốc 1 lệnh (Khuyên dùng)
+Sau khi SSH vào VPS với quyền 
+oot, thầy cô chỉ cần dán đúng 1 dòng lệnh này:
+`ash
+curl -sSL https://raw.githubusercontent.com/mrbin2026dh-droid/aihoctap/main/brain/deploy/setup.sh | bash
+`
+Script sẽ tự động thực hiện từ Bước 2 đến Bước 7:
+- Cập nhật gói và cài đặt python3, sqlite3, git, ufw, unattended-upgrades.
+- Đặt múi giờ Asia/Ho_Chi_Minh và kích hoạt tường lửa chỉ mở SSH.
+- Tạo người dùng riêng rain, tải mã nguồn từ GitHub, chạy bộ kiểm thử đạt 7/7 OK.
+- Kích hoạt systemd timer chạy định kỳ 21:00 mỗi tối và cronjob sao lưu lúc 22:30.
+- Tạo sẵn tệp /opt/brain/.env với WORKER_URL và BRAIN_KEY đã được điền sẵn.
+Thầy cô chỉ cần làm tiếp **Bước 4 (điền các khóa bí mật)** và **Bước 5 (chạy thử)**.
+
+---
+
+## 2. Cập nhật và khóa máy chủ (cài thủ công từng bước)
 ```bash
 apt update && apt -y upgrade
 apt -y install python3 sqlite3 git ufw unattended-upgrades
