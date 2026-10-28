@@ -68,25 +68,28 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     cfg = Config.from_env(a.env)
     db = store.open_db(cfg.db_path)
-    if a.cmd in ("run", "collect"):
-        print("Thu thập:", collect(cfg, db))
-        if a.cmd == "collect":
+    try:
+        if a.cmd in ("run", "collect"):
+            print("Thu thập:", collect(cfg, db))
+            if a.cmd == "collect":
+                return 0
+        if a.cmd == "report":
+            f = analyze.class_facts(db, a.lop or "", today(cfg), cfg.tz_offset_hours)
+            print(json.dumps(f, ensure_ascii=False, indent=2)); print(); print(report.fallback_md(f))
             return 0
-    if a.cmd == "report":
-        f = analyze.class_facts(db, a.lop or "", today(cfg), cfg.tz_offset_hours)
-        print(json.dumps(f, ensure_ascii=False, indent=2)); print(); print(report.fallback_md(f))
+        reps = build_reports(cfg, db, use_ai=not a.no_ai)
+        print(f"Đã viết {len(reps)} báo cáo lớp.")
+        if a.dry_run or not (cfg.sheet_url and cfg.sheet_brain_key):
+            for r in reps:
+                print(f"\n===== Lớp {r['lop']} =====\n{r['md']}")
+            return 0
+        res = sources.sheet_save(cfg.sheet_url, cfg.sheet_brain_key, reps)
+        with db:
+            store.set_meta(db, "last_run", datetime.now(timezone.utc).isoformat())
+        print("Đã gửi Google Sheet:", res.get("saved"), "lớp")
         return 0
-    reps = build_reports(cfg, db, use_ai=not a.no_ai)
-    print(f"Đã viết {len(reps)} báo cáo lớp.")
-    if a.dry_run or not (cfg.sheet_url and cfg.sheet_brain_key):
-        for r in reps:
-            print(f"\n===== Lớp {r['lop']} =====\n{r['md']}")
-        return 0
-    res = sources.sheet_save(cfg.sheet_url, cfg.sheet_brain_key, reps)
-    with db:
-        store.set_meta(db, "last_run", datetime.now(timezone.utc).isoformat())
-    print("Đã gửi Google Sheet:", res.get("saved"), "lớp")
-    return 0
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

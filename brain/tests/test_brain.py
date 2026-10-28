@@ -38,6 +38,9 @@ class Analyze(unittest.TestCase):
         store.add_questions(self.db, qs, analyze.keyof)
         self.f = analyze.class_facts(self.db, "9A", "2026-10-28")
 
+    def tearDown(self):
+        self.db.close()
+
     def test_keywords_vietnamese(self):
         kw = analyze.keywords(["Mã nhị phân là gì ạ?", "Em chưa hiểu mã nhị phân", "mã nhị phân đổi thế nào", "dữ liệu số"])
         self.assertEqual(kw[0]["w"], "mã nhị phân"); self.assertEqual(kw[0]["n"], 3)
@@ -113,7 +116,7 @@ class Pipeline(unittest.TestCase):
         base = f"http://127.0.0.1:{srv.server_port}"
         with tempfile.TemporaryDirectory() as d:
             env = os.path.join(d, ".env")
-            open(env, "w", encoding="utf-8").write("\n".join([f"FB_URL={base}/fb", "FB_SECRET=bi-mat", f"WORKER_URL={base}", "BRAIN_KEY=kb", f"SHEET_URL={base}/sheet",
+            with open(env, "w", encoding="utf-8") as _ef: _ef.write("\n".join([f"FB_URL={base}/fb", "FB_SECRET=bi-mat", f"WORKER_URL={base}", "BRAIN_KEY=kb", f"SHEET_URL={base}/sheet",
                                                              "SHEET_BRAIN_KEY=ks", "GEMINI_API_KEY=g", f"GEMINI_URL={base}/gem", f"DB_PATH={d}/b.sqlite3"]))
             old = {k: os.environ.pop(k, None) for k in ("NO_PROXY", "no_proxy", "HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy")}
             try:
@@ -125,6 +128,7 @@ class Pipeline(unittest.TestCase):
             db = sqlite3.connect(f"{d}/b.sqlite3")
             self.assertEqual(db.execute("SELECT COUNT(*) FROM mastery").fetchone()[0], 1)
             self.assertEqual(db.execute("SELECT COUNT(*) FROM questions").fetchone()[0], 1)
+            db.close()
         srv.shutdown()
         self.assertTrue(all(a == "bi-mat" for a in seen["auth"]) and seen["brain"][0] == "kb")
         sheet = seen["sheet"]; self.assertEqual(sheet["key"], "ks"); self.assertEqual(sheet["action"], "brain_save")
