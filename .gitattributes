@@ -4,3 +4,15 @@
 frontend/hoc/** text eol=lf
 frontend/hoc/**/*.png binary
 frontend/hoc/**/*.woff2 binary
+*.ico binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+frontend/hoc/**/*.ico binary
+frontend/hoc/**/*.webp binary
+frontend/hoc/*.ico binary
+frontend/hoc/**/*.jpg binary
+frontend/hoc/**/*.jpeg binary
+frontend/hoc/**/*.gif binary
