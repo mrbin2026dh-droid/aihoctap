@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành khẩn cấp Bước 1 (dừng và tắt `brain.timer` trên VPS lúc 20:25) và Bước 2 (xóa sạch 2 hiểu lầm giả lập trong Gia sư qua Cloudflare Worker DO lúc 20:28); thực hiện kiểm kê chi tiết toàn bộ các nhánh dữ liệu Firebase và SQLite VPS; xác nhận dữ liệu thật (13 bài đọc, 65 học sinh thi_hs) hoàn toàn nguyên vẹn; chưa xóa gì trên Firebase và chưa sửa báo cáo minh chứng; lập báo cáo tại `docs/handoff/antigravity-claude-kiem-ke-du-lieu-gia.md`; chờ Thầy quyết định chọn Phương án A (xóa giả, thi thật ngày mai) hoặc B (mô phỏng ẩn danh).
+- Yêu cầu mới nhất: Antigravity đã kiểm thử giao diện menu giáo viên trên điện thoại gọn 5 mục (21/21 ca PASS, teacher_shell PASS); xác nhận GitHub Pages đã deploy live thành công (run id 40699509322, URL teacher.html trả HTTP 200); chờ Thầy lựa chọn Phương án A/B về dữ liệu giả lập và xác nhận có làm Zalo Bot bản tối thiểu hay không.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2043,4 +2043,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-kiem-ke-du-lieu-gia.md.
 - Kiểm thực tế: VPS `systemctl list-timers brain.timer` trả 0 timers; Worker `/api/brain/hieu-lam` trả `{"saved":0,"cleared":2,"skipped":0}`; Firebase REST API xác nhận toàn vẹn dữ liệu thật; SQLite VPS kiểm đếm đầy đủ 7 bảng.
 - Việc tiếp: Chuyển Claude báo cáo kiểm kê; chờ Thầy quyết định chọn Phương án A (xóa dữ liệu giả, tổ chức làm bài thi thử thật ngày 29/10 để lấy số liệu thực tế nộp cuộc thi 30/10) hoặc Phương án B (chuyển sang mô phỏng kiểm thử tải ẩn danh).
+
+### 28/10/2026 20:55 — Antigravity — Kiểm thử Gọn menu giáo viên trên điện thoại 21/21 PASS & Xác nhận GitHub Pages Live
+- Đã thực hiện: Kéo commit `18b99d0` từ Claude; chạy bộ kiểm thử chuyên sâu `test_teacher_mobile_nav.cjs` đạt 21/21 ca PASS (kiểm tra thanh dưới 5 mục Tổng quan · Bài học · Thi · Hiệu quả · Tiện ích; thanh con Soạn bài|Tài liệu và Thi|Về nhà; Tài khoản chuyển thành icon cạnh bánh răng; giáo viên lớp hiển thị đúng 4 mục); chạy `test_teacher_shell.cjs` PASS; kiểm tra đóng dấu PWA `package_student_pwa --check` PASS; kiểm tra workflow GitHub Pages đã build và deploy tự động thành công (run id 40699509322); kiểm tra live URL `https://mrbin2026dh-droid.github.io/aihoctap/teacher.html` trả HTTP 200 và chứa phần tử `hdr-accounts`.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: `test_teacher_mobile_nav.cjs` 21/21 PASS; `test_teacher_shell.cjs` PASS; GitHub Pages run 40699509322 completed success; Live HTTP 200 xác nhận có `hdr-accounts`.
+- Việc tiếp: Chờ Thầy chọn Phương án A hoặc B cho dữ liệu giả lập; Thầy xác nhận có làm Zalo Bot bản tối thiểu không (nếu có, Thầy tự tạo bot trên Zalo để lấy token).
+
 
