@@ -2,7 +2,7 @@
 
 ## 1. Kết quả kiểm tra & chuẩn bị hạ tầng Bộ não AI hiện có (Python)
 - **Mã nguồn `brain/`**: Đã kiểm tra cấu trúc (sources.py, analyze.py, report.py, store.py, config.py, __main__.py), tất cả unittests trong `brain/tests/test_brain.py` đều đạt **7/7 PASS**.
-- **Đồng bộ Cloudflare Worker Secret**: Đã nạp secret `BRAIN_KEY=7ae4e12a355fa61dfade8edb4cbe758e355bcbf317b02902` lên Worker live `aihoctap-gate`. Đã đo đạc thực tế gọi endpoint `/api/brain/export` với header `X-Brain-Key` và User-Agent: API trả về **HTTP 200** `{"items":[]}` thành công 100%.
+- **Đồng bộ Cloudflare Worker Secret**: Đã nạp secret `BRAIN_KEY` (giá trị đã bị xóa khỏi tài liệu vì lộ trên kho công khai; đã yêu cầu xoay khóa) lên Worker live `aihoctap-gate`. Đã đo đạc thực tế gọi endpoint `/api/brain/export` với header `X-Brain-Key` và User-Agent: API trả về **HTTP 200** `{"items":[]}` thành công 100%.
 - **Kịch bản tự động 1 lệnh `setup.sh`**: Đã viết tại `brain/deploy/setup.sh` và đẩy lên `origin/main` (commit `15d3314`). Thầy cô chỉ cần chạy 1 dòng lệnh duy nhất trên VPS là hoàn tất toàn bộ các bước cấu hình hệ thống, UFW, user `brain`, systemd service & timer 21:00 hàng tối và cronjob sao lưu.
 - **Tài liệu hướng dẫn**: Đã cập nhật `docs/huong-dan-vps-bo-nao-ai.md` bổ sung phần cài đặt siêu tốc 1 lệnh.
 - **Kiểm thử giao diện**: Chạy `node tests/test_help_widget.cjs` đạt **28/28 PASS** (kiểm chứng khung Trợ giúp nhanh và căn giữa thẻ đăng nhập trên cả mobile và desktop).

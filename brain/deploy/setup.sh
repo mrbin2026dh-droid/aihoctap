@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a   # không hỏi tương tác khi cài gói
 
 # Kịch bản cài đặt tự động Bộ não AI (Góc học tập SGK) trên Ubuntu 24.04 LTS
 # Sử dụng: sudo bash brain/deploy/setup.sh
@@ -44,15 +45,16 @@ if [ ! -f /opt/brain/.env ]; then
   cp /opt/brain/brain/.env.example /opt/brain/.env
   # Điền sẵn các giá trị mặc định của dự án
   sed -i 's|WORKER_URL=https://ten-worker-cua-ban.workers.dev|WORKER_URL=https://aihoctap-gate.mrbin2026dh.workers.dev|g' /opt/brain/.env
-  sed -i 's|BRAIN_KEY=|BRAIN_KEY=7ae4e12a355fa61dfade8edb4cbe758e355bcbf317b02902|g' /opt/brain/.env
   chown brain:brain /opt/brain/.env
   chmod 600 /opt/brain/.env
-  echo "[+] Đã tạo /opt/brain/.env mẫu với WORKER_URL và BRAIN_KEY điền sẵn."
+  echo "[+] Đã tạo /opt/brain/.env mẫu (WORKER_URL điền sẵn). Các khóa bí mật phải tự điền, KHÔNG ghi khóa vào mã nguồn."
 fi
 
 # Cài đặt cronjob sao lưu hàng ngày lúc 22:30
 (crontab -u brain -l 2>/dev/null | grep -v "backup.sh" || true; echo "30 22 * * * /opt/brain/brain/deploy/backup.sh") | crontab -u brain -
 
+echo "--- Các dòng trong .env còn trống (cần điền): ---"
+grep -E '^(FB_SECRET|BRAIN_KEY|SHEET_URL|SHEET_BRAIN_KEY|GEMINI_API_KEY)=(|dán-.*|.*\.\.\./exec)$' /opt/brain/.env | cut -d= -f1 || true
 echo "=========================================================="
 echo " [OK] Cài đặt hoàn tất!"
 echo " Việc tiếp theo của Thầy:"

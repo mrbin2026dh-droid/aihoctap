@@ -40,7 +40,7 @@ Script sẽ tự động thực hiện từ Bước 2 đến Bước 7:
 - Đặt múi giờ Asia/Ho_Chi_Minh và kích hoạt tường lửa chỉ mở SSH.
 - Tạo người dùng riêng rain, tải mã nguồn từ GitHub, chạy bộ kiểm thử đạt 7/7 OK.
 - Kích hoạt systemd timer chạy định kỳ 21:00 mỗi tối và cronjob sao lưu lúc 22:30.
-- Tạo sẵn tệp /opt/brain/.env với WORKER_URL và BRAIN_KEY đã được điền sẵn.
+- Tạo sẵn tệp /opt/brain/.env với WORKER_URL điền sẵn. Mọi khóa bí mật (BRAIN_KEY, FB_SECRET, SHEET_BRAIN_KEY, GEMINI_API_KEY) tự điền, không bao giờ ghi vào mã nguồn.
 Thầy cô chỉ cần làm tiếp **Bước 4 (điền các khóa bí mật)** và **Bước 5 (chạy thử)**.
 
 ---
