@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Thầy đăng luật Firebase mới từ spike/step0/database.rules.ai-sgk-final.json lên Firebase Console, kiểm tra hết 401 trên app học sinh, và chuẩn bị VPS Ubuntu 24.04 theo hướng dẫn.
+- Yêu cầu mới nhất: Đã deploy Worker bản 5a82fe25, kiểm thử Emulator 100% PASS; Thầy dán Code.gs bản mới, đăng luật Firebase và thử tính năng AI soạn đề + thi thử tự luận.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1959,3 +1959,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Test: test_essay_ai 17, test_thi_tuluan 68, test_sheet_exam_gs 125.
 - Bàn giao: docs/handoff/claude-antigravity-thi-tu-luan.md
 - Khôi phục frontend/hoc/sw.js (bản gộp f3eef3a làm mất xử lý navigate offline + ACTIVATE/VERSION); test_pwa_update_integrity lại đạt 7/7.
+
+### 28/10/2026 (trưa) — Antigravity — Deploy Worker 5a82fe25, Emulator 100% PASS & Bàn giao Thầy
+- Đã thực hiện: Deploy Cloudflare Worker bản 5a82fe25 (sửa 502 Gemini, tự thử lại 3 lần, chấm tự luận /api/pwa/exam-essay); chạy kiểm thử máy giả lập Emulator đạt 100% TẤT CẢ CA ĐÚNG (kể cả 4 ca tự luận mới); chạy test_essay_ai (17), test_thi_tuluan (68), test_sheet_exam_gs (125) đều PASS.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: Cloudflare Worker live tại 5a82fe25-880d-4d9d-8941-cd61e429a7c6; Firebase Emulator script code 0; PWA release files verified.
+- Việc tiếp: Thầy dán Code.gs mới, đăng luật Firebase mới và thử nghiệm: AI soạn đề → tạo thi thử có tự luận → học sinh làm và nộp bài.
