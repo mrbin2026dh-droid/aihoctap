@@ -55,6 +55,10 @@ assert.ok(prog.body.attempts.every(x => !('per_question' in x) && !('student_nam
 assert.deepEqual(prog.body.review.map(r => r.topic), ['Phần cứng'], 'chỉ gợi ý chủ đề luyện tập còn yếu');
 assert.deepEqual([prog.body.review[0].correct, prog.body.review[0].total], [0, 2]);
 assert.ok(!JSON.stringify(prog.body).includes('Câu một?'), 'không trả nội dung câu sai');
+// Bản đồ năng lực: MỌI chủ đề (kể cả chủ đề đã vững), kèm bài để ôn; không có nội dung câu
+assert.ok(Array.isArray(prog.body.mastery) && prog.body.mastery.length >= 1, 'progress trả mastery (bản đồ năng lực)');
+assert.ok(prog.body.mastery.every(m => typeof m.percent === 'number' && m.total > 0 && Array.isArray(m.lessons) && m.lessons[0].lesson_id === 'bai1'), 'mỗi chủ đề có %, số câu, bài để ôn');
+assert.ok(prog.body.mastery.length >= prog.body.review.length, 'mastery gồm cả chủ đề đã vững (review chỉ chủ đề yếu)');
 // Học sinh B (đúng 2/3, có 1 câu bỏ trống thuộc Phần cứng): 1/2 Phần cứng
 const progB = await call('GET', '/pwa/progress', null, tb);
 assert.deepEqual([progB.body.review[0].topic, progB.body.review[0].percent], ['Phần cứng', 50]);

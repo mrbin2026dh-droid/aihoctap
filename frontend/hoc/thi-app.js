@@ -10,7 +10,7 @@ import { typeOut } from './typing.js';
 
 /** @typedef {{ma:string,ten:string,lop:string,khoi:number}} Me */
 /** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean,noi_dung?:'tn'|'tn_th',hinh_thuc?:string,nam_hoc?:string}} Bai */
-/** @typedef {{id:string,stt?:number|string,text:string,options:Record<string,string>,answer:string,points:number}} Cau */
+/** @typedef {{id:string,stt?:number|string,text:string,options:Record<string,string>,answer:string,points:number,topic?:string}} Cau */
 
 /** @type {HTMLElement|null} */ let root = null;
 /** @type {Me|null} */ let me = null;
@@ -22,6 +22,22 @@ import { typeOut } from './typing.js';
 let loaded = false, online = true, pin = '';
 /** @type {any} bài thi thử vừa nộp (để Gia sư AI nhận xét) */ let reviewData = null;
 
+/** Khóa chủ đề an toàn cho Firebase (dùng chung với Bản đồ năng lực). @param {string} t */
+export const topicKey = t => String(t || '').normalize('NFC').toLowerCase().trim().replace(/[.#$[\]/\s]+/g, '_').slice(0, 60);
+/** Xáo trộn có hạt giống (cùng em + cùng bài → cùng thứ tự, tải lại trang không đổi). @template T @param {T[]} arr @param {string} seedText @returns {T[]} */
+export function seededShuffle(arr, seedText) {
+  let h = 2166136261; for (const ch of String(seedText)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  const rnd = () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; };
+  const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a;
+}
+/** Số lần rời màn hình bài thi thật (lưu trên máy, tải lại trang không mất). */
+const leaveKey = (/** @type {string} */ id) => `thi-roi-${store.keyOf(me?.ma || '')}-${id}`;
+const leaves = (/** @type {string} */ id) => { try { return Number(localStorage.getItem(leaveKey(id))) || 0; } catch { return 0; } };
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden || cur.phase !== 'exam' || !inExam() || bai[cur.id]?.che_do !== 'that') return;
+  const n = leaves(cur.id) + 1; try { localStorage.setItem(leaveKey(cur.id), String(n)); } catch { /* bỏ qua */ }
+  const box = root?.querySelector('.thi-leave'); if (box) box.textContent = `Em đã rời màn hình bài thi ${n} lần. Thầy cô sẽ thấy số lần này.`;
+});
 const draftKey = (/** @type {string} */ id) => `thi-fb-${store.keyOf(me?.ma || '')}-${id}`;
 const readDraft = (/** @type {string} */ id) => { try { return JSON.parse(localStorage.getItem(draftKey(id)) || '{}'); } catch { return {}; } };
 const saveDraft = (/** @type {string} */ id, /** @type {Record<string,string>} */ a) => { try { localStorage.setItem(draftKey(id), JSON.stringify(a)); } catch { /* bỏ qua */ } };
@@ -73,6 +89,18 @@ export function watchBadge(identity, cb) {
 /** Em đang ở màn làm bài (thi thử hoặc thi thật, tab Thi đang hiện) → Gia sư AI tạm nghỉ để kết quả phản ánh đúng sức em. */
 export function inExam() { return cur.phase === 'exam' && !!root && root.isConnected && !root.closest('[hidden]'); }
 export function realExamOpen() { return visible().some(([id, b]) => b.che_do === 'that' && b.trang_thai === 'mo' && !mine[id]); }
+/**
+ * Bản đồ năng lực: cộng dồn đúng/tổng theo chủ đề từ lần nộp gần nhất của mỗi bài thi thử/thi thật dành cho em.
+ * @returns {Promise<Record<string,{ten:string,d:number,n:number}>>}
+ */
+export async function myTopics() {
+  if (!me || !store.enabled()) return {};
+  const ids = Object.entries(bai || {}).filter(([, b]) => b && forMe(b)).map(([id]) => id);
+  await Promise.all(ids.filter(id => !mine[id]).map(id => store.get(`thi_nop/${id}/${store.keyOf(me?.ma || '')}`).then(v => { if (v) mine[id] = v; }).catch(() => {})));
+  /** @type {Record<string,{ten:string,d:number,n:number}>} */ const out = {};
+  for (const id of ids) for (const [k, v] of Object.entries(mine[id]?.chu_de || {})) { const r = out[k] || { ten: String(v?.ten || k), d: 0, n: 0 }; r.d += Number(v?.d) || 0; r.n += Number(v?.n) || 0; out[k] = r; }
+  return out;
+}
 /** @type {null|((review:any)=>Promise<string>)} */ let reviewer = null;
 /** app.js cung cấp hàm gọi Gia sư AI nhận xét bài thi thử (cần token Worker). @param {(review:any)=>Promise<string>} fn */
 export function setReviewer(fn) { reviewer = fn; }
@@ -194,7 +222,8 @@ async function startExam(id) {
   catch (e) { if (!deCache[id]) { const w2 = page(b.tieu_de, ''); w2.append(el('p', (e instanceof Error ? e.message : 'Chưa tải được đề.'), 'thi-error'), backBtn('Về danh sách')); return; } }
   if (cur.id === id && cur.phase === 'exam' && !deCache[id].length) { const w3 = page(b.tieu_de, ''); w3.append(el('p', 'Bài thi chưa có câu hỏi. Em báo thầy cô nhé.', 'thi-error'), backBtn('Về danh sách')); return; }
   if (cur.id !== id || cur.phase !== 'exam') return;
-  cur.qs = deCache[id];
+  // Thi thật: mỗi em một thứ tự câu khác nhau (công bằng hơn); thi thử giữ nguyên thứ tự.
+  cur.qs = b.che_do === 'that' ? seededShuffle(deCache[id], `${store.keyOf(me?.ma || '')}|${id}`) : deCache[id];
   drawExam(); void presence('dang_thi');
 }
 function answers() {
@@ -218,16 +247,18 @@ function drawExam() {
   top.append(tt, count);
   const nav = el('nav', '', 'thi-qnav'); nav.setAttribute('aria-label', 'Chọn câu hỏi');
   head.append(top, nav); w.append(head, el('div', '', 'thi-lock'));
+  if (b.che_do === 'that') { const lv = el('p', leaves(cur.id) ? `Em đã rời màn hình bài thi ${leaves(cur.id)} lần. Thầy cô sẽ thấy số lần này.` : 'Bài thi thật: thứ tự câu và phương án của mỗi bạn khác nhau. Không rời khỏi màn hình khi đang làm.', 'thi-leave'); lv.setAttribute('role', 'status'); w.append(lv); }
   const draft = readDraft(cur.id);
   const f = /** @type {HTMLFormElement} */ (el('form', '', 'thi-form')); f.noValidate = true;
   cur.qs.forEach((q, i) => {
     const fs = el('fieldset', '', 'question thi-q'); fs.id = `thi-q-${i + 1}`;
     const lg = el('legend', `Câu ${i + 1}. ${q.text}`); lg.append(el('span', ` (${q.points} điểm)`, 'thi-pts')); fs.append(lg);
-    for (const [k, t] of Object.entries(q.options || {})) {
+    const that = b.che_do === 'that', opts = Object.entries(q.options || {});
+    (that ? seededShuffle(opts, `${store.keyOf(me?.ma || '')}|${cur.id}|${q.id}`) : opts).forEach(([k, t], pos) => {
       const lab = el('label', '', 'option'); const inp = /** @type {HTMLInputElement} */ (el('input'));
-      inp.type = 'radio'; inp.name = q.id; inp.value = k; inp.checked = draft[q.id] === k;
-      lab.append(inp, document.createTextNode(`${k}. ${t}`)); fs.append(lab);
-    }
+      inp.type = 'radio'; inp.name = q.id; inp.value = k; inp.checked = draft[q.id] === k;   // giá trị = phương án gốc (chấm đúng), nhãn = vị trí hiển thị
+      lab.append(inp, document.createTextNode(`${that ? 'ABCD'[pos] : k}. ${t}`)); fs.append(lab);
+    });
     f.append(fs);
     const nb = /** @type {HTMLButtonElement} */ (el('button', String(i + 1), 'thi-qbtn')); nb.type = 'button'; nb.dataset.q = q.id;
     nb.addEventListener('click', () => { fs.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); /** @type {HTMLInputElement|null} */ (fs.querySelector('input:checked') || fs.querySelector('input'))?.focus({ preventScroll: true }); });
@@ -254,8 +285,11 @@ function drawExam() {
 function practical(id) {
   const box = el('section', '', 'thi-practical'); box.setAttribute('aria-labelledby', 'thi-th-title');
   const h = el('h3', 'Bài thực hành'); h.id = 'thi-th-title';
+  const b0 = bai[id], kind = b0?.loai_th;
+  const task = b0?.de_th ? el('p', b0.de_th, 'thi-th-task') : null;
   const inp = /** @type {HTMLInputElement} */ (el('input')); inp.type = 'file'; inp.id = 'thi-th-file';
-  const lab = el('label', 'Chọn file bài làm (tối đa 10 MB)'); lab.setAttribute('for', 'thi-th-file');
+  if (kind === 'excel') inp.accept = '.xlsx'; else if (kind === 'python') inp.accept = '.py,.txt';
+  const lab = el('label', kind === 'excel' ? 'Chọn file Excel bài làm (.xlsx, tối đa 10 MB)' : kind === 'python' ? 'Chọn file chương trình Python (.py, tối đa 10 MB)' : 'Chọn file bài làm (tối đa 10 MB)'); lab.setAttribute('for', 'thi-th-file');
   const st = el('p', '', 'meta thi-th-status'); st.setAttribute('role', 'status');
   const done = (() => { try { return localStorage.getItem(`thi-th-${store.keyOf(me?.ma || '')}-${id}`) || ''; } catch { return ''; } })();
   if (done) st.textContent = `Đã nộp file: ${done}. Có thể nộp lại file khác.`;
@@ -274,7 +308,7 @@ function practical(id) {
     } catch (e) { st.textContent = (e instanceof Error ? e.message : 'Chưa tải lên được.'); st.classList.add('is-bad'); }
     finally { up.disabled = false; up.removeAttribute('aria-busy'); up.textContent = old; }
   });
-  box.append(h, lab, inp, up, st); return box;
+  box.append(h, ...(task ? [task] : []), lab, inp, up, st); return box;
 }
 function lockBanner() {
   const box = root?.querySelector('.thi-lock'); const b = bai[cur.id]; if (!box) return;
@@ -303,11 +337,16 @@ async function doSubmit(btn, err) {
   try {
     const key = store.keyOf(me.ma);
     const prev = mine[cur.id] !== undefined && mine[cur.id] !== null ? mine[cur.id] : await store.get(`thi_nop/${cur.id}/${key}`).catch(() => null);
-    const rec = { ma: me.ma, ten: me.ten, lop: me.lop, diem, tong, dung, so_cau: total, lan: lanOf(prev) + 1, cao_nhat: Math.max(diem, prev ? best(prev) : 0), tra_loi: a, at: store.SERVER_TIME };
+    // Theo chủ đề (Bản đồ năng lực): code đếm đúng/tổng mỗi chủ đề của bài.
+    /** @type {Record<string,{ten:string,d:number,n:number}>} */ const chu_de = {};
+    for (const q of cur.qs) { const t = String(q.topic || '').trim(); if (!t) continue; const k = topicKey(t), r = chu_de[k] || { ten: t.slice(0, 60), d: 0, n: 0 }; r.n++; if (a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase()) r.d++; chu_de[k] = r; }
+    /** @type {Record<string, any>} */ const rec = { ma: me.ma, ten: me.ten, lop: me.lop, diem, tong, dung, so_cau: total, lan: lanOf(prev) + 1, cao_nhat: Math.max(diem, prev ? best(prev) : 0), dau: prev ? Number(prev.dau ?? prev.diem) || 0 : diem, tra_loi: a, at: store.SERVER_TIME };
+    if (Object.keys(chu_de).length) rec.chu_de = chu_de;
+    if (b.che_do === 'that') rec.roi_tab = leaves(cur.id);
     await store.put(`thi_nop/${cur.id}/${key}`, rec);
     clearDraft(cur.id); mine[cur.id] = { ...rec, at: Date.now() };
     void presence('da_nop');
-    reviewData = { id: cur.id, title: b.tieu_de, rec, items: cur.qs.map((q, i) => ({ stt: i + 1, text: q.text, dung: !!a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase(), bo_trong: !a[q.id] })) };
+    reviewData = { id: cur.id, title: b.tieu_de, rec, items: cur.qs.map((q, i) => ({ stt: i + 1, text: q.text, topic: q.topic || '', dung: !!a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase(), bo_trong: !a[q.id] })) };
     if (b.xem_diem) await showStats(cur.id, true);
     else { cur = { phase: 'result', id: cur.id, qs: cur.qs, result: rec, fresh: true }; drawResult(); }
   } catch (e) {
@@ -371,6 +410,10 @@ function drawResult(all) {
       ol.append(li);
     }
     board.append(ol); w.append(board);
+  }
+  if (b && b.noi_dung === 'tn_th') {   // điểm thực hành do thầy cô chấm (máy + AI gợi ý, thầy cô quyết định)
+    const thp = el('p', 'Bài thực hành: thầy cô đang chấm.', 'meta thi-th-score'); thp.setAttribute('role', 'status'); w.append(thp);
+    void store.get(`thi_th/${cur.id}/${store.keyOf(me?.ma || '')}`).then(v => { if (!thp.isConnected) return; thp.textContent = !v ? 'Em chưa nộp bài thực hành.' : (typeof v.diem_th === 'number' ? `Điểm thực hành: ${v.diem_th} / ${v.tong_th ?? '?'}` : 'Bài thực hành: thầy cô đang chấm.'); }).catch(() => {});
   }
   if (b && b.che_do === 'thu' && cur.fresh && reviewData && reviewData.id === cur.id) w.append(reviewBox(reviewData));
   actions(w, b); hero.tabIndex = -1; hero.focus?.();

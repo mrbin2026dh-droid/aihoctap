@@ -37,3 +37,6 @@ frontend/data/exams/submissions/
 *students*.csv
 *students*.json
 .wrangler/
+tests/.cache/
+brain/.env
+*.sqlite3

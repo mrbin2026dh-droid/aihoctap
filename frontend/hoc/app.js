@@ -8,6 +8,9 @@ import * as thiStore from './thi-store.js';
 import * as thiApp from './thi-app.js';
 import { typeOut } from './typing.js';
 import * as readProgress from './read-progress.js';
+import * as support from './support.js';
+import * as mastery from './mastery.js';
+import * as quiz from './quiz-play.js';
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -16,7 +19,7 @@ function thiBadge(n) {
     else { b?.remove(); btn.removeAttribute('aria-label'); }
   }
 }
-const startThiBadge = () => { if (session && thiStore.enabled()) thiApp.watchBadge(session.identity, thiBadge); };
+const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); } };
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -211,6 +214,7 @@ function gateUI() {
   if (gate) gate.hidden = !gated;
 }
 function identityUI() {
+  support.setClass(session?.identity?.class_code || '');
   gateUI();
   node('login').hidden = Boolean(session);
   node('account').hidden = !session;
@@ -347,11 +351,33 @@ async function refreshCatalog() {
     const changed = next.revision !== catalog?.revision;
     await db.put('meta', 'catalog', next); catalog = next;
     if (changed) {renderCatalog(); if (currentView === 'practice') renderPractice();}
+    void prefetchLessons();
   } catch (error) { if (!catalog) {catalogUnavailable('Chưa kết nối được máy chủ. Em có thể thử lại.'); report(error instanceof Error ? error : new Error('Chưa tải được danh mục.'));} }
   finally {
     refreshing = false;
     if (refreshAgain) {refreshAgain = false; refreshCatalog().catch(report);}
   }
+}
+let prefetching = false;
+/** Có mạng: tải ngầm mọi bài của khối em về máy (từng bài, nhẹ nhàng) → mất mạng vẫn học được. Bản cũ của bài đã đổi phiên bản được thay. */
+async function prefetchLessons() {
+  if (prefetching || !navigator.onLine || !session || !catalog) return;
+  prefetching = true;
+  try {
+    const have = new Set(/** @type {Lesson[]} */ (await db.all('packages')).map(l => db.packageKey(l)));
+    const grade = session.identity.grade;
+    for (const course of catalog.courses.filter(c => c.grade === grade)) for (const summary of course.lessons) {
+      const key = `${course.id}/${summary.id}/${summary.version}`;
+      if (have.has(key)) continue;
+      if (!navigator.onLine || !session) return;
+      try {
+        const lesson = /** @type {Lesson} */ (await api(`/pwa/lessons/${course.id}/${summary.id}/${summary.version}`));
+        await verifyPackage(lesson); await db.put('packages', db.packageKey(lesson), lesson);
+        for (const old of have) if (old.startsWith(`${course.id}/${summary.id}/`)) void db.remove('packages', old);
+      } catch { /* bài lỗi: bỏ qua, lần sau thử lại */ }
+      await new Promise(r => setTimeout(r, 300));
+    }
+  } finally { prefetching = false; }
 }
 /** @param {string} courseId @param {string} lessonId @param {string} version @param {boolean} [exerciseOnly] */
 async function loadLesson(courseId, lessonId, version, exerciseOnly = false) {
@@ -364,9 +390,12 @@ async function loadLesson(courseId, lessonId, version, exerciseOnly = false) {
   if (saved) { await openLesson(saved.lesson, saved, generation, owner, exerciseOnly); return; }
   const key = `${courseId}/${lessonId}/${version}`;
   let lesson = /** @type {Lesson|undefined} */ (await db.get('packages', key));
+  if (!lesson && !navigator.onLine) { notify('Bài này chưa có trên máy. Kết nối mạng một lần để tải bài, sau đó học được cả khi mất mạng.', true); return; }
+  const fresh = !lesson;
   if (!lesson) lesson = /** @type {Lesson} */ (await api(`/pwa/lessons/${courseId}/${lessonId}/${version}`));
   if (generation !== viewGeneration || owner !== session) return;
   await verifyPackage(lesson);
+  if (fresh) void db.put('packages', db.packageKey(lesson), lesson).catch(() => {});   // đã mở một lần là học lại được khi mất mạng
   await openLesson(lesson, null, generation, owner, exerciseOnly);
 }
 /** @param {Lesson} lesson @param {Draft|null} [saved] @param {number} [generation] @param {Session|null} [owner] @param {boolean} [exerciseOnly] */
@@ -610,11 +639,12 @@ async function progressBuild(target, syncButton, generation) {
   let fresh = false;
   /** @type {{course_id:string,lesson_id:string,lesson_title:string,topic:string,correct:number,total:number,percent:number}[]} */
   let review = [];
+  /** @type {any[]|null} */ let masteryData = null;
   // Đăng nhập nhanh: token Worker đang lấy ở nền → chờ tối đa 8 giây rồi mới tải tiến độ (trước đây bỏ qua → hiện 0 lượt).
   if (navigator.onLine && captured.pin && !captured.token) await Promise.race([workerToken(captured.identity.uid, captured.pin), new Promise(r => setTimeout(r, 8000))]);
   if (session !== captured || generation !== viewGeneration) return false;
   if (navigator.onLine && (captured.token || !captured.pin)) {
-    try { const data = await api('/pwa/progress', {token:captured.token}); attempts = data.attempts; review = Array.isArray(data.review) ? data.review : []; fresh = true; }
+    try { const data = await api('/pwa/progress', {token:captured.token}); if (Array.isArray(data?.attempts)) attempts = data.attempts; review = Array.isArray(data?.review) ? data.review : []; masteryData = Array.isArray(data?.mastery) ? data.mastery : null; fresh = true; }
     catch (error) { if (session === captured) report(error instanceof Error ? error : new Error('Chưa tải được tiến độ.')); }
   }
   if (session !== captured || generation !== viewGeneration) return false;
@@ -690,6 +720,14 @@ async function progressBuild(target, syncButton, generation) {
   tiles.append(streakTile, statTile('Lượt làm bài', String(attempts.length), 'repeat', 'blue'), statTile('Điểm trung bình', stats.size ? (Math.round(average) / 10).toString() : '–', 'target', 'teal'), statTile('Tỉ lệ câu đúng', sumTotal ? `${Math.round(100 * sumCorrect / sumTotal)}%` : '–', 'check', 'green'));
   overview.append(ringCard, tiles); target.append(overview);
 
+  // Bản đồ năng lực: luyện tập (máy chủ) + thi thử/thi thật (Firebase), mỗi chủ đề một ô màu.
+  const practiceTopics = masteryData || review.map(r => ({ topic: r.topic, correct: r.correct, total: r.total, lessons: [{ course_id: r.course_id, lesson_id: r.lesson_id, title: r.lesson_title }] }));
+  const examTopics = await Promise.race([thiApp.myTopics().catch(() => ({})), new Promise(r => setTimeout(() => r({}), 2500))]);
+  if (session !== captured || generation !== viewGeneration) return false;
+  const topicList = mastery.merge(practiceTopics, /** @type {any} */ (examTopics));
+  if (fresh || Object.keys(/** @type {any} */ (examTopics)).length) void mastery.publish(captured.identity, topicList).catch(() => {});
+  target.append(mastery.render(topicList, { onReview: t => void openTopicLesson(t, false), onAsk: t => void openTopicLesson(t, true) }));
+
   if (stamps.length) {
     const days = []; const today = dayStart(Date.now());
     for (let offset = 6; offset >= 0; offset--) { const start = today - offset * DAY_MS; days.push({start, label: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][new Date(start).getDay()], count: 0}); }
@@ -760,6 +798,17 @@ async function progressBuild(target, syncButton, generation) {
   target.append(how);
   return true;
 }
+/** Ô chủ đề yếu: mở bài chứa chủ đề để ôn, hoặc mở bài + hỏi Gia sư về chủ đề đó. @param {import('./mastery.js').Topic} t @param {boolean} ask */
+async function openTopicLesson(t, ask) {
+  const l = t.lessons[0]; if (!l) return;
+  const summary = catalog?.courses.find(c => c.id === l.course_id)?.lessons.find(x => x.id === l.lesson_id);
+  if (!summary) { notify('Bài học này chưa có trong danh mục.', true); return; }
+  await loadLesson(l.course_id, l.lesson_id, summary.version, !ask);
+  if (!ask || active?.lesson_id !== l.lesson_id) return;
+  openTutor(null);
+  const input = /** @type {HTMLInputElement} */ (node('tutor-input'));
+  input.value = `Em chưa vững chủ đề "${t.ten}". Thầy/cô giải thích lại ngắn gọn kèm ví dụ giúp em nhé.`; input.focus();
+}
 /** @param {{course_id:string,lesson_id:string}} item */
 function lessonTitle(item) {return catalog?.courses.find(course => course.id === item.course_id)?.lessons.find(lesson => lesson.id === item.lesson_id)?.title || 'Bài học đã nộp';}
 /** @param {Lesson} lesson @param {Record<string,string>} answers */
@@ -821,7 +870,7 @@ on('logout', async () => {
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
-  await presence.stopStudent(); thiApp.stopAll();
+  await presence.stopStudent(); thiApp.stopAll(); quiz.stop();
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.
@@ -878,7 +927,7 @@ form('login-form').addEventListener('submit', async event => {
       await db.put('meta', 'session', next); session = next;
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
       if (quick) { presence.startStudentLite(next.identity); void workerToken(code, pin); }
-      clearTeacherSession(); startThiBadge();
+      clearTeacherSession(); startThiBadge(); void prefetchLessons();
       // Hệ thống thi Firebase cũ (đề do Worker quản lý): chỉ dùng ở đường đăng nhập cũ.
       fb.clear(); if (!quick && !isLocalhostBackend) void fb.signIn(code, pin).catch(() => {});
       draft = null; locked = false; identityUI(); renderCatalog();
@@ -1167,7 +1216,8 @@ form('tutor-form').addEventListener('submit', async event => {
       history: tutorHistory,
       question_id: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
       selected_option: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
-      attempt_count: 1
+      attempt_count: 1,
+      context: session ? { weak_topics: mastery.weakTopics(session.identity.uid) } : undefined   // Bản đồ năng lực: Gia sư củng cố đúng chủ đề em còn yếu
     };
     /** @type {import('./contracts').TutorResponse} */
     const res = await api('/pwa/tutor', { method: 'POST', body: payload, token: session?.token });
@@ -1205,6 +1255,7 @@ form('tutor-form').addEventListener('submit', async event => {
 });
 installState(); updateConnection();
 start().catch(error => {catalogUnavailable('Kiểm tra quyền lưu trữ của trình duyệt rồi thử lại.'); report(error);});
+void support.init();
 
 
 // ==========================================

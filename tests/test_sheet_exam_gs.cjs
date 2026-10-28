@@ -16,10 +16,10 @@ function env() {
     console, MimeType: { PLAIN_TEXT: 'text/plain' },
     DriveApp: (() => { const files = {}; const mkF = (name, path) => { const f = { name, path, folders: {}, files: [], getId: () => path, getFoldersByName: n => { const x = f.folders[n]; let used = false; return { hasNext: () => !!x && !used, next: () => { used = true; return x; } }; }, createFolder: n => (f.folders[n] = mkF(n, path + '/' + n)),
       getFilesByName: n => { const xs = f.files.filter(z => z.name === n && !z.trashed); let i = 0; return { hasNext: () => i < xs.length, next: () => xs[i++] }; },
-      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getId = () => path + '/' + z.name; z.setSharing = (acc, perm) => { z.sharing = acc + ':' + perm; }; z.moveTo = d => { z.moved = d.path; }; files[z.getId()] = z; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
+      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getBlob = () => ({ getBytes: () => (Array.isArray(z.content) ? z.content : [...Buffer.from(String(z.content))]), getContentType: () => z.mime || 'application/octet-stream' }); z.getId = () => path + '/' + z.name; z.setSharing = (acc, perm) => { z.sharing = acc + ':' + perm; }; z.moveTo = d => { z.moved = d.path; }; files[z.getId()] = z; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
       const root = mkF('root', ''); return { Access: { ANYONE_WITH_LINK: 'link' }, Permission: { VIEW: 'view' }, getRootFolder: () => root, getFolderById: () => { throw new Error('x'); }, getFileById: id => { if (!files[id]) throw new Error('no'); return files[id]; } }; })(),
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; }, deleteProperty: k => { delete props[k]; } }) },
-    Utilities: { base64Decode: b => [...Buffer.from(b, 'base64')], newBlob: (bytes, mime, name) => ({ bytes, mime, name }), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
+    Utilities: { base64Decode: b => [...Buffer.from(b, 'base64')], base64Encode: bytes => Buffer.from(bytes.map(x => x & 255)).toString('base64'), newBlob: (bytes, mime, name) => ({ bytes, mime, name }), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
     UrlFetchApp: { fetch: (url, opt) => {
       const u = new URL(url); fbCalls.push({ method: opt.method, path: u.pathname, auth: u.searchParams.get('auth') });
       const parts = u.pathname.replace(/\.json$/, '').split('/').filter(Boolean);
@@ -149,12 +149,32 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   c({ action: 'gv_set', ma_de: e2.ma_de, trang_thai: 'mo' });
   const th = call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai.docx', mime: 'application/msword', data: 'aGVsbG8=' });
   ok(th.ok && E.drive.some(f => f.path.endsWith('/Lớp 9A/Cuối kỳ I - Cuối kỳ/hs9a01 - Nguyễn Văn An - Thực hành - bai.docx')) && E.fbdb.thi_th[e2.ma_de].hs9a01.ten_file === 'bai.docx', 'nộp thực hành → file vào thư mục lớp trên Drive + báo Firebase');
+  { // Chấm thực hành: tiêu chí ở Sheet, chỉ đề bài lên Firebase; file bài làm → giáo viên chấm (máy + AI gợi ý) → lưu điểm
+    const TH = { loai: 'excel', de: 'Tính tổng cột D vào ô D11', tieu_chi: [{ mo_ta: 'D11 dùng hàm SUM', diem: 2, kt: { type: 'excel_formula', a: 'D11', b: 'SUM' } }, { mo_ta: 'Kết quả đúng', diem: 1, kt: { type: 'excel_value', a: 'D11', b: '120' } }, { mo_ta: '', diem: 3 }, { mo_ta: 'Lạ', diem: 1, kt: { type: 'rm -rf', a: 'x' } }] };
+    c({ action: 'gv_update', ma_de: e2.ma_de, thuc_hanh: TH });
+    const bt = E.fbdb.thi_bai[e2.ma_de];
+    ok(bt.de_th === 'Tính tổng cột D vào ô D11' && bt.loai_th === 'excel' && bt.diem_th === 4 && !JSON.stringify(E.fbdb).includes('excel_value'), 'đề thực hành lên Firebase cho học sinh; tiêu chí + kết quả mong đợi chỉ ở Sheet');
+    const g0 = c({ action: 'gv_th_get', ma_de: e2.ma_de, ma: 'hs9a01' });
+    ok(g0.ok && g0.file.ten === 'bai.docx' && Buffer.from(g0.file.data, 'base64').toString() === 'hello' && g0.thuc_hanh.tieu_chi.length === 3 && g0.thuc_hanh.tieu_chi[1].kt.type === 'excel_value' && g0.thuc_hanh.tieu_chi.every(t => t.mo_ta !== 'Lạ' || !t.kt) && g0.cham === null, 'giáo viên lấy file bài làm (Drive) + tiêu chí đã lọc (bỏ tiêu chí trống, bỏ kiểu kiểm tra lạ); chưa chấm');
+    ok(c({ action: 'gv_th_get', ma_de: e2.ma_de, ma: 'hs9b01' }).error.includes('chưa nộp'), 'em chưa nộp → báo');
+    const sv = c({ action: 'gv_th_save', ma_de: e2.ma_de, ma: 'hs9a01', chi_tiet: [{ diem: 5, nhan_xet: 'Đúng SUM' }, { diem: 0.6, nhan_xet: 'Gần đúng' }], nhan_xet: 'Khá' });
+    const row = E.sheets.ChamThucHanh.rows.find(r => r[1] === 'hs9a01');
+    ok(sv.ok && sv.diem === 2.5 && sv.tong === 4 && row[7] === 2.5 && row[9] === 'Khá' && E.fbdb.thi_th[e2.ma_de].hs9a01.diem_th === 2.5 && E.fbdb.thi_th[e2.ma_de].hs9a01.ten_file === 'bai.docx', 'lưu điểm thực hành: không vượt điểm tối đa từng tiêu chí, ghi Sheet + Firebase');
+    ok(c({ action: 'gv_th_get', ma_de: e2.ma_de, ma: 'hs9a01' }).cham.chi_tiet[0].nhan_xet === 'Đúng SUM', 'mở lại thấy điểm đã chấm');
+    call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai2.xlsx', mime: 'application/vnd.ms-excel', data: 'aGk=' });
+    ok(E.sheets.ChamThucHanh.rows.filter(r => r[1] === 'hs9a01').length === 1 && E.sheets.ChamThucHanh.rows.find(r => r[1] === 'hs9a01')[7] === '' && c({ action: 'gv_th_get', ma_de: e2.ma_de, ma: 'hs9a01' }).file.ten === 'bai2.xlsx', 'nộp lại file → thay file, xóa điểm cũ để chấm lại'); }
   const qd = c({ action: 'gv_questions', ma_de: e2.ma_de });
   ok(qd.questions.length === 2 && qd.questions[0].answer === 'A', 'giáo viên lấy câu hỏi kèm đáp án để sửa');
   ok(c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Q?', options: { A: 'x' }, answer: 'A', points: 1 }] }).error.includes('ít nhất 2 phương án'), 'sửa câu hỏi: kiểm phương án');
   c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Câu mới?', options: { A: 'x', B: 'y' }, answer: 'B', points: 4 }] });
   ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === 'B', 'lưu câu hỏi đã sửa → Sheet và Firebase');
   ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
+  c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Bit là gì?', options: { A: 'x', B: 'y' }, answer: 'A', points: 2, topic: 'Mã nhị phân', level: 'Hiểu' }, { text: 'Byte?', options: { A: 'x', B: 'y' }, answer: 'B', points: 2, topic: 'Mã nhị phân', level: 'Sai' }] });
+  const dRow = E.sheets.DeThi.rows.find(r => r[2] === 'Bit là gì?');
+  ok(dRow[9] === 'Mã nhị phân' && dRow[10] === 'Hiểu' && E.sheets.DeThi.rows.find(r => r[2] === 'Byte?')[10] === '' && E.fbdb.thi_de[e2.ma_de][0].topic === 'Mã nhị phân' && c({ action: 'gv_questions', ma_de: e2.ma_de }).questions[0].level === 'Hiểu', 'câu hỏi có Chủ đề + Mức độ (Biết/Hiểu/Vận dụng): lưu Sheet, đẩy chủ đề lên Firebase');
+  const tt = c({ action: 'gv_create', tieu_de: 'TT chủ đề', che_do: 'thu', khoi: 9, lop: '9A', questions: [{ text: 'Q1', options: { A: 'a', B: 'b' }, answer: 'A', points: 1, topic: 'Dữ liệu số', level: 'Biết' }] });
+  const ttId = tt.exams.find(e => e.tieu_de === 'TT chủ đề').ma_de;
+  ok(E.sheets.DeThiThu.rows.find(r => r[9] === ttId)[10] === 'Dữ liệu số' && E.fbdb.thi_de[ttId][0].topic === 'Dữ liệu số', 'thi thử: chủ đề lưu ở DeThiThu (giữ cột Mã bài thi)');
 }
 // ---------- Lấy điểm về Sheet khi nhiều học sinh: nhanh, không chép trùng, đúng thứ tự khi cho thi lại ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
@@ -187,6 +207,18 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   E.fbdb.thi_nop[id].k24 = sub('k24', 1761550003333); c({ action: 'gv_delete', ma_de: id });
   ok(kqOf().some(r => r[1] === 'k24'), 'xóa bài: chép điểm còn trên Firebase về trước khi ẩn');
 }
+// ---------- Bộ não AI: VPS gửi báo cáo bằng khóa riêng; giáo viên lớp chỉ xem lớp mình ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
+  ok(call({ action: 'brain_save', key: 'x', reports: [{ lop: '9A', md: 'a' }] }).error.includes('Khóa'), 'chưa cài khóa → VPS không ghi được');
+  E.props.BRAIN_KEY = 'k'.repeat(32);
+  ok(call({ action: 'brain_save', key: 'sai', reports: [] }).error.includes('Khóa'), 'sai khóa → chặn');
+  const sv = call({ action: 'brain_save', key: 'k'.repeat(32), reports: [{ lop: '9A', md: '**Tóm tắt** lớp 9A', facts: { at_risk: [{ ten: 'An' }] } }, { lop: '9B', md: 'B' }] });
+  ok(sv.ok && sv.saved === 2 && E.sheets.NaoAI.rows.length === 3, 'VPS gửi báo cáo từng lớp → trang NaoAI');
+  call({ action: 'brain_save', key: 'k'.repeat(32), reports: [{ lop: '9a', md: 'mới' }] });
+  ok(E.sheets.NaoAI.rows.length === 3 && E.sheets.NaoAI.rows[1][2] === 'mới', 'gửi lại cùng lớp → cập nhật, không thêm dòng');
+  const all = c({ action: 'gv_brain' }); ok(all.ok && all.reports.length === 2, 'quản trị xem mọi lớp');
+  c({ action: 'gv_teacher_save', moi: true, ma: 'GV09', ten: 'Cô Mai', lop: '9B', pin: '999999' });
+  const mine = call({ gv: '999999', gv_ma: 'GV09', action: 'gv_brain' }); ok(mine.ok && mine.reports.length === 1 && mine.reports[0].lop === '9B', 'giáo viên lớp chỉ xem báo cáo lớp mình'); }
 // ---------- Tài khoản: giáo viên lớp (trang GiaoVien), học sinh (trang HocSinh), phạm vi lớp ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
   const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
@@ -199,6 +231,13 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   ok(c({ action: 'gv_teacher_save', moi: true, ma: 'gv01', ten: 'X', lop: '9B', pin: '222222' }).error.includes('đã có'), 'trùng mã giáo viên → báo');
   { const nb = E.fbCalls.length; c({ action: 'gv_student_save', moi: true, ma: 'hs8z77', ten: 'Em Mới', lop: '8Z', pin: '777777' }); const pc = E.fbCalls.slice(nb).filter(x => x.method === 'patch');
     ok(pc.length === 1 && E.fbdb.thi_hs.hs8z77 && E.fbdb.thi_hs.hs8z77.ten === 'Em Mới', 'sửa tài khoản: chỉ đẩy phần tài khoản lên Firebase (nhanh khi nhiều bài thi)'); }
+  { const z0 = c({ action: 'gv_support_save', zalo: 'zalo.com/abc' }); ok(z0.error && z0.error.includes('Zalo'), 'Zalo sai dạng → báo');
+    const z1 = c({ action: 'gv_support_save', zalo: '+84 912 345 678', ten: 'Thầy Hải' });
+    ok(z1.ok && z1.zalo === 'https://zalo.me/0912345678' && E.fbdb.ho_tro.zalo === 'https://zalo.me/0912345678' && E.fbdb.ho_tro.ten === 'Thầy Hải', 'quản trị lưu Zalo chung → đường dẫn zalo.me, đẩy lên Firebase ho_tro');
+    const z2 = call({ gv: '111111', gv_ma: 'GV01', action: 'gv_support_save', zalo: '0987654321' });
+    ok(z2.ok && E.fbdb.ho_tro.lop['9a'].zalo === 'https://zalo.me/0987654321' && E.fbdb.ho_tro.lop['9a'].ten === 'Cô Hoa' && E.fbdb.ho_tro.zalo === 'https://zalo.me/0912345678', 'giáo viên lớp lưu Zalo riêng → học sinh lớp 9A thấy Zalo cô Hoa, Zalo chung giữ nguyên');
+    ok(call({ gv: '111111', gv_ma: 'GV01', action: 'gv_support' }).zalo === 'https://zalo.me/0987654321', 'giáo viên lớp đọc lại Zalo của mình');
+    c({ action: 'gv_support_save', zalo: '' }); ok(!E.fbdb.ho_tro.zalo, 'để trống → ẩn Zalo chung'); }
   ok(call({ action: 'gv_login', ma: 'GV01', pin: '111111' }).teacher.lop[0] === '9A' && call({ action: 'gv_login', ma: 'GV01', pin: 'sai' }).error.includes('chưa đúng'), 'gv_login: đúng/sai PIN');
   c({ action: 'gv_create', tieu_de: 'Bài 9A', che_do: 'that', khoi: 9, lop: '9A' }); c({ action: 'gv_create', tieu_de: 'Bài 9B', che_do: 'that', khoi: 9, lop: '9B' }); c({ action: 'gv_create', tieu_de: 'Bài khối 9', che_do: 'that', khoi: 9, lop: '' });
   const g = p => call({ gv: '111111', gv_ma: 'GV01', ...p });

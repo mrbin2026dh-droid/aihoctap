@@ -11,7 +11,7 @@
 </head>
 <body class="teacher-app"><a class="t-skip" href="#main">Đến nội dung</a>
 <header class="t-topbar"><a class="t-wordmark" href="./" aria-label="SGK — Góc giáo viên">sgk<span>GÓC GIÁO VIÊN</span></a><button type="button" id="open-settings" class="t-icon-btn" data-icon="gear" popovertarget="nav-profile" aria-controls="nav-profile" aria-label="Hồ sơ" title="Hồ sơ và cài đặt" hidden></button>
-<nav id="nav-profile" class="t-profile-menu" popover="auto" aria-label="Hồ sơ giáo viên"><button type="button" id="act-profile-pin" class="t-button" data-action="profile-pin" >Đổi mã PIN</button><button type="button" id="act-profile-ai" class="t-button" data-action="profile-ai" >Gia sư AI và hạn mức</button><button type="button" id="act-profile-keys" class="t-button" data-action="profile-keys" >Khóa API</button><a class="t-button" href="./">Về Góc học tập</a><button type="button" class="t-button t-danger" id="teacher-logout" hidden>Đăng xuất</button>
+<nav id="nav-profile" class="t-profile-menu" popover="auto" aria-label="Hồ sơ giáo viên"><p class="t-profile-who" id="gv-who" hidden></p><button type="button" id="act-profile-pin" class="t-button" data-action="profile-pin" >Đổi mã PIN</button><button type="button" id="act-gv-pin" class="t-button">Đổi mã PIN</button><button type="button" id="act-support" class="t-button">Hỗ trợ học sinh qua Zalo</button><button type="button" id="act-profile-ai" class="t-button" data-action="profile-ai" >Gia sư AI và hạn mức</button><button type="button" id="act-profile-keys" class="t-button" data-action="profile-keys" >Khóa API</button><a class="t-button" href="./">Về Góc học tập</a><button type="button" class="t-button t-danger" id="teacher-logout" hidden>Đăng xuất</button>
 </nav>
 </header>
 
@@ -64,7 +64,11 @@
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4z M4 7V3h7l3 4"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Tài liệu</span><span class="t-nav-mobile">Tài liệu</span></span></button><button type="button" id="nav-accounts" class="t-nav-item" data-view="accounts" aria-controls="view-accounts">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21v-3a8 8 0 0 1 16 0v3"/>
-</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản</span><span class="t-nav-mobile">Tài khoản</span></span></button>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Tài khoản</span><span class="t-nav-mobile">Tài khoản</span></span></button><button type="button" id="nav-effect" class="t-nav-item" data-view="effect" aria-controls="view-effect">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16 M6 16l4-5 3 3 5-7 M15 7h3v3"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Hiệu quả</span><span class="t-nav-mobile">Hiệu quả</span></span></button><button type="button" id="nav-tools" class="t-nav-item" data-view="tools" aria-controls="view-tools">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h4 M8 9v4 M15 12h.01 M18 10h.01 M7 5h10a5 5 0 0 1 5 5v2a5 5 0 0 1-9 3h-2a5 5 0 0 1-9-3v-2a5 5 0 0 1 5-5z"/>
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Tiện ích</span><span class="t-nav-mobile">Tiện ích</span></span></button>
 </nav>
 <section id="workspace" class="t-workspace" aria-labelledby="workspace-title">
 <header class="t-workspace-head">
@@ -261,9 +265,16 @@
 <div class="t-field"><label for="thi-new-ht">Hình thức thi</label><select id="thi-new-ht"><option>15 phút</option><option>Giữa kỳ I</option><option>Cuối kỳ I</option><option>Giữa kỳ II</option><option>Cuối kỳ II</option><option>Khác</option></select></div>
 <div class="t-field"><label for="thi-new-nd">Nội dung thi</label><select id="thi-new-nd"><option value="tn">Trắc nghiệm</option><option value="tn_th">Trắc nghiệm + Thực hành (học sinh nộp file)</option></select></div>
 </div>
+<section id="thi-th-fields" class="thi-th-wrap" hidden aria-labelledby="thi-th-title">
+<h3 id="thi-th-title">Bài thực hành</h3>
+<div class="t-form-grid"><div class="t-field"><label for="thi-th-loai">Loại bài</label><select id="thi-th-loai"><option value="excel">Bảng tính Excel (.xlsx)</option><option value="python">Lập trình Python (.py)</option><option value="khac">Khác (chấm tay)</option></select></div></div>
+<div class="t-field"><label for="thi-th-de">Đề bài thực hành (học sinh thấy)</label><textarea id="thi-th-de" maxlength="3000" rows="3" aria-describedby="thi-th-de-err"></textarea><p id="thi-th-de-err" class="t-field-error"></p></div>
+<div class="t-heading"><div><h4>Tiêu chí chấm</h4><p class="t-muted">Máy tự kiểm tra tiêu chí có "Kiểm tra tự động". Tiêu chí còn lại AI gợi ý điểm, thầy cô quyết định. Kết quả mong đợi không gửi cho học sinh.</p></div><button type="button" id="thi-th-add" class="t-button">Thêm tiêu chí</button></div>
+<div id="thi-th-list"></div><p class="t-hint" id="thi-th-total" aria-live="polite"></p>
+</section>
 <p class="t-hint" id="thi-new-bank" aria-live="polite"></p>
-<section id="thi-q-editor" class="thi-qe-wrap" hidden aria-labelledby="thi-qe-title"><div class="t-heading"><div><h3 id="thi-qe-title">Câu hỏi</h3><p class="t-muted" id="thi-qe-note"></p></div><button type="button" id="thi-qe-add" class="t-button">Thêm câu</button></div><div id="thi-qe-list"></div></section>
-<div class="t-actions" id="thi-new-file-row" hidden><button type="button" id="thi-new-template" class="t-button">Tải mẫu Excel đề</button><label class="t-file" for="thi-new-file">Tải lên Excel đề thi thử<input id="thi-new-file" type="file" accept=".xlsx"></label></div>
+<section id="thi-q-editor" class="thi-qe-wrap" hidden aria-labelledby="thi-qe-title"><div class="t-heading"><div><h3 id="thi-qe-title">Câu hỏi</h3><p class="t-muted" id="thi-qe-note"></p></div><div class="t-actions"><button type="button" id="thi-qe-ai" class="t-button thi-ai-btn">AI soạn thêm câu</button><button type="button" id="thi-qe-add" class="t-button">Thêm câu</button></div></div><div id="thi-qe-list"></div></section>
+<div class="t-actions" id="thi-new-file-row" hidden><button type="button" id="thi-new-ai" class="t-button t-primary thi-ai-btn">AI soạn đề theo ma trận</button><button type="button" id="thi-new-template" class="t-button">Tải mẫu Excel đề</button><label class="t-file" for="thi-new-file">Tải lên Excel đề thi thử<input id="thi-new-file" type="file" accept=".xlsx"></label></div>
 <div class="t-actions"><button type="submit" id="thi-new-create" class="t-button t-primary">Tạo bài thi</button><button type="button" id="thi-new-cancel" class="t-button" hidden>Hủy sửa</button></div>
 </form>
 </div>
@@ -324,6 +335,42 @@
 </details><button type="submit" class="t-button t-primary" data-action="save-material">Lưu tài liệu</button>
 </form>
 </section>
+</section>
+</section>
+<section id="view-tools" hidden>
+<section id="list-tools" class="t-list" aria-labelledby="qz-title">
+<div class="t-heading"><div><h2 id="qz-title">Trò chơi câu hỏi</h2><p class="t-muted">Tạo bộ câu hỏi (AI soạn hoặc tự nhập) → trình chiếu trên lớp → học sinh trả lời trên điện thoại → xếp hạng → AI phân tích lớp có hiểu bài không.</p></div><button type="button" id="qz-new" class="t-button t-primary">Tạo bộ câu hỏi</button></div>
+<div class="notice status thi-alert" id="qz-alert" role="status" hidden><span id="qz-status"></span></div>
+<ul class="t-list-items qz-sets" id="qz-sets"></ul>
+<section class="t-card qz-history-card" aria-labelledby="qz-hist-title"><h3 id="qz-hist-title">Các lần chơi gần đây</h3><ul class="qz-history" id="qz-history"></ul></section>
+</section>
+<section id="detail-tools" class="t-detail" aria-labelledby="qz-ed-title" hidden>
+<div class="t-heading"><div><h2 id="qz-ed-title">Bộ câu hỏi</h2><p class="t-muted">Mỗi câu 4 phương án, chọn đáp án đúng. Câu do AI soạn cần đánh dấu Đã duyệt.</p></div><button type="button" class="t-button" data-action="back-tools" data-target="list-tools" id="qz-back">Quay lại</button></div>
+<form id="qz-form" class="t-form" novalidate>
+<div class="t-form-grid">
+<div class="t-field"><label for="qz-name">Tên bộ câu hỏi</label><input id="qz-name" required maxlength="120" autocomplete="off" aria-describedby="qz-name-err"><p id="qz-name-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="qz-lop">Lớp chơi</label><select id="qz-lop" aria-describedby="qz-lop-err"></select><p id="qz-lop-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="qz-lim">Thời gian mỗi câu</label><select id="qz-lim"><option value="10">10 giây</option><option value="20" selected>20 giây</option><option value="30">30 giây</option><option value="45">45 giây</option><option value="60">60 giây</option></select></div>
+</div>
+<div class="qz-src"><button type="button" id="qz-ai" class="t-button thi-ai-btn">AI soạn câu hỏi theo bài</button><button type="button" id="qz-from-exam" class="t-button">Lấy câu từ đề thi thử</button><button type="button" id="qz-add" class="t-button">Thêm câu</button></div>
+<div id="qz-ai-box" class="qz-ai-box" hidden><div class="t-form-grid"><div class="t-field"><label for="qz-ai-lesson">Bài học</label><select id="qz-ai-lesson"></select></div><div class="t-field"><label for="qz-ai-n">Số câu</label><select id="qz-ai-n"><option>5</option><option selected>8</option><option>10</option><option>15</option></select></div><div class="t-field"><label for="qz-ai-topic">Chủ đề (không bắt buộc)</label><input id="qz-ai-topic" maxlength="80" autocomplete="off"></div></div><div class="t-actions"><button type="button" id="qz-ai-go" class="t-button t-primary">Soạn câu hỏi</button></div><p id="qz-ai-err" class="t-field-error" role="alert"></p></div>
+<div id="qz-exam-box" class="qz-ai-box" hidden><div class="t-field"><label for="qz-exam">Đề thi thử</label><select id="qz-exam"></select></div><div class="t-actions"><button type="button" id="qz-exam-go" class="t-button t-primary">Lấy câu hỏi</button></div><p id="qz-exam-err" class="t-field-error" role="alert"></p></div>
+<div id="qz-list"></div>
+<p id="qz-form-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="submit" id="qz-save" class="t-button t-primary">Lưu bộ câu hỏi</button></div>
+</form>
+</section>
+</section>
+<section id="view-effect" hidden>
+<section id="list-effect" class="t-list" aria-labelledby="eff-title">
+<h2 id="eff-title" class="visually-hidden">Hiệu quả học tập</h2>
+<p class="t-muted">Số liệu thật từ bài thi thử, bài thi, đọc bài và Bản đồ năng lực của học sinh (máy tính, không dùng AI). Dùng làm minh chứng hiệu quả.</p>
+<div class="t-toolbar acc-toolbar"><div class="t-field"><label for="eff-lop">Lớp</label><select id="eff-lop"><option value="">Tất cả lớp</option></select></div><p class="t-muted acc-note" id="eff-status" role="status">Đang tải…</p><button type="button" id="eff-csv" class="t-button t-primary" disabled>Tải báo cáo CSV</button></div>
+<dl class="t-metrics eff-metrics" id="eff-metrics"></dl>
+<section class="t-card eff-card brain-card" aria-labelledby="eff-brain-title"><h3 id="eff-brain-title">Bộ não AI: báo cáo tuần</h3><p class="t-muted" id="eff-brain-sub">Máy chủ riêng của thầy cô phân tích lịch sử học tập và câu học sinh hỏi Gia sư mỗi tối, rồi viết báo cáo.</p><div id="eff-brain"></div></section>
+<section class="t-card eff-card" aria-labelledby="eff-topics-title"><h3 id="eff-topics-title">Bản đồ năng lực của lớp</h3><p class="t-muted">Tỉ lệ câu đúng theo chủ đề (luyện tập + thi). Chủ đề đỏ là nên dạy lại.</p><ul class="eff-topics" id="eff-topics"></ul></section>
+<section class="t-card eff-card" aria-labelledby="eff-exams-title"><h3 id="eff-exams-title">Tiến bộ qua thi thử</h3><p class="t-muted">So điểm lần làm đầu tiên với điểm cao nhất của mỗi em.</p><div class="t-table-wrap"><table class="t-table" id="eff-exams"><thead><tr><th scope="col">Bài thi thử</th><th scope="col">Số em làm</th><th scope="col">Lần đầu TB</th><th scope="col">Cao nhất TB</th><th scope="col">Tiến bộ</th></tr></thead><tbody id="eff-exams-body"></tbody></table></div></section>
+<section class="t-card eff-card" aria-labelledby="eff-help-title"><h3 id="eff-help-title">Học sinh cần hỗ trợ</h3><p class="t-muted">Em có Bản đồ năng lực dưới 50% hoặc điểm thi thử cao nhất dưới 50%.</p><ul class="eff-help" id="eff-help"></ul></section>
 </section>
 </section>
 <section id="view-accounts" hidden>
@@ -517,5 +564,49 @@
 </div>
 </form></dialog>
 <script type="module" src="./teacher.js?v=20261028a"></script>
+<dialog id="ai-q-dialog" class="t-dialog" aria-labelledby="ai-q-title"><form id="ai-q-form" class="t-form" method="dialog" novalidate>
+<h2 id="ai-q-title">AI soạn đề theo ma trận</h2>
+<p class="t-muted">AI soạn câu trắc nghiệm bám nội dung bài học. Thầy cô đọc, sửa và đánh dấu <strong>Đã duyệt</strong> từng câu trước khi lưu.</p>
+<div class="t-field"><label for="ai-q-lesson">Bài học</label><select id="ai-q-lesson" required aria-describedby="ai-q-lesson-err"><option value="">Đang tải danh sách bài…</option></select><p id="ai-q-lesson-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="ai-q-topic">Chủ đề cần tập trung (không bắt buộc)</label><input id="ai-q-topic" maxlength="80" autocomplete="off" placeholder="Ví dụ: Mã nhị phân"></div>
+<fieldset class="ai-q-matrix"><legend>Ma trận số câu (tối đa 20)</legend>
+<div class="t-field"><label for="ai-q-biet">Biết</label><input id="ai-q-biet" type="number" inputmode="numeric" min="0" max="20" value="4"></div>
+<div class="t-field"><label for="ai-q-hieu">Hiểu</label><input id="ai-q-hieu" type="number" inputmode="numeric" min="0" max="20" value="3"></div>
+<div class="t-field"><label for="ai-q-vd">Vận dụng</label><input id="ai-q-vd" type="number" inputmode="numeric" min="0" max="20" value="3"></div>
+<p id="ai-q-total" class="t-hint" aria-live="polite">Tổng 10 câu</p><p id="ai-q-matrix-err" class="t-field-error"></p></fieldset>
+<p id="ai-q-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="ai-q-cancel" class="t-button">Hủy</button><button type="submit" id="ai-q-go" class="t-button t-primary">Soạn câu hỏi</button></div>
+</form></dialog>
+<dialog id="support-dialog" class="t-dialog" aria-labelledby="support-title"><form id="support-form" class="t-form" method="dialog" novalidate>
+<h2 id="support-title">Hỗ trợ học sinh qua Zalo</h2>
+<p class="t-muted" id="support-sub">Học sinh thấy nút "Hỏi thầy cô" ở góc màn hình, bấm vào là mở Zalo nhắn cho thầy cô.</p>
+<div class="t-field"><label for="support-zalo">Số điện thoại Zalo hoặc đường dẫn zalo.me</label><input id="support-zalo" type="text" inputmode="tel" maxlength="90" autocomplete="off" placeholder="0912345678" aria-describedby="support-zalo-err support-zalo-hint"><p id="support-zalo-hint" class="t-hint">Để trống rồi Lưu để dùng Zalo mặc định của ứng dụng.</p><p id="support-zalo-err" class="t-field-error"></p></div>
+<div class="t-field" id="support-ten-field"><label for="support-ten">Tên hiển thị</label><input id="support-ten" type="text" maxlength="40" autocomplete="off" placeholder="Thầy Hải" aria-describedby="support-ten-hint"><p id="support-ten-hint" class="t-hint">Học sinh thấy "Hỏi Thầy Hải".</p></div>
+<p id="support-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="support-cancel" class="t-button">Hủy</button><button type="submit" id="support-save" class="t-button t-primary">Lưu</button></div>
+</form></dialog>
+<dialog id="gv-pin-dialog" class="t-dialog" aria-labelledby="gv-pin-title"><form id="gv-pin-form" class="t-form" method="dialog" novalidate>
+<h2 id="gv-pin-title">Đổi mã PIN</h2>
+<div class="t-field"><label for="gv-pin-old">Mã PIN hiện tại</label><input id="gv-pin-old" type="password" inputmode="numeric" required minlength="6" maxlength="16" autocomplete="current-password" aria-describedby="gv-pin-old-err"><p id="gv-pin-old-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="gv-pin-new">Mã PIN mới</label><input id="gv-pin-new" type="password" inputmode="numeric" required minlength="6" maxlength="16" autocomplete="new-password" aria-describedby="gv-pin-new-err gv-pin-hint"><p id="gv-pin-hint" class="t-hint">Từ 6 đến 16 ký tự.</p><p id="gv-pin-new-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="gv-pin-again">Nhập lại mã PIN mới</label><input id="gv-pin-again" type="password" inputmode="numeric" required minlength="6" maxlength="16" autocomplete="new-password" aria-describedby="gv-pin-again-err"><p id="gv-pin-again-err" class="t-field-error"></p></div>
+<p id="gv-pin-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="gv-pin-cancel" class="t-button">Hủy</button><button type="submit" id="gv-pin-save" class="t-button t-primary">Đổi mã PIN</button></div>
+</form></dialog>
+<dialog id="th-dialog" class="t-dialog th-dialog" aria-labelledby="th-title"><form id="th-form" class="t-form" method="dialog" novalidate>
+<h2 id="th-title">Chấm thực hành</h2><p class="t-muted" id="th-sub"></p>
+<p id="th-status" class="t-hint" role="status" aria-live="polite"></p>
+<details id="th-preview-box"><summary>Xem bài làm</summary><pre id="th-preview" class="th-preview"></pre></details>
+<div id="th-items"></div>
+<div class="t-field"><label for="th-nhanxet">Nhận xét chung</label><textarea id="th-nhanxet" maxlength="1500" rows="3"></textarea></div>
+<p class="t-hint th-sum" id="th-sum" aria-live="polite"></p>
+<p id="th-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="button" id="th-cancel" class="t-button">Đóng</button><button type="button" id="th-ai" class="t-button thi-ai-btn">AI gợi ý điểm</button><button type="submit" id="th-save" class="t-button t-primary">Lưu điểm thực hành</button></div>
+</form></dialog>
+<div id="qz-host" class="qz-host" hidden role="dialog" aria-modal="true" aria-labelledby="qz-h-title">
+<header class="qz-h-top"><div><p class="qz-h-kicker" id="qz-h-kicker"></p><h2 id="qz-h-title"></h2></div><button type="button" id="qz-h-close" class="t-button">Đóng phòng</button></header>
+<main class="qz-h-main" id="qz-h-main"></main>
+<footer class="qz-h-foot" id="qz-h-foot"></footer>
+</div>
 </body>
 </html>

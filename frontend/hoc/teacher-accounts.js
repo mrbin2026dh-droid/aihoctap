@@ -4,7 +4,7 @@
 //   Tab Giáo viên: trang GiaoVien (chỉ quản trị). Giáo viên được cấp tài khoản đăng nhập bằng Mã giáo viên + PIN.
 // Mỗi thay đổi Sheet tự đẩy lên Firebase, nên học sinh/giáo viên đăng nhập được ngay.
 import { SHEET_API } from './sheet-config.js';
-import { confirmBox } from './dom.js';
+import { confirmBox, noticeBox } from './dom.js';
 import * as ui from './teacher-ui.js?v=20261028a';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -165,3 +165,61 @@ $('acc-hs-search').addEventListener('input', ui.debounce(refilter));
 $('acc-hs-lop').addEventListener('change', refilter);
 $('nav-accounts').addEventListener('click', () => void load());
 document.getElementById('teacher-logout')?.addEventListener('click', () => { st.students = []; st.teachers = []; st.loaded = false; status(''); });
+
+/* ---------- Giáo viên lớp: Cài đặt → Đổi mã PIN (trang GiaoVien trong Google Sheet) ---------- */
+{
+  const dlg = /** @type {HTMLDialogElement} */ ($('gv-pin-dialog'));
+  const fields = ['gv-pin-old', 'gv-pin-new', 'gv-pin-again'];
+  const clear = () => { for (const id of fields) { inp(id).removeAttribute('aria-invalid'); $(id + '-err').textContent = ''; } $('gv-pin-err').textContent = ''; };
+  const bad = (/** @type {string} */ id, /** @type {string} */ msg) => { inp(id).setAttribute('aria-invalid', 'true'); $(id + '-err').textContent = msg; inp(id).focus(); };
+  $('act-gv-pin').addEventListener('click', () => { /** @type {any} */ ($('nav-profile')).hidePopover?.(); for (const id of fields) inp(id).value = ''; clear(); dlg.showModal(); inp('gv-pin-old').focus(); });
+  $('gv-pin-cancel').addEventListener('click', () => dlg.close());
+  $('gv-pin-form').addEventListener('submit', async ev => {
+    ev.preventDefault(); clear();
+    const old = inp('gv-pin-old').value.trim(), np = inp('gv-pin-new').value.trim(), again = inp('gv-pin-again').value.trim();
+    if (old.length < 6) return bad('gv-pin-old', 'Nhập mã PIN hiện tại.');
+    if (np.length < 6 || np.length > 16) return bad('gv-pin-new', 'Mã PIN từ 6 đến 16 ký tự.');
+    if (np === old) return bad('gv-pin-new', 'Mã PIN mới phải khác mã hiện tại.');
+    if (again !== np) return bad('gv-pin-again', 'Hai lần nhập chưa khớp.');
+    const btn = /** @type {HTMLButtonElement} */ ($('gv-pin-save')), label = btn.textContent;
+    btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Đang đổi…';
+    try {
+      await call({ action: 'gv_repin', gv: old, new_gv: np });
+      try { sessionStorage.setItem('thi-gv-mk', np); } catch { /* bỏ qua */ }
+      dlg.close(); void noticeBox({ title: 'Đã đổi mã PIN', body: 'Lần sau thầy cô đăng nhập bằng mã PIN mới.', okText: 'Đóng' });
+    } catch (e) { const m = e instanceof Error ? e.message : 'Chưa đổi được mã PIN.'; if (/PIN/.test(m) && /khớp|sai|chưa đúng/i.test(m)) bad('gv-pin-old', 'Mã PIN hiện tại chưa đúng.'); else $('gv-pin-err').textContent = m; }
+    finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
+  });
+}
+
+/* ---------- Cài đặt → Hỗ trợ học sinh qua Zalo (quản trị: chung cả trường; giáo viên lớp: riêng lớp mình) ---------- */
+{
+  const dlg = /** @type {HTMLDialogElement} */ ($('support-dialog'));
+  const zaloOk = (/** @type {string} */ x) => !x || /^https:\/\/zalo\.me\/[A-Za-z0-9/_-]{3,80}$/.test(x) || /^(0|\+?84)\d{9,10}$/.test(x.replace(/[\s.\-()]/g, ''));
+  const reset = () => { inp('support-zalo').removeAttribute('aria-invalid'); $('support-zalo-err').textContent = ''; $('support-err').textContent = ''; };
+  $('act-support').addEventListener('click', async () => {
+    /** @type {any} */ ($('nav-profile')).hidePopover?.(); reset();
+    const cls = isClassTeacher();
+    $('support-ten-field').hidden = cls;   // giáo viên lớp: dùng tên trong tài khoản
+    $('support-sub').textContent = cls ? 'Học sinh các lớp thầy cô phụ trách thấy nút "Hỏi thầy cô", bấm vào là mở Zalo nhắn cho thầy cô.' : 'Zalo chung của trường: học sinh lớp chưa có Zalo riêng của giáo viên lớp sẽ thấy số này.';
+    inp('support-zalo').value = ''; inp('support-ten').value = ''; inp('support-zalo').placeholder = 'Đang tải…';
+    dlg.showModal(); inp('support-zalo').focus();
+    try { const r = await call({ action: 'gv_support' }); inp('support-zalo').value = String(r.zalo || '').replace('https://zalo.me/', ''); inp('support-ten').value = r.ten || ''; }
+    catch (e) { $('support-err').textContent = e instanceof Error ? e.message : 'Chưa tải được.'; }
+    finally { inp('support-zalo').placeholder = '0912345678'; }
+  });
+  $('support-cancel').addEventListener('click', () => dlg.close());
+  $('support-form').addEventListener('submit', async ev => {
+    ev.preventDefault(); reset();
+    const z = inp('support-zalo').value.trim();
+    if (!zaloOk(z)) { inp('support-zalo').setAttribute('aria-invalid', 'true'); $('support-zalo-err').textContent = 'Nhập số điện thoại Zalo (ví dụ 0912345678) hoặc đường dẫn https://zalo.me/…'; inp('support-zalo').focus(); return; }
+    const btn = /** @type {HTMLButtonElement} */ ($('support-save')), label = btn.textContent;
+    btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Đang lưu…';
+    try {
+      const r = await call({ action: 'gv_support_save', zalo: z, ten: inp('support-ten').value.trim() });
+      dlg.close();
+      void noticeBox({ title: r.zalo ? 'Đã lưu Zalo hỗ trợ' : 'Đã bỏ Zalo riêng', body: r.fb_error ? 'Đã lưu vào Google Sheet nhưng chưa đẩy được lên Firebase: ' + r.fb_error : (r.zalo ? 'Học sinh thấy nút "Hỏi thầy cô" ngay khi mở lại ứng dụng.' : 'Học sinh thấy Zalo mặc định của ứng dụng.'), okText: 'Đóng' });
+    } catch (e) { $('support-err').textContent = e instanceof Error ? e.message : 'Chưa lưu được.'; }
+    finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
+  });
+}

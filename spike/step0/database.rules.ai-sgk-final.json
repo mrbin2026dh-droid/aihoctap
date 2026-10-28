@@ -97,6 +97,17 @@
           },
           "cao_nhat": {
             ".validate": "newData.isNumber()"
+          },
+          "dau": {
+            ".validate": "newData.isNumber()"
+          },
+          "roi_tab": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "chu_de": {
+            "$t": {
+              ".validate": "$t.length <= 64 && newData.hasChildren(['ten','d','n']) && newData.child('ten').isString() && newData.child('ten').val().length <= 60 && newData.child('d').isNumber() && newData.child('n').isNumber()"
+            }
           }
         }
       }
@@ -108,6 +119,76 @@
     "thi_gv": {
       ".read": true,
       ".write": false
+    },
+    "quiz_key": {
+      ".read": false,
+      "$room": {
+        ".write": "!data.exists() && $room.matches(/^[0-9]{6}$/) && newData.isString() && newData.val().length >= 20 && newData.val().length <= 64"
+      }
+    },
+    "quiz_proof": {
+      ".read": false,
+      "$room": {
+        ".write": "newData.isString() && newData.val() === root.child('quiz_key').child($room).val()"
+      }
+    },
+    "quiz": {
+      ".read": true,
+      "$room": {
+        "pub": {
+          ".write": "newData.parent().parent().parent().child('quiz_proof').child($room).val() === root.child('quiz_key').child($room).val() && root.child('quiz_key').child($room).exists()"
+        },
+        "kq": {
+          ".write": "newData.parent().parent().parent().child('quiz_proof').child($room).val() === root.child('quiz_key').child($room).val() && root.child('quiz_key').child($room).exists()"
+        },
+        "ds": {
+          "$ma": {
+            ".write": "!data.exists() && $ma.length <= 64 && root.child('quiz').child($room).child('pub').exists()",
+            ".validate": "newData.hasChildren(['ten','at']) && newData.child('ten').isString() && newData.child('ten').val().length <= 100 && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000"
+          }
+        },
+        "ans": {
+          "$q": {
+            "$ma": {
+              ".write": "!data.exists() && $ma.length <= 64 && root.child('quiz').child($room).child('pub').child('phase').val() === 'q' && root.child('quiz').child($room).child('pub').child('q').child('k').val() === $q && now <= root.child('quiz').child($room).child('pub').child('q').child('at').val() + root.child('quiz').child($room).child('pub').child('q').child('lim').val() * 1000 + 3000",
+              ".validate": "newData.hasChildren(['a','t']) && newData.child('a').isString() && newData.child('a').val().matches(/^[A-D]$/) && newData.child('t').isNumber() && newData.child('t').val() <= now + 2000"
+            }
+          }
+        },
+        "$other": {
+          ".write": false
+        }
+      }
+    },
+    "quiz_lop": {
+      ".read": true,
+      "$lop": {
+        ".write": "$lop.length <= 40 && (newData.exists() ? newData.isString() && newData.parent().parent().child('quiz_proof').child(newData.val()).val() === root.child('quiz_key').child(newData.val()).val() && root.child('quiz_key').child(newData.val()).exists() : newData.parent().parent().child('quiz_proof').child(data.val()).val() === root.child('quiz_key').child(data.val()).val())"
+      }
+    },
+    "nang_luc": {
+      ".read": true,
+      "$ma": {
+        ".write": "$ma.length <= 64",
+        ".validate": "newData.hasChildren(['at','topics']) && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000",
+        "at": {
+          ".validate": true
+        },
+        "ten": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "lop": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "topics": {
+          "$t": {
+            ".validate": "$t.length <= 64 && newData.hasChildren(['ten','d','n']) && newData.child('ten').isString() && newData.child('ten').val().length <= 60 && newData.child('d').isNumber() && newData.child('n').isNumber() && newData.child('n').val() <= 10000"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     },
     "doc_read": {
       ".read": true,
@@ -134,6 +215,10 @@
       }
     },
     "tai_lieu": {
+      ".read": true,
+      ".write": false
+    },
+    "ho_tro": {
       ".read": true,
       ".write": false
     }

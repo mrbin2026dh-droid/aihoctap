@@ -1,0 +1,18 @@
+[Unit]
+Description=Bộ não AI — Góc học tập (chạy một lượt: thu thập, phân tích, báo cáo)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=brain
+Group=brain
+WorkingDirectory=/opt/brain
+ExecStart=/usr/bin/python3 -m brain run --env /opt/brain/.env
+# Hạn chế quyền: chỉ ghi được thư mục dữ liệu
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/brain
+TimeoutStartSec=900

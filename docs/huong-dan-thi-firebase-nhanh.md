@@ -61,3 +61,33 @@
 - Học sinh báo "Mã học sinh hoặc mã PIN chưa đúng" dù đúng: thầy cô vừa đổi PIN trong Sheet nhưng chưa bấm **Cập nhật lên Firebase**.
 - Học sinh mới chưa có trên Firebase vẫn đăng nhập được (đường cũ qua Worker, chậm hơn) nhưng tab Thi dùng bài thi Google Sheet cũ → bấm Cập nhật lên Firebase.
 - App giáo viên báo "Chưa nối Firebase": làm lại bước 3.
+
+## Tính năng mới 28/10/2026
+### Bản đồ năng lực (học sinh)
+- Mỗi câu hỏi có **Chủ đề** và **Mức độ** (Biết / Hiểu / Vận dụng): nhập trong trình sửa câu hỏi, file Excel đề thi thử (cột "Chủ đề"), hoặc cột J/K trang DeThi (cột K/L trang DeThiThu).
+- Học sinh: **Tổng quan → Bản đồ năng lực**: mỗi chủ đề một ô màu (xanh ≥ 80%, vàng 50–79%, đỏ < 50%) gộp bài luyện tập + thi thử + thi thật; "Hôm nay em nên ôn…"; ô yếu có nút **Ôn bài** và **Hỏi Gia sư**.
+- Gia sư AI biết em còn yếu chủ đề nào để củng cố đúng chỗ; nhận xét bài thi thử theo chủ đề. (Cần Worker mới.)
+### AI soạn đề theo ma trận (giáo viên)
+- Thi → Tạo đề thi → Thi thử → **AI soạn đề theo ma trận**: chọn bài học, chủ đề (tùy chọn), số câu Biết/Hiểu/Vận dụng (tối đa 20).
+- Câu AI soạn hiện trong trình sửa với viền vàng "AI soạn — cần duyệt" và giải thích của AI. Thầy cô sửa, đánh dấu **Đã duyệt** từng câu mới lưu được. Khi sửa bài có nút **AI soạn thêm câu**.
+- Mỗi giáo viên 40 lượt AI/ngày. (Cần Worker mới.)
+### Chấm thực hành Excel / Python
+- Tạo bài thi thật **Trắc nghiệm + Thực hành**: chọn Loại bài (Excel/Python/Khác), nhập **Đề bài thực hành** (học sinh thấy) và **Tiêu chí chấm** (mô tả, điểm, kiểm tra tự động: ô Excel có công thức chứa…, ô có giá trị…, Python chạy với dữ liệu vào → kết quả, mã có dùng…). Kết quả mong đợi chỉ nằm trong Sheet.
+- Thống kê → Theo dõi nộp bài → **Chấm thực hành**: máy đọc file .xlsx / chạy chương trình Python (dừng nếu chạy quá lâu) và chấm các tiêu chí tự động; **AI gợi ý điểm** cho tiêu chí chấm tay; thầy cô sửa rồi **Lưu điểm thực hành** (trang ChamThucHanh của Sheet). Học sinh được xem điểm thực hành khi bật Cho xem điểm.
+### Hiệu quả + thi thật công bằng
+- Menu **Hiệu quả**: tiến bộ thi thử (điểm lần đầu → cao nhất), Bản đồ năng lực của lớp, đọc bài trung bình, học sinh cần hỗ trợ, **Tải báo cáo CSV** (mở bằng Excel).
+- Thi thật: mỗi em một thứ tự câu và phương án; đếm số lần rời màn hình (giáo viên thấy ở Theo dõi nộp bài).
+### Khác
+- Điện thoại: thanh menu giáo viên luôn hiện. Giáo viên lớp có **Cài đặt**: Đổi mã PIN, Hỗ trợ học sinh qua Zalo, Đăng xuất.
+- **Nút "Hỏi thầy cô" (Zalo)**: Cài đặt → Hỗ trợ học sinh qua Zalo → nhập số Zalo. Quản trị = số chung; giáo viên lớp = số riêng cho lớp mình.
+- Học ngoại tuyến: có mạng thì app tự tải mọi bài của khối về máy; mất mạng vẫn mở và đọc bài được.
+
+## Tiện ích: Trò chơi câu hỏi trên lớp (28/10/2026)
+1. Trang giáo viên → **Tiện ích** → **Tạo bộ câu hỏi**: đặt tên, chọn lớp, thời gian mỗi câu. Thêm câu bằng cách tự nhập, **AI soạn câu hỏi theo bài** (câu AI soạn phải đánh dấu Đã duyệt), hoặc **Lấy câu từ đề thi thử** → Lưu.
+2. Bấm **Trình chiếu** (nên mở trên máy chiếu). Màn hình hiện mã phòng; học sinh lớp đó mở app là thấy thẻ **"Vào chơi"**, không phải gõ mã.
+3. Đủ học sinh thì bấm **Bắt đầu**. Mỗi câu có đồng hồ đếm ngược; học sinh chọn 1 trong 4 ô màu trên điện thoại. Hết giờ hoặc cả lớp đã trả lời thì máy chiếu hiện đáp án, số em chọn mỗi phương án và bảng xếp hạng. Đúng và nhanh thì được nhiều điểm hơn.
+4. Kết thúc: bục vinh danh top 3, bảng từng câu (tỉ lệ đúng, phương án sai bị chọn nhiều nhất), danh sách em cần hỗ trợ. Bấm **AI phân tích lớp hiểu bài** (AI chỉ nhận số liệu, không nhận tên học sinh), **Tải kết quả CSV**.
+5. Đáp án chỉ nằm trên máy giáo viên đến lúc công bố. Học sinh không điều khiển được phòng và không đổi được câu đã trả lời.
+
+## Bộ não AI (VPS) — báo cáo tuần
+Cài theo `docs/huong-dan-vps-bo-nao-ai.md`. Mỗi tối 21:00, báo cáo từng lớp hiện ở **Hiệu quả → Bộ não AI: báo cáo tuần**: xu hướng chủ đề, học sinh hay hỏi gì, học sinh cần chú ý, đề xuất tuần tới.

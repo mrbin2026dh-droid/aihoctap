@@ -12,16 +12,32 @@
  */
 var SH_HS = 'HocSinh', SH_DE = 'DeThi', SH_DT = 'DeThiThu', SH_KQ = 'KetQua', SH_CH = 'CauHinh', SH_BT = 'BaiThi', SH_DD = 'DiemDanh';
 var HS_HEAD = ['Stt', 'Họ tên', 'Lớp', 'Mã học sinh', 'Mã PIN', 'Trạng thái'];
-var DE_HEAD = ['Stt', 'Khối', 'Đề bài', 'A', 'B', 'C', 'D', 'Đáp án đúng', 'Điểm'];
-var DT_HEAD = DE_HEAD.concat(['Mã bài thi']);
+var Q_HEAD = ['Stt', 'Khối', 'Đề bài', 'A', 'B', 'C', 'D', 'Đáp án đúng', 'Điểm'];
+var DE_HEAD = Q_HEAD.concat(['Chủ đề', 'Mức độ']);                 // DeThi: cột J Chủ đề, K Mức độ (Biết/Hiểu/Vận dụng)
+var DT_HEAD = Q_HEAD.concat(['Mã bài thi', 'Chủ đề', 'Mức độ']);   // DeThiThu: giữ cột J Mã bài thi như cũ
+var MUC_DO = ['Biết', 'Hiểu', 'Vận dụng'];
+function lvl_(x) { x = String(x || '').trim(); return MUC_DO.indexOf(x) >= 0 ? x : ''; }
 var KQ_HEAD = ['Thời gian nộp', 'Mã học sinh', 'Họ tên', 'Lớp', 'Điểm', 'Tổng điểm', 'Số câu đúng', 'Bài làm', 'Hình thức', 'Mã bài thi', 'Hủy', 'Mã nộp', 'Lưu Drive'];
 /** Firebase dùng chung với app (học sinh đọc đề, nộp bài trực tiếp — nhanh, không qua Worker). */
 var FB_URL_DEFAULT = 'https://ai-sgk-tinhoc-default-rtdb.asia-southeast1.firebasedatabase.app';
 var SH_TL = 'TaiLieu', TL_HEAD = ['Mã tài liệu', 'Tiêu đề', 'Khối', 'Mô tả', 'File ID', 'Tên file', 'Kích thước', 'Cập nhật lúc', 'Người đăng'];
-var SH_GV = 'GiaoVien', GV_HEAD = ['Mã giáo viên', 'Họ tên', 'Mã PIN', 'Lớp phụ trách', 'Trạng thái'];
+var SH_GV = 'GiaoVien', GV_HEAD = ['Mã giáo viên', 'Họ tên', 'Mã PIN', 'Lớp phụ trách', 'Trạng thái', 'Zalo'];
 /** Lớp giáo viên đang đăng nhập được phụ trách (chữ thường); null = quản trị (thấy mọi lớp). */
 var SCOPE_ = null;
-var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm', 'Năm học', 'Hình thức', 'Nội dung'];
+var BT_HEAD = ['Mã bài thi', 'Tiêu đề', 'Loại', 'Khối', 'Lớp', 'Trạng thái', 'Tạo lúc', 'Xem điểm', 'Năm học', 'Hình thức', 'Nội dung', 'Thực hành'];
+var SH_CTH = 'ChamThucHanh', CTH_HEAD = ['Mã bài thi', 'Mã học sinh', 'Họ tên', 'Lớp', 'File', 'File ID', 'Nộp lúc', 'Điểm TH', 'Chi tiết', 'Nhận xét', 'Chấm lúc', 'Người chấm'];
+var KT_TYPES = ['excel_formula', 'excel_value', 'py_test', 'py_contains'];
+/** Đề + tiêu chí chấm thực hành (giữ ở Sheet; chỉ đề bài được đẩy cho học sinh). */
+function thucHanh_(x) {
+  if (typeof x === 'string') { try { x = JSON.parse(x || 'null'); } catch (e) { x = null; } }
+  if (!x || typeof x !== 'object') return null;
+  var loai = ['excel', 'python', 'khac'].indexOf(String(x.loai)) >= 0 ? String(x.loai) : 'khac';
+  var tc = (Array.isArray(x.tieu_chi) ? x.tieu_chi : []).slice(0, 12).map(function (t) {
+    var kt = t && t.kt && KT_TYPES.indexOf(String(t.kt.type)) >= 0 ? { type: String(t.kt.type), a: String(t.kt.a || '').slice(0, 200), b: String(t.kt.b === undefined ? '' : t.kt.b).slice(0, 2000) } : null;
+    return { mo_ta: String(t && t.mo_ta || '').trim().slice(0, 200), diem: Math.max(0, Math.min(100, Number(t && t.diem) || 0)), kt: kt };
+  }).filter(function (t) { return t.mo_ta && t.diem > 0; });
+  return { loai: loai, de: String(x.de || '').trim().slice(0, 3000), tieu_chi: tc };
+}
 var HINH_THUC = ['15 phút', 'Giữa kỳ I', 'Cuối kỳ I', 'Giữa kỳ II', 'Cuối kỳ II', 'Khác'];
 var DD_HEAD = ['Mã bài thi', 'Mã học sinh', 'Vào lúc'];
 
@@ -33,6 +49,7 @@ function doPost(e) {
 function route_(p) {
   try {
     if (p.action === 'ping') return out_({ ok: true });
+    if (p.action === 'brain_save') return out_(brainSave_(p));   // Bộ não AI trên VPS gửi báo cáo (khóa BRAIN_KEY)
     if (p.action === 'gv_login') { var t = findTeacher_(p.ma, p.pin); return out_({ ok: true, teacher: { ma: t.ma, ten: t.ten, lop: t.lop } }); }
     if (/^gv_/.test(String(p.action || ''))) return out_(teacher_(p));
     if ((p.action === 'exams' || p.action === 'exam' || p.action === 'submit') && !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT)) schema_();
@@ -118,7 +135,7 @@ function exams_() {
   if (v.length) for (var c = 7; c < BT_HEAD.length; c++) if (String(v[0][c] || '').trim() !== BT_HEAD[c]) sh.getRange(1, c + 1).setValue(BT_HEAD[c]);
   for (var r = 1; r < v.length; r++) {
     var id = String(v[r][0] || '').trim(); if (!id || String(v[r][5]).trim() === 'xoa') continue;
-    out.push({ row: r + 1, ma_de: id, tieu_de: String(v[r][1] || '').trim(), che_do: String(v[r][2]).trim() === 'that' ? 'that' : 'thu', khoi: Number(v[r][3]) || 0, lop: String(v[r][4] || '').trim(), trang_thai: String(v[r][5]).trim() === 'mo' ? 'mo' : 'khoa', tao_luc: v[r][6] instanceof Date ? v[r][6].toISOString() : String(v[r][6] || ''), xem_diem: xemOf_(v[r][7], v[r][2]), nam_hoc: String(v[r][8] || '').trim(), hinh_thuc: String(v[r][9] || '').trim(), noi_dung: String(v[r][10] || '').trim() === 'tn_th' ? 'tn_th' : 'tn' });
+    out.push({ row: r + 1, ma_de: id, tieu_de: String(v[r][1] || '').trim(), che_do: String(v[r][2]).trim() === 'that' ? 'that' : 'thu', khoi: Number(v[r][3]) || 0, lop: String(v[r][4] || '').trim(), trang_thai: String(v[r][5]).trim() === 'mo' ? 'mo' : 'khoa', tao_luc: v[r][6] instanceof Date ? v[r][6].toISOString() : String(v[r][6] || ''), xem_diem: xemOf_(v[r][7], v[r][2]), nam_hoc: String(v[r][8] || '').trim(), hinh_thuc: String(v[r][9] || '').trim(), noi_dung: String(v[r][10] || '').trim() === 'tn_th' ? 'tn_th' : 'tn', thuc_hanh: thucHanh_(v[r][11]) });
   }
   return out;
 }
@@ -150,7 +167,7 @@ function questions_(ex, hs) {
     else if (String(row[9] || '').trim() !== ex.ma_de) continue;
     var options = {};
     ['A', 'B', 'C', 'D'].forEach(function (L, i) { var t = String(row[3 + i] === undefined ? '' : row[3 + i]).trim(); if (t) options[L] = t; });
-    out.push({ id: 'r' + (r + 1), stt: row[0] === '' ? out.length + 1 : row[0], text: text, options: options, answer: String(row[7] || '').trim().toUpperCase(), points: Number(row[8]) || 1 });
+    out.push({ id: 'r' + (r + 1), stt: row[0] === '' ? out.length + 1 : row[0], text: text, options: options, answer: String(row[7] || '').trim().toUpperCase(), points: Number(row[8]) || 1, topic: String((that ? row[9] : row[10]) || '').trim().slice(0, 60), level: lvl_(that ? row[10] : row[11]) });
   }
   if (!out.length) throw new Error('Bài thi này chưa có câu hỏi.');
   return out;
@@ -273,11 +290,20 @@ function teacher_(p) {
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_BT) || !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_DD) || cfgGet_('ma_de')) schema_();
   var a = p.action;
   if (a === 'gv_repin') { var np = String(p.new_gv || '').trim(); if (np.length < 6) throw new Error('PIN mới quá ngắn.'); if (me) setTeacherPin_(me.ma, np); else setConfig_('mat_khau_gv', np); return { ok: true }; }
+  if (a === 'gv_brain') return brainGet_();
+  if (a === 'gv_support') return { ok: true, zalo: me ? (me.zalo || '') : cfgGet_('ho_tro_zalo'), ten: me ? me.ten : cfgGet_('ho_tro_ten') };
+  if (a === 'gv_support_save') {                          // Zalo hỗ trợ: quản trị = chung cả trường; giáo viên lớp = riêng các lớp mình
+    var z = normZalo_(p.zalo), tn = String(p.ten || '').trim().slice(0, 40);
+    if (me) { var shg = ensure_(SH_GV, GV_HEAD); if (String(shg.getRange(1, 6).getValue()).trim() !== 'Zalo') shg.getRange(1, 6).setValue('Zalo'); shg.getRange(me.row, 6).setValue(z); }
+    else { setConfig_('ho_tro_zalo', z); setConfig_('ho_tro_ten', tn); }
+    var resz = { ok: true, zalo: z, ten: me ? me.ten : tn }; try { publish_(['ho_tro']); } catch (e) { resz.fb_error = e.message; } return resz;
+  }
   if (a === 'gv_whoami') return { ok: true, me: me ? { ma: me.ma, ten: me.ten, lop: me.lop } : null, admin: !me };
   if (/^gv_(teachers|teacher_save|teacher_delete|students|student_save|student_delete)$/.test(a)) return accounts_(a, p, me);
   if (/^gv_doc(s|_save|_delete)$/.test(a)) return docs_(a, p, me);
   if (p.ma_de && a !== 'gv_create') ownExam_(String(p.ma_de));
   if (a === 'gv_stats') return stats_(String(p.ma_de || ''));
+  if (a === 'gv_th_get' || a === 'gv_th_save') return thCham_(a, p, me);
   if (a === 'gv_questions') { var exq = exam_(String(p.ma_de || '')); return { ok: true, ma_de: exq.ma_de, che_do: exq.che_do, khoi: exq.khoi, questions: questionsFor_(exq) }; }
   if (a === 'gv_publish') { var n = publish_(); var info = info_(); info.published = n; return info; }
   if (a === 'gv_create') create_(p);
@@ -297,10 +323,11 @@ function teacher_(p) {
 }
 function writeQuestions_(maDe, khoi, qs) {
   var d = ensure_(SH_DT, DT_HEAD), v = d.getDataRange().getValues(), keep = [];
-  for (var r = 1; r < v.length; r++) if (String(v[r][9] || '').trim() !== maDe && String(v[r][2] || '').trim()) keep.push(v[r].slice(0, 10));
-  qs.forEach(function (q, i) { var o = q.options || {}; keep.push([i + 1, khoi, String(q.text || ''), o.A || '', o.B || '', o.C || '', o.D || '', String(q.answer || '').toUpperCase(), Number(q.points) || 1, maDe]); });
+  var pad = function (row) { row = row.slice(0, 12); while (row.length < 12) row.push(''); return row; };
+  for (var r = 1; r < v.length; r++) if (String(v[r][9] || '').trim() !== maDe && String(v[r][2] || '').trim()) keep.push(pad(v[r]));
+  qs.forEach(function (q, i) { var o = q.options || {}; keep.push([i + 1, khoi, String(q.text || ''), o.A || '', o.B || '', o.C || '', o.D || '', String(q.answer || '').toUpperCase(), Number(q.points) || 1, maDe, String(q.topic || '').trim().slice(0, 60), lvl_(q.level)]); });
   d.clear(); d.appendRow(DT_HEAD); d.setFrozenRows(1);
-  if (keep.length) d.getRange(2, 1, keep.length, 10).setValues(keep);
+  if (keep.length) d.getRange(2, 1, keep.length, 12).setValues(keep);
 }
 function create_(p) {
   var che = p.che_do === 'that' ? 'that' : 'thu', khoi = Number(p.khoi) || 0, lop = String(p.lop || '').trim(), title = String(p.tieu_de || '').trim();
@@ -313,7 +340,8 @@ function create_(p) {
   if (che === 'that') { if (!countBank_(ex)) throw new Error('Trang DeThi trong Google Sheet chưa có câu cho khối ' + khoi + '.'); }
   else { if (!(p.questions || []).length) throw new Error('Tải file Excel đề thi thử lên trước.'); writeQuestions_(ex.ma_de, khoi, p.questions); }
   var nam = String(p.nam_hoc || '').trim() || namHoc_(), ht = HINH_THUC.indexOf(String(p.hinh_thuc || '')) >= 0 ? String(p.hinh_thuc) : (che === 'that' ? 'Khác' : '');
-  ensure_(SH_BT, BT_HEAD).appendRow([ex.ma_de, title, che, khoi, lop, 'khoa', new Date().toISOString(), che === 'thu' ? 'co' : 'khong', che === 'that' ? nam : '', ht, che === 'that' && p.noi_dung === 'tn_th' ? 'tn_th' : 'tn']);
+  var th = che === 'that' && p.noi_dung === 'tn_th' ? thucHanh_(p.thuc_hanh) : null;
+  ensure_(SH_BT, BT_HEAD).appendRow([ex.ma_de, title, che, khoi, lop, 'khoa', new Date().toISOString(), che === 'thu' ? 'co' : 'khong', che === 'that' ? nam : '', ht, che === 'that' && p.noi_dung === 'tn_th' ? 'tn_th' : 'tn', th ? JSON.stringify(th) : '']);
 }
 function update_(p) {
   var ex = exam_(String(p.ma_de || '')), sh = sheet_(SH_BT);
@@ -327,12 +355,13 @@ function update_(p) {
     if (p.nam_hoc !== undefined) sh.getRange(ex.row, 9).setValue(String(p.nam_hoc || '').trim() || namHoc_());
     if (HINH_THUC.indexOf(String(p.hinh_thuc || '')) >= 0) sh.getRange(ex.row, 10).setValue(String(p.hinh_thuc));
     if (p.noi_dung === 'tn' || p.noi_dung === 'tn_th') sh.getRange(ex.row, 11).setValue(p.noi_dung);
+    if (p.thuc_hanh !== undefined) { var th2 = thucHanh_(p.thuc_hanh); if (String(sh.getRange(1, 12).getValue()).trim() !== 'Thực hành') sh.getRange(1, 12).setValue('Thực hành'); sh.getRange(ex.row, 12).setValue(th2 ? JSON.stringify(th2) : ''); }
   }
 }
 /** Câu hỏi của bài để giáo viên sửa (kèm đáp án). Thi thật: các câu của khối trong DeThi; thi thử: các câu của bài trong DeThiThu. */
 function questionsFor_(ex) {
   var qs = []; try { qs = questions_(ex, { lop: '' }); } catch (e) { qs = []; }
-  return qs.map(function (q) { return { id: q.id, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
+  return qs.map(function (q) { return { id: q.id, text: q.text, options: q.options, answer: q.answer, points: q.points, topic: q.topic, level: q.level }; });
 }
 /** Lưu câu hỏi giáo viên sửa: thi thử thay đề của bài; thi thật thay các câu của khối đó trong DeThi (giữ câu các khối khác). */
 function saveQuestions_(ex, khoi, qs) {
@@ -345,10 +374,11 @@ function saveQuestions_(ex, khoi, qs) {
   });
   if (ex.che_do === 'thu') { writeQuestions_(ex.ma_de, khoi, qs); return; }
   var d = sheet_(SH_DE), v = d.getDataRange().getValues(), keep = [];
-  for (var r = 1; r < v.length; r++) { var k = khoiOf_(v[r][1]); if (String(v[r][2] || '').trim() && k !== khoi) keep.push(v[r].slice(0, 9)); }
-  qs.forEach(function (q, i) { var o = q.options || {}; keep.push([i + 1, khoi, String(q.text).trim(), o.A || '', o.B || '', o.C || '', o.D || '', String(q.answer).toUpperCase(), Number(q.points) || 1]); });
+  var pad = function (row) { row = row.slice(0, 11); while (row.length < 11) row.push(''); return row; };
+  for (var r = 1; r < v.length; r++) { var k = khoiOf_(v[r][1]); if (String(v[r][2] || '').trim() && k !== khoi) keep.push(pad(v[r])); }
+  qs.forEach(function (q, i) { var o = q.options || {}; keep.push([i + 1, khoi, String(q.text).trim(), o.A || '', o.B || '', o.C || '', o.D || '', String(q.answer).toUpperCase(), Number(q.points) || 1, String(q.topic || '').trim().slice(0, 60), lvl_(q.level)]); });
   d.clear(); d.appendRow(DE_HEAD); d.setFrozenRows(1);
-  if (keep.length) d.getRange(2, 1, keep.length, 9).setValues(keep);
+  if (keep.length) d.getRange(2, 1, keep.length, 11).setValues(keep);
 }
 /** Mở/khóa (trang_thai) và/hoặc cho học sinh xem điểm, xếp hạng (xem_diem: 'co' | 'khong'). */
 function setStatus_(maDe, st, xem) {
@@ -385,7 +415,7 @@ function info_() {
   exams_().filter(inScope_).forEach(function (ex) {
     var res = allRes[ex.ma_de] || {}, vis = allVis[ex.ma_de] || {}, n = 0, vao = 0, nop = 0;
     st.forEach(function (s) { if (!allowed_(s, ex)) return; n++; var k = norm_(s.ma); if (res[k]) nop++; else if (vis[k]) vao++; });
-    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
+    list.push({ ma_de: ex.ma_de, tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung, thuc_hanh: ex.thuc_hanh, questions: countFrom_(bc, ex), total: n, vao: vao, nop: nop });
   });
   list.sort(function (a, b) { return String(b.tao_luc).localeCompare(String(a.tao_luc)); });
   var bank = {}; [6, 7, 8, 9].forEach(function (k) { bank[k] = (bc.khoi[k] || 0) + bc.khoiFree; });
@@ -413,7 +443,7 @@ function teachers_() {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_GV), out = [];
   if (!sh) return out;
   var v = sh.getDataRange().getValues();
-  for (var r = 1; r < v.length; r++) { var ma = String(v[r][0] || '').trim(); if (ma) out.push({ row: r + 1, ma: ma, ten: String(v[r][1] || '').trim(), pin: String(v[r][2]).trim(), lop: lopList_(v[r][3]), trang_thai: /^khóa$/i.test(String(v[r][4] || '').trim()) ? 'Khóa' : 'Hoạt động' }); }
+  for (var r = 1; r < v.length; r++) { var ma = String(v[r][0] || '').trim(); if (ma) out.push({ row: r + 1, ma: ma, ten: String(v[r][1] || '').trim(), pin: String(v[r][2]).trim(), lop: lopList_(v[r][3]), trang_thai: /^khóa$/i.test(String(v[r][4] || '').trim()) ? 'Khóa' : 'Hoạt động', zalo: String(v[r][5] || '').trim() }); }
   return out;
 }
 function findTeacher_(ma, pin) {
@@ -424,12 +454,12 @@ function findTeacher_(ma, pin) {
   if (t.trang_thai === 'Khóa') throw new Error('Tài khoản giáo viên đang bị khóa.');
   return t;
 }
-function setTeacherPin_(ma, pin) { var t = teachers_().filter(function (x) { return norm_(x.ma) === norm_(ma); })[0]; if (!t) throw new Error('Không tìm thấy giáo viên.'); sheet_(SH_GV).getRange(t.row, 3).setValue(pin); try { publish_(); } catch (e) { /* lần sau */ } }
+function setTeacherPin_(ma, pin) { var t = teachers_().filter(function (x) { return norm_(x.ma) === norm_(ma); })[0]; if (!t) throw new Error('Không tìm thấy giáo viên.'); sheet_(SH_GV).getRange(t.row, 3).setValue(pin); try { publish_(['gv', 'ho_tro']); } catch (e) { /* lần sau */ } }
 /** Quản lý tài khoản: giáo viên (chỉ quản trị) và học sinh (quản trị: mọi lớp; giáo viên lớp: lớp mình). */
 function accounts_(a, p, me) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), CODE = /^[A-Za-z0-9_-]{2,32}$/;
   var pinOk = function (x) { x = String(x || '').trim(); if (x.length < 6 || x.length > 16) throw new Error('Mã PIN từ 6 đến 16 ký tự.'); return x; };
-  var done = function (res) { try { publish_(['hs', 'gv']); } catch (e) { res.fb_error = e.message; } return res; };   // chỉ đẩy tài khoản (nhanh)
+  var done = function (res) { try { publish_(['hs', 'gv', 'ho_tro']); } catch (e) { res.fb_error = e.message; } return res; };   // chỉ đẩy tài khoản (nhanh)
   if (/^gv_teacher/.test(a) && me) throw new Error('Chỉ quản trị viên được quản lý tài khoản giáo viên.');
   if (a === 'gv_teachers') return { ok: true, teachers: teachers_().map(function (t) { return { ma: t.ma, ten: t.ten, lop: t.lop, trang_thai: t.trang_thai }; }) };
   if (a === 'gv_teacher_save') {
@@ -561,14 +591,29 @@ function publish_(only) {
     list.forEach(function (ex) {
       var qs = []; try { qs = questions_(ex, { lop: '' }); } catch (e) { qs = []; }
       bai[ex.ma_de] = { tieu_de: ex.tieu_de, che_do: ex.che_do, khoi: ex.khoi, lop: ex.lop, trang_thai: ex.trang_thai, so_cau: qs.length, tao_luc: ex.tao_luc, xem_diem: !!ex.xem_diem, nam_hoc: ex.nam_hoc, hinh_thuc: ex.hinh_thuc, noi_dung: ex.noi_dung };
-      de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points }; });
+      if (ex.noi_dung === 'tn_th' && ex.thuc_hanh) { bai[ex.ma_de].loai_th = ex.thuc_hanh.loai; bai[ex.ma_de].de_th = ex.thuc_hanh.de; bai[ex.ma_de].diem_th = ex.thuc_hanh.tieu_chi.reduce(function (a, t) { return a + t.diem; }, 0); }   // chỉ đề bài, không đẩy tiêu chí/kết quả mong đợi
+      de[ex.ma_de] = qs.map(function (q) { return { id: q.id, stt: q.stt, text: q.text, options: q.options, answer: q.answer, points: q.points, topic: q.topic || '' }; });
     });
     body.thi_bai = bai; body.thi_de = de; n = list.length;
   }
   if (want('gv')) { var gvs = {}; teachers_().forEach(function (t) { if (t.trang_thai !== 'Khóa') gvs[fbKey_(t.ma)] = { ma: t.ma, ten: t.ten, lop: t.lop, h: sha256_(norm_(t.ma) + ':' + t.pin) }; }); body.thi_gv = gvs; }
+  if (want('ho_tro')) {
+    var ht = { zalo: cfgGet_('ho_tro_zalo'), ten: cfgGet_('ho_tro_ten'), lop: {} };
+    teachers_().forEach(function (t) { if (t.trang_thai !== 'Khóa' && t.zalo) t.lop.forEach(function (l) { ht.lop[fbKey_(l)] = { zalo: t.zalo, ten: t.ten }; }); });
+    body.ho_tro = ht;
+  }
   if (want('tl')) { var tl = {}; docList_().forEach(function (d) { tl[d.id] = { tieu_de: d.tieu_de, khoi: d.khoi, mo_ta: d.mo_ta, file_id: d.file_id, ten_file: d.ten_file, size: d.size, at: d.at }; }); body.tai_lieu = tl; }
   fb_('patch', '', body);
   return n;
+}
+/** Số điện thoại Zalo (0912345678, +84 912…) hoặc đường dẫn https://zalo.me/… → đường dẫn zalo.me; rỗng = gỡ. */
+function normZalo_(x) {
+  x = String(x || '').trim(); if (!x) return '';
+  if (/^https:\/\/zalo\.me\/[A-Za-z0-9\/_-]{3,80}$/.test(x)) return x;
+  var d = x.replace(/[\s.\-()]/g, '');
+  if (/^\+?84\d{9,10}$/.test(d)) d = '0' + d.replace(/^\+?84/, '');
+  if (/^0\d{9,10}$/.test(d)) return 'https://zalo.me/' + d;
+  throw new Error('Nhập số điện thoại Zalo (ví dụ 0912345678) hoặc đường dẫn https://zalo.me/…');
 }
 /** Bài đã khóa và đã chép xong (không tải lại từ Firebase mỗi lần mở menu Thi). */
 function pullDone_() { try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('PULL_DONE') || '{}'); } catch (e) { return {}; } }
@@ -658,8 +703,72 @@ function nopThucHanh_(hs, maDe, p) {
   var bytes = Utilities.base64Decode(data);
   if (bytes.length > 10 * 1024 * 1024) throw new Error('File quá lớn (tối đa 10 MB).');
   var f = folderFor_(ex, hs.lop), file = f.createFile(Utilities.newBlob(bytes, String(p.mime || 'application/octet-stream'), safeName_(hs.ma + ' - ' + hs.name) + ' - Thực hành - ' + name));
+  // Sổ chấm thực hành: mỗi em một dòng / bài; nộp lại thì thay file và xóa điểm cũ (chấm lại).
+  var sh = ensure_(SH_CTH, CTH_HEAD), v = sh.getDataRange().getValues(), row = 0;
+  for (var r = 1; r < v.length; r++) if (String(v[r][0]) === maDe && norm_(v[r][1]) === norm_(hs.ma)) { row = r + 1; break; }
+  var line = [maDe, hs.ma, hs.name, hs.lop, name, file.getId(), new Date(), '', '', '', '', ''];
+  if (row) sh.getRange(row, 1, 1, line.length).setValues([line]); else sh.appendRow(line);
   if (fbOn_()) { try { fb_('put', 'thi_th/' + maDe + '/' + fbKey_(hs.ma), { ten_file: name, at: { '.sv': 'timestamp' } }); } catch (e) { /* đã lưu Drive */ } }
   return { ok: true, ten_file: name, id: file.getId() };
+}
+
+/** Chấm thực hành: lấy file bài làm + tiêu chí (gv_th_get), lưu điểm giáo viên đã duyệt (gv_th_save). */
+function thCham_(a, p, me) {
+  var ex = exam_(String(p.ma_de || '')), ma = String(p.ma || '').trim();
+  var sh = ensure_(SH_CTH, CTH_HEAD), v = sh.getDataRange().getValues(), row = 0;
+  for (var r = 1; r < v.length; r++) if (String(v[r][0]) === ex.ma_de && norm_(v[r][1]) === norm_(ma)) { row = r; break; }
+  if (!row) throw new Error('Học sinh này chưa nộp bài thực hành.');
+  var rec = v[row], th = ex.thuc_hanh || { loai: 'khac', de: '', tieu_chi: [] };
+  if (a === 'gv_th_get') {
+    var f = DriveApp.getFileById(String(rec[5])), blob = f.getBlob();
+    if (blob.getBytes().length > 10 * 1024 * 1024) throw new Error('File quá lớn để chấm trên trình duyệt.');
+    var chi = []; try { chi = JSON.parse(String(rec[8] || '[]')); } catch (e) { chi = []; }
+    return { ok: true, hs: { ma: rec[1], ten: rec[2], lop: rec[3] }, file: { ten: String(rec[4]), mime: blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) }, thuc_hanh: th,
+      cham: rec[7] === '' ? null : { diem: Number(rec[7]) || 0, chi_tiet: chi, nhan_xet: String(rec[9] || '') } };
+  }
+  var max = th.tieu_chi.reduce(function (s, t) { return s + t.diem; }, 0);
+  var items = (Array.isArray(p.chi_tiet) ? p.chi_tiet : []).slice(0, th.tieu_chi.length).map(function (it, i) { var m = th.tieu_chi[i] ? th.tieu_chi[i].diem : 0; return { diem: Math.max(0, Math.min(m, Math.round((Number(it && it.diem) || 0) * 4) / 4)), nhan_xet: String(it && it.nhan_xet || '').slice(0, 300) }; });
+  var diem = items.length ? items.reduce(function (s, it) { return s + it.diem; }, 0) : Math.max(0, Math.min(max || 100, Number(p.diem) || 0));
+  diem = Math.round(diem * 100) / 100;
+  sh.getRange(row + 1, 8, 1, 5).setValues([[diem, JSON.stringify(items), String(p.nhan_xet || '').slice(0, 1500), new Date(), me ? me.ten : 'Quản trị']]);
+  if (fbOn_()) { try { fb_('patch', 'thi_th/' + ex.ma_de + '/' + fbKey_(ma), { diem_th: diem, tong_th: max }); } catch (e) { /* đã lưu Sheet */ } }
+  return { ok: true, diem: diem, tong: max };
+}
+
+/* ---------- Bộ não AI (Python chạy trên VPS của thầy cô) ---------- */
+var SH_NAO = 'NaoAI', NAO_HEAD = ['Lớp', 'Cập nhật', 'Báo cáo', 'Dữ liệu'];
+/** VPS gửi báo cáo từng lớp: {key, reports:[{lop, md, facts}]}. Khóa nằm trong Script Properties (menu Cài khóa Bộ não AI). */
+function brainSave_(p) {
+  var cache = CacheService.getScriptCache(), fails = Number(cache.get('naofail') || 0);
+  if (fails >= 10) throw new Error('Sai khóa quá nhiều lần. Chờ 10 phút.');
+  var key = PropertiesService.getScriptProperties().getProperty('BRAIN_KEY') || '';
+  if (key.length < 24 || String(p.key || '') !== key) { cache.put('naofail', String(fails + 1), 600); throw new Error('Khóa Bộ não AI chưa đúng.'); }
+  var sh = ensure_(SH_NAO, NAO_HEAD), v = sh.getDataRange().getValues(), rows = {}, n = 0;
+  for (var r = 1; r < v.length; r++) rows[norm_(v[r][0])] = r + 1;
+  (Array.isArray(p.reports) ? p.reports : []).slice(0, 80).forEach(function (x) {
+    var lop = String(x && x.lop || '').trim().slice(0, 20); if (!lop) return;
+    var line = [lop, new Date(), String(x.md || '').slice(0, 20000), JSON.stringify(x.facts || {}).slice(0, 45000)];
+    if (rows[norm_(lop)]) sh.getRange(rows[norm_(lop)], 1, 1, 4).setValues([line]); else { sh.appendRow(line); rows[norm_(lop)] = sh.getLastRow(); }
+    n++;
+  });
+  cache.remove('naofail');
+  return { ok: true, saved: n };
+}
+/** Giáo viên xem báo cáo Bộ não AI (giáo viên lớp: chỉ lớp mình). */
+function brainGet_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_NAO), out = [];
+  if (sh) sh.getDataRange().getValues().slice(1).forEach(function (r) {
+    var lop = String(r[0] || '').trim(); if (!lop || (SCOPE_ && SCOPE_.indexOf(norm_(lop)) < 0)) return;
+    var facts = {}; try { facts = JSON.parse(String(r[3] || '{}')); } catch (e) { facts = {}; }
+    out.push({ lop: lop, at: r[1] instanceof Date ? r[1].toISOString() : String(r[1] || ''), md: String(r[2] || ''), facts: facts });
+  });
+  return { ok: true, reports: out };
+}
+function caiKhoaNaoAI() {
+  var ui = SpreadsheetApp.getUi(), key = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+  if (ui.alert('Cài khóa Bộ não AI', 'Tạo khóa mới cho máy chủ VPS? (Khóa cũ sẽ hết hiệu lực.)', ui.ButtonSet.OK_CANCEL) !== ui.Button.OK) return;
+  PropertiesService.getScriptProperties().setProperty('BRAIN_KEY', key);
+  ui.alert('Khóa Bộ não AI', 'Chép khóa này vào tệp .env trên VPS (dòng SHEET_BRAIN_KEY=...). Không gửi khóa qua chat hay đăng lên mạng:\n\n' + key, ui.ButtonSet.OK);
 }
 
 function caiKhoaFirebase() {
@@ -696,5 +805,5 @@ function taoMau() {
 }
 function datLaiMatKhau() { setConfig_('mat_khau_gv', ''); }
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addToUi();
+  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addItem('Cài khóa Bộ não AI', 'caiKhoaNaoAI').addToUi();
 }

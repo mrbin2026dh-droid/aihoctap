@@ -1,0 +1,10 @@
+[Unit]
+Description=Chạy Bộ não AI mỗi tối 21:00 (giờ máy chủ đặt Asia/Ho_Chi_Minh)
+
+[Timer]
+OnCalendar=*-*-* 21:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
