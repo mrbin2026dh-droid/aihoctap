@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Thầy đã chọn Phương án A và xác nhận làm Zalo Bot bản tối thiểu; Antigravity đã hoàn thành việc sao lưu an toàn (199KB) và xóa sạch toàn bộ dữ liệu giả lập/tài khoản ảo trên Firebase (thi_nop: null, nang_luc: null, doc_read giả: xóa sạch, students/auth/attempts: xóa sạch); reset SQLite trên VPS về 0 bảng mock (giữ nguyên 65 HS thật và 26 câu hỏi); cập nhật VPS 18/18 unittests PASS; hướng dẫn Thầy tạo Zalo Bot trên Zalo Developer; lập báo cáo tại `docs/handoff/antigravity-claude-da-xoa-du-lieu-gia-phuong-an-a.md`; chuyển Claude điều chỉnh báo cáo minh chứng và chuẩn bị kết nối Zalo Bot.
+- Yêu cầu mới nhất: Antigravity đã dựng hoàn tất "Bộ não thứ 2" theo kiến trúc Karpathy trong kho Obsidian thật của Thầy (`AI-KEN THUC/Mr.KhangKhoi`); cấu hình app.json chuẩn Wikilinks; nạp lần đầu 3 tài liệu công việc tạo 5 trang wiki chuẩn; kiểm tra kho đạt 0 liên kết gãy; truy vấn thử nghiệm 2 câu hỏi trả lời chính xác 100% có dẫn nguồn; hướng dẫn Thầy cài đặt Obsidian Web Clipper; lập báo cáo tại `docs/handoff/antigravity-claude-bo-nao-thu-2-xong.md`.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2055,6 +2055,13 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-da-xoa-du-lieu-gia-phuong-an-a.md.
 - Kiểm thực tế: Firebase REST API kiểm tra thi_nop = null, nang_luc = null, thi_hs = 65; SQLite VPS 0 answers/mastery/reports; VPS unittests 18/18 PASS; backup 199.563 bytes verified.
 - Việc tiếp: Chuyển Claude điều chỉnh Báo cáo minh chứng cuộc thi và thiết kế luồng kết nối Zalo Bot; Thầy tạo Zalo Bot trên Zalo Developer để lấy token (không gửi token qua chat).
+
+### 28/10/2026 21:18 — Antigravity — Dựng hoàn tất Bộ não thứ 2 trong Obsidian, Nạp 3 tài liệu & Kiểm tra kho 0 lỗi
+- Đã thực hiện: Định vị kho Obsidian thật của Thầy tại `C:\Users\HPZBook\Desktop\AI-KEN THUC\Mr.KhangKhoi` (bảo toàn 2 tệp gốc `create a link.md` và `Untitled.base`); chép toàn bộ bộ khởi động `second-brain-kit` (xóa sạch .gitkeep, tạo thư mục đính kèm); cấu hình `.obsidian/app.json` (ghi chú mới vào `00-Hop-thu-den`, đính kèm vào `tep`, format shortest, bật `[[Wikilinks]]`); nạp lần đầu 3 tài liệu công việc dự án (`Dự án Góc học tập - tổng quan.md`, `Việc cần làm trước 30-10.md`, `Quyết định đã chốt tháng 10.md`), tạo 5 trang wiki chuẩn có frontmatter, cập nhật `index.md` và `log.md`, chuyển tài liệu gốc vào `00-Hop-thu-den/da-nap/`; chạy kiểm tra liên kết gãy đạt 0 lỗi (100% HEALTHY); truy vấn thử 2 câu hỏi từ kho đạt độ chính xác 100% có dẫn nguồn; hướng dẫn Thầy cài đặt Obsidian Web Clipper; lập báo cáo tại docs/handoff/antigravity-claude-bo-nao-thu-2-xong.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-bo-nao-thu-2-xong.md.
+- Kiểm thực tế: Kho `Mr.KhangKhoi` có 5 trang wiki mới; `0 broken links` verified; app.json đã cấu hình; 3 tệp gốc đã di chuyển vào `da-nap`.
+- Việc tiếp: Thầy cài tiện ích Obsidian Web Clipper trên Chrome/Edge để kẹp bài vào `00-Hop-thu-den`; Claude xem báo cáo dựng kho và tiếp tục điều chỉnh Báo cáo minh chứng cuộc thi.
+
 
 
 
