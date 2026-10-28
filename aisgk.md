@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã kiểm tra trực tiếp trên VPS: bảng answers có 660 dòng, qbank có 12 dòng (không in dữ liệu học sinh); bàn giao 2 số liệu cho Claude tiếp tục phân tích.
+- Yêu cầu mới nhất: Antigravity đã deploy Worker 07a961b8, cập nhật VPS (16/16 unittests PASS), chạy Bộ não AI thật gửi hiểu lầm riêng cho 2 học sinh lên Gia sư AI và gửi báo cáo tuần vào Google Sheet NaoAI thành công 100%.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2025,3 +2025,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: `answers` = 660; `qbank` = 12; bảo toàn 100% dữ liệu riêng tư của học sinh (không trích xuất dữ liệu cá nhân).
 - Việc tiếp: Chuyển Claude hai số liệu (answers: 660, qbank: 12); Thầy phản hồi Claude về phương án chấm tự luận (cách 1).
+
+### 28/10/2026 (tối) — Antigravity — Deploy Worker 07a961b8, cập nhật VPS 16/16 PASS, gửi hiểu lầm cho Gia sư & gửi Sheet NaoAI
+- Đã thực hiện: Deploy Cloudflare Worker bản `07a961b8` (thêm endpoint `/api/brain/hieu-lam`, kiểm thử 16 ca test_brain_hieu_lam.mjs PASS); cập nhật mã nguồn trên VPS qua SSH; chạy 16 unittests trên VPS đạt 100% PASS; chạy Bộ não AI thật thu thập 65 học sinh, tính hiểu lầm riêng và gửi cho 2 em (9A10009, 9A9001) lên Worker Durable Object của Gia sư; gửi báo cáo tuần 2 lớp vào Google Sheet NaoAI; lập báo cáo tại docs/handoff/antigravity-claude-bo-nao-gia-su-xong.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-bo-nao-gia-su-xong.md.
+- Kiểm thực tế: Worker `/api/brain/hieu-lam` trả 403 (không khóa) / 200 (có khóa); test_brain_hieu_lam 16/16 PASS; VPS unittests 16/16 PASS; VPS run thật: `Đã gửi hiểu lầm riêng cho Gia sư: 2 em, xóa 0 em đã hết nhầm. Đã gửi Google Sheet: 2 lớp`.
+- Việc tiếp: Chuyển Claude đọc báo cáo hoàn tất; Thầy có thể đăng nhập bằng tài khoản 9A10009 hoặc 9A9001 để thử tính năng Gia sư gợi mở theo hiểu lầm riêng.
