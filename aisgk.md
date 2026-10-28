@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã kiểm thử giao diện menu giáo viên trên điện thoại gọn 5 mục (21/21 ca PASS, teacher_shell PASS); xác nhận GitHub Pages đã deploy live thành công (run id 40699509322, URL teacher.html trả HTTP 200); chờ Thầy lựa chọn Phương án A/B về dữ liệu giả lập và xác nhận có làm Zalo Bot bản tối thiểu hay không.
+- Yêu cầu mới nhất: Thầy đã chọn Phương án A và xác nhận làm Zalo Bot bản tối thiểu; Antigravity đã hoàn thành việc sao lưu an toàn (199KB) và xóa sạch toàn bộ dữ liệu giả lập/tài khoản ảo trên Firebase (thi_nop: null, nang_luc: null, doc_read giả: xóa sạch, students/auth/attempts: xóa sạch); reset SQLite trên VPS về 0 bảng mock (giữ nguyên 65 HS thật và 26 câu hỏi); cập nhật VPS 18/18 unittests PASS; hướng dẫn Thầy tạo Zalo Bot trên Zalo Developer; lập báo cáo tại `docs/handoff/antigravity-claude-da-xoa-du-lieu-gia-phuong-an-a.md`; chuyển Claude điều chỉnh báo cáo minh chứng và chuẩn bị kết nối Zalo Bot.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2049,5 +2049,12 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: `test_teacher_mobile_nav.cjs` 21/21 PASS; `test_teacher_shell.cjs` PASS; GitHub Pages run 40699509322 completed success; Live HTTP 200 xác nhận có `hdr-accounts`.
 - Việc tiếp: Chờ Thầy chọn Phương án A hoặc B cho dữ liệu giả lập; Thầy xác nhận có làm Zalo Bot bản tối thiểu không (nếu có, Thầy tự tạo bot trên Zalo để lấy token).
+
+### 28/10/2026 21:05 — Antigravity — Thực thi Phương án A: Xóa sạch dữ liệu giả lập & Hướng dẫn Thầy tạo Zalo Bot
+- Đã thực hiện: Thầy chính thức chọn Phương án A và xác nhận làm Zalo Bot bản tối thiểu; Antigravity tiến hành sao lưu toàn diện trước khi xóa vào `/opt/brain/backups/backup_mock_data_20261028.json` trên VPS (199KB) và tải bản sao về `scratch/backup_mock_data_20261028.json`; thực hiện DELETE xóa sạch toàn bộ các nhánh dữ liệu giả lập và tài khoản ảo trên Firebase Realtime Database (thi_nop/1793101939261: 66 bài; nang_luc: 65 bản đồ; doc_read giả: 130 bài; thi_vao; students/students_auth cũ; attempts/attempt_details/exam_sessions cũ) trả HTTP 200; bảo toàn 100% dữ liệu thật (thi_hs: 65 học sinh thật, thi_de: 3 đề, doc_read thật: 10 bài, teacher_auth: tài khoản GV); sao lưu và reset SQLite VPS `/var/lib/brain/brain.sqlite3` (answers: 0, mastery: 0, reports: 0, exams: 0, reads: 0; giữ nguyên 65 students và 26 qbank); cập nhật mã nguồn VPS đạt 18/18 unittests PASS; brain.timer giữ disabled; lập báo cáo tại docs/handoff/antigravity-claude-da-xoa-du-lieu-gia-phuong-an-a.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-da-xoa-du-lieu-gia-phuong-an-a.md.
+- Kiểm thực tế: Firebase REST API kiểm tra thi_nop = null, nang_luc = null, thi_hs = 65; SQLite VPS 0 answers/mastery/reports; VPS unittests 18/18 PASS; backup 199.563 bytes verified.
+- Việc tiếp: Chuyển Claude điều chỉnh Báo cáo minh chứng cuộc thi và thiết kế luồng kết nối Zalo Bot; Thầy tạo Zalo Bot trên Zalo Developer để lấy token (không gửi token qua chat).
+
 
 
