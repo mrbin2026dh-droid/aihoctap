@@ -66,6 +66,7 @@ function updateAuth() {
   node('teacher-logout').hidden = !signed;
   const openSettingsBtn = document.getElementById('open-settings');
   if (openSettingsBtn) openSettingsBtn.hidden = !signed || (Boolean(token) && mustChangePin);   // giáo viên lớp cũng có Cài đặt: Đổi mã PIN, Đăng xuất
+  const hdrAcc = document.getElementById('hdr-accounts'); if (hdrAcc) hdrAcc.hidden = !signed || (Boolean(token) && mustChangePin);
   const who = document.getElementById('gv-who'); if (who) { who.hidden = !(gv && !token); who.textContent = gv && !token ? `${gv.ten || gv.ma} · Lớp ${(gv.lop || []).join(', ')}` : ''; }
 }
 /** @param {string} name @returns {HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement} */

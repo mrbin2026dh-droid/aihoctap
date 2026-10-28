@@ -1,5 +1,6 @@
 // Giáo viên theo dõi bài làm, gia hạn, xem thống kê/xếp hạng và xuất Excel từ dữ liệu máy chủ.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert'),os=require('os');
+const {goNav}=require('./helpers/teacher-nav.cjs');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
 r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8187);
@@ -17,7 +18,7 @@ await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let b
  else if(u.endsWith('/results'))body=RES;else if(u.endsWith('/extend')){ext=JSON.parse(r.request().postData());body={uid:ext.uid,deadline:1}}
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
 await pg.goto('http://localhost:8187/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(800);
-await pg.click('#nav-exams');await pg.waitForSelector('#exams-tbody tr td');
+await goNav(pg,'#nav-exams');await pg.waitForSelector('#exams-tbody tr td');
 await pg.getByRole('button',{name:'Theo dõi'}).click();await pg.waitForSelector('#exam-mon-body tr td');
 let t=await pg.innerText('#detail-exams-monitor');assert(t.includes('Giữa kỳ Tin 9')&&t.includes('Đang làm')&&t.includes('12:34')&&t.includes('nộp muộn')&&!t.includes('[THỬ]'),t);
 assert(/Rời tab[\s\S]*4/.test(t));assert.strictEqual(await pg.locator('#exam-mon-body button[aria-label^="Gia hạn"]').count(),1,'chỉ bài đang làm có nút Gia hạn');

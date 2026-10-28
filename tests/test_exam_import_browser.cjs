@@ -1,5 +1,6 @@
 // Giáo viên tải mẫu Excel, tải file lên: đúng thì báo thành công, sai thì chỉ rõ dòng và lý do.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert'),os=require('os');
+const {goNav}=require('./helpers/teacher-nav.cjs');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
 r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8183);
@@ -9,7 +10,7 @@ await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let b
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
 await pg.goto('http://localhost:8183/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(800);
 assert(/chưa cập nhật tính năng báo cáo/.test(await pg.innerText('#teacher-analytics')),'máy chủ cũ: báo nhẹ trong thẻ');assert.strictEqual(await pg.locator('dialog[open]').count(),0,'không bật hộp thoại lỗi khi máy chủ chưa cập nhật');
-await pg.click('#nav-exams');await pg.click('#act-exams-new');await pg.waitForTimeout(300);
+await goNav(pg,'#nav-exams');await pg.click('#act-exams-new');await pg.waitForTimeout(300);
 // 1b. Lưu khi chưa có câu hỏi: báo rõ
 await pg.fill('#field-exam_title','Kiểm tra giữa kỳ');await pg.click('#save-exam');await pg.waitForFunction(()=>/Chưa có câu hỏi/.test(document.getElementById('exam-save-status').innerText));assert.strictEqual(saved,null,'chưa gửi lên máy chủ');
 // 1. Tải mẫu

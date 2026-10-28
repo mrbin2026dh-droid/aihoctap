@@ -1,5 +1,6 @@
 // Giáo viên: thêm học sinh với mã tự đặt, tải mẫu, nhập Excel (báo lỗi từng dòng), tải danh sách có PIN, xuất danh sách.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert'),os=require('os');
+const {goNav}=require('./helpers/teacher-nav.cjs');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
 r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8188);
@@ -12,7 +13,7 @@ await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;const
  else if(u.endsWith('/teacher/students'))body=students;
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
 await pg.goto('http://localhost:8188/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(800);
-await pg.click('#nav-accounts');await pg.evaluate(()=>{document.getElementById('students-section').hidden=false});/* danh sách Worker cũ đã ẩn (tài khoản nay ở Google Sheet); vẫn kiểm mã cũ còn chạy */await pg.waitForSelector('#students-tbody tr[data-sid]');
+await goNav(pg,'#nav-accounts');await pg.evaluate(()=>{document.getElementById('students-section').hidden=false});/* danh sách Worker cũ đã ẩn (tài khoản nay ở Google Sheet); vẫn kiểm mã cũ còn chạy */await pg.waitForSelector('#students-tbody tr[data-sid]');
 assert.equal(await pg.getAttribute('#field-student_search','placeholder'),'Nhập tên hoặc mã học sinh');assert.equal(await pg.innerText('#students-count'),'1 học sinh');
 // 1. Thêm tay với mã tự đặt
 await pg.click('#act-accounts-new');await pg.fill('#field-add-student-form-student_id','HS9A07');await pg.fill('#field-add-student-form-name','Lê Văn Bảy');await pg.fill('#field-add-student-form-class_code','9A1');

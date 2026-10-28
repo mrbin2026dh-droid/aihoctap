@@ -1,6 +1,7 @@
 // Menu "Thi" giáo viên (Google Sheet giả, đăng nhập giáo viên thật qua giao diện): 2 tab (Danh sách bài thi / Tạo đề thi), nhiều bài cùng lúc,
 // nút biểu tượng thống kê/chỉnh sửa/khóa-mở/xóa (có hộp thoại xác nhận), trang thống kê từng bài, cho thi lại.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
+const {goNav}=require('./helpers/teacher-nav.cjs');
 const root=path.resolve(__dirname,'../frontend/hoc');const API='https://script.google.com/macros/s/TEST/exec';const PIN='Mat-khau-thu-1';
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
  let body=fs.readFileSync(f);if(p==='/presence-config.js')body=Buffer.from("export const PRESENCE_CONFIG = {apiKey:'K', dbUrl:'https://test-gv-default-rtdb.asia-southeast1.firebasedatabase.app'};");if(p==='/sheet-config.js')body=Buffer.from(body.toString().replace(/export const SHEET_API = '[^']*';/,`export const SHEET_API = '${API}';`));
@@ -179,10 +180,10 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   await pg.waitForFunction(()=>document.getElementById('teacher-login-error').textContent.includes('chưa đúng'));ok(true,'sai PIN → báo ngay');
   await pg.fill('#teacher-login [name=pin]','246810');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');await pg.waitForTimeout(500);
   ok(!worker.some(u=>u.endsWith('/teacher/auth')),'đăng nhập giáo viên lớp không qua Worker');
-  ok(await pg.evaluate(()=>document.body.classList.contains('is-class-teacher'))&&await pg.isHidden('#nav-overview')&&await pg.isHidden('#nav-lessons')&&await pg.isVisible('#nav-sheetexam')&&await pg.isVisible('#nav-accounts'),'giáo viên lớp: chỉ menu Thi và Tài khoản');
+  ok(await pg.evaluate(()=>document.body.classList.contains('is-class-teacher'))&&await pg.isHidden('#nav-overview')&&await pg.isHidden('#nav-lessons')&&await pg.isVisible('#nav-sheetexam')&&(await pg.isVisible('#nav-accounts')||await pg.isVisible('#hdr-accounts')),'giáo viên lớp: chỉ menu Thi và Tài khoản (điện thoại: Tài khoản ở biểu tượng cạnh bánh răng)');
   ok((await pg.textContent('#workspace-title'))==='Thi'&&calls.some(c=>c.action==='gv_list'&&c.gv_ma==='GV01'&&c.gv==='246810'),'vào thẳng Thi, gửi Mã giáo viên để Sheet lọc theo lớp');
   await pg.click('#tab-thi-new');ok((await pg['$$eval']('#thi-new-lop option',o=>o.map(x=>x.textContent))).join('|')==='Chỉ lớp 9A','tạo đề: chỉ chọn được lớp mình (không có Cả khối)');
-  await pg.click('#nav-accounts');await pg.waitForSelector('#acc-hs-body tr');ok(await pg.isHidden('#tab-acc-gv')&&(await pg.textContent('#acc-hs-count')).includes('lớp thầy cô phụ trách'),'Tài khoản: chỉ học sinh lớp mình, không có tab Giáo viên');
+  await goNav(pg,'#nav-accounts');await pg.waitForSelector('#acc-hs-body tr');ok(await pg.isHidden('#tab-acc-gv')&&(await pg.textContent('#acc-hs-count')).includes('lớp thầy cô phụ trách'),'Tài khoản: chỉ học sinh lớp mình, không có tab Giáo viên');
   ok(await pg.evaluate(()=>{const r=document.querySelector('.t-nav').getBoundingClientRect();return r.height>40&&Math.abs(r.bottom-innerHeight)<=2&&getComputedStyle(document.documentElement).getPropertyValue('--app-h').trim()===innerHeight+'px'}),'điện thoại: thanh menu dưới luôn hiện (đo chiều cao thật, không phụ thuộc 100dvh)');
   ok(await pg.isVisible('#open-settings'),'giáo viên lớp có nút Cài đặt');await pg.click('#open-settings');await pg.waitForTimeout(150);
   ok(await pg.isVisible('#act-gv-pin')&&await pg.isVisible('#teacher-logout')&&await pg.isHidden('#act-profile-ai')&&await pg.isHidden('#act-profile-keys')&&(await pg.textContent('#gv-who')).includes('Cô Hoa'),'Cài đặt giáo viên lớp: tên, Đổi mã PIN, Đăng xuất (không có mục quản trị)');

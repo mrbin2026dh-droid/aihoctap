@@ -33,6 +33,35 @@ function renderNav() {
   }
   const h1 = byId('workspace-title');
   if (h1) h1.textContent = TITLES[/** @type {keyof typeof TITLES} */ (view)] || '';
+  renderMobileGroups();
+}
+
+/* Điện thoại: thanh dưới chỉ giữ 5 mục; mục cùng tính năng gộp thành thanh con, Tài khoản lên biểu tượng cạnh bánh răng.
+   Lối vào mới luôn bấm hộ NÚT GỐC (#nav-…) để giữ nguyên việc nạp dữ liệu của từng mục. Máy tính không đổi. */
+const MOBILE_GROUPS = /** @type {Record<string, [string, string][]>} */ ({
+  lessons: [['lessons', 'Soạn bài'], ['materials', 'Tài liệu']],
+  sheetexam: [['sheetexam', 'Thi'], ['exams', 'Về nhà']]
+});
+const GROUP_OF = /** @type {Record<string, string>} */ ({ lessons: 'lessons', materials: 'lessons', sheetexam: 'sheetexam', exams: 'sheetexam' });
+function renderMobileGroups() {
+  const classTeacher = document.body.classList.contains('is-class-teacher');   // giáo viên lớp: không có Soạn bài, Về nhà → không gộp
+  const leader = screen === 'work' && !classTeacher ? GROUP_OF[view] : '';
+  for (const item of document.querySelectorAll('.t-nav-item')) {
+    const b = /** @type {HTMLElement} */ (item);
+    b.classList.toggle('is-group-current', Boolean(leader) && b.dataset.view === leader && b.dataset.view !== view);
+  }
+  const acc = byId('hdr-accounts');
+  if (acc) { if (screen === 'work' && view === 'accounts') acc.setAttribute('aria-current', 'page'); else acc.removeAttribute('aria-current'); }
+  const bar = byId('t-subtabs');
+  if (!bar) return;
+  const group = leader ? MOBILE_GROUPS[leader] : null;
+  bar.hidden = !group;
+  if (!group) { bar.replaceChildren(); return; }
+  bar.replaceChildren(...group.map(([v, label]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 't-subtab'; b.textContent = label; b.dataset.goto = 'nav-' + v;
+    if (v === view) b.setAttribute('aria-current', 'page');
+    return b;
+  }));
 }
 
 function renderSub() {
@@ -141,6 +170,8 @@ export function init(options = {}) {
     const btn = /** @type {HTMLElement|null} */ (target?.closest('button,[data-view]'));
     if (!btn) return;
     if (btn.classList.contains('t-nav-item') && btn.dataset.view) { void showView(btn.dataset.view); return; }
+    if (btn.dataset.goto && (btn.classList.contains('t-subtab'))) { if (btn.getAttribute('aria-current') !== 'page') byId(btn.dataset.goto)?.click(); return; }
+    if (btn.id === 'hdr-accounts') { byId('nav-accounts')?.click(); return; }
     const action = btn.dataset.action || '';
     if (action.startsWith('back-') && btn.dataset.target) { void goBack(); return; }
     if (action === 'new-exams' || action === 'edit-exam') { void showSub('detail-exams'); return; }

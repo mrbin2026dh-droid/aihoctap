@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="./teacher.css">
 </head>
 <body class="teacher-app"><a class="t-skip" href="#main">Đến nội dung</a>
-<header class="t-topbar"><a class="t-wordmark" href="./" aria-label="SGK — Góc giáo viên">sgk<span>GÓC GIÁO VIÊN</span></a><button type="button" id="open-settings" class="t-icon-btn" data-icon="gear" popovertarget="nav-profile" aria-controls="nav-profile" aria-label="Hồ sơ" title="Hồ sơ và cài đặt" hidden></button>
+<header class="t-topbar"><a class="t-wordmark" href="./" aria-label="SGK — Góc giáo viên">sgk<span>GÓC GIÁO VIÊN</span></a><button type="button" id="hdr-accounts" class="t-icon-btn t-mobile-only" aria-label="Tài khoản học sinh" title="Tài khoản học sinh" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20 M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35 M15.5 4.15a3.5 3.5 0 0 1 0 6.7"/></svg></button><button type="button" id="open-settings" class="t-icon-btn" data-icon="gear" popovertarget="nav-profile" aria-controls="nav-profile" aria-label="Hồ sơ" title="Hồ sơ và cài đặt" hidden></button>
 <nav id="nav-profile" class="t-profile-menu" popover="auto" aria-label="Hồ sơ giáo viên"><p class="t-profile-who" id="gv-who" hidden></p><button type="button" id="act-profile-pin" class="t-button" data-action="profile-pin" >Đổi mã PIN</button><button type="button" id="act-gv-pin" class="t-button">Đổi mã PIN</button><button type="button" id="act-support" class="t-button">Hỗ trợ học sinh qua Zalo</button><button type="button" id="act-profile-ai" class="t-button" data-action="profile-ai" >Gia sư AI và hạn mức</button><button type="button" id="act-profile-keys" class="t-button" data-action="profile-keys" >Khóa API</button><a class="t-button" href="./">Về Góc học tập</a><button type="button" class="t-button t-danger" id="teacher-logout" hidden>Đăng xuất</button>
 </nav>
 </header>
@@ -56,7 +56,7 @@
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4z M13 4h7v4h-7z M13 11h7v9h-7z M4 14h7v6H4z"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Tổng quan</span><span class="t-nav-mobile">Tổng quan</span></span></button><button type="button" id="nav-lessons" class="t-nav-item" data-view="lessons" aria-controls="view-lessons">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v16H4z M13 4h7v16h-7z"/>
-</svg><span class="t-nav-label"><span class="t-nav-desktop">Soạn bài</span><span class="t-nav-mobile">Soạn bài</span></span></button><button type="button" id="nav-exams" class="t-nav-item" data-view="exams" aria-controls="view-exams">
+</svg><span class="t-nav-label"><span class="t-nav-desktop">Soạn bài</span><span class="t-nav-mobile">Bài học</span></span></button><button type="button" id="nav-exams" class="t-nav-item" data-view="exams" aria-controls="view-exams">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6z M9 8h6 M9 12h6 M9 16h4"/>
 </svg><span class="t-nav-label"><span class="t-nav-desktop">Về nhà</span><span class="t-nav-mobile">Về nhà</span></span></button><button type="button" id="nav-sheetexam" class="t-nav-item" data-view="sheetexam" aria-controls="view-sheetexam">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z M8 9l2 2l3-4 M8 16h8"/>
@@ -73,6 +73,7 @@
 <section id="workspace" class="t-workspace" aria-labelledby="workspace-title">
 <header class="t-workspace-head">
 <h1 id="workspace-title" tabindex="-1">Tổng quan</h1>
+<nav id="t-subtabs" class="t-subtabs" aria-label="Chuyển mục con" hidden></nav>
 </header>
 <section id="view-overview">
 <section id="list-overview" class="t-list">

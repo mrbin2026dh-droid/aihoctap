@@ -1,5 +1,6 @@
 // Giáo viên mở đề đã lưu, thấy từng câu hỏi dạng thẻ, sửa trực tiếp, thêm/xóa câu rồi lưu; các nút thao tác là icon đủ lớn trên mọi màn hình.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
+const {goNav}=require('./helpers/teacher-nav.cjs');
 const root=path.resolve(__dirname,'../frontend/hoc');
 const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
 r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(f)]||'x');r.end(fs.readFileSync(f))}).listen(8191);
@@ -11,7 +12,7 @@ await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let b
  else if(u.endsWith('/pwa/teacher/exams/exam_t1'))body=EXAM;
  r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
 await pg.goto('http://localhost:8191/teacher.html');await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForTimeout(800);
-await pg.click('#nav-exams');await pg.waitForSelector('#exams-tbody tr td');
+await goNav(pg,'#nav-exams');await pg.waitForSelector('#exams-tbody tr td');
 assert(!(await pg.isVisible('#exams-preview-note')),'đã bỏ ghi chú dữ liệu minh họa');
 for(const vw of [[360,740],[390,844],[768,900],[1280,800]]){await pg.setViewportSize({width:vw[0],height:vw[1]});
  const btns=pg.locator('#exams-tbody .t-icon-btn');assert.strictEqual(await btns.count(),3,'Sửa, Thống kê, Đóng đề (đề Thử không có Theo dõi)');

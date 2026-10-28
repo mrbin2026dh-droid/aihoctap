@@ -488,3 +488,17 @@ body.qz-hosting{overflow:hidden}
 /* Đăng nhập giáo viên: thẻ nằm chính giữa màn hình */
 .teacher-app .t-main:has(>#auth-section:not([hidden])){display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;overflow:auto}
 .teacher-app .t-main>#auth-section:not([hidden]){margin:0!important;width:min(440px,100%)!important;flex:none}
+
+/* Điện thoại: gom menu — thanh dưới 5 mục, mục cùng tính năng thành thanh con, Tài khoản lên biểu tượng cạnh bánh răng */
+.teacher-app .t-subtabs,.teacher-app .t-mobile-only{display:none}
+@media(max-width:760px){
+ .teacher-app #hdr-accounts:not([hidden]){display:inline-flex;margin-left:auto}
+ .teacher-app #hdr-accounts[aria-current=page]{background:var(--brand);border-color:var(--brand);color:var(--white)}
+ .teacher-app #nav-accounts,.teacher-app #nav-exams{display:none!important}
+ body:not(.is-class-teacher).teacher-app #nav-materials{display:none!important}
+ .teacher-app .t-nav-item.is-group-current{background:var(--brand);border-color:var(--brand);color:var(--white)}
+ .teacher-app .t-subtabs:not([hidden]){display:flex;gap:4px;margin:0 0 16px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+ .teacher-app .t-subtab{flex:1;min-height:44px;padding:8px 12px;border:0;border-radius:9px;background:transparent;color:var(--ink);font-weight:700;font-size:var(--t-text, 16px)}
+ .teacher-app .t-subtab[aria-current=page]{background:var(--brand);color:var(--white)}
+ .teacher-app .t-subtab:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+}
