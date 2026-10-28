@@ -1468,3 +1468,11 @@ body.qz-playing .zalo-fab,body.qz-playing .qz-banner{display:none}
 @media(prefers-reduced-motion:reduce){.qz-banner,.qz-banner-dot,.qz-play .qz-p-pulse{animation:none}}
 .qz-play .qz-A{background:#e5484d}.qz-play .qz-B{background:#2f6fe4}.qz-play .qz-C{background:#b07f00}.qz-play .qz-D{background:#2b9a66}
 body:has(#qz-banner:not([hidden])) .zalo-fab{display:none}
+/* Điện thoại: khung chat Gia sư toàn màn hình như ứng dụng nhắn tin, bám theo vùng nhìn thấy khi bàn phím bật
+   (--vv-top/--vv-h do app.js đo bằng visualViewport) → tiêu đề không bị đẩy khuất, ô nhập luôn ngay trên bàn phím */
+@media(max-width:760px){
+  body.student-app dialog.tutor-dialog{inset:var(--vv-top,0px) 0 auto 0;width:100%;height:var(--vv-h,100dvh);max-height:none;border-radius:0;border:0;z-index:70;animation:none}
+  body.student-app.tutor-open{overflow:hidden}
+  body.student-app dialog.tutor-dialog .tutor-header{padding-top:max(10px,env(safe-area-inset-top))}
+  body.student-app dialog.tutor-dialog .tutor-form,body.student-app dialog.tutor-dialog form{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+}

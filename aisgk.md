@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành deploy Worker bản 294ac865 kèm BRAIN_KEY; chạy Emulator phát hiện 2 ca SAI ở luật quiz_proof; chặn đăng luật và chuyển Claude xử lý theo quy tắc bảo mật.
+- Yêu cầu mới nhất: Antigravity kiểm thử bộ luật Firebase mới với 4 ca chẩn đoán quiz_proof; kiểm tra PASS 100% trước khi hướng dẫn đăng lên Firebase Console.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1934,3 +1934,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: brain/__main__.py, brain/tests/test_brain.py, frontend/hoc/quiz-play.js, frontend/hoc/support.js, frontend/hoc/sw.js, tests/test_*, aisgk.md, docs/handoff/antigravity-claude-luat-quiz-proof-fail.md.
 - Kiểm thực tế: Worker /api/brain/export live trả 200 (có khóa) / 403 (không khóa); test_sheet_exam_gs 101/101 PASS; brain unittests 7/7 PASS; emulator 2 ca SAI được ghi nhận chính xác.
 - Việc tiếp: Chuyển Claude sửa lại cấu trúc luật quiz_proof; sau đó Antigravity cùng Thầy cập nhật luật và cài VPS.
+
+## 28/10 (chiều) — Sửa 401 quiz_lop, luật quiz_proof, chat điện thoại
+- Nguyên nhân 401: luật trên mạng còn bản cũ (Antigravity chặn đăng do ca quiz_proof hỏng). Luật mới: bằng chứng MỚI mỗi lần ghi "khóa|đếm" (beginsWith khóa+'|', khác bằng chứng đang lưu); mã phòng dùng length+matches thay {6}.
+- quiz-play.js: probe() đọc thử quiz_lop trước khi nghe, lỗi thì im lặng thử lại sau 10 phút.
+- Gia sư AI trên điện thoại (≤760px): toàn màn hình, co theo visualViewport khi mở bàn phím (fitTutor trong app.js).
+- Test: test_quiz_live 30, test_lesson_ai_docs_ui 51 (có giả lập bàn phím). Emulator: 4 ca chẩn đoán quiz.
+- VPS Cloud Basic 2vCPU/2GB/30GB đủ; chọn Ubuntu 24.04.
+- Bàn giao: docs/handoff/claude-antigravity-sua-luat-quiz.md

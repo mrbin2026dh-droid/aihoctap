@@ -123,23 +123,23 @@
     "quiz_key": {
       ".read": false,
       "$room": {
-        ".write": "!data.exists() && $room.matches(/^[0-9]{6}$/) && newData.isString() && newData.val().length >= 20 && newData.val().length <= 64"
+        ".write": "!data.exists() && $room.length === 6 && $room.matches(/^[0-9]+$/) && newData.isString() && newData.val().length >= 20 && newData.val().length <= 64"
       }
     },
     "quiz_proof": {
       ".read": false,
       "$room": {
-        ".write": "newData.isString() && newData.val() === root.child('quiz_key').child($room).val()"
+        ".write": "newData.isString() && newData.val().length <= 140 && newData.val() !== data.val() && newData.val().beginsWith(root.child('quiz_key').child($room).val() + '|')"
       }
     },
     "quiz": {
       ".read": true,
       "$room": {
         "pub": {
-          ".write": "newData.parent().parent().parent().child('quiz_proof').child($room).val() === root.child('quiz_key').child($room).val() && root.child('quiz_key').child($room).exists()"
+          ".write": "root.child('quiz_key').child($room).exists() && newData.parent().parent().parent().child('quiz_proof').child($room).val() !== root.child('quiz_proof').child($room).val() && newData.parent().parent().parent().child('quiz_proof').child($room).val().beginsWith(root.child('quiz_key').child($room).val() + '|')"
         },
         "kq": {
-          ".write": "newData.parent().parent().parent().child('quiz_proof').child($room).val() === root.child('quiz_key').child($room).val() && root.child('quiz_key').child($room).exists()"
+          ".write": "root.child('quiz_key').child($room).exists() && newData.parent().parent().parent().child('quiz_proof').child($room).val() !== root.child('quiz_proof').child($room).val() && newData.parent().parent().parent().child('quiz_proof').child($room).val().beginsWith(root.child('quiz_key').child($room).val() + '|')"
         },
         "ds": {
           "$ma": {
@@ -163,7 +163,7 @@
     "quiz_lop": {
       ".read": true,
       "$lop": {
-        ".write": "$lop.length <= 40 && (newData.exists() ? newData.isString() && newData.parent().parent().child('quiz_proof').child(newData.val()).val() === root.child('quiz_key').child(newData.val()).val() && root.child('quiz_key').child(newData.val()).exists() : newData.parent().parent().child('quiz_proof').child(data.val()).val() === root.child('quiz_key').child(data.val()).val())"
+        ".write": "$lop.length <= 40 && (newData.exists() ? newData.isString() : true) && root.child('quiz_key').child((newData.exists() ? newData.val() : data.val())).exists() && newData.parent().parent().child('quiz_proof').child((newData.exists() ? newData.val() : data.val())).val() !== root.child('quiz_proof').child((newData.exists() ? newData.val() : data.val())).val() && newData.parent().parent().child('quiz_proof').child((newData.exists() ? newData.val() : data.val())).val().beginsWith(root.child('quiz_key').child((newData.exists() ? newData.val() : data.val())).val() + '|')"
       }
     },
     "nang_luc": {

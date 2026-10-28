@@ -135,14 +135,22 @@ function openTutor(questionId = null) {
   refreshTutorQuota().catch(() => {});
   const tb = document.querySelector('.topbar'); document.body.style.setProperty('--tb-h', `${tb && getComputedStyle(tb).position === 'sticky' ? Math.round(tb.getBoundingClientRect().height) : 0}px`);
   if (!dialog.open) dialog.show();   // máy tính rộng: cột chat bên phải, nội dung dịch sang trái; màn nhỏ: khung nổi / tấm trượt
-  document.body.classList.add('tutor-open'); queueMicrotask(readProgress.refresh);
+  document.body.classList.add('tutor-open'); fitTutor(); queueMicrotask(readProgress.refresh);
   if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
+/** Điện thoại: khung chat bám vùng nhìn thấy (bàn phím bật thì thu lại, không đẩy tiêu đề ra khỏi màn hình). */
+function fitTutor() {
+  const vv = window.visualViewport, d = document.documentElement.style;
+  if (!vv || window.innerWidth > 760 || !document.body.classList.contains('tutor-open')) { d.removeProperty('--vv-h'); d.removeProperty('--vv-top'); return; }
+  d.setProperty('--vv-h', `${Math.round(vv.height)}px`); d.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`);
+  const box = document.getElementById('tutor-messages'); if (box && document.activeElement?.id === 'tutor-input') box.scrollTop = box.scrollHeight;
+}
+window.visualViewport?.addEventListener('resize', fitTutor); window.visualViewport?.addEventListener('scroll', fitTutor); window.addEventListener('resize', fitTutor);
 window.addEventListener('thi:exam', () => { if (/** @type {HTMLDialogElement} */ (node('tutor-dialog')).open) closeTutor(); });
 function closeTutor() {
   /** @type {HTMLDialogElement} */ (node('tutor-dialog')).close();
-  document.body.classList.remove('tutor-open'); queueMicrotask(readProgress.refresh);
+  document.body.classList.remove('tutor-open'); fitTutor(); queueMicrotask(readProgress.refresh);
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && /** @type {HTMLDialogElement} */ (node('tutor-dialog')).open && !document.querySelector('dialog[open]:modal')) closeTutor(); });
 /** Gia sư AI nhận xét bài thi thử vừa nộp (Worker, tốn 1 lượt). Lỗi/không có token → '' để tab Thi hiện lời nhắn thay. */

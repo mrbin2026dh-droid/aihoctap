@@ -16,7 +16,8 @@ Mỗi tối lúc 21:00, máy chủ riêng của thầy cô làm 4 việc:
 - Học sinh không phụ thuộc VPS: VPS tắt thì học, thi, Gia sư AI vẫn chạy bình thường.
 
 ## 0. Chọn VPS
-- Hệ điều hành **Ubuntu 24.04 LTS**, 1 vCPU, 1 GB RAM, ổ 20 GB là đủ. Nên chọn máy đặt ở Việt Nam hoặc Singapore.
+- Hệ điều hành **Ubuntu 24.04 LTS** (không chọn Windows), 1 vCPU, 1 GB RAM, ổ 20 GB là đủ. Gói 2 vCPU / 2 GB / 30 GB càng thoải mái. Nên chọn máy đặt ở Việt Nam hoặc Singapore.
+- Cần: quyền `root` qua SSH, địa chỉ IPv4 công khai, cho phép kết nối HTTPS ra ngoài.
 - Giá VPS nhỏ thường khoảng một trăm đến vài trăm nghìn đồng/tháng tùy nhà cung cấp. Thầy cô xem giá hiện tại trước khi đăng ký.
 - Sau khi mua, nhà cung cấp gửi địa chỉ IP và mật khẩu `root`.
 

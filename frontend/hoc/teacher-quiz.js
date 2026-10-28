@@ -183,7 +183,9 @@ $('qz-exam-go').addEventListener('click', async () => {
 const host = $('qz-host'), main = $('qz-h-main'), foot = $('qz-h-foot');
 const rnd = (/** @type {number} */ n) => { const a = new Uint8Array(n); crypto.getRandomValues(a); return a; };
 /** Ghi trạng thái phòng kèm bằng chứng khóa (luật Firebase chỉ cho chủ phòng). @param {Record<string, unknown>} paths */
-const write = paths => { if (!room) return Promise.resolve(); return store.patch('', { ...paths, [`quiz_proof/${room.room}`]: room.key }); };
+// Bằng chứng MỚI cho mỗi lần ghi (khóa|số đếm): luật yêu cầu bằng chứng đổi trong chính lần ghi đó, nên ai chỉ ghi trạng thái mà không biết khóa sẽ bị chặn.
+let proofN = 0;
+const write = paths => { if (!room) return Promise.resolve(); return store.patch('', { ...paths, [`quiz_proof/${room.room}`]: `${room.key}|${Date.now().toString(36)}${(++proofN).toString(36)}` }); };
 function el(/** @type {string} */ tag, /** @type {string} */ cls = '', /** @type {string} */ text = '') { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; }
 function btn(/** @type {string} */ text, /** @type {string} */ cls, /** @type {() => void} */ fn) { const b = /** @type {HTMLButtonElement} */ (el('button', 't-button ' + cls, text)); b.type = 'button'; b.addEventListener('click', fn); return b; }
 const ranked = () => room ? Object.entries(room.score).map(([k, v]) => ({ k, ...v })).sort((a, b) => b.p - a.p || b.c - a.c || a.ten.localeCompare(b.ten, 'vi')) : [];
