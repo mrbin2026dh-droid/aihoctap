@@ -1490,6 +1490,13 @@ export function buildQuizAnalysisPrompt(q) {
   ].join('\n');
 }
 /** Gọi Gemini một lượt (dùng kho khóa nếu có). Trả chữ; lỗi → ném Error có .status. Kiểm thử: env.MOCK_GEMINI(prompt). */
+/** Báo đúng lý do khi Gemini từ chối vì hạn mức (429): hết lượt trong ngày (gói miễn phí) hay quá nhiều yêu cầu trong 1 phút. @param {string} why */
+export function geminiBusyMessage(why) {
+  const w = String(why || '');
+  if (/per ?day|PerDay|daily|requests_per_day/i.test(w)) return 'Khóa Gemini đã hết lượt dùng trong ngày (gói miễn phí). Thầy cô thêm khóa Gemini khác ở Hồ sơ → Khóa Gemini, hoặc thử lại vào ngày mai.';
+  if (/per ?minute|PerMinute|rate/i.test(w)) return 'AI đang nhận quá nhiều yêu cầu trong 1 phút. Thầy cô đợi khoảng 1 phút rồi bấm lại.';
+  return 'AI đang bận (hết hạn mức tạm thời). Thử lại sau 1 phút; nếu vẫn bận, thêm khóa Gemini khác ở Hồ sơ → Khóa Gemini.';
+}
 export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096, temperature = 0.4, json = true, attempts = 3 } = {}) {
   if (typeof env.MOCK_GEMINI === 'function' && SecurityConfigContract.isMockModeAllowed(env)) return String(await env.MOCK_GEMINI(prompt));
   const report = (id, body) => gateStub.fetch('http://do/report-gemini-key-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key_id: id, ...body }) }).catch(() => {});
@@ -1505,13 +1512,13 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
     }
     return null;
   };
-  let pool = await acquire(), useJson = json, last = 0;
+  let pool = await acquire(), useJson = json, last = 0, useFallback = false, why429 = '';
   const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite', fallback = String(env.GEMINI_FALLBACK_MODEL || '').trim();
   // Gemini hay trả 503 (quá tải) / 500 nhất thời: thử lại có giãn cách; 429 hoặc khóa hỏng → đổi khóa khác trong kho; 400 do chế độ JSON → bỏ chế độ JSON.
   for (let i = 0; i < attempts; i++) {
     const key = pool ? pool.key : env.GEMINI_API_KEY;
     if (!key) throw Object.assign(new Error('Chưa cài khóa Gemini.'), { status: 503 });
-    const m = i > 0 && fallback ? fallback : model;
+    const m = (i > 0 || useFallback) && fallback ? fallback : model;
     /** @type {Response|null} */ let res = null;
     try {
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
@@ -1532,7 +1539,9 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
       if (pool) await report(pool.id, last === 429 ? { status: 'rate_limited', retry_after_sec: 60 } : { status: 'error' });
       const next = pool ? await acquire() : null;
       if (next && next.id !== pool?.id) { pool = next; continue; }
-      if (last === 429) throw Object.assign(new Error('AI đang bận, thử lại sau 1 phút.'), { status: 429 });
+      // Hết khóa để đổi: mô hình dự phòng có hạn mức riêng → thử một lần trước khi báo bận.
+      if (last === 429 && fallback && fallback !== m && !useFallback) { useFallback = true; why429 = why; i--; continue; }
+      if (last === 429) throw Object.assign(new Error(geminiBusyMessage(why429 || why)), { status: 429 });
       break;
     }
     if (last === 400 && useJson) { useJson = false; continue; }

@@ -35,16 +35,16 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
   let o=db;parts.slice(0,-1).forEach(k=>{o=o[k]??={}});if(m==='PATCH')o[parts.at(-1)]={...(o[parts.at(-1)]||{}),...v};else o[parts.at(-1)]=v;
   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(v)})});
  await pg.goto('http://thi.test:8198/');await pg.waitForSelector('#gate:not([hidden])');
- await pg.waitForSelector('#zalo-help:not([hidden])',{timeout:5000});
- ok((await pg.getAttribute('#zalo-help','href'))==='https://zalo.me/0912345678'&&(await pg.getAttribute('#zalo-help','target'))==='_blank'&&(await pg.getAttribute('#zalo-help','aria-label')).includes('Thầy Hải'),'màn đăng nhập: nút nổi Hỏi thầy cô mở Zalo chung');
- ok(await pg.evaluate(()=>{const r=document.getElementById('zalo-help').getBoundingClientRect();return r.right<=innerWidth&&r.bottom<=innerHeight&&r.height>=48&&r.width>=48&&getComputedStyle(document.querySelector('#zalo-help .zalo-ring')).animationName==='zalo-pulse'}),'nút Zalo ở góc phải dưới, đủ lớn để chạm, có vòng sáng thu hút');
+// (bỏ: nút Zalo "Hỏi thầy cô" đã thay bằng trợ giúp nhanh FAQ theo yêu cầu thầy) 
+// (bỏ: nút Zalo "Hỏi thầy cô" đã thay bằng trợ giúp nhanh FAQ theo yêu cầu thầy) 
+// (bỏ: nút Zalo "Hỏi thầy cô" đã thay bằng trợ giúp nhanh FAQ theo yêu cầu thầy) 
  await pg.click('#gate-student');await pg.fill('#student-code','HS01');await pg.fill('#student-pin','000000');await pg.click('#login-form button[type=submit]');
  await pg.waitForFunction(()=>document.getElementById('login-error').textContent.includes('PIN'));ok(!workerCalls.some(p=>p.endsWith('/login')),'sai PIN → báo ngay từ Firebase, không gọi Worker');
  const t0=Date.now();await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForSelector('#main:not([hidden])');
  const dt=Date.now()-t0;ok(dt<2500,`đăng nhập tức thì bằng Firebase (${dt} ms), không chờ Worker 4 giây`);
  ok((await pg.textContent('body')).includes('Nguyễn Văn An'),'hiện tên học sinh từ Firebase');
- await pg.waitForFunction(()=>document.getElementById('zalo-help').href.endsWith('0987654321'));ok((await pg.textContent('#zalo-help')).includes('Cô Lan'),'đăng nhập lớp 9A → nút Zalo chuyển sang cô giáo lớp mình');
- ok(await pg.evaluate(()=>{const z=document.getElementById('zalo-help').getBoundingClientRect(),n=document.querySelector('.bottom-nav').getBoundingClientRect();return innerWidth>760||z.bottom<=n.top}),'điện thoại: nút Zalo nằm trên thanh menu dưới, không che');
+// (bỏ: nút Zalo "Hỏi thầy cô" đã thay bằng trợ giúp nhanh FAQ theo yêu cầu thầy) 
+// (bỏ: nút Zalo "Hỏi thầy cô" đã thay bằng trợ giúp nhanh FAQ theo yêu cầu thầy) 
  await pg.waitForTimeout(300);ok(workerCalls.some(p=>p.endsWith('/login')),'Worker chạy ngầm sau (cho Gia sư AI), không chặn học sinh');
  const pres=writes.filter(w=>w.path.includes('/presence/'));ok(pres.length&&pres[0].path.endsWith('/presence/HS01.json')&&!pres[0].auth&&pres[0].v.state==='hoc','trạng thái "Đang học" ghi thẳng Firebase, không cần vé');
  await pg.waitForSelector('.bottom-nav [data-tab="exams"] .nav-badge',{timeout:8000});ok((await pg.textContent('.bottom-nav [data-tab="exams"] .nav-badge'))==='1'&&await pg.evaluate(()=>document.querySelector('.bottom-nav [data-tab="exams"]').classList.contains('has-open')),'chưa mở tab Thi: mục Thi đã sáng, huy hiệu 1 bài đang mở');
@@ -60,7 +60,7 @@ try{for(const vp of [{width:390,height:800},{width:1280,height:800}]){
  await pg.waitForTimeout(200);ok(await pg.locator('.thi-form .question').count()===2&&writes.some(w=>w.path.endsWith('/thi_vao/b1/hs01.json')),'vào bài: điểm danh thi_vao, hiện đề');
  ok(await pg.isVisible('.thi-practical')&&(await pg.textContent('.thi-practical')).includes('Bài thực hành'),'thi thật Trắc nghiệm + Thực hành: có phần nộp bài thực hành');
  ok((await pg.textContent('.thi-th-task')).includes('Tính tổng cột D')&&(await pg.getAttribute('#thi-th-file','accept'))==='.xlsx','học sinh thấy đề thực hành; chỉ chọn được file Excel');
- ok(await pg.isHidden('#zalo-help'),'đang làm bài thi: ẩn nút Zalo (không che nút Nộp bài)');
+// (bỏ: nút Zalo "Hỏi thầy cô" đã thay bằng trợ giúp nhanh FAQ theo yêu cầu thầy) 
  ok((await pg.textContent('.thi-leave')).includes('thứ tự câu và phương án'),'thi thật: báo thứ tự câu/phương án mỗi bạn khác nhau');
  ok(await pg.evaluate(()=>[...document.querySelectorAll('.thi-form .question')].every(fs=>[...fs.querySelectorAll('.option')].map(o=>o.textContent.trim()[0]).join('')==='AB')),'thi thật: nhãn A, B theo vị trí hiển thị (giá trị chấm vẫn là phương án gốc)');
  await pg.evaluate(()=>{Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'hidden',{value:false,configurable:true});});

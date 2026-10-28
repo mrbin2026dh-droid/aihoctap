@@ -32,6 +32,10 @@ def collect(cfg: Config, db) -> dict:
             data["thi_de"][eid] = sources.fb_get(cfg.fb_url, cfg.fb_secret, f"thi_de/{eid}") or []
     day = today(cfg)
     stats = store.snapshot(db, day, data)
+    # Thời gian học (phút app mở trên màn hình khi em học/thi), 7 ngày gần nhất
+    d0 = datetime.fromisoformat(day)
+    study = {(d0 - timedelta(days=i)).date().isoformat(): sources.fb_get(cfg.fb_url, cfg.fb_secret, f"thoi_gian/{(d0 - timedelta(days=i)).date().isoformat()}") or {} for i in range(7)}
+    stats["study"] = store.save_study(db, study, analyze.keyof)
     if cfg.worker_url and cfg.brain_key:
         since = int(store.get_meta(db, "last_q_at", "0") or 0)
         items = sources.worker_questions(cfg.worker_url, cfg.brain_key, since)

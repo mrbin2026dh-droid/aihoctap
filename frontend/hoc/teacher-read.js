@@ -4,7 +4,7 @@
 // Giáo viên lớp chỉ thấy lớp mình phụ trách.
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261028a';
+import * as ui from './teacher-ui.js?v=20261029a';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 /** @type {Record<string, any>} */ let reads = {};

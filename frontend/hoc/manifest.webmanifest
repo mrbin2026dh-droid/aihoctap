@@ -33,5 +33,42 @@
    "type": "image/png",
    "purpose": "maskable"
   }
+ ],
+ "screenshots": [
+  {
+   "src": "./seo/screens/wide-dang-nhap.webp",
+   "sizes": "1280x720",
+   "type": "image/webp",
+   "form_factor": "wide",
+   "label": "Đăng nhập AI Học Tập"
+  },
+  {
+   "src": "./seo/screens/wide-gioi-thieu.webp",
+   "sizes": "1280x720",
+   "type": "image/webp",
+   "form_factor": "wide",
+   "label": "Gia sư AI gợi mở tư duy cho học sinh THCS"
+  },
+  {
+   "src": "./seo/screens/narrow-dang-nhap.webp",
+   "sizes": "585x1266",
+   "type": "image/webp",
+   "form_factor": "narrow",
+   "label": "Đăng nhập trên điện thoại"
+  },
+  {
+   "src": "./seo/screens/narrow-gioi-thieu.webp",
+   "sizes": "585x1266",
+   "type": "image/webp",
+   "form_factor": "narrow",
+   "label": "Học bằng câu hỏi gợi mở"
+  },
+  {
+   "src": "./seo/screens/narrow-tinh-nang.webp",
+   "sizes": "585x1266",
+   "type": "image/webp",
+   "form_factor": "narrow",
+   "label": "Thi thử, trò chơi câu hỏi, Bộ não AI"
+  }
  ]
 }

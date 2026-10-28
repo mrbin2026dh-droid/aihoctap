@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS reads(day TEXT, ma TEXT, lesson TEXT, pct REAL, PRIMA
 CREATE TABLE IF NOT EXISTS questions(at INTEGER, ma TEXT, lop TEXT, course TEXT, lesson TEXT, q TEXT, blocked INTEGER, PRIMARY KEY(at, ma));
 CREATE TABLE IF NOT EXISTS qbank(exam TEXT, qid TEXT, text TEXT, topic TEXT, answer TEXT, options TEXT, PRIMARY KEY(exam, qid));
 CREATE TABLE IF NOT EXISTS answers(exam TEXT, ma TEXT, qid TEXT, chosen TEXT, PRIMARY KEY(exam, ma, qid));
+CREATE TABLE IF NOT EXISTS study(day TEXT, ma TEXT, minutes INTEGER, PRIMARY KEY(day, ma));
 CREATE TABLE IF NOT EXISTS reports(day TEXT, lop TEXT, md TEXT, facts TEXT, PRIMARY KEY(day, lop));
 CREATE INDEX IF NOT EXISTS ix_mastery_ma ON mastery(ma, day);
 CREATE INDEX IF NOT EXISTS ix_questions_lop ON questions(lop, at);
@@ -120,3 +121,18 @@ def save_report(db: sqlite3.Connection, day: str, lop: str, md: str, facts: dict
     with db:
         db.execute("INSERT INTO reports VALUES(?,?,?,?) ON CONFLICT(day, lop) DO UPDATE SET md=excluded.md, facts=excluded.facts",
                    (day, lop, md, json.dumps(facts, ensure_ascii=False)))
+
+
+def save_study(db: sqlite3.Connection, by_day: dict[str, Any], keyof) -> int:
+    """Số phút học mỗi ngày (Firebase thoi_gian/{ngày}/{mã}); ghi đè theo ngày vì Firebase luôn giữ tổng mới nhất."""
+    n = 0
+    with db:
+        for day, per in (by_day or {}).items():
+            if not isinstance(per, dict):
+                continue
+            for ma, v in per.items():
+                m = int(num(v))
+                if 0 < m <= 1440:
+                    db.execute("INSERT INTO study(day, ma, minutes) VALUES(?,?,?) ON CONFLICT(day, ma) DO UPDATE SET minutes=MAX(minutes, excluded.minutes)", (day, keyof(ma), m))
+                    n += 1
+    return n

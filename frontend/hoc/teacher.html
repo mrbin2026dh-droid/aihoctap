@@ -394,9 +394,10 @@
 <div class="notice status thi-alert" id="acc-alert" role="status" hidden><span id="acc-status"></span></div>
 <div class="t-tabs" role="tablist" aria-label="Loại tài khoản"><button type="button" id="tab-acc-hs" role="tab" aria-selected="true" aria-controls="tabpanel-acc-hs" tabindex="0">Học sinh</button><button type="button" id="tab-acc-gv" role="tab" aria-selected="false" aria-controls="tabpanel-acc-gv" tabindex="-1">Giáo viên</button></div>
 <div role="tabpanel" id="tabpanel-acc-hs" aria-labelledby="tab-acc-hs">
-<div class="t-toolbar acc-toolbar"><div class="t-field"><label for="acc-hs-search">Tìm theo tên hoặc mã</label><input id="acc-hs-search" type="search" autocomplete="off"></div><div class="t-field"><label for="acc-hs-lop">Lớp</label><select id="acc-hs-lop"><option value="">Tất cả các lớp</option></select></div><button type="button" id="acc-hs-add" class="t-button t-primary">Thêm học sinh</button></div>
+<div class="t-toolbar acc-toolbar"><div class="t-field"><label for="acc-hs-search">Tìm theo tên hoặc mã</label><input id="acc-hs-search" type="search" autocomplete="off"></div><div class="t-field"><label for="acc-hs-lop">Lớp</label><select id="acc-hs-lop"><option value="">Tất cả các lớp</option></select></div><div class="t-field"><label for="acc-hs-online">Trực tuyến</label><select id="acc-hs-online"><option value="">Tất cả</option><option value="on">Đang trực tuyến</option><option value="off">Ngoại tuyến</option></select></div><div class="t-field"><label for="acc-hs-act">Học trên app</label><select id="acc-hs-act"><option value="">Tất cả</option><option value="today">Có học hôm nay</option><option value="not_today">Chưa học hôm nay</option><option value="low7">Dưới 30 phút / 7 ngày</option><option value="none7">Chưa học 7 ngày</option></select></div><div class="t-field"><label for="acc-hs-sort">Sắp xếp</label><select id="acc-hs-sort"><option value="ten">Theo tên</option><option value="lop">Theo lớp</option><option value="online">Đang trực tuyến trước</option><option value="today">Học nhiều nhất hôm nay</option><option value="week">Học nhiều nhất 7 ngày</option><option value="week_asc">Học ít nhất 7 ngày</option></select></div><button type="button" id="acc-hs-add" class="t-button t-primary">Thêm học sinh</button></div>
+<div class="acc-stats" id="acc-hs-stats" aria-label="Thống kê học sinh (bấm để lọc)"></div>
 <p class="t-muted" id="acc-hs-count" role="status">Đang tải…</p>
-<table class="t-table" id="acc-hs-table"><caption>Tài khoản học sinh (trang HocSinh trong Google Sheet)</caption><thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ và tên</th><th scope="col">Lớp</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="acc-hs-body"></tbody></table>
+<table class="t-table" id="acc-hs-table"><caption>Tài khoản học sinh (trang HocSinh trong Google Sheet)</caption><thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ và tên</th><th scope="col">Lớp</th><th scope="col">Trực tuyến</th><th scope="col">Hôm nay</th><th scope="col">7 ngày</th><th scope="col"><abbr title="Theo số phút học 7 ngày: Chăm ≥ 90 phút và ≥ 3 ngày; Có học ≥ 30 phút; Học ít &gt; 0">Chuyên cần</abbr></th><th scope="col">Thao tác</th></tr></thead><tbody id="acc-hs-body"></tbody></table>
 </div>
 <div role="tabpanel" id="tabpanel-acc-gv" aria-labelledby="tab-acc-gv" hidden>
 <div class="t-toolbar t-toolbar-actions-only"><p class="t-muted acc-note">Giáo viên được cấp tài khoản đăng nhập bằng Mã giáo viên + PIN, chỉ quản lý các lớp phụ trách.</p><button type="button" id="acc-gv-add" class="t-button t-primary">Thêm giáo viên</button></div>
@@ -578,7 +579,7 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261028a"></script>
+<script type="module" src="./teacher.js?v=20261029a"></script>
 <dialog id="ai-q-dialog" class="t-dialog" aria-labelledby="ai-q-title"><form id="ai-q-form" class="t-form" method="dialog" novalidate>
 <h2 id="ai-q-title">AI soạn đề theo ma trận</h2>
 <p class="t-muted" id="ai-q-sub">AI soạn câu trắc nghiệm bám nội dung bài học. Thầy cô đọc, sửa và đánh dấu <strong>Đã duyệt</strong> từng câu trước khi lưu.</p>

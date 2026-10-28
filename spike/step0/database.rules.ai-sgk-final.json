@@ -92,11 +92,21 @@
           "tu_luan": {
             "$q": {
               ".validate": "$q.length <= 64 && newData.hasChildren(['tl', 'd', 'max']) && newData.child('tl').isString() && newData.child('tl').val().length <= 3000 && newData.child('d').isNumber() && newData.child('max').isNumber() && newData.child('d').val() >= 0 && newData.child('d').val() <= newData.child('max').val() && newData.child('max').val() <= 100",
-              "tl": { ".validate": true },
-              "d": { ".validate": true },
-              "max": { ".validate": true },
-              "nx": { ".validate": "newData.isString() && newData.val().length <= 600" },
-              "$other": { ".validate": false }
+              "tl": {
+                ".validate": true
+              },
+              "d": {
+                ".validate": true
+              },
+              "max": {
+                ".validate": true
+              },
+              "nx": {
+                ".validate": "newData.isString() && newData.val().length <= 600"
+              },
+              "$other": {
+                ".validate": false
+              }
             }
           },
           "diem_tn": {
@@ -237,6 +247,16 @@
     "ho_tro": {
       ".read": true,
       ".write": false
+    },
+    "thoi_gian": {
+      ".read": true,
+      "$day": {
+        ".validate": "$day.matches(/^20[0-9][0-9]-[01][0-9]-[0-3][0-9]$/)",
+        "$uid": {
+          ".write": "$uid.length <= 64",
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1440 && (!data.exists() ? newData.val() <= 2 : newData.val() <= data.val() + 2)"
+        }
+      }
     }
   }
 }

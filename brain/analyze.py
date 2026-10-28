@@ -308,8 +308,13 @@ def class_facts(db: sqlite3.Connection, lop: str, today: str, tz_hours: int = 7)
     ex_now = {r["ma"]: r["s"] for r in db.execute(f"SELECT ma, SUM(lan) AS s FROM exams WHERE day=? AND ma IN ({ph}) GROUP BY ma", (d_ex, *ma_list))} if d_ex else {}
     have_history = bool(d_old or d_rd_old or ex_old_day)
 
+    # Thời gian học trên app 7 ngày (chỉ khi đã bắt đầu đo: có ít nhất 1 dòng study của lớp)
+    st_rows = db.execute(f"SELECT ma, SUM(minutes) AS s, SUM(CASE WHEN minutes>=5 THEN 1 ELSE 0 END) AS d FROM study WHERE day>? AND day<=? AND ma IN ({ph}) GROUP BY ma", (days_ago(today, 7), today, *ma_list)).fetchall()
+    study = {r["ma"]: (int(r["s"] or 0), int(r["d"] or 0)) for r in st_rows}
+    tracking = bool(study)
+
     def active(m: str) -> bool:
-        return per_q[m] > 0 or r_now.get(m, 0) > r_old.get(m, 0) or ex_now.get(m, 0) > ex_old.get(m, 0) or (m in p_now and p_now.get(m) != p_old.get(m))
+        return study.get(m, (0, 0))[0] > 0 or per_q[m] > 0 or r_now.get(m, 0) > r_old.get(m, 0) or ex_now.get(m, 0) > ex_old.get(m, 0) or (m in p_now and m in p_old and p_now[m] != p_old[m])
 
     at_risk = []
     for m, ten in studs.items():
@@ -322,15 +327,21 @@ def class_facts(db: sqlite3.Connection, lop: str, today: str, tz_hours: int = 7)
             why.append(f"thi thử cao nhất {max(best[m])}%")
         if blocked[m] >= 3:
             why.append(f"{blocked[m]} lần cố xin đáp án Gia sư AI")
-        if have_history and not active(m):
+        if (have_history or tracking) and not active(m):
             why.append("không học trên app 7 ngày qua")
+        elif tracking and 0 < study.get(m, (0, 0))[0] < 30:
+            why.append(f"chỉ học {study[m][0]} phút trên app 7 ngày qua")
         if why:
             at_risk.append({"ma": m, "ten": ten, "ly_do": why, "nang_luc": p_now.get(m)})
     at_risk.sort(key=lambda x: (-len(x["ly_do"]), x["nang_luc"] if x["nang_luc"] is not None else 101))
 
     return {
         "lop": lop, "ngay": today, "students": len(studs),
-        "hoat_dong_7_ngay": sum(1 for m in studs if active(m)) if have_history else None,
+        "hoat_dong_7_ngay": sum(1 for m in studs if active(m)) if (have_history or tracking) else None,
+        "thoi_gian_hoc": ({"phut_tb_7_ngay": round(sum(v[0] for v in study.values()) / len(studs)),
+                           "so_em_chua_hoc": sum(1 for m in studs if study.get(m, (0, 0))[0] == 0),
+                           "so_em_cham": sum(1 for v in study.values() if v[0] >= 90 and v[1] >= 3),
+                           "ghi_chu": "phút app mở trên màn hình khi em học/thi; tính từ 29/10/2026"} if tracking else None),
         "nang_luc_tb": round(sum(p_now.values()) / len(p_now)) if p_now else None,
         "chu_de": topics[:15],
         "can_chu_y": at_risk[:12],

@@ -61,6 +61,36 @@ export async function setState(state) {
     return res.ok;
   } catch { return false; }
 }
+/** Ngày theo giờ Việt Nam (UTC+7), dạng 2026-10-29. @param {number} [t] */
+export const dayVN = (t = Date.now()) => new Date(t + 7 * 3600e3).toISOString().slice(0, 10);
+/** Mỗi phút app đang mở trên màn hình và em đang học/thi: cộng 1 phút vào thoi_gian/{ngày}/{mã} (phép cộng phía máy chủ). */
+async function addMinute() {
+  const s = await fresh(KEY_HS) || load(KEY_HS); if (!s || !s.uid) return;
+  try {
+    await fetch(url(`thoi_gian/${dayVN()}/${s.uid}`, s.idToken || ''), { method: 'PUT', credentials: 'omit', body: JSON.stringify({ '.sv': { increment: 1 } }) });
+  } catch { /* mất mạng: bỏ qua phút này */ }
+}
+/** Đọc số phút học N ngày gần nhất (nhánh thoi_gian đọc công khai, chỉ có mã + số phút).
+ * @param {number} [days] @returns {Promise<{days:string[], byDay: Record<string, Record<string, number>>}>} */
+export async function minutes(days = 7) {
+  const list = Array.from({ length: days }, (_, i) => dayVN(Date.now() - i * 864e5));
+  /** @type {Record<string, Record<string, number>>} */ const byDay = {};
+  if (!ENABLED()) return { days: list, byDay };
+  await Promise.all(list.map(async d => {
+    try {
+      const r = await fetch(url('thoi_gian/' + d, ''), { credentials: 'omit' });
+      const j = r.ok ? await r.json() : null;
+      byDay[d] = {}; for (const [k, v] of Object.entries(j || {})) byDay[d][k.toLowerCase()] = (byDay[d][k.toLowerCase()] || 0) + (Number(v) || 0);
+    } catch { byDay[d] = {}; }
+  }));
+  return { days: list, byDay };
+}
+/** Nghe presence cho màn hình phụ (Tài khoản) mà không giành kênh của màn hình Thi. @param {(map: Record<string, any>) => void} fn */
+export function listen(fn) {
+  const off = subscribe(fn);
+  if (!es) void watch(() => {}, () => {});
+  return off;
+}
 /** Gọi sau khi học sinh đăng nhập: đổi vé, ghi "Đang học", bắt đầu nhịp 1 phút. @param {string} fbToken @param {{name?:string,class_code?:string}} identity */
 export async function startStudent(fbToken, identity) {
   if (!fbToken || !ENABLED()) return false;
@@ -83,7 +113,7 @@ export function resumeStudent(state) {
   if (!ENABLED() || !load(KEY_HS)) return;
   void setState(/** @type {any} */ (state || getLast()));
   clearInterval(beat);
-  beat = window.setInterval(() => { if (document.visibilityState === 'visible') void setState(/** @type {any} */ (getLast())); }, HEARTBEAT_MS);
+  beat = window.setInterval(() => { if (document.visibilityState === 'visible') { const st = /** @type {any} */ (getLast()); void setState(st); if (st === 'hoc' || st === 'dang_thi' || st === 'phong_cho') void addMinute(); } }, HEARTBEAT_MS);
 }
 /** Đăng xuất: ghi "Đã thoát" rồi xóa phiên. */
 export async function stopStudent() {
@@ -106,6 +136,12 @@ export function lastTeacherError() { return teacherError; }
 export function stopTeacher() { save(KEY_GV, null); stopWatch(); }
 
 /** @type {EventSource|null} */ let es = null;
+/** Nhiều màn hình (Thi, Tài khoản) cùng nghe một kênh presence. @type {Set<(map: Record<string, any>) => void>} */
+const subs = new Set();
+/** @type {Record<string, any>|null} */ let lastMap = null;
+/** Đăng ký nhận bản đồ trực tuyến (nhận ngay bản mới nhất nếu có). @param {(map: Record<string, any>) => void} fn @returns {() => void} */
+export function subscribe(fn) { subs.add(fn); if (lastMap) fn({ ...lastMap }); return () => { subs.delete(fn); }; }
+export const isWatching = () => Boolean(es);
 let retry = 0;
 /**
  * Nghe toàn bộ presence. onChange nhận bản đồ {mã: {name, lop, state, at}} mỗi khi có thay đổi.
@@ -124,7 +160,8 @@ export async function watch(onChange, onStatus) {
     if (!parts.length) { map = merge ? { ...map, ...(data || {}) } : (data || {}); }
     else if (parts.length === 1) { if (data === null) delete map[parts[0]]; else map[parts[0]] = merge ? { ...(map[parts[0]] || {}), ...data } : data; }
     else { const k = parts[0]; map[k] = { ...(map[k] || {}), [parts[1]]: data }; }
-    onChange({ ...map });
+    lastMap = { ...map };
+    onChange({ ...map }); for (const f of subs) { try { f({ ...map }); } catch { /* bỏ qua */ } }
   };
   src.addEventListener('put', ev => { retry = 0; onStatus('live'); try { const d = JSON.parse(/** @type {MessageEvent} */ (ev).data); apply(d.path, d.data, false); } catch { /* bỏ qua */ } });
   src.addEventListener('patch', ev => { try { const d = JSON.parse(/** @type {MessageEvent} */ (ev).data); apply(d.path, d.data, true); } catch { /* bỏ qua */ } });

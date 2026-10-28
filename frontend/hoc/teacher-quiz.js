@@ -8,7 +8,7 @@
 // Chỉ giáo viên có "khóa phòng" (quiz_key, không ai đọc được) mới điều khiển được phòng (luật Firebase quiz_proof).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261028a';
+import * as ui from './teacher-ui.js?v=20261029a';
 import { confirmBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
 
@@ -59,7 +59,8 @@ async function removeSet(s) {
 /** Lớp giáo viên được dùng: giáo viên lớp = lớp phụ trách; quản trị = mọi lớp có học sinh. */
 async function classes() {
   try { const t = JSON.parse(sessionStorage.getItem('aisgk-gv-info') || 'null'); if (t && Array.isArray(t.lop) && cred().gv_ma) return t.lop.map(String); } catch { /* bỏ qua */ }
-  const hs = await store.get('thi_hs').catch(() => null);
+  const hs = await store.get('thi_hs').catch(() => undefined);
+  if (hs === undefined) return null;   // tải lỗi ≠ chưa có học sinh
   return [...new Set(Object.values(hs || {}).map((/** @type {any} */ s) => String(s?.lop || '')).filter(Boolean))].sort();
 }
 /** @param {Partial<Q>} [q] */
@@ -96,8 +97,8 @@ async function openEditor(s) {
   $('qz-list').replaceChildren(...(s?.qs?.length ? s.qs : [{}]).map(q => qRow(q))); qNumber();
   await ui.showSub('detail-tools');
   const lops = await classes(), ls = sel('qz-lop');
-  ls.replaceChildren(...(lops.length ? lops.map(l => new Option('Lớp ' + l, l)) : [new Option('Chưa có lớp (thêm học sinh trước)', '')]));
-  if (s?.lop && lops.includes(s.lop)) ls.value = s.lop;
+  ls.replaceChildren(...(lops === null ? [new Option('Chưa tải được danh sách lớp. Kiểm tra mạng, bấm Quay lại rồi mở lại.', '')] : lops.length ? lops.map(l => new Option('Lớp ' + l, l)) : [new Option('Chưa có lớp (thêm học sinh trước)', '')]));
+  if (s?.lop && lops?.includes(s.lop)) ls.value = s.lop;
   inp('qz-name').focus();
 }
 /** @returns {{error?:string, qs?:Q[]}} */

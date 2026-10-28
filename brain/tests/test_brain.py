@@ -190,6 +190,33 @@ class Analyze(unittest.TestCase):
         self.assertEqual(report.deanonymize("Gặp riêng HS1 và HS2.", back).count("HS"), 0)
 
 
+class Study(unittest.TestCase):
+    def setUp(self):
+        self.db = store.open_db(":memory:")
+        store.snapshot(self.db, "2026-10-29", fixture_day({"a": topics(mnp=("Mã nhị phân", 8, 10)), "b": topics(mnp=("Mã nhị phân", 8, 10)), "c": topics(mnp=("Mã nhị phân", 8, 10))}))
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_no_tracking_no_reason(self):
+        f = analyze.class_facts(self.db, "9A", "2026-10-29")
+        self.assertIsNone(f["thoi_gian_hoc"])
+        self.assertFalse(any("phút" in w for r in f["can_chu_y"] for w in r["ly_do"]), "chưa đo thì không kết luận")
+
+    def test_minutes_reasons_and_summary(self):
+        n = store.save_study(self.db, {"2026-10-27": {"A": 50, "B": 10}, "2026-10-28": {"a": 30}, "2026-10-29": {"a": 20, "x": 9999}, "2026-10-20": {"b": 500}}, analyze.keyof)
+        self.assertEqual(n, 5, "bỏ giá trị vô lý > 1440")
+        store.save_study(self.db, {"2026-10-29": {"a": 15}}, analyze.keyof)   # lượt sau đọc số nhỏ hơn → giữ số lớn
+        f = analyze.class_facts(self.db, "9A", "2026-10-29")
+        r = {x["ten"]: x["ly_do"] for x in f["can_chu_y"]}
+        self.assertIn("chỉ học 10 phút trên app 7 ngày qua", r.get("Bình", []), "ngày 20/10 ngoài 7 ngày")
+        self.assertIn("không học trên app 7 ngày qua", r.get("Chi", []))
+        self.assertNotIn("An", r)
+        tg = f["thoi_gian_hoc"]
+        self.assertEqual((tg["phut_tb_7_ngay"], tg["so_em_cham"], tg["so_em_chua_hoc"]), (28, 1, 2))
+        self.assertIn("**Thời gian học trên app**", report.fallback_md(f))
+
+
 class Pipeline(unittest.TestCase):
     """Chạy thật 'python -m brain run' với Firebase / Worker / Gemini / Google Sheet giả lập trên máy."""
     def test_misconceptions(self):

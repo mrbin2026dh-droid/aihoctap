@@ -46,6 +46,9 @@ def fallback_md(f: dict[str, Any]) -> str:
     lines = [f"**Tóm tắt** Lớp {f['lop']}: {f['students']} học sinh"
              + (f", {f['hoat_dong_7_ngay']} em học trên app 7 ngày qua" if f.get("hoat_dong_7_ngay") is not None else "")
              + (f", năng lực trung bình {f['nang_luc_tb']}%" if f.get("nang_luc_tb") is not None else "") + "."]
+    tg = f.get("thoi_gian_hoc")
+    if tg:
+        lines.append(f"**Thời gian học trên app** trung bình {tg['phut_tb_7_ngay']} phút/em trong 7 ngày; {tg['so_em_cham']} em học chăm (≥ 90 phút, ≥ 3 ngày); {tg['so_em_chua_hoc']} em chưa mở app học.")
     ct = f.get("chu_de") or []
     if ct:
         lines.append("**Xu hướng chủ đề** " + "; ".join(f"{t['ten']} {t['pct']}%" + (f" ({'+' if t['delta'] >= 0 else ''}{t['delta']})" if t.get("delta") is not None else "") for t in ct[:5]) + ".")

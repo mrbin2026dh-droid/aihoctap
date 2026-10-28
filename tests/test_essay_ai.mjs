@@ -1,7 +1,7 @@
 // Thi thử Trắc nghiệm + Tự luận: AI chấm tự luận theo gợi ý đáp án (token học sinh, giới hạn lượt), AI soạn câu tự luận,
 // và gọi Gemini bền (thử lại khi 503, bỏ chế độ JSON khi 400, báo mã lỗi thay vì chỉ "AI chưa trả lời được").
 import assert from 'node:assert/strict';
-import worker, {MockDONamespace, registerStudentCredential, geminiOnce, cleanGeneratedEssays, buildEssayGradePrompt, buildQuestionGenPrompt} from '../worker/index.js';
+import worker, {MockDONamespace, registerStudentCredential, geminiOnce, geminiBusyMessage, cleanGeneratedEssays, buildEssayGradePrompt, buildQuestionGenPrompt} from '../worker/index.js';
 const kp = await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['sign','verify']);
 await registerStudentCredential('hs_tl', '123456', 'a1b2c3d4e5f60718293a4b5c6d7e8f92', {name:'Trần An', grade:9, class_code:'9A'});
 let prompts = [], gen = () => '{}';
@@ -26,6 +26,9 @@ seq = [[500], [500], [500]]; seen = [];
 await assert.rejects(geminiOnce(genv, gate, 'x'), e => e.status === 502 && /mã 500/.test(e.message)); n++; console.log('ok   lỗi liên tục → báo mã lỗi (502, "mã 500") để biết nguyên nhân');
 seq = [[429]]; seen = [];
 await assert.rejects(geminiOnce(genv, gate, 'x'), e => e.status === 429); n++; console.log('ok   hết lượt (429) không có kho khóa → báo AI bận');
+seq = [[429], [200, 'du-phong']]; seen = [];
+ok(await geminiOnce({...genv, GEMINI_FALLBACK_MODEL:'gemini-du-phong'}, gate, 'x') === 'du-phong' && seen[1].u.includes('gemini-du-phong'), 'hết lượt (429), không còn khóa khác → thử mô hình dự phòng (hạn mức riêng) trước khi báo bận');
+ok(geminiBusyMessage('Quota exceeded for metric: generate_content_free_tier_requests, limit: 20  GenerateRequestsPerDayPerProjectPerModel-FreeTier').includes('hết lượt dùng trong ngày') && geminiBusyMessage('GenerateRequestsPerMinutePerProjectPerModel').includes('1 phút'), 'báo đúng lý do: hết lượt trong ngày (gói miễn phí) / quá nhiều yêu cầu trong 1 phút');
 seq = [[503], [200, 'fb']]; seen = [];
 ok(await geminiOnce({...genv, GEMINI_FALLBACK_MODEL:'gemini-dự-phòng'}, gate, 'x') === 'fb' && seen[1].u.includes('gemini-dự-phòng'), 'có mô hình dự phòng → lần thử lại dùng mô hình dự phòng');
 globalThis.fetch = realFetch;

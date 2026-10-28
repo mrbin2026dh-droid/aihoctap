@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261028a';
-import * as ui from './teacher-ui.js?v=20261028a';
+import * as presence from './presence.js?v=20261029a';
+import * as ui from './teacher-ui.js?v=20261029a';
 import * as store from './thi-store.js';
 import { api } from './api.js';
 import { KT_LABELS, autoGrade } from './practical.js';

@@ -26,7 +26,8 @@ async function req(path, init = {}, ms = 8000) {
     throw e;
   } finally { clearTimeout(t); }
 }
-/** @param {string} path */ export const get = path => req(path);
+/** Đọc; mạng chập chờn (quá giờ / máy chủ lỗi tạm) → tự thử lại một lần, chờ lâu hơn. @param {string} path */
+export const get = path => req(path).catch(e => (e && (e.status === 0 || e.status >= 500)) ? req(path, {}, 15000) : Promise.reject(e));
 /** @param {string} path @param {unknown} val */ export const put = (path, val) => req(path, { method: 'PUT', body: JSON.stringify(val) });
 /** Ghi nhiều chỗ một lần (PATCH ở gốc khi path = ''). @param {string} path @param {Record<string, unknown>} val */ export const patch = (path, val) => req(path, { method: 'PATCH', body: JSON.stringify(val) });
 export const SERVER_TIME = { '.sv': 'timestamp' };

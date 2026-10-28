@@ -5,7 +5,8 @@
 // Mỗi thay đổi Sheet tự đẩy lên Firebase, nên học sinh/giáo viên đăng nhập được ngay.
 import { SHEET_API } from './sheet-config.js';
 import { confirmBox, noticeBox } from './dom.js';
-import * as ui from './teacher-ui.js?v=20261028a';
+import * as ui from './teacher-ui.js?v=20261029a';
+import * as presence from './presence.js?v=20261029a';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -52,28 +53,163 @@ async function load() {
     apply(await call({ action: 'gv_students' }));
     $('tab-acc-gv').hidden = !st.admin; if (!st.admin) tab('hs');
     if (st.admin) apply(await call({ action: 'gv_teachers' }));
-    st.loaded = true; status(''); render();
+    st.loaded = true; status(''); render(); startLive();
   } catch (e) { $('acc-hs-count').textContent = ''; status(e instanceof Error ? e.message : 'Chưa tải được danh sách.', 'error'); }
 }
+/* ---------- Trực tuyến + thời gian học (Firebase: presence, thoi_gian) ---------- */
+/** Ngày bắt đầu đo thời gian học (trước ngày này chưa có số liệu, không suy đoán). */
+export const TRACK_FROM = '2026-10-29';
+/** @type {Record<string, any>} */ let live = {};
+/** @type {{days:string[], byDay: Record<string, Record<string, number>>}} */ let mins = { days: [], byDay: {} };
+let offLive = /** @type {null | (() => void)} */ (null), minTimer = 0, liveTimer = 0;
+const key = (/** @type {string} */ m) => String(m || '').trim().toLowerCase();
+/** Trạng thái trực tuyến của một em. @param {string} ma */
+export function onlineOf(ma, now = Date.now(), map = live) {
+  const p = map[key(ma)] || map[ma];
+  if (!p) return { on: false, label: 'Chưa đăng nhập', at: 0 };
+  const at = Number(p.at || 0);
+  if (p.state === 'offline' || now - at > presence.STALE_MS) return { on: false, label: 'Ngoại tuyến', at };
+  return { on: true, label: presence.STATES[/** @type {keyof typeof presence.STATES} */ (p.state)] || 'Đang học', at };
+}
+/** Phút học hôm nay, 7 ngày, số ngày có học (≥ 5 phút). @param {string} ma */
+export function minutesOf(ma, m = mins) {
+  const k = key(ma), today = m.days[0];
+  let week = 0, daysOn = 0;
+  for (const d of m.days) { const v = m.byDay[d]?.[k] || 0; week += v; if (v >= 5) daysOn++; }
+  return { today: today ? m.byDay[today]?.[k] || 0 : 0, week, daysOn };
+}
+/** Mức chuyên cần theo luật rõ ràng (giáo viên kiểm lại được), dùng số phút app mở trên màn hình khi em học/thi.
+ * @param {{week:number, daysOn:number}} x @returns {{muc:'cham'|'deu'|'it'|'chua', ten:string, giai_thich:string}} */
+export function diligence(x) {
+  if (x.week >= 90 && x.daysOn >= 3) return { muc: 'cham', ten: 'Chăm', giai_thich: `${x.week} phút, ${x.daysOn} ngày có học trong 7 ngày` };
+  if (x.week >= 30) return { muc: 'deu', ten: 'Có học', giai_thich: `${x.week} phút trong 7 ngày` };
+  if (x.week > 0) return { muc: 'it', ten: 'Học ít', giai_thich: `chỉ ${x.week} phút trong 7 ngày` };
+  return { muc: 'chua', ten: 'Chưa học', giai_thich: 'chưa mở app học trong 7 ngày (tính từ ngày bắt đầu đo)' };
+}
+const ago = (/** @type {number} */ at, now = Date.now()) => {
+  if (!at) return '';
+  const m = Math.round((now - at) / 60000);
+  return m < 1 ? 'vừa xong' : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`;
+};
+const fmtMin = (/** @type {number} */ v) => v >= 60 ? `${Math.floor(v / 60)} giờ ${v % 60 ? (v % 60) + ' phút' : ''}`.trim() : `${v} phút`;
+function liveCell(/** @type {string} */ ma) {
+  const o = onlineOf(ma), w = document.createElement('span');
+  w.className = 'acc-live ' + (o.on ? 'is-on' : 'is-off');
+  const dot = document.createElement('span'); dot.className = 'acc-dot'; dot.setAttribute('aria-hidden', 'true');
+  const t = document.createElement('span'); t.textContent = o.label;
+  w.append(dot, t);
+  if (!o.on && o.at) { const s = document.createElement('small'); s.textContent = ago(o.at); w.append(s); }
+  return w;
+}
+function dilBadge(/** @type {string} */ ma) {
+  const d = diligence(minutesOf(ma)), b = document.createElement('span');
+  b.className = 'acc-dil acc-dil-' + d.muc; b.textContent = d.ten; b.title = d.giai_thich;
+  return b;
+}
+/** Bộ lọc học sinh (tách riêng để kiểm thử). */
+export function filterStudents(/** @type {any[]} */ list, /** @type {{lop?:string,q?:string,online?:string,act?:string,sort?:string}} */ f, now = Date.now(), map = live, m = mins) {
+  const q = (f.q || '').trim().toLowerCase();
+  const rows = list.filter(s => {
+    if (f.lop && s.lop !== f.lop) return false;
+    if (q && !(s.ma + ' ' + s.ten).toLowerCase().includes(q)) return false;
+    const on = onlineOf(s.ma, now, map).on, x = minutesOf(s.ma, m);
+    if (f.online === 'on' && !on) return false;
+    if (f.online === 'off' && on) return false;
+    if (f.act === 'today' && x.today < 1) return false;
+    if (f.act === 'not_today' && x.today >= 1) return false;
+    if (f.act === 'none7' && x.week > 0) return false;
+    if (f.act === 'low7' && !(x.week < 30)) return false;
+    return true;
+  });
+  const by = f.sort || 'ten';
+  const cmpName = (/** @type {any} */ a, /** @type {any} */ b) => String(a.ten).localeCompare(String(b.ten), 'vi');
+  rows.sort((a, b) => {
+    if (by === 'lop') return String(a.lop).localeCompare(String(b.lop), 'vi') || cmpName(a, b);
+    if (by === 'online') return Number(onlineOf(b.ma, now, map).on) - Number(onlineOf(a.ma, now, map).on) || cmpName(a, b);
+    if (by === 'today') return minutesOf(b.ma, m).today - minutesOf(a.ma, m).today || cmpName(a, b);
+    if (by === 'week') return minutesOf(b.ma, m).week - minutesOf(a.ma, m).week || cmpName(a, b);
+    if (by === 'week_asc') return minutesOf(a.ma, m).week - minutesOf(b.ma, m).week || cmpName(a, b);
+    return cmpName(a, b);
+  });
+  return rows;
+}
+/** Số liệu thẻ thống kê. */
+export function statsOf(/** @type {any[]} */ list, now = Date.now(), map = live, m = mins) {
+  let on = 0, today = 0, none7 = 0, minToday = 0;
+  for (const s of list) { if (onlineOf(s.ma, now, map).on) on++; const x = minutesOf(s.ma, m); if (x.today >= 1) today++; if (x.week === 0) none7++; minToday += x.today; }
+  return { total: list.length, on, off: list.length - on, today, none7, avgToday: list.length ? Math.round(minToday / list.length) : 0 };
+}
+function scope() { const lop = /** @type {HTMLSelectElement} */ ($('acc-hs-lop')).value; return lop ? st.students.filter(s => s.lop === lop) : st.students; }
+function renderStats() {
+  const box = $('acc-hs-stats'); if (!box) return;
+  const x = statsOf(scope());
+  const cards = /** @type {const} */ ([
+    ['total', 'Học sinh', x.total, '', ''],
+    ['on', 'Đang trực tuyến', x.on, 'online:on', 'is-on'],
+    ['off', 'Ngoại tuyến', x.off, 'online:off', 'is-off'],
+    ['today', 'Có học hôm nay', x.today, 'act:today', ''],
+    ['none7', 'Chưa học 7 ngày', x.none7, 'act:none7', 'is-warn']]);
+  box.replaceChildren(...cards.map(([id, label, n, flt, cls]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'acc-stat ' + cls; b.dataset.stat = id;
+    const [fk, fv] = flt ? flt.split(':') : ['', ''];
+    const cur = fk ? /** @type {HTMLSelectElement} */ ($('acc-hs-' + fk)).value : '';
+    b.setAttribute('aria-pressed', String(!!fk && cur === fv));
+    const num = document.createElement('strong'); num.textContent = String(n);
+    const lb = document.createElement('span'); lb.textContent = label;
+    b.append(num, lb);
+    if (id === 'total') { const sm = document.createElement('small'); sm.textContent = `TB hôm nay ${fmtMin(x.avgToday)}/em`; b.append(sm); }
+    b.addEventListener('click', () => {
+      for (const k of ['online', 'act']) /** @type {HTMLSelectElement} */ ($('acc-hs-' + k)).value = '';
+      if (fk && cur !== fv) /** @type {HTMLSelectElement} */ ($('acc-hs-' + fk)).value = fv;
+      refilter();
+    });
+    return b;
+  }));
+}
+/** Cập nhật cột Trực tuyến tại chỗ (không vẽ lại cả bảng → không mất vị trí bấm). */
+function updateLive() {
+  if (!st.loaded) return;
+  const f = /** @type {HTMLSelectElement} */ ($('acc-hs-online')).value, sort = /** @type {HTMLSelectElement} */ ($('acc-hs-sort')).value;
+  if (f || sort === 'online') { clearTimeout(liveTimer); liveTimer = window.setTimeout(render, 3000); return; }
+  for (const tr of $('acc-hs-body').querySelectorAll('tr[data-ma]')) {
+    const c = tr.querySelector('td[data-col=live]'); if (c) c.replaceChildren(liveCell(/** @type {HTMLElement} */ (tr).dataset.ma || ''));
+  }
+  renderStats();
+}
+async function loadMinutes() { try { mins = await presence.minutes(7); } catch { /* giữ số cũ */ } if (st.loaded) render(); }
+function startLive() {
+  if (!offLive) offLive = presence.listen(map => { live = map; updateLive(); });
+  void loadMinutes();
+  clearInterval(minTimer); minTimer = window.setInterval(() => { if (!$('view-accounts').hidden && document.visibilityState === 'visible') void loadMinutes(); else updateLive(); }, 60000);
+}
+
 function render() {
   // Học sinh
   const sel = /** @type {HTMLSelectElement} */ ($('acc-hs-lop')), keep = sel.value, lops = Object.keys(st.classes).sort();
   sel.replaceChildren(new Option('Tất cả các lớp', ''), ...lops.map(l => new Option('Lớp ' + l, l))); if (lops.includes(keep)) sel.value = keep;
-  const q = inp('acc-hs-search').value.trim().toLowerCase();
-  const rows = st.students.filter(s => (!sel.value || s.lop === sel.value) && (!q || (s.ma + ' ' + s.ten).toLowerCase().includes(q)));
-  $('acc-hs-count').textContent = `${rows.length} học sinh` + (st.admin ? '' : ' của lớp thầy cô phụ trách');
+  const val = (/** @type {string} */ id) => /** @type {HTMLSelectElement} */ ($(id)).value;
+  const rows = filterStudents(st.students, { lop: sel.value, q: inp('acc-hs-search').value, online: val('acc-hs-online'), act: val('acc-hs-act'), sort: val('acc-hs-sort') });
+  const all = scope().length;
+  $('acc-hs-count').textContent = (rows.length === all ? `${rows.length} học sinh` : `Đang lọc: ${rows.length} / ${all} học sinh`) + (st.admin ? '' : ' của lớp thầy cô phụ trách') + ` · Thời gian học tính từ ${TRACK_FROM.split('-').reverse().join('/')}, chỉ đếm phút app mở trên màn hình.`;
+  renderStats();
   const body = $('acc-hs-body'); body.replaceChildren();
-  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', st.students.length ? 'Không có học sinh khớp bộ lọc.' : 'Chưa có học sinh. Bấm "Thêm học sinh".'); c.colSpan = 5; c.className = 't-muted'; tr.append(c); body.append(tr); }
+  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', st.students.length ? 'Không có học sinh khớp bộ lọc.' : 'Chưa có học sinh. Bấm "Thêm học sinh".'); c.colSpan = 8; c.className = 't-muted'; tr.append(c); body.append(tr); }
   // Vẽ từng trang 50 dòng (1000 học sinh × 4 nút = 4000 nút → treo nếu vẽ hết mỗi lần gõ tìm kiếm).
   const frag = document.createDocumentFragment();
   for (const s of rows.slice(0, st.limit)) {
     const tr = document.createElement('tr'), acts = document.createElement('div'); acts.className = 't-icon-actions';
+    tr.dataset.ma = s.ma;
     acts.append(
       ui.iconButton({ icon: 'edit', label: `Sửa: ${s.ten}`, onClick: () => openForm('hs', s) }),
       ui.iconButton({ icon: 'key', label: `Đặt lại mã PIN: ${s.ten}`, onClick: () => openForm('hs', s, true) }),
       ui.iconButton({ icon: s.trang_thai === 'Khóa' ? 'unlock' : 'lock', label: (s.trang_thai === 'Khóa' ? 'Mở khóa: ' : 'Khóa: ') + s.ten, onClick: () => void toggleLock('hs', s) }),
       ui.iconButton({ icon: 'trash', label: `Xóa: ${s.ten}`, danger: true, onClick: () => void remove('hs', s) }));
-    tr.append(td('Mã học sinh', s.ma), td('Họ và tên', s.ten), td('Lớp', s.lop), td('Trạng thái', badge(s.trang_thai)), td('Thao tác', acts)); frag.append(tr);
+    const x = minutesOf(s.ma), liveTd = td('Trực tuyến', liveCell(s.ma)); liveTd.dataset.col = 'live';
+    const tToday = td('Hôm nay', fmtMin(x.today)), tWeek = td('7 ngày', fmtMin(x.week));
+    tToday.className = tWeek.className = 'acc-num';
+    tr.append(td('Mã học sinh', s.ma), td('Họ và tên', s.ten), td('Lớp', s.lop), liveTd, tToday, tWeek, td('Chuyên cần', dilBadge(s.ma)), td('Thao tác', acts));
+    if (s.trang_thai === 'Khóa') tr.cells[1].append(' ', badge('Khóa'));
+    frag.append(tr);
   }
   body.append(frag);
   ui.moreRows($('acc-hs-table'), Math.min(st.limit, rows.length), rows.length, () => { st.limit += ui.PAGE; render(); });
@@ -163,8 +299,9 @@ for (const k of /** @type {const} */ (['hs', 'gv'])) $('tab-acc-' + k).addEventL
 const refilter = () => { st.limit = ui.PAGE; render(); };
 $('acc-hs-search').addEventListener('input', ui.debounce(refilter));
 $('acc-hs-lop').addEventListener('change', refilter);
+for (const id of ['acc-hs-online', 'acc-hs-act', 'acc-hs-sort']) $(id).addEventListener('change', refilter);
 $('nav-accounts').addEventListener('click', () => void load());
-document.getElementById('teacher-logout')?.addEventListener('click', () => { st.students = []; st.teachers = []; st.loaded = false; status(''); });
+document.getElementById('teacher-logout')?.addEventListener('click', () => { st.students = []; st.teachers = []; st.loaded = false; status(''); offLive?.(); offLive = null; clearInterval(minTimer); live = {}; });
 
 /* ---------- Giáo viên lớp: Cài đặt → Đổi mã PIN (trang GiaoVien trong Google Sheet) ---------- */
 {
