@@ -1384,21 +1384,6 @@ body.student-app #lesson-content.reading-paper{max-width:none}
 /* Nút đồng bộ ở Tổng quan: chỉ xoay biểu tượng, không vẽ lại trắng trang */
 #sync.is-spinning svg{animation:spin .8s linear infinite}
 @media (prefers-reduced-motion:reduce){#sync.is-spinning svg{animation:none}}
-/* Nút nổi "Hỏi thầy cô" qua Zalo: góc phải dưới, có vòng sáng nhịp nhàng để học sinh dễ thấy */
-.zalo-fab{position:fixed;right:20px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:30;display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 20px 0 16px;border-radius:999px;background:#0068ff;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(0,104,255,.35);transition:transform .15s ease-out,box-shadow .15s ease-out}
-.zalo-fab[hidden]{display:none}
-.zalo-fab:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,104,255,.45);color:#fff}
-.zalo-fab:focus-visible{outline:3px solid #1e3a8a;outline-offset:3px}
-.zalo-fab .zalo-ic{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;animation:zalo-wiggle 4s ease-in-out infinite}
-.zalo-fab .zalo-ring{position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 0 rgba(0,104,255,.55);animation:zalo-pulse 2.2s ease-out infinite;pointer-events:none}
-@keyframes zalo-pulse{0%{box-shadow:0 0 0 0 rgba(0,104,255,.5)}70%{box-shadow:0 0 0 16px rgba(0,104,255,0)}100%{box-shadow:0 0 0 0 rgba(0,104,255,0)}}
-@keyframes zalo-wiggle{0%,86%,100%{transform:rotate(0)}89%{transform:rotate(-14deg)}92%{transform:rotate(12deg)}95%{transform:rotate(-8deg)}}
-@media(prefers-reduced-motion:reduce){.zalo-fab .zalo-ring,.zalo-fab .zalo-ic{animation:none}}
-/* Trong app (có thanh menu dưới trên điện thoại): đặt cao hơn thanh menu; chỉ hiện biểu tượng cho gọn */
-@media(max-width:760px){body.student-app:not(:has(#gate:not([hidden]))) .zalo-fab{bottom:calc(84px + env(safe-area-inset-bottom));right:16px;padding:0;width:56px;justify-content:center}body.student-app:not(:has(#gate:not([hidden]))) .zalo-fab .zalo-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
-/* Không che khi đang làm bài thi hoặc đang mở Gia sư AI */
-body:has(#exams-view:not([hidden]) .thi-exam) .zalo-fab,body.tutor-open .zalo-fab,body:has(dialog[open]:modal) .zalo-fab{display:none}
-:where(:root[data-theme=dark]) .zalo-fab{background:#2b7bff}
 /* Bản đồ năng lực: mỗi chủ đề một ô, màu theo mức (Vững / Đang học / Cần ôn) */
 .student-app{--lv-good-fg:var(--green-fg,#15803d);--lv-good-bg:var(--green-bg,#e7f6ec);--lv-mid-fg:var(--amber-fg,#a15c07);--lv-mid-bg:var(--amber-bg,#fdf3e1);--lv-weak-fg:#b42318;--lv-weak-bg:#fdecea}
 :root[data-theme=dark] .student-app{--lv-weak-fg:#ff9a8f;--lv-weak-bg:#3a1f1d}
@@ -1439,7 +1424,7 @@ body:has(#exams-view:not([hidden]) .thi-exam) .zalo-fab,body.tutor-open .zalo-fa
 @keyframes qz-in{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 @media(max-width:760px){body.student-app .qz-banner{bottom:calc(84px + env(safe-area-inset-bottom))}}
 body.qz-playing{overflow:hidden}
-body.qz-playing .zalo-fab,body.qz-playing .qz-banner{display:none}
+body.qz-playing .help-fab,body.qz-playing .help-panel,body.qz-playing .qz-banner{display:none}
 .qz-play{position:fixed;inset:0;z-index:60;display:grid;grid-template-rows:auto minmax(0,1fr);background:#0f2a2b;color:#fff}
 .qz-play[hidden]{display:none}
 .qz-play .qz-p-top{display:flex;align-items:center;gap:12px;padding:12px 16px calc(12px) 16px;border-bottom:1px solid #ffffff22}
@@ -1467,7 +1452,7 @@ body.qz-playing .zalo-fab,body.qz-playing .qz-banner{display:none}
 @media(max-width:380px){.qz-play .qz-p-opts{grid-template-columns:minmax(0,1fr)}.qz-play .qz-p-opt{min-height:64px}}
 @media(prefers-reduced-motion:reduce){.qz-banner,.qz-banner-dot,.qz-play .qz-p-pulse{animation:none}}
 .qz-play .qz-A{background:#e5484d}.qz-play .qz-B{background:#2f6fe4}.qz-play .qz-C{background:#b07f00}.qz-play .qz-D{background:#2b9a66}
-body:has(#qz-banner:not([hidden])) .zalo-fab{display:none}
+body:has(#qz-banner:not([hidden])) .help-fab{bottom:calc(150px + env(safe-area-inset-bottom))}
 /* Điện thoại: khung chat Gia sư toàn màn hình như ứng dụng nhắn tin, bám theo vùng nhìn thấy khi bàn phím bật
    (--vv-top/--vv-h do app.js đo bằng visualViewport) → tiêu đề không bị đẩy khuất, ô nhập luôn ngay trên bàn phím */
 @media(max-width:760px){
@@ -1526,3 +1511,61 @@ body:has(#qz-banner:not([hidden])) .zalo-fab{display:none}
 .uo-steps li.done b::after{content:"✓"}
 .uo-card .uo-note{margin:0;font-size:13px}
 @media (prefers-reduced-motion:reduce){.student-app .update-btn .badge-dot,.student-app .update-btn .ic,.uo-logo i,.uo-card{animation:none}.uo-steps li.now b{animation:none;border-top-color:#0e766e}}
+
+/* Màn hình đăng nhập: thẻ nằm chính giữa khoảng trống dưới thanh trên (điện thoại + máy tính) */
+body.student-app:has(#gate:not([hidden])){display:flex;flex-direction:column;min-height:100dvh}
+body.student-app:has(#gate:not([hidden])) .gate{flex:1;min-height:0;padding:24px 20px}
+body.student-app:has(#gate:not([hidden])) .workspace,body.student-app:has(#gate:not([hidden])) .student-footer{display:none}
+
+/* Trợ giúp nhanh: nút tròn nhỏ + khung hỏi đáp có câu hỏi sẵn */
+.help-fab{position:fixed;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:30;display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:0;background:#0f766e;color:#fff;box-shadow:0 4px 14px rgba(15,118,110,.4);cursor:pointer;transition:transform .15s ease-out,box-shadow .15s ease-out}
+.help-fab:hover{background:#115e59;transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,118,110,.45)}
+.help-fab:focus-visible{outline:3px solid #134e4a;outline-offset:3px}
+.help-fab[aria-expanded=true]{background:#134e4a}
+.help-ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.help-ring{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 0 rgba(15,118,110,.5);animation:help-pulse 2.4s ease-out 3;pointer-events:none}
+@keyframes help-pulse{0%{box-shadow:0 0 0 0 rgba(15,118,110,.5)}70%,100%{box-shadow:0 0 0 14px rgba(15,118,110,0)}}
+.help-panel{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100dvh - 110px));border:1px solid var(--line,#d8dfd8);border-radius:18px;background:var(--surface,#fffefa);color:var(--ink,#18302d);box-shadow:0 18px 48px rgba(0,0,0,.28);overflow:hidden;animation:help-in .2s ease-out}
+.help-panel[hidden]{display:none}
+@keyframes help-in{from{opacity:0;transform:translateY(10px) scale(.98)}}
+.help-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 14px 12px 18px;background:#0f766e;color:#fff}
+.help-head h2{margin:0;font-size:17px;line-height:1.3;color:#fff}
+.help-head p{margin:2px 0 0;font-size:13px;opacity:.9;color:#fff}
+.help-close{display:grid;place-items:center;width:36px;height:36px;min-height:36px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;cursor:pointer}
+.help-close:hover{background:rgba(255,255,255,.28)}
+.help-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.help-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--paper,#f5f4ef);scroll-behavior:smooth}
+.help-msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.help-msg p{margin:0}.help-msg p+p{margin-top:6px}
+.help-bot{align-self:flex-start;background:var(--surface,#fffefa);border:1px solid var(--line,#d8dfd8);border-bottom-left-radius:4px}
+.help-me{align-self:flex-end;background:#0f766e;color:#fff;border-bottom-right-radius:4px}
+.help-typing{display:flex;gap:4px;padding:13px 14px}
+.help-typing i{width:7px;height:7px;border-radius:50%;background:#7a8f8a;animation:help-dot 1s ease-in-out infinite}
+.help-typing i:nth-child(2){animation-delay:.15s}.help-typing i:nth-child(3){animation-delay:.3s}
+@keyframes help-dot{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.help-foot{display:flex;flex-direction:column;gap:8px;max-height:46%;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line,#d8dfd8);background:var(--surface,#fffefa)}
+.help-tabs{display:flex;gap:6px;overflow-x:auto;flex:none}
+.help-tab{flex:none;min-height:34px;padding:4px 12px;border-radius:999px;border:1px solid var(--line,#d8dfd8);background:transparent;color:var(--ink,#18302d);font-size:14px;font-weight:700;cursor:pointer}
+.help-tab[aria-pressed=true]{background:#0f766e;border-color:#0f766e;color:#fff}
+.help-chips{display:flex;flex-direction:column;gap:6px;overflow-y:auto;min-height:0}
+.help-chip{min-height:40px;padding:8px 12px;border-radius:12px;border:1px solid #0f766e;background:transparent;color:#0f766e;text-align:left;font-size:14.5px;font-weight:600;cursor:pointer;line-height:1.35}
+.help-chip:hover{background:rgba(15,118,110,.08)}
+.help-chip.done{border-color:var(--line,#d8dfd8);color:var(--muted,#536762);font-weight:500}
+.help-zalo{flex:none;display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:12px;background:#0068ff;color:#fff;text-decoration:none;font-weight:700;font-size:14.5px}
+.help-zalo[hidden]{display:none}
+.help-zalo:hover{background:#0057d9;color:#fff}
+.help-fab:focus-visible,.help-tab:focus-visible,.help-chip:focus-visible,.help-zalo:focus-visible{outline:3px solid #134e4a;outline-offset:2px}
+@media(max-width:760px){
+ body.student-app:not(:has(#gate:not([hidden]))) .help-fab{bottom:calc(84px + env(safe-area-inset-bottom))}
+ .help-panel{left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom));height:min(78dvh,640px)}
+ body.help-open .help-fab{display:none}
+}
+body:has(#exams-view:not([hidden]) .thi-exam) .help-fab,body:has(#exams-view:not([hidden]) .thi-exam) .help-panel,body.tutor-open .help-fab,body.tutor-open .help-panel,body:has(dialog[open]:modal) .help-fab,body:has(dialog[open]:modal) .help-panel{display:none}
+:where(:root[data-theme=dark]) .help-fab,:where(:root[data-theme=dark]) .help-head,:where(:root[data-theme=dark]) .help-tab[aria-pressed=true],:where(:root[data-theme=dark]) .help-me{background:#2d7a6c;border-color:#2d7a6c}
+:where(:root[data-theme=dark]) .help-chip{border-color:#4ac0a8;color:#8fe0cf}
+:where(:root[data-theme=dark]) .help-bot{background:#2b2d2c}
+@media (prefers-color-scheme:dark){:where(:root:not([data-theme=light])) .help-fab,:where(:root:not([data-theme=light])) .help-head,:where(:root:not([data-theme=light])) .help-tab[aria-pressed=true],:where(:root:not([data-theme=light])) .help-me{background:#2d7a6c;border-color:#2d7a6c}:where(:root:not([data-theme=light])) .help-chip{border-color:#4ac0a8;color:#8fe0cf}:where(:root:not([data-theme=light])) .help-bot{background:#2b2d2c}}
+@media (prefers-reduced-motion:reduce){.help-ring,.help-panel,.help-typing i{animation:none}.help-log{scroll-behavior:auto}}
+@media(max-width:760px){body.student-app:has(#qz-banner:not([hidden])) .help-fab{bottom:calc(150px + env(safe-area-inset-bottom))}}
+.student-app .gate-card.auth-card{padding-bottom:92px;background-size:130px auto}
+@media(max-width:560px){.student-app .gate-card.auth-card{padding-bottom:28px}}

@@ -484,3 +484,7 @@ body.qz-hosting{overflow:hidden}
 .teacher-app .brain-report details{margin-top:8px}.teacher-app .brain-report summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
 .teacher-app .thi-mix-sum{font-weight:600;margin:4px 0 12px}
 .teacher-app .thi-tl .tl-guide{min-height:96px}
+
+/* Đăng nhập giáo viên: thẻ nằm chính giữa màn hình */
+.teacher-app .t-main:has(>#auth-section:not([hidden])){display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;overflow:auto}
+.teacher-app .t-main>#auth-section:not([hidden]){margin:0!important;width:min(440px,100%)!important;flex:none}
