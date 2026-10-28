@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã đóng gói kịch bản setup.sh cài đặt 1 lệnh cho VPS Bộ não AI, cập nhật secret BRAIN_KEY trên Cloudflare Worker live (trả về 200 {"items":[]}), kiểm thử unittests brain 7/7 PASS và Playwright Help Widget 28/28 PASS; sẵn sàng để Thầy cung cấp IP/SSH hoặc chạy 1 lệnh trên VPS.
+- Yêu cầu mới nhất: Antigravity đã xoay BRAIN_KEY an toàn trên Worker (xác minh cũ 403 / mới 200), tạo SSH key vps_brain; xác nhận Thầy chốt hạn cuộc thi là trong ngày 30/10/2026; chờ Thầy cung cấp IP VPS để hoàn tất 13 ca kiểm thử.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1995,3 +1995,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: brain/deploy/setup.sh, docs/huong-dan-vps-bo-nao-ai.md, aisgk.md, docs/handoff/antigravity-claude-vps-bo-nao.md.
 - Kiểm thực tế: Cloudflare Worker `/api/brain/export` trả HTTP 200 {"items":[]}; python unittests `brain` 7/7 PASS; Playwright `test_help_widget.cjs` 28/28 PASS; git push `origin/main` 15d3314 thành công.
 - Việc tiếp: Chờ Thầy cung cấp thông tin VPS (hoặc Thầy dán lệnh `setup.sh` lên VPS) và điền 3 bí mật (FB_SECRET, SHEET_URL/SHEET_BRAIN_KEY, GEMINI_API_KEY) để chạy thử nghiệm; Thầy cho biết hạn nộp cuộc thi để Claude lên kế hoạch "Phân tích hiểu lầm và Ôn tập cách quãng".
+
+### 28/10/2026 (chiều) — Antigravity — Xoay BRAIN_KEY an toàn, tạo khóa SSH vps_brain và ghi nhận hạn cuộc thi 30/10/2026
+- Đã thực hiện: Khẩn cấp xoay secret `BRAIN_KEY` mới cho Cloudflare Worker qua wrangler secret (khóa cũ vô hiệu, khóa mới hoạt động 100%); kiểm chứng thực tế: gọi `/api/brain/export` bằng khóa cũ trả HTTP 403, khóa mới trả HTTP 200; cập nhật `brain/.env` cục bộ; tạo cặp khóa SSH Ed25519 `~/.ssh/vps_brain`; ghi nhận hạn chốt nộp hồ sơ cuộc thi từ Thầy là trong ngày 30/10/2026 (còn 2 ngày) để Claude lên kế hoạch "Phân tích hiểu lầm và Ôn tập cách quãng".
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-vps-bo-nao.md, brain/.env (cục bộ).
+- Kiểm thực tế: Cloudflare Worker `/api/brain/export` trả 403 (khóa cũ) và 200 (khóa mới); SSH key vps_brain đã sẵn sàng trên máy Thầy.
+- Việc tiếp: Thầy cung cấp IP VPS và chạy 1 lệnh nạp khóa SSH (nhập pass root 1 lần); sau đó Antigravity SSH tự động chạy 13 ca kiểm thử, khóa SSH và hoàn tất báo cáo cho Claude.
