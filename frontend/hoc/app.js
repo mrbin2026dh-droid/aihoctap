@@ -161,6 +161,13 @@ thiApp.setReviewer(async review => {
   try { const r = await api('/pwa/tutor', { method: 'POST', token: session.token, body: { mode: 'exam_review', message: 'Nhận xét bài thi thử của em', review } }); refreshTutorQuota().catch(() => {}); return String(r.reply || ''); }
   catch { return ''; }
 });
+// Thi thử có tự luận: AI chấm theo gợi ý đáp án của thầy cô (Worker, token học sinh). Lỗi → ném để bài ghi "chờ chấm".
+thiApp.setGrader(async payload => {
+  if (!navigator.onLine || !session) throw new Error('offline');
+  if (!session.token && session.pin) await workerToken(session.identity.uid, session.pin);
+  if (!session?.token) throw new Error('no token');
+  return api('/pwa/exam-essay', { method: 'POST', token: session.token, timeout: 60000, body: payload });
+});
 
 
 /** @param {Error} error */

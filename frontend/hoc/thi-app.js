@@ -9,8 +9,8 @@ import { SHEET_API } from './sheet-config.js';
 import { typeOut } from './typing.js';
 
 /** @typedef {{ma:string,ten:string,lop:string,khoi:number}} Me */
-/** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean,noi_dung?:'tn'|'tn_th',hinh_thuc?:string,nam_hoc?:string}} Bai */
-/** @typedef {{id:string,stt?:number|string,text:string,options:Record<string,string>,answer:string,points:number,topic?:string}} Cau */
+/** @typedef {{tieu_de:string,che_do:'that'|'thu',khoi:number,lop:string,trang_thai:'mo'|'khoa',so_cau:number,xem_diem?:boolean,noi_dung?:'tn'|'tn_th'|'tn_tl',hinh_thuc?:string,nam_hoc?:string}} Bai */
+/** @typedef {{id:string,stt?:number|string,kind?:'tl',text:string,options:Record<string,string>,answer:string,points:number,topic?:string,goi_y?:string}} Cau */
 
 /** @type {HTMLElement|null} */ let root = null;
 /** @type {Me|null} */ let me = null;
@@ -21,6 +21,9 @@ import { typeOut } from './typing.js';
 /** @type {{phase:'list'|'wait'|'exam'|'result', id:string, qs:Cau[], result?:any, fresh?:boolean}} */ let cur = { phase: 'list', id: '', qs: [] };
 let loaded = false, online = true, pin = '';
 /** @type {any} bài thi thử vừa nộp (để Gia sư AI nhận xét) */ let reviewData = null;
+const isTl = (/** @type {Cau} */ q) => q.kind === 'tl';
+const MAX_TL = 3000;
+const r2 = (/** @type {number} */ x) => Math.round(x * 100) / 100;
 
 /** Khóa chủ đề an toàn cho Firebase (dùng chung với Bản đồ năng lực). @param {string} t */
 export const topicKey = t => String(t || '').normalize('NFC').toLowerCase().trim().replace(/[.#$[\]/\s]+/g, '_').slice(0, 60);
@@ -104,6 +107,23 @@ export async function myTopics() {
 /** @type {null|((review:any)=>Promise<string>)} */ let reviewer = null;
 /** app.js cung cấp hàm gọi Gia sư AI nhận xét bài thi thử (cần token Worker). @param {(review:any)=>Promise<string>} fn */
 export function setReviewer(fn) { reviewer = fn; }
+/** @type {null|((payload:any)=>Promise<{items:{diem:number,nhan_xet:string}[],tong_ket?:string}>)} */ let grader = null;
+/** app.js cung cấp hàm nhờ AI chấm tự luận (cần token Worker). @param {(payload:any)=>Promise<any>} fn */
+export function setGrader(fn) { grader = fn; }
+/** AI chấm các câu tự luận theo gợi ý đáp án của thầy cô. Lỗi → null (bài vẫn nộp, chấm lại sau). @param {string} title @param {Cau[]} qs @param {Record<string,string>} a */
+async function gradeEssays(title, qs, a) {
+  if (!grader || !qs.length) return null;
+  try {
+    const r = await grader({ title, items: qs.map(q => ({ text: q.text, guide: q.goi_y || '', answer: String(a[q.id] || '').slice(0, MAX_TL), max: Number(q.points) || 1 })) });
+    return r && Array.isArray(r.items) && r.items.length === qs.length ? r : null;
+  } catch { return null; }
+}
+/** Bài làm tự luận + điểm AI → bản ghi tu_luan. @param {Cau[]} qs @param {Record<string,string>} a @param {any} g */
+function tlRecord(qs, a, g) {
+  /** @type {Record<string, any>} */ const out = {};
+  qs.forEach((q, k) => { const max = Number(q.points) || 1, it = g?.items?.[k]; const d = it ? Math.max(0, Math.min(max, Math.round((Number(it.diem) || 0) * 4) / 4)) : 0; out[q.id] = { tl: String(a[q.id] || '').slice(0, MAX_TL), d, max, ...(it && it.nhan_xet ? { nx: String(it.nhan_xet).slice(0, 600) } : {}) }; });
+  return out;
+}
 /** Đăng xuất: dừng nghe, tắt huy hiệu. */
 export function stopAll() { if (badgeCb) badgeCb(0); badgeCb = null; leave(); me = null; mine = {}; bai = {}; loaded = false; cur = { phase: 'list', id: '', qs: [] }; }
 /** Rời tab Thi (đăng xuất/đổi tab): dừng nghe. */
@@ -223,12 +243,13 @@ async function startExam(id) {
   if (cur.id === id && cur.phase === 'exam' && !deCache[id].length) { const w3 = page(b.tieu_de, ''); w3.append(el('p', 'Bài thi chưa có câu hỏi. Em báo thầy cô nhé.', 'thi-error'), backBtn('Về danh sách')); return; }
   if (cur.id !== id || cur.phase !== 'exam') return;
   // Thi thật: mỗi em một thứ tự câu khác nhau (công bằng hơn); thi thử giữ nguyên thứ tự.
-  cur.qs = b.che_do === 'that' ? seededShuffle(deCache[id], `${store.keyOf(me?.ma || '')}|${id}`) : deCache[id];
+  cur.qs = b.che_do === 'that' ? seededShuffle(deCache[id].filter(q => !isTl(q)), `${store.keyOf(me?.ma || '')}|${id}`) : [...deCache[id].filter(q => !isTl(q)), ...deCache[id].filter(isTl)];
   drawExam(); void presence('dang_thi');
 }
 function answers() {
   /** @type {Record<string,string>} */ const a = {};
   root?.querySelectorAll('.thi-form input[type=radio]:checked').forEach(n => { const i = /** @type {HTMLInputElement} */ (n); a[i.name] = i.value; });
+  root?.querySelectorAll('.thi-form textarea.thi-tl-input').forEach(n => { const t = /** @type {HTMLTextAreaElement} */ (n); if (t.value.trim()) a[t.name] = t.value.slice(0, MAX_TL); });
   return a;
 }
 /** Chiều cao thanh trên cùng của app (để thanh tiêu đề bài thi neo ngay bên dưới). */
@@ -250,7 +271,10 @@ function drawExam() {
   if (b.che_do === 'that') { const lv = el('p', leaves(cur.id) ? `Em đã rời màn hình bài thi ${leaves(cur.id)} lần. Thầy cô sẽ thấy số lần này.` : 'Bài thi thật: thứ tự câu và phương án của mỗi bạn khác nhau. Không rời khỏi màn hình khi đang làm.', 'thi-leave'); lv.setAttribute('role', 'status'); w.append(lv); }
   const draft = readDraft(cur.id);
   const f = /** @type {HTMLFormElement} */ (el('form', '', 'thi-form')); f.noValidate = true;
+  const mixed = cur.qs.some(isTl) && cur.qs.some(q => !isTl(q));
   cur.qs.forEach((q, i) => {
+    if (mixed && (i === 0 || isTl(q) !== isTl(cur.qs[i - 1]))) f.append(el('h3', isTl(q) ? 'PHẦN II. TỰ LUẬN' : 'PHẦN I. TRẮC NGHIỆM', 'thi-part'));
+    if (isTl(q)) { f.append(essayBox(q, i, draft)); addNav(q, i, /** @type {HTMLElement} */ (f.lastElementChild)); return; }
     const fs = el('fieldset', '', 'question thi-q'); fs.id = `thi-q-${i + 1}`;
     const lg = el('legend', `Câu ${i + 1}. ${q.text}`); lg.append(el('span', ` (${q.points} điểm)`, 'thi-pts')); fs.append(lg);
     const that = b.che_do === 'that', opts = Object.entries(q.options || {});
@@ -259,11 +283,14 @@ function drawExam() {
       inp.type = 'radio'; inp.name = q.id; inp.value = k; inp.checked = draft[q.id] === k;   // giá trị = phương án gốc (chấm đúng), nhãn = vị trí hiển thị
       lab.append(inp, document.createTextNode(`${that ? 'ABCD'[pos] : k}. ${t}`)); fs.append(lab);
     });
-    f.append(fs);
-    const nb = /** @type {HTMLButtonElement} */ (el('button', String(i + 1), 'thi-qbtn')); nb.type = 'button'; nb.dataset.q = q.id;
-    nb.addEventListener('click', () => { fs.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); /** @type {HTMLInputElement|null} */ (fs.querySelector('input:checked') || fs.querySelector('input'))?.focus({ preventScroll: true }); });
-    nav.append(nb);
+    f.append(fs); addNav(q, i, fs);
   });
+  /** @param {Cau} q @param {number} i @param {HTMLElement} fs */
+  function addNav(q, i, fs) {
+    const nb = /** @type {HTMLButtonElement} */ (el('button', String(i + 1), 'thi-qbtn' + (isTl(q) ? ' is-tl' : ''))); nb.type = 'button'; nb.dataset.q = q.id;
+    nb.addEventListener('click', () => { fs.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); /** @type {HTMLInputElement|null} */ (fs.querySelector('input:checked') || fs.querySelector('input') || fs.querySelector('textarea'))?.focus({ preventScroll: true }); });
+    nav.append(nb);
+  }
   const bar = el('div', '', 'thi-bar');
   const err = el('p', '', 'thi-error'); err.setAttribute('role', 'alert');
   const submit = /** @type {HTMLButtonElement} */ (el('button', 'Nộp bài', 'primary thi-submit')); submit.type = 'submit';
@@ -273,9 +300,11 @@ function drawExam() {
     const a = answers(), n = Object.keys(a).length;
     count.textContent = `Đã làm ${n}/${cur.qs.length}`;
     nav.querySelectorAll('.thi-qbtn').forEach((x, i) => { const done = !!a[cur.qs[i].id]; x.classList.toggle('is-done', done); if (done) x.classList.remove('is-missing'); x.setAttribute('aria-label', `Câu ${i + 1}, ${done ? 'đã làm' : 'chưa làm'}`); });
-    f.querySelectorAll('.thi-q.is-missing').forEach(fs => { if (fs.querySelector('input:checked')) fs.classList.remove('is-missing'); });
+    f.querySelectorAll('.thi-q.is-missing').forEach(fs => { const t = /** @type {HTMLTextAreaElement|null} */ (fs.querySelector('textarea')); if (fs.querySelector('input:checked') || (t && t.value.trim())) fs.classList.remove('is-missing'); });
   };
   f.addEventListener('change', () => { saveDraft(cur.id, answers()); update(); });
+  let typing = 0;   // gõ tự luận: lưu nháp sau khi ngừng gõ 0,4 giây
+  f.addEventListener('input', ev => { if (!(/** @type {HTMLElement} */ (ev.target)).matches('textarea')) return; clearTimeout(typing); typing = window.setTimeout(() => { saveDraft(cur.id, answers()); update(); }, 400); });
   f.addEventListener('submit', ev => { ev.preventDefault(); void doSubmit(submit, err); });
   bar.append(exit, submit);
   if (b.noi_dung === 'tn_th') f.append(practical(cur.id));
@@ -310,6 +339,20 @@ function practical(id) {
   });
   box.append(h, ...(task ? [task] : []), lab, inp, up, st); return box;
 }
+/** Câu tự luận: đề + khung gõ kẻ dòng chấm như giấy thi (tự cao theo bài làm). @param {Cau} q @param {number} i @param {Record<string,string>} draft */
+function essayBox(q, i, draft) {
+  const fs = el('fieldset', '', 'question thi-q thi-tl-q'); fs.id = `thi-q-${i + 1}`;
+  const lg = el('legend', `Câu ${i + 1}. ${q.text}`); lg.append(el('span', ` (${q.points} điểm)`, 'thi-pts')); fs.append(lg);
+  const id = `thi-tl-${q.id}`;
+  const lab = el('label', 'Bài làm của em', 'thi-tl-label'); lab.setAttribute('for', id);
+  const ta = /** @type {HTMLTextAreaElement} */ (el('textarea', '', 'thi-tl-input')); ta.id = id; ta.name = q.id; ta.maxLength = MAX_TL; ta.rows = 6; ta.spellcheck = true; ta.value = draft[q.id] || '';
+  ta.setAttribute('autocapitalize', 'sentences');
+  const cnt = el('p', '', 'meta thi-tl-count'); cnt.id = id + '-n'; cnt.setAttribute('aria-live', 'polite'); ta.setAttribute('aria-describedby', cnt.id);
+  const grow = () => { ta.style.height = 'auto'; ta.style.height = `${Math.max(ta.scrollHeight, 0) + 2}px`; cnt.textContent = `${ta.value.length}/${MAX_TL} ký tự`; };
+  ta.addEventListener('input', grow); requestAnimationFrame(grow);
+  const paper = el('div', '', 'thi-tl-paper'); paper.append(ta);
+  fs.append(lab, paper, cnt); return fs;
+}
 function lockBanner() {
   const box = root?.querySelector('.thi-lock'); const b = bai[cur.id]; if (!box) return;
   box.textContent = b && b.trang_thai !== 'mo' ? 'Thầy cô đang tạm khóa bài thi. Bài làm vẫn được giữ trên máy, chờ mở lại rồi nộp.' : '';
@@ -319,34 +362,48 @@ async function doSubmit(btn, err) {
   const b = bai[cur.id]; if (!b || !me) return;
   const a = answers(), total = cur.qs.length;
   // Bắt buộc làm hết: chỉ ra các câu còn sót, tô đỏ và đưa tới câu đầu tiên.
-  const missing = cur.qs.map((q, i) => (a[q.id] ? 0 : i + 1)).filter(Boolean);
+  const missing = cur.qs.map((q, i) => (a[q.id] && (!isTl(q) || a[q.id].trim().length > 1) ? 0 : i + 1)).filter(Boolean);
   if (missing.length) {
     root?.querySelectorAll('.thi-qbtn').forEach((x, i) => x.classList.toggle('is-missing', missing.includes(i + 1)));
     missing.forEach(n => document.getElementById(`thi-q-${n}`)?.classList.add('is-missing'));
     await noticeBox({ title: `Còn ${missing.length} câu chưa làm`, body: `Em chưa làm câu ${missing.join(', ')}. Làm hết các câu rồi mới nộp được.`, okText: 'Làm tiếp' }).catch(() => {});
     const first = document.getElementById(`thi-q-${missing[0]}`);
-    first?.scrollIntoView({ block: 'start' }); /** @type {HTMLInputElement|null} */ (first?.querySelector('input'))?.focus({ preventScroll: true });
+    first?.scrollIntoView({ block: 'start' }); /** @type {HTMLInputElement|null} */ (first?.querySelector('input') || first?.querySelector('textarea'))?.focus({ preventScroll: true });
     return;
   }
   const ok = await confirmBox({ title: 'Nộp bài?', body: `Em đã làm đủ ${total} câu. ` + (b.che_do === 'thu' ? 'Đây là thi thử, em làm lại được.' : 'Nộp rồi thì không làm lại được.'), okText: 'Nộp bài', cancelText: 'Xem lại' });
   if (!ok) return;
+  const mcq = cur.qs.filter(q => !isTl(q)), ess = cur.qs.filter(isTl);
+  const right = (/** @type {Cau} */ q) => !!a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase();
   let diem = 0, tong = 0, dung = 0;
-  for (const q of cur.qs) { const pts = Number(q.points) || 1; tong += pts; if (a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase()) { diem += pts; dung++; } }
-  diem = Math.round(diem * 100) / 100; tong = Math.round(tong * 100) / 100;
-  btn.disabled = true; btn.textContent = 'Đang nộp…'; err.textContent = '';
+  for (const q of cur.qs) { const pts = Number(q.points) || 1; tong += pts; if (!isTl(q) && right(q)) { diem += pts; dung++; } }
+  const diemTn = r2(diem); tong = r2(tong);
+  btn.disabled = true; err.textContent = '';
+  /** @type {Record<string, any>|null} */ let tuLuan = null, choCham = false;
+  if (ess.length) {   // AI chấm tự luận trước khi ghi (một lần ghi, có đủ điểm)
+    btn.textContent = 'AI đang chấm tự luận…';
+    const wait = el('p', 'AI đang chấm phần tự luận theo gợi ý của thầy cô, em chờ khoảng 10–20 giây…', 'meta thi-grading'); wait.setAttribute('role', 'status'); err.before(wait);
+    const g = await gradeEssays(b.tieu_de, ess, a); wait.remove();
+    tuLuan = tlRecord(ess, a, g); choCham = !g;
+    diem += Object.values(tuLuan).reduce((x, v) => x + v.d, 0);
+  }
+  diem = r2(diem);
+  btn.textContent = 'Đang nộp…';
   try {
     const key = store.keyOf(me.ma);
     const prev = mine[cur.id] !== undefined && mine[cur.id] !== null ? mine[cur.id] : await store.get(`thi_nop/${cur.id}/${key}`).catch(() => null);
     // Theo chủ đề (Bản đồ năng lực): code đếm đúng/tổng mỗi chủ đề của bài.
     /** @type {Record<string,{ten:string,d:number,n:number}>} */ const chu_de = {};
-    for (const q of cur.qs) { const t = String(q.topic || '').trim(); if (!t) continue; const k = topicKey(t), r = chu_de[k] || { ten: t.slice(0, 60), d: 0, n: 0 }; r.n++; if (a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase()) r.d++; chu_de[k] = r; }
-    /** @type {Record<string, any>} */ const rec = { ma: me.ma, ten: me.ten, lop: me.lop, diem, tong, dung, so_cau: total, lan: lanOf(prev) + 1, cao_nhat: Math.max(diem, prev ? best(prev) : 0), dau: prev ? Number(prev.dau ?? prev.diem) || 0 : diem, tra_loi: a, at: store.SERVER_TIME };
+    for (const q of cur.qs) { const t = String(q.topic || '').trim(); if (!t) continue; const k = topicKey(t), r = chu_de[k] || { ten: t.slice(0, 60), d: 0, n: 0 }; r.n++; if (isTl(q)) { const v = tuLuan?.[q.id]; if (v && !choCham) r.d = r2(r.d + v.d / v.max); } else if (right(q)) r.d++; chu_de[k] = r; }
+    /** @type {Record<string,string>} chỉ đáp án trắc nghiệm (bài làm tự luận nằm ở tu_luan) */ const traLoi = {}; for (const q of mcq) if (a[q.id]) traLoi[q.id] = a[q.id];
+    /** @type {Record<string, any>} */ const rec = { ma: me.ma, ten: me.ten, lop: me.lop, diem, tong, dung, so_cau: total, lan: lanOf(prev) + 1, cao_nhat: Math.max(diem, prev ? best(prev) : 0), dau: prev ? Number(prev.dau ?? prev.diem) || 0 : diem, tra_loi: traLoi, at: store.SERVER_TIME };
+    if (tuLuan) { rec.tu_luan = tuLuan; rec.diem_tn = diemTn; rec.cho_cham = choCham; }
     if (Object.keys(chu_de).length) rec.chu_de = chu_de;
     if (b.che_do === 'that') rec.roi_tab = leaves(cur.id);
     await store.put(`thi_nop/${cur.id}/${key}`, rec);
     clearDraft(cur.id); mine[cur.id] = { ...rec, at: Date.now() };
     void presence('da_nop');
-    reviewData = { id: cur.id, title: b.tieu_de, rec, items: cur.qs.map((q, i) => ({ stt: i + 1, text: q.text, topic: q.topic || '', dung: !!a[q.id] && a[q.id].toUpperCase() === String(q.answer || '').toUpperCase(), bo_trong: !a[q.id] })) };
+    reviewData = { id: cur.id, title: b.tieu_de, rec, items: cur.qs.map((q, i) => ({ stt: i + 1, text: q.text, topic: q.topic || '', dung: isTl(q) ? !!tuLuan && !choCham && tuLuan[q.id].d >= tuLuan[q.id].max / 2 : right(q), bo_trong: !a[q.id] })) };
     if (b.xem_diem) await showStats(cur.id, true);
     else { cur = { phase: 'result', id: cur.id, qs: cur.qs, result: rec, fresh: true }; drawResult(); }
   } catch (e) {
@@ -357,6 +414,43 @@ async function doSubmit(btn, err) {
     else err.textContent = (msg || 'Chưa nộp được.') + ' Bài làm vẫn còn trên máy, bấm Nộp bài lần nữa.';
     btn.disabled = false; btn.textContent = 'Nộp bài';
   }
+}
+/** Chấm lại phần tự luận khi lần nộp trước AI chưa chấm được (thi thử: ghi đè được khi bài còn mở). @param {HTMLButtonElement} btn @param {HTMLElement} msg */
+async function regrade(btn, msg) {
+  const b = bai[cur.id], r = cur.result; if (!b || !me || !r?.tu_luan) return;
+  const qs = (deCache[cur.id] || []).filter(isTl).filter(q => r.tu_luan[q.id]);
+  if (!qs.length) { try { const d = await store.get('thi_de/' + cur.id); deCache[cur.id] = (Array.isArray(d) ? d : Object.values(d || {})).filter(Boolean); } catch { /* mạng */ } }
+  const list = (deCache[cur.id] || []).filter(isTl).filter(q => r.tu_luan[q.id]);
+  if (!list.length) { msg.textContent = 'Chưa tải được đề. Kiểm tra mạng rồi thử lại.'; return; }
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'AI đang chấm…'; msg.textContent = '';
+  /** @type {Record<string,string>} */ const a = {}; for (const q of list) a[q.id] = r.tu_luan[q.id].tl;
+  const g = await gradeEssays(b.tieu_de, list, a);
+  if (!g) { msg.textContent = 'AI vẫn chưa chấm được. Thử lại sau ít phút.'; btn.disabled = false; btn.textContent = old; return; }
+  const tl = tlRecord(list, a, g), diem = r2((Number(r.diem_tn) || 0) + Object.values(tl).reduce((x, v) => x + v.d, 0));
+  /** @type {Record<string, any>} */ const rec = { ma: r.ma, ten: r.ten, lop: r.lop, diem, tong: r.tong, dung: r.dung, so_cau: r.so_cau, lan: r.lan, cao_nhat: Math.max(Number(r.cao_nhat) || 0, diem), dau: r.lan > 1 ? r.dau : diem, tra_loi: r.tra_loi || {}, tu_luan: tl, diem_tn: Number(r.diem_tn) || 0, cho_cham: false, at: store.SERVER_TIME };
+  if (r.chu_de) rec.chu_de = r.chu_de;
+  try { await store.put(`thi_nop/${cur.id}/${store.keyOf(me.ma)}`, rec); mine[cur.id] = { ...rec, at: Date.now() }; cur.result = mine[cur.id]; await showStats(cur.id, cur.fresh); }
+  catch { msg.textContent = b.trang_thai !== 'mo' ? 'Thầy cô đã khóa bài nên chưa ghi lại được điểm.' : 'Chưa ghi được điểm. Thử lại.'; btn.disabled = false; btn.textContent = old; }
+}
+/** Kết quả phần tự luận: điểm + nhận xét của AI từng câu; chưa chấm được → nút Chấm lại. @param {any} r */
+function essayResult(r) {
+  const box = el('section', '', 'thi-tl-result'); box.setAttribute('aria-labelledby', 'thi-tlr-title');
+  const h = el('h3', 'Phần tự luận — AI chấm theo gợi ý của thầy cô'); h.id = 'thi-tlr-title'; box.append(h);
+  const qs = (deCache[cur.id] || []).filter(isTl), byId = Object.fromEntries(qs.map((q, i) => [q.id, { q, i }]));
+  if (r.cho_cham) {
+    const msg = el('p', 'AI chưa chấm được phần tự luận (mạng hoặc AI đang bận). Bài làm của em đã được lưu.', 'thi-tl-pending'); msg.setAttribute('role', 'status');
+    const note = el('p', '', 'meta'); note.setAttribute('aria-live', 'polite');
+    box.append(msg, btn('Chấm lại phần tự luận', 'primary thi-tl-regrade', () => void regrade(/** @type {HTMLButtonElement} */ (box.querySelector('.thi-tl-regrade')), note)), note);
+    return box;
+  }
+  const ol = el('ol', '', 'thi-tl-items');
+  Object.entries(r.tu_luan || {}).forEach(([qid, v], k) => {
+    const li = el('li', '', 'thi-tl-item'); const info = byId[qid];
+    li.append(el('p', `${info ? info.q.text : 'Câu tự luận ' + (k + 1)}`, 'thi-tl-q'), el('p', `${v.d} / ${v.max} điểm`, 'thi-tl-score'));
+    if (v.nx) li.append(el('p', v.nx, 'thi-tl-nx'));
+    ol.append(li);
+  });
+  box.append(ol); return box;
 }
 
 /* ---------- Kết quả: số lần thi, điểm, hạng trong lớp ---------- */
@@ -382,7 +476,7 @@ function drawResult(all) {
   if (!xem) {
     const card = el('div', '', 'thi-result'); card.setAttribute('role', 'status');
     card.append(icon('check', 'ic thi-result-ic'), el('p', 'Đã nộp bài', 'thi-result-title'), el('p', 'Thầy cô sẽ công bố điểm sau.', 'meta'));
-    w.append(card); actions(w, b); card.tabIndex = -1; card.focus?.(); return;
+    w.append(card); if (r.cho_cham && r.tu_luan) w.append(essayResult(r)); actions(w, b); card.tabIndex = -1; card.focus?.(); return;
   }
   // Xếp hạng trong lớp theo điểm cao nhất; bằng điểm thì ai nộp trước đứng trước.
   const cls = Object.entries(all || { [store.keyOf(me?.ma || '')]: r }).map(([k, v]) => ({ k, ...v }))
@@ -391,8 +485,10 @@ function drawResult(all) {
   const myKey = store.keyOf(me?.ma || ''), rank = cls.findIndex(v => v.k === myKey) + 1;
   const avg = cls.length ? Math.round(cls.reduce((s, v) => s + best(v), 0) / cls.length * 10) / 10 : 0;
   const hero = el('div', '', 'thi-result thi-hero'); hero.setAttribute('role', 'status');
-  hero.append(el('p', cur.fresh ? 'Điểm lần này' : 'Điểm lần gần nhất', 'meta'), el('p', `${r.diem} / ${r.tong}`, 'thi-score'), el('p', `Đúng ${r.dung}/${r.so_cau} câu`, 'meta'));
+  const nTl = r.tu_luan ? Object.keys(r.tu_luan).length : 0;
+  hero.append(el('p', cur.fresh ? 'Điểm lần này' : 'Điểm lần gần nhất', 'meta'), el('p', `${r.diem} / ${r.tong}`, 'thi-score'), el('p', nTl ? `Trắc nghiệm đúng ${r.dung}/${r.so_cau - nTl} câu · Tự luận ${r.cho_cham ? 'chưa chấm' : r2(Object.values(r.tu_luan).reduce((/** @type {number} */ x, /** @type {any} */ v) => x + (Number(v.d) || 0), 0)) + ' điểm'}` : `Đúng ${r.dung}/${r.so_cau} câu`, 'meta'));
   w.append(hero);
+  if (nTl) w.append(essayResult(r));
   const grid = el('div', '', 'stat-grid stat-grid-4 thi-stats');
   /** @param {string} ic @param {string} v @param {string} label */
   const tile = (ic, v, label) => { const t = el('div', '', 'stat-tile'); const i = el('span', '', 'stat-ic'); i.append(icon(ic, 'ic')); t.append(i, el('span', v, 'stat-value'), el('span', label, 'stat-label')); return t; };

@@ -1948,3 +1948,14 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: Firebase Emulator 100% PASS (4 ca chẩn đoán quiz_proof PASS, 2 ca sửa quiz ghi điểm PASS); Alibaba OCR 0 lỗi; git push main thành công.
 - Việc tiếp: Thầy đăng luật lên Firebase Console, kiểm tra app học sinh hết lỗi 401, thuê VPS Ubuntu 24.04 và cấu hình theo hướng dẫn.
+
+## 28/10 (trưa) — Sửa 502 AI soạn đề, thi thử Trắc nghiệm + Tự luận
+- geminiOnce: thử lại 503/500 (3 lần), đổi khóa khi 429/401/403, bỏ JSON khi 400, báo "mã NNN", log [GEMINI_FAIL], GEMINI_FALLBACK_MODEL tùy chọn.
+- Worker: /api/pwa/exam-essay (token học sinh, ESSAY_DAILY=40) chấm tự luận theo gợi ý; ai-questions nhận essays (≤5) trả {questions, essays}.
+- Code.gs: DeThiThu cột M "Gợi ý chấm", câu TL = "TL"; noi_dung thi thử tn/tn_tl; thi_de câu tl {kind:'tl', goi_y}; checkQs_/ndOf_.
+- Luật thi_nop: tu_luan{tl≤3000,d≤max,max,nx}, diem_tn, cho_cham.
+- Giáo viên: Nội dung thi thử, Số câu tự luận, Phần tự luận (đề/gợi ý/điểm/duyệt AI), dòng tổng điểm, Excel TL, sửa bài.
+- Học sinh: Phần I/II, khung gõ kẻ dòng chấm tự cao, AI chấm khi nộp, chờ chấm + Chấm lại.
+- Test: test_essay_ai 17, test_thi_tuluan 68, test_sheet_exam_gs 125.
+- Bàn giao: docs/handoff/claude-antigravity-thi-tu-luan.md
+- Khôi phục frontend/hoc/sw.js (bản gộp f3eef3a làm mất xử lý navigate offline + ACTIVATE/VERSION); test_pwa_update_integrity lại đạt 7/7.

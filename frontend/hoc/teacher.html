@@ -256,9 +256,13 @@
 <div class="t-heading"><div><h2 id="thi-form-title">Tạo đề thi</h2><p class="t-muted" id="thi-form-sub">Bài mới luôn ở trạng thái khóa cho đến khi bấm Mở thi. Có thể tạo nhiều bài cho nhiều lớp cùng lúc.</p></div></div>
 <div class="t-form-grid">
 <div class="t-field"><label for="thi-new-title">Tiêu đề</label><input id="thi-new-title" type="text" maxlength="200" required></div>
-<div class="t-field"><label for="thi-new-mode">Loại thi</label><select id="thi-new-mode"><option value="that">Thi thật (đề lấy từ Google Sheet, mỗi em một lần)</option><option value="thu">Thi thử (đề tải từ file Excel, làm nhiều lần)</option></select></div>
+<div class="t-field"><label for="thi-new-mode">Loại thi</label><select id="thi-new-mode"><option value="that">Thi thật (đề lấy từ Google Sheet, mỗi em một lần)</option><option value="thu">Thi thử (đề từ Excel hoặc AI soạn, làm nhiều lần)</option></select></div>
 <div class="t-field"><label for="thi-new-khoi">Khối</label><select id="thi-new-khoi"><option value="9">Khối 9</option><option value="8">Khối 8</option><option value="7">Khối 7</option><option value="6">Khối 6</option></select></div>
 <div class="t-field"><label for="thi-new-lop">Lớp được vào thi</label><select id="thi-new-lop"><option value="">Cả khối</option></select></div>
+</div>
+<div class="t-form-grid thi-that-fields" id="thi-thu-fields" hidden>
+<div class="t-field"><label for="thi-thu-nd">Nội dung thi</label><select id="thi-thu-nd"><option value="tn">Trắc nghiệm</option><option value="tn_tl">Trắc nghiệm + Tự luận (AI chấm tự luận)</option></select></div>
+<div class="t-field" id="thi-tl-count-f" hidden><label for="thi-tl-count">Số câu tự luận</label><input id="thi-tl-count" type="number" inputmode="numeric" min="1" max="10" value="2" aria-describedby="thi-tl-count-hint"><p class="t-hint" id="thi-tl-count-hint">Số câu trắc nghiệm: tải file Excel hoặc chọn trong "AI soạn đề theo ma trận".</p></div>
 </div>
 <div class="t-form-grid thi-that-fields" id="thi-that-fields">
 <div class="t-field"><label for="thi-new-nam">Năm học</label><select id="thi-new-nam"></select></div>
@@ -274,6 +278,11 @@
 </section>
 <p class="t-hint" id="thi-new-bank" aria-live="polite"></p>
 <section id="thi-q-editor" class="thi-qe-wrap" hidden aria-labelledby="thi-qe-title"><div class="t-heading"><div><h3 id="thi-qe-title">Câu hỏi</h3><p class="t-muted" id="thi-qe-note"></p></div><div class="t-actions"><button type="button" id="thi-qe-ai" class="t-button thi-ai-btn">AI soạn thêm câu</button><button type="button" id="thi-qe-add" class="t-button">Thêm câu</button></div></div><div id="thi-qe-list"></div></section>
+<section id="thi-tl-fields" class="thi-th-wrap thi-tl-wrap" hidden aria-labelledby="thi-tl-title">
+<div class="t-heading"><div><h3 id="thi-tl-title">Phần tự luận</h3><p class="t-muted">Nhập đề và gợi ý đáp án (các ý chính, mỗi ý bao nhiêu điểm). Học sinh không thấy gợi ý; AI dựa vào gợi ý để chấm ngay khi em nộp bài.</p></div><button type="button" id="thi-tl-add" class="t-button">Thêm câu tự luận</button></div>
+<div id="thi-tl-list"></div>
+</section>
+<p class="t-hint thi-mix-sum" id="thi-mix-sum" aria-live="polite" hidden></p>
 <div class="t-actions" id="thi-new-file-row" hidden><button type="button" id="thi-new-ai" class="t-button t-primary thi-ai-btn">AI soạn đề theo ma trận</button><button type="button" id="thi-new-template" class="t-button">Tải mẫu Excel đề</button><label class="t-file" for="thi-new-file">Tải lên Excel đề thi thử<input id="thi-new-file" type="file" accept=".xlsx"></label></div>
 <div class="t-actions"><button type="submit" id="thi-new-create" class="t-button t-primary">Tạo bài thi</button><button type="button" id="thi-new-cancel" class="t-button" hidden>Hủy sửa</button></div>
 </form>
@@ -566,7 +575,7 @@
 <script type="module" src="./teacher.js?v=20261028a"></script>
 <dialog id="ai-q-dialog" class="t-dialog" aria-labelledby="ai-q-title"><form id="ai-q-form" class="t-form" method="dialog" novalidate>
 <h2 id="ai-q-title">AI soạn đề theo ma trận</h2>
-<p class="t-muted">AI soạn câu trắc nghiệm bám nội dung bài học. Thầy cô đọc, sửa và đánh dấu <strong>Đã duyệt</strong> từng câu trước khi lưu.</p>
+<p class="t-muted" id="ai-q-sub">AI soạn câu trắc nghiệm bám nội dung bài học. Thầy cô đọc, sửa và đánh dấu <strong>Đã duyệt</strong> từng câu trước khi lưu.</p>
 <div class="t-field"><label for="ai-q-lesson">Bài học</label><select id="ai-q-lesson" required aria-describedby="ai-q-lesson-err"><option value="">Đang tải danh sách bài…</option></select><p id="ai-q-lesson-err" class="t-field-error"></p></div>
 <div class="t-field"><label for="ai-q-topic">Chủ đề cần tập trung (không bắt buộc)</label><input id="ai-q-topic" maxlength="80" autocomplete="off" placeholder="Ví dụ: Mã nhị phân"></div>
 <fieldset class="ai-q-matrix"><legend>Ma trận số câu (tối đa 20)</legend>
@@ -574,6 +583,7 @@
 <div class="t-field"><label for="ai-q-hieu">Hiểu</label><input id="ai-q-hieu" type="number" inputmode="numeric" min="0" max="20" value="3"></div>
 <div class="t-field"><label for="ai-q-vd">Vận dụng</label><input id="ai-q-vd" type="number" inputmode="numeric" min="0" max="20" value="3"></div>
 <p id="ai-q-total" class="t-hint" aria-live="polite">Tổng 10 câu</p><p id="ai-q-matrix-err" class="t-field-error"></p></fieldset>
+<div class="t-field" id="ai-q-tl-f" hidden><label for="ai-q-tl">Số câu tự luận (AI soạn kèm gợi ý đáp án, tối đa 5)</label><input id="ai-q-tl" type="number" inputmode="numeric" min="0" max="5" value="2"></div>
 <p id="ai-q-err" class="notice error status" role="alert"></p>
 <div class="t-actions"><button type="button" id="ai-q-cancel" class="t-button">Hủy</button><button type="submit" id="ai-q-go" class="t-button t-primary">Soạn câu hỏi</button></div>
 </form></dialog>

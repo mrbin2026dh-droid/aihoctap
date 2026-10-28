@@ -21,7 +21,7 @@ export function templateRows() {
     questions: [
       EXAM_COLUMNS.slice(),
       [1, 'TN', 'Bộ phận nào được ví như "bộ não" của máy tính?', 'Bộ xử lí trung tâm (CPU)', 'Màn hình', 'Chuột', 'Loa', 'A', 1, 'Phần cứng máy tính', 'Nhớ lại bộ phận xử lí thông tin.'],
-      [2, 'TL', 'Nêu hai ví dụ về thiết bị số có bộ xử lí thông tin.', '', '', '', '', '', 2, 'Thiết bị số', '']
+      [2, 'TL', 'Nêu hai ví dụ về thiết bị số có bộ xử lí thông tin.', '', '', '', '', '', 2, 'Thiết bị số', '- Nêu đúng ví dụ thứ nhất (1 điểm), ví dụ: điện thoại thông minh\n- Nêu đúng ví dụ thứ hai (1 điểm), ví dụ: máy tính bảng']
     ],
     guide: [
       ['Hướng dẫn điền file'],
@@ -31,7 +31,8 @@ export function templateRows() {
       ['4. Tự luận: để trống các cột A–D và "Đáp án đúng".'],
       ['5. Cột "Điểm": số điểm của câu đó, lớn hơn 0 và tối đa ' + MAX_POINTS + ' (ví dụ 0,5 hoặc 1). Bắt buộc điền cho mọi câu.'],
       ['6. "Chủ đề" và "Gợi ý" không bắt buộc. Gợi ý không được ghi đáp án.'],
-      ['7. Hai dòng ví dụ ở sheet "Câu hỏi" có thể xóa hoặc sửa trước khi tải lên.']
+      ['7. Hai dòng ví dụ ở sheet "Câu hỏi" có thể xóa hoặc sửa trước khi tải lên.'],
+      ['8. Đề THI THỬ Trắc nghiệm + Tự luận: với câu TL, cột "Gợi ý" ghi gợi ý đáp án (các ý chính, mỗi ý bao nhiêu điểm). Học sinh không thấy; AI dùng để chấm.']
     ]
   };
 }

@@ -175,6 +175,19 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   const tt = c({ action: 'gv_create', tieu_de: 'TT chủ đề', che_do: 'thu', khoi: 9, lop: '9A', questions: [{ text: 'Q1', options: { A: 'a', B: 'b' }, answer: 'A', points: 1, topic: 'Dữ liệu số', level: 'Biết' }] });
   const ttId = tt.exams.find(e => e.tieu_de === 'TT chủ đề').ma_de;
   ok(E.sheets.DeThiThu.rows.find(r => r[9] === ttId)[10] === 'Dữ liệu số' && E.fbdb.thi_de[ttId][0].topic === 'Dữ liệu số', 'thi thử: chủ đề lưu ở DeThiThu (giữ cột Mã bài thi)');
+  // Thi thử Trắc nghiệm + Tự luận: câu TL lưu "TL" + gợi ý chấm (cột M), đẩy lên Firebase dạng kind:'tl' + goi_y
+  const TLQ = [{ text: 'Q1', options: { A: 'a', B: 'b' }, answer: 'A', points: 1 }, { kind: 'tl', text: 'Nêu 2 ví dụ thiết bị số.', guide: '- Điện thoại (1đ)\n- Máy tính (1đ)', points: 2, topic: 'Thiết bị số' }];
+  ok(c({ action: 'gv_create', tieu_de: 'TL thiếu gợi ý', che_do: 'thu', khoi: 9, lop: '9A', questions: [{ kind: 'tl', text: 'X', guide: '', points: 1 }] }).error.includes('gợi ý đáp án'), 'câu tự luận thiếu gợi ý đáp án → báo rõ');
+  ok(c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ kind: 'tl', text: 'X', guide: 'g', points: 1 }] }).error.includes('chỉ đề thi thử'), 'thi thật không nhận câu tự luận');
+  const tl = c({ action: 'gv_create', tieu_de: 'TT tự luận', che_do: 'thu', khoi: 9, lop: '9A', noi_dung: 'tn_tl', questions: TLQ });
+  const tlE = tl.exams.find(e => e.tieu_de === 'TT tự luận'), tlRow = E.sheets.DeThiThu.rows.find(r => r[9] === tlE.ma_de && r[7] === 'TL');
+  ok(tlE.noi_dung === 'tn_tl' && tlRow && tlRow[12].includes('Điện thoại') && tlRow[3] === '' && E.sheets.DeThiThu.rows[0][12] === 'Gợi ý chấm', 'DeThiThu: câu tự luận ghi TL, gợi ý ở cột "Gợi ý chấm"; bài ghi nội dung tn_tl');
+  const fde = E.fbdb.thi_de[tlE.ma_de], fess = fde.find(q => q.kind === 'tl');
+  ok(E.fbdb.thi_bai[tlE.ma_de].noi_dung === 'tn_tl' && fde.length === 2 && fess && fess.goi_y.includes('Máy tính') && fess.points === 2 && !fess.options && fde[0].answer === 'A', 'Firebase: thi_bai noi_dung tn_tl; câu tự luận kind tl + goi_y, không có phương án');
+  const gq = c({ action: 'gv_questions', ma_de: tlE.ma_de }).questions;
+  ok(gq[1].kind === 'tl' && gq[1].guide.includes('Điện thoại') && gq[1].topic === 'Thiết bị số', 'giáo viên mở sửa: nhận lại câu tự luận kèm gợi ý');
+  c({ action: 'gv_update', ma_de: tlE.ma_de, questions: [TLQ[0]] });
+  ok(E.fbdb.thi_bai[tlE.ma_de].noi_dung === 'tn' && E.fbdb.thi_de[tlE.ma_de].length === 1, 'bỏ hết câu tự luận khi sửa → nội dung về Trắc nghiệm');
 }
 // ---------- Lấy điểm về Sheet khi nhiều học sinh: nhanh, không chép trùng, đúng thứ tự khi cho thi lại ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';

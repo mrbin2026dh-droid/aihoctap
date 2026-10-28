@@ -41,6 +41,11 @@ await c('dữ liệu Worker (students_auth, attempts, gốc) → đóng', async 
 // 28/10: Bản đồ năng lực, rời màn hình, chủ đề trong bài nộp, Zalo hỗ trợ, đọc bài
 await c('thi_nop: kèm chủ đề, điểm lần đầu, số lần rời màn hình → được', () => assertSucceeds(set(ref(anon, 'thi_nop/thu/hs04'), { ...NOP, ma: 'hs04', dau: 5, roi_tab: 2, chu_de: { ma_nhi_phan: { ten: 'Mã nhị phân', d: 1, n: 2 } } })));
 await c('thi_nop: chủ đề sai khuôn → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs05'), { ...NOP, ma: 'hs05', chu_de: { x: { ten: 1 } } })));
+// 28/10: thi thử Trắc nghiệm + Tự luận — bài làm tự luận + điểm AI chấm
+await c('thi_nop: kèm tự luận (bài làm, điểm, nhận xét) → được', () => assertSucceeds(set(ref(anon, 'thi_nop/thu/hs06'), { ...NOP, ma: 'hs06', diem_tn: 1, cho_cham: false, tu_luan: { r5: { tl: 'Điện thoại, máy tính', d: 1.5, max: 2, nx: 'Đúng hai ví dụ' } } })));
+await c('thi_nop: tự luận điểm vượt tối đa → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs07'), { ...NOP, ma: 'hs07', tu_luan: { r5: { tl: 'x', d: 3, max: 2 } } })));
+await c('thi_nop: tự luận bài làm quá 3000 ký tự → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs08'), { ...NOP, ma: 'hs08', tu_luan: { r5: { tl: 'x'.repeat(3001), d: 0, max: 2 } } })));
+await c('thi_nop: tự luận trường lạ → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs09'), { ...NOP, ma: 'hs09', tu_luan: { r5: { tl: 'x', d: 0, max: 2, hack: 1 } } })));
 await c('thi_nop: rời màn hình âm → chặn', () => assertFails(set(ref(anon, 'thi_nop/thu/hs06'), { ...NOP, ma: 'hs06', roi_tab: -1 })));
 await c('nang_luc: học sinh ghi tóm tắt đúng khuôn → được', () => assertSucceeds(set(ref(anon, 'nang_luc/hs01'), { at: serverTimestamp(), ten: 'An', lop: '9A', topics: { ma_nhi_phan: { ten: 'Mã nhị phân', d: 3, n: 10 } } })));
 await c('nang_luc: thiếu topics / trường lạ → chặn', async () => { await assertFails(set(ref(anon, 'nang_luc/hs02'), { at: serverTimestamp() })); await assertFails(set(ref(anon, 'nang_luc/hs02'), { at: serverTimestamp(), topics: {}, hack: 1 })); });
