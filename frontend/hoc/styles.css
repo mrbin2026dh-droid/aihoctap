@@ -1595,3 +1595,7 @@ body.student-app:has(#gate:not([hidden])) .about{display:block;padding:8px 20px 
 .uo-logo img{width:64px;height:64px;border-radius:16px;display:block}
 /* Đã đăng nhập trên điện thoại hẹp: thanh trên nhiều nút → chỉ giữ biểu tượng logo (tên vẫn có trong aria-label) */
 @media(max-width:480px){body.student-app:not(:has(#gate:not([hidden]))) .wordmark .brand-name{display:none}}
+.student-app .about h2{text-align:center;text-wrap:balance}
+.student-app .about-lead{max-width:68ch;margin-left:auto;margin-right:auto;text-align:center;text-wrap:pretty}
+.student-app .about-list{display:flex;flex-wrap:wrap;gap:12px}
+.student-app .about-list li{flex:1 1 260px;align-content:start}
