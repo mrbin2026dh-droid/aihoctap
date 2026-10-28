@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã cài đặt hoàn tất Bộ não AI lên VPS Ubuntu 24.04, nghiệm thu 13 ca kiểm thử, khóa chặt SSH (tắt mật khẩu, bật fail2ban, dùng khóa vps_brain), và xác nhận hạn cuộc thi 30/10/2026 cho Claude.
+- Yêu cầu mới nhất: Antigravity đã cập nhật Bộ não AI (tính năng Hiểu lầm phổ biến) lên VPS, chạy 8/8 unittests PASS; cấu hình sẵn 8/10 biến trong .env; chờ Thầy dán FB_SECRET và SHEET_BRAIN_KEY để hoàn tất thu thập dữ liệu thật.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2007,3 +2007,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-vps-cai-dat-xong.md.
 - Kiểm thực tế: VPS Ubuntu 24.04 `setup.sh` exit code 0; unittests 7/7 PASS; timer 21:00 hoạt động; SSH mật khẩu bị từ chối `AuthenticationException`; SSH khóa `vps_brain` đăng nhập thành công.
 - Việc tiếp: Chuyển Claude đọc báo cáo nghiệm thu và tiến hành thiết kế/lập kế hoạch 2 tính năng sư phạm: "Phân tích hiểu lầm" và "Ôn tập cách quãng" trước hạn nộp 30/10/2026; Thầy có thể dán `FB_SECRET` vào `/opt/brain/.env` khi có.
+
+### 28/10/2026 (tối) — Antigravity — Cập nhật Bộ não AI (Hiểu lầm phổ biến) lên VPS, 8/8 unittests PASS & hướng dẫn Thầy dán khóa
+- Đã thực hiện: Kéo commit `d48e3b4` từ Claude; kết nối SSH tự động lên VPS Ubuntu 24.04 (`zcloudviet-rs5k`); chạy kịch bản `setup.sh` cập nhật mã nguồn Bộ não AI (tính năng phân tích Hiểu lầm phổ biến từ đáp án sai của học sinh); chạy bộ kiểm thử đạt 8/8 PASS; quét tệp cấu hình `/opt/brain/.env` (đã điền sẵn 8 biến: FB_URL, WORKER_URL, BRAIN_KEY, SHEET_URL, GEMINI_API_KEY, GEMINI_MODEL, DB_PATH, TZ_OFFSET_HOURS; chỉ còn 2 biến chờ Thầy dán: FB_SECRET và SHEET_BRAIN_KEY); lập báo cáo nghiệm thu tại docs/handoff/antigravity-claude-hieu-lam-vps.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-hieu-lam-vps.md.
+- Kiểm thực tế: VPS Ubuntu 24.04 unittests 8/8 PASS; kiểm tra fail-closed khi thiếu key trả đúng lỗi; SSH key authentication hoạt động trơn tru.
+- Việc tiếp: Thầy mở `nano /opt/brain/.env` dán `FB_SECRET` và `SHEET_BRAIN_KEY`; Bộ não AI sẽ tự động kích hoạt gửi báo cáo tuần vào Google Sheet NaoAI lúc 21:00 hàng tối.
