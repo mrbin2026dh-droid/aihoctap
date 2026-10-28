@@ -96,6 +96,16 @@ class ItemAnalysis(unittest.TestCase):
         self.assertIn("không khớp câu hỏi trong đề: 0; không khớp học sinh trong danh sách: 0; lựa chọn không có trong phương án: 0", txt)
         self.assertNotIn("s0", txt.replace("s0 ", "")); self.assertNotIn("Em ", txt)
 
+    def test_mismatched_question_ids_ignored(self):
+        d = exam20()   # thêm 30 bài nộp mang mã câu không có trong đề → không được làm sai lệch tỉ lệ đúng
+        for i in range(30):
+            d["thi_nop"]["t9"][f"z{i:02d}"] = {"diem": 0, "tong": 9, "tra_loi": {"tin9_b1_q1": "A", "tin9_b1_q2": "B"}}
+        db = store.open_db(":memory:"); store.snapshot(db, "2026-10-28", d)
+        g = {it["cau"]: it for it in analyze.item_analysis(db, "t9")}["Câu tốt 3"]
+        self.assertEqual((g["so_em"], g["ti_le_dung"], g["do_phan_biet"]), (20, 60, 1.0))
+        self.assertIn("không khớp câu hỏi trong đề: 60", "\n".join(analyze.diagnose(db)))
+        db.close()
+
     def test_too_few_students(self):
         self.assertEqual(analyze.item_analysis(self.db, "t9", min_n=21), [])
 

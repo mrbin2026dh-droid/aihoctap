@@ -159,8 +159,10 @@ def item_analysis(db: sqlite3.Connection, exam: str, min_n: int = 10) -> list[di
     if not qs:
         return []
     ch: dict[str, dict[str, str]] = defaultdict(dict)
+    known = {q["qid"] for q in qs}
     for r in db.execute("SELECT ma, qid, chosen FROM answers WHERE exam=?", (exam,)):
-        ch[r["ma"]][r["qid"]] = r["chosen"]
+        if r["qid"] in known:   # câu trả lời mang mã câu không có trong đề (dữ liệu cũ/lỗi) → không tính em đó là đã làm đề
+            ch[r["ma"]][r["qid"]] = r["chosen"]
     n = len(ch)
     if n < min_n:
         return []
