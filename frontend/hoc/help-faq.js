@@ -9,7 +9,7 @@ export const GROUPS = [
 ];
 /** @type {{g:string,q:string,a:string}[]} */
 export const FAQ = [
-  {g: 'app', q: 'Ứng dụng này là gì?', a: 'Góc học tập là ứng dụng tự học môn Tin học THCS (lớp 6 đến 9, sách Kết nối tri thức). Học sinh đọc bài, luyện tập, thi thử và hỏi Gia sư AI. Giáo viên soạn bài, giao đề và theo dõi lớp ngay trên điện thoại.'},
+  {g: 'app', q: 'Ứng dụng này là gì?', a: 'AI Học Tập là gia sư AI cho học sinh THCS, hiện triển khai môn Tin học (lớp 6 đến 9, sách Kết nối tri thức). Học sinh đọc bài, luyện tập, thi thử và hỏi Gia sư AI. Giáo viên soạn bài, giao đề và theo dõi lớp ngay trên điện thoại.'},
   {g: 'app', q: 'Ứng dụng giải quyết vấn đề gì?', a: 'Ba việc: học sinh được gợi ý để tự nghĩ chứ không chép đáp án; giáo viên bớt chấm tay vì trắc nghiệm và tự luận được chấm tự động; giáo viên thấy ngay chủ đề nào cả lớp còn yếu để dạy bù đúng chỗ.'},
   {g: 'app', q: 'AI được dùng ở những đâu?', a: '1) Gia sư AI hỏi gợi mở khi học sinh học bài.\n2) AI chấm bài tự luận theo gợi ý đáp án của giáo viên.\n3) AI soạn câu hỏi theo ma trận cho giáo viên (giáo viên phải duyệt mới dùng).\n4) Bộ não AI viết báo cáo tuần về từng lớp cho giáo viên.'},
   {g: 'app', q: 'Dùng được khi mất mạng không?', a: 'Được một phần. Ứng dụng cài lên màn hình chính như app thường. Bài đã tải mở được khi không có mạng, bài đang làm dở được giữ trên máy và tự gửi khi có mạng lại. Gia sư AI và chấm tự luận cần có mạng.'},

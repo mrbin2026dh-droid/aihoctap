@@ -1,4 +1,4 @@
-# BÁO CÁO MINH CHỨNG
+# BÁO CÁO MINH CHỨNG — AI HỌC TẬP
 ## Cuộc thi Giáo viên sáng tạo ứng dụng AI năm 2026
 
 **Đề tài:** Ứng dụng Gia sư AI hỏi gợi mở và "Bộ não AI" phân tích hiểu lầm trong dạy học phân hóa môn Tin học THCS (Chương trình GDPT 2018)
@@ -103,7 +103,7 @@ Nếu kịp tổ chức lần thi thứ hai cùng chủ đề: ghi điểm trung
 - Thời gian thực nghiệm ngắn (1 bài thi thử); cần thêm các lần thi để đo tiến bộ.
 - AI chấm tự luận có sai số; điểm AI là tham khảo, giáo viên có quyền chỉnh.
 - Phân tích chất lượng câu hỏi cần ít nhất 10 em làm cùng đề.
-- Hướng phát triển: học sinh ôn và trả lời qua **Zalo Bot** (kết quả về Bộ não); **gói ôn đúng chỗ hổng** do AI soạn, giáo viên duyệt; **ôn tập cách quãng**; chuyển chấm thi thử về máy chủ để giấu hẳn đáp án.
+- Hướng phát triển: mở rộng sang các môn Toán, Ngữ văn, Tiếng Anh, KHTN (hiện chỉ triển khai Tin học); **gói ôn đúng chỗ hổng** do AI soạn, giáo viên duyệt; **ôn tập cách quãng**; chuyển chấm thi thử về máy chủ để giấu hẳn đáp án.
 
 ---
 
@@ -114,6 +114,7 @@ Nếu kịp tổ chức lần thi thứ hai cùng chủ đề: ghi điểm trung
   2. Học sinh: làm đề thi thử Trắc nghiệm + Tự luận → xem điểm và nhận xét AI.
   3. Giáo viên: Hiệu quả → Bộ não AI: báo cáo tuần (Hiểu lầm phổ biến, Chất lượng câu hỏi).
   4. Bấm nút **?** góc phải dưới: trợ giúp nhanh giới thiệu ứng dụng.
+- Địa chỉ: https://aihoctap.online (khi tên miền đã gắn xong).
 
 ---
 

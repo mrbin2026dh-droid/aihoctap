@@ -1495,7 +1495,6 @@ body:has(#qz-banner:not([hidden])) .help-fab{bottom:calc(150px + env(safe-area-i
 .uo-card{width:min(400px,100%);padding:30px 24px 24px;border-radius:20px;background:var(--surface,#fffefa);color:var(--ink,#18302d);text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:uo-in .28s ease-out}
 @keyframes uo-in{from{opacity:0;transform:translateY(14px) scale(.96)}}
 .uo-logo{position:relative;width:84px;height:84px;margin:0 auto 14px;display:grid;place-items:center}
-.uo-logo span{width:64px;height:64px;border-radius:50%;background:#0e766e;color:#fff;display:grid;place-items:center;font:800 22px/1 Georgia,serif}
 .uo-logo i{position:absolute;inset:0;border-radius:50%;border:4px solid rgba(14,118,110,.18);border-top-color:#0e766e;animation:uo-spin 1s linear infinite}
 .uo-card h2{margin:0 0 4px;font-size:21px}
 .uo-card p{margin:0 0 16px;color:var(--muted,#536762);font-size:15px}
@@ -1569,3 +1568,30 @@ body:has(#exams-view:not([hidden]) .thi-exam) .help-fab,body:has(#exams-view:not
 @media(max-width:760px){body.student-app:has(#qz-banner:not([hidden])) .help-fab{bottom:calc(150px + env(safe-area-inset-bottom))}}
 .student-app .gate-card.auth-card{padding-bottom:92px;background-size:130px auto}
 @media(max-width:560px){.student-app .gate-card.auth-card{padding-bottom:28px}}
+
+/* Thương hiệu AI Học Tập: biểu tượng (nét SVG gốc trong bộ nhận diện, đổi màu theo giao diện) + tên dạng chữ */
+.student-app .wordmark.brand{gap:10px;font-size:inherit;letter-spacing:0;color:var(--brand-text,#0f766e);text-decoration:none}
+.brand-ic{height:40px;width:auto;flex:none;display:block}
+.student-app .wordmark .brand-name{display:block;margin:0;font:800 22px/1.15 Nunito,system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:-.01em;text-transform:none;white-space:nowrap;color:inherit}
+@media(max-width:760px){.brand-ic{height:34px}.student-app .wordmark .brand-name{font-size:19px}}
+@media(max-width:380px){.student-app .wordmark .brand-name{font-size:17px}}
+.student-app .auth-logo-img{display:block;width:64px;height:64px;margin:0 auto 16px;border-radius:16px}
+
+/* Giới thiệu dưới thẻ đăng nhập (chỉ khi chưa đăng nhập): thẻ đăng nhập vẫn nằm giữa màn hình đầu, giới thiệu ở dưới */
+.student-app .about{display:none}
+body.student-app:has(#gate:not([hidden])){--tb:72px}
+@media(max-width:760px){body.student-app:has(#gate:not([hidden])){--tb:80px}}
+body.student-app:has(#gate:not([hidden])) .gate{flex:none;min-height:calc(100dvh - var(--tb))}
+body.student-app:has(#gate:not([hidden])) .about{display:block;padding:8px 20px 48px}
+.student-app .about-inner{max-width:880px;margin:0 auto}
+.student-app .about h2{margin:0 0 10px;font-size:clamp(22px,4vw,30px);line-height:1.3;color:var(--ink)}
+.student-app .about-lead{margin:0 0 20px;color:var(--muted);font-size:var(--fs-body,17px)}
+.student-app .about-hero{display:block;width:100%;height:auto;aspect-ratio:1672/941;border-radius:18px;border:1px solid var(--line);background:var(--surface)}
+.student-app .about-list{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+.student-app .about-list li{padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:grid;gap:4px}
+.student-app .about-list strong{color:var(--brand-text,#0f766e);font-size:16px}
+.student-app .about-list span{color:var(--muted);font-size:15px;line-height:1.5}
+.student-app .about-foot{margin:24px 0 0;text-align:center;color:var(--muted);font-size:14px}
+.uo-logo img{width:64px;height:64px;border-radius:16px;display:block}
+/* Đã đăng nhập trên điện thoại hẹp: thanh trên nhiều nút → chỉ giữ biểu tượng logo (tên vẫn có trong aria-label) */
+@media(max-width:480px){body.student-app:not(:has(#gate:not([hidden]))) .wordmark .brand-name{display:none}}

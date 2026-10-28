@@ -1358,6 +1358,10 @@ export function weakTopicsLine(list) {
   return `BẢN ĐỒ NĂNG LỰC CỦA EM NÀY: còn yếu các chủ đề: ${items.join('; ')}. Khi phù hợp với câu hỏi, liên hệ và củng cố các chủ đề này (giải thích lại ngắn gọn, gợi ý ôn), vẫn tuyệt đối không đưa đáp án.`;
 }
 
+/** Danh sách tên miền được phép gọi Worker: "https://a.vn, https://b.github.io" → ['https://a.vn', 'https://b.github.io'] (bỏ dấu / cuối, bỏ mục rỗng). @param {unknown} v */
+export function allowedOriginList(v) {
+  return String(v || '').split(',').map(x => x.trim().replace(/\/+$/, '')).filter(x => /^https?:\/\/[^/\s]+$/.test(x));
+}
 /** Khóa học sinh giống Firebase/Bộ não (thi-store.keyOf, brain.analyze.keyof). @param {unknown} s */
 export const brainKeyOf = s => String(s || '').trim().toLowerCase().replace(/[.#$\[\]/]/g, '_');
 const hlText = (/** @type {unknown} */ v, /** @type {number} */ n) => String(v ?? '').replace(/[\u0000-\u001f\u007f"`]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
@@ -2468,18 +2472,21 @@ export default {
     const reqOrigin = request.headers.get('Origin') || '';
     const isMock = SecurityConfigContract.isMockModeAllowed(env);
     const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(reqOrigin);
-    // L3: In production (!isMock), localhost is NEVER allowed; only exact env.ALLOWED_ORIGIN is permitted
-    let corsOrigin = env.ALLOWED_ORIGIN || '*';
+    // L3: In production (!isMock), localhost is NEVER allowed; only EXACT origins in env.ALLOWED_ORIGIN are permitted.
+    // ALLOWED_ORIGIN có thể là một hoặc nhiều tên miền cách nhau bằng dấu phẩy (ví dụ tên miền riêng + github.io khi chuyển đổi).
+    const allowedOrigins = allowedOriginList(env.ALLOWED_ORIGIN);
+    let corsOrigin = allowedOrigins[0] || '*';
     if (isMock && isLocalhost) {
       corsOrigin = reqOrigin;
-    } else if (reqOrigin && reqOrigin === env.ALLOWED_ORIGIN) {
-      corsOrigin = env.ALLOWED_ORIGIN;
+    } else if (reqOrigin && allowedOrigins.includes(reqOrigin)) {
+      corsOrigin = reqOrigin;
     }
     const corsHeaders = {
       'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
       'Access-Control-Max-Age': '86400',
+      'Vary': 'Origin',
     };
 
     if (request.method === 'OPTIONS') {

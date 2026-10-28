@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /teacher.html
+Disallow: /thi.html
+
+Sitemap: https://aihoctap.online/sitemap.xml

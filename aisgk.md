@@ -2065,3 +2065,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 
 
 
+
+### 28/10/2026 (tối) — Claude — Thương hiệu AI Học Tập, SEO, tên miền aihoctap.online; bỏ Zalo Bot
+- Quyết định của thầy: bỏ Zalo Bot; đổi tên ứng dụng thành AI Học Tập; gắn tên miền aihoctap.online.
+- Đã làm: logo/biểu tượng/ảnh chia sẻ từ gói tài nguyên v2; thẻ SEO (Open Graph, Twitter, canonical, JSON-LD), robots.txt, sitemap.xml; trang giáo viên noindex; phần giới thiệu dưới thẻ đăng nhập; Worker nhận nhiều tên miền (ALLOWED_ORIGIN cách nhau dấu phẩy, Vary: Origin); báo cáo minh chứng viết lại theo phương án A.
+- Kiểm thử: test_seo_brand 28, test_worker_multi_origin 8 (mới); hồi quy giao diện học sinh/giáo viên/thi và toàn bộ test Worker đạt; test_fonts_vietnamese đạt lại (gỡ phông Georgia của màn hình cập nhật).
+- Việc tiếp: Antigravity làm theo docs/handoff/claude-antigravity-ten-mien-seo.md (Worker trước, DNS, Pages, HTTPS). Học sinh cài lại app từ tên miền mới.

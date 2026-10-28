@@ -88,7 +88,7 @@ function build() {
   foot.append(z);
   panel.append(head, log, foot);
   document.body.append(fab, panel);
-  bubble('bot', 'Xin chào! Mình giới thiệu nhanh về ứng dụng Góc học tập. Em hoặc thầy cô chọn câu hỏi bên dưới nhé.');
+  bubble('bot', 'Xin chào! Mình giới thiệu nhanh về ứng dụng AI Học Tập. Em hoặc thầy cô chọn câu hỏi bên dưới nhé.');
   renderChips();
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && panel && !panel.hidden) toggle(false); });
   document.addEventListener('pointerdown', e => { const t = /** @type {Node} */ (e.target); if (panel && !panel.hidden && !panel.contains(t) && !fab?.contains(t)) toggle(false); });

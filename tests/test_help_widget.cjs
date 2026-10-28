@@ -9,8 +9,9 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
    const c=await b.newContext({viewport:{width:w,height:h},serviceWorkers:'block'});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
    await c.route('**/api/**',r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
    await p.goto('http://localhost:8213/');await p.waitForSelector('#gate:not([hidden])');await p.waitForTimeout(400);
-   const m=await p.evaluate(()=>{const g=document.querySelector('.gate-card').getBoundingClientRect(),t=document.querySelector('.topbar').getBoundingClientRect();return{above:g.top-t.bottom,below:innerHeight-g.bottom,sc:document.documentElement.scrollHeight,vh:innerHeight}});
-   ok(Math.abs(m.above-m.below)<=2&&m.sc<=m.vh,`${name}: thẻ đăng nhập nằm chính giữa (trên ${Math.round(m.above)} = dưới ${Math.round(m.below)}), không phải cuộn`);
+   const m=await p.evaluate(()=>{const g=document.querySelector('.gate-card').getBoundingClientRect(),t=document.querySelector('.topbar').getBoundingClientRect(),v=Math.min(innerHeight,document.getElementById('gate').getBoundingClientRect().bottom);return{above:g.top-t.bottom,below:v-g.bottom}});
+   ok(Math.abs(m.above-m.below)<=2,`${name}: thẻ đăng nhập nằm chính giữa màn hình đầu (trên ${Math.round(m.above)} = dưới ${Math.round(m.below)})`);
+   ok(await p.evaluate(()=>{const a=document.getElementById('about');return a&&getComputedStyle(a).display!=='none'&&a.getBoundingClientRect().top>=innerHeight-1}),`${name}: phần giới thiệu nằm dưới màn hình đầu (cuộn xuống mới thấy)`);
    const fb=await p.$eval('#help-fab',e=>{const r=e.getBoundingClientRect();return{w:r.width,h:r.height,vis:r.right<=innerWidth&&r.bottom<=innerHeight}});
    ok(fb.w<=48&&fb.h<=48&&fb.w>=44&&fb.vis,`${name}: nút trợ giúp nhỏ gọn ${Math.round(fb.w)}px, nằm trong màn hình`);
    ok(await p.locator('#help-panel').isHidden(),`${name}: khung trợ giúp đóng sẵn`);
@@ -20,8 +21,8 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
    ok(pr.l>=0&&pr.r<=w&&pr.t>=0&&pr.b<=h,`${name}: khung trợ giúp nằm gọn trong màn hình`);
    ok((await p.textContent('.help-log')).includes('Xin chào'),`${name}: có lời chào`);
    ok(await p.locator('.help-tab').count()===4&&await p.locator('.help-chip').count()>=5,`${name}: có 4 nhóm và các câu hỏi gợi ý`);
-   await p.click('.help-chip >> nth=0');await p.waitForFunction(()=>document.querySelector('.help-log').textContent.includes('Góc học tập là ứng dụng tự học'),null,{timeout:3000});
-   const log=await p.textContent('.help-log');ok(log.includes('Ứng dụng này là gì?')&&log.includes('Góc học tập là ứng dụng tự học'),`${name}: bấm câu hỏi → hiện câu trả lời có sẵn`);
+   await p.click('.help-chip >> nth=0');await p.waitForFunction(()=>document.querySelector('.help-log').textContent.includes('AI Học Tập là gia sư AI'),null,{timeout:3000});
+   const log=await p.textContent('.help-log');ok(log.includes('Ứng dụng này là gì?')&&log.includes('AI Học Tập là gia sư AI'),`${name}: bấm câu hỏi → hiện câu trả lời có sẵn`);
    ok(await p.locator('.help-chip.done').count()===1,`${name}: câu đã hỏi được đánh dấu mờ`);
    await p.click('.help-tab >> text=Học sinh');await p.click('.help-chip >> text=Gia sư AI có làm hộ bài không?');await p.waitForFunction(()=>document.querySelector('.help-log').textContent.includes('không đưa đáp án'));
    ok(true,`${name}: nhóm Học sinh trả lời đúng (Gia sư AI không đưa đáp án)`);

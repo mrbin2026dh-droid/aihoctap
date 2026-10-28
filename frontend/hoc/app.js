@@ -1235,12 +1235,12 @@ let installedThisSession = false;
 function installState() {
   const standalone = matchMedia('(display-mode: standalone)').matches;
   let label = 'Cài ứng dụng'; let detail = 'Trang hiện đang mở trong trình duyệt. Làm theo hướng dẫn phù hợp với thiết bị.';
-  if (installedThisSession) {label = 'Đã cài ứng dụng'; detail = 'Trình duyệt đã xác nhận cài đặt. Em có thể mở từ biểu tượng SGK.';}
+  if (installedThisSession) {label = 'Đã cài ứng dụng'; detail = 'Trình duyệt đã xác nhận cài đặt. Em có thể mở từ biểu tượng AI Học Tập.';}
   if (standalone) {label = 'Đang dùng ứng dụng'; detail = 'Em đang mở ứng dụng ở chế độ độc lập.';}
   node('install-label').textContent = label; node('install').setAttribute('aria-label', label); node('install').title = label; node('install-state').textContent = detail;
 }
 window.addEventListener('beforeinstallprompt', event => {event.preventDefault(); installPrompt = /** @type {typeof installPrompt} */ (event);});
-window.addEventListener('appinstalled', () => {installPrompt = null; installedThisSession = true; installState(); notify('Trình duyệt đã xác nhận cài ứng dụng. Mở từ biểu tượng SGK để dùng.');});
+window.addEventListener('appinstalled', () => {installPrompt = null; installedThisSession = true; installState(); notify('Trình duyệt đã xác nhận cài ứng dụng. Mở từ biểu tượng AI Học Tập để dùng.');});
 on('install', async () => {
   if (installPrompt) {const pwaPrompt = installPrompt; installPrompt = null; await pwaPrompt.prompt();}
   else {installState(); /** @type {HTMLDialogElement} */ (node('install-help-dialog')).showModal();}

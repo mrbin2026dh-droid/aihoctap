@@ -215,7 +215,7 @@ function drawLobby() {
   $('qz-h-kicker').textContent = `Lớp ${room.set.lop} · ${room.set.qs.length} câu · ${room.set.lim} giây/câu`; $('qz-h-title').textContent = room.set.name;
   const n = Object.keys(room.players).length;
   const code = el('div', 'qz-code'); code.append(el('span', '', 'Mã phòng'), el('strong', '', room.room.replace(/(\d{3})(\d{3})/, '$1 $2')));
-  const hint = el('p', 'qz-hint', `Học sinh lớp ${room.set.lop} mở ứng dụng Góc học tập → thấy "Trò chơi câu hỏi" → bấm Vào chơi.`);
+  const hint = el('p', 'qz-hint', `Học sinh lớp ${room.set.lop} mở ứng dụng AI Học Tập → thấy "Trò chơi câu hỏi" → bấm Vào chơi.`);
   const chips = el('ul', 'qz-chips'); for (const v of Object.values(room.players)) chips.append(el('li', '', String(/** @type {any} */ (v)?.ten || '')));
   main.replaceChildren(code, hint, el('p', 'qz-count', `${n} học sinh đã vào`), chips);
   const go = btn('Bắt đầu', 't-primary qz-big', () => void nextQ()); go.disabled = !n; go.id = 'qz-start';

@@ -502,3 +502,13 @@ body.qz-hosting{overflow:hidden}
  .teacher-app .t-subtab[aria-current=page]{background:var(--brand);color:var(--white)}
  .teacher-app .t-subtab:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
 }
+
+/* Thương hiệu AI Học Tập ở trang giáo viên */
+.teacher-app .t-wordmark.brand{gap:10px;font:inherit;color:var(--brand-text,#0f766e)}
+.teacher-app .t-wordmark .brand-ic{height:36px}
+.teacher-app .t-wordmark .brand-name{font:800 20px/1.1 Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.01em;white-space:nowrap}
+.teacher-app .t-wordmark .brand-sub{font:700 var(--t-tiny,12px)/1.4 system-ui,sans-serif;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:var(--brand-soft);color:var(--brand)}
+:root:not([data-theme=light]) .teacher-app .t-wordmark .brand-sub{background:#2b3a36;color:#a8d9d0}
+:root[data-theme=dark] .teacher-app .t-wordmark .brand-sub{background:#2b3a36;color:#a8d9d0}
+@media(max-width:380px){.teacher-app .t-wordmark .brand-sub{display:none}}
+.teacher-app .t-auth-logo-img{display:block;width:64px;height:64px;margin:0 auto 16px;border-radius:16px}
