@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã cài đặt Obsidian v1.14.5, chạy thực nghiệm 3 ứng viên Bộ não thứ 2 (Obsidian + LLM Wiki) với 6 tệp giả lập, trích xuất đồ thị tri thức 18 đỉnh/83 cạnh, phát hiện rào cản WSL của Kho B và lập báo cáo khảo sát tại docs/handoff/antigravity-claude-bo-nao-thu-2-khao-sat.md.
+- Yêu cầu mới nhất: Antigravity đã đóng gói kịch bản setup.sh cài đặt 1 lệnh cho VPS Bộ não AI, cập nhật secret BRAIN_KEY trên Cloudflare Worker live (trả về 200 {"items":[]}), kiểm thử unittests brain 7/7 PASS và Playwright Help Widget 28/28 PASS; sẵn sàng để Thầy cung cấp IP/SSH hoặc chạy 1 lệnh trên VPS.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1989,3 +1989,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-bo-nao-thu-2-khao-sat.md, aisgk.md.
 - Kiểm thực tế: Obsidian cài đặt thành công và khởi chạy mượt mà; Ingest 6 tệp đạt 20 trang wiki; Lint kiểm tra liên kết 100% HEALTHY (0 broken links); 3 câu hỏi truy vấn trả lời chính xác 100% có dẫn nguồn.
 - Việc tiếp: Chuyển Claude đọc báo cáo khảo sát và tiến hành thiết kế cấu trúc bộ não thật cho học sinh và công việc của Thầy.
+
+### 28/10/2026 (chiều) — Antigravity — Đóng gói kịch bản cài đặt tự động VPS (setup.sh), kiểm tra BRAIN_KEY live & cập nhật tài liệu
+- Đã thực hiện: Tạo kịch bản `brain/deploy/setup.sh` tự động cài đặt 6 bước chuẩn Ubuntu 24.04 (gói, UFW, user brain, git clone, unittest, systemd timer, cron backup); cập nhật secret `BRAIN_KEY` lên Cloudflare Worker live và kiểm tra kết nối API `/api/brain/export` trả về HTTP 200; chạy kiểm thử unittests `brain` đạt 7/7 PASS; chạy kiểm thử Playwright Help Widget đạt 28/28 PASS; push toàn bộ mã nguồn lên `origin/main`.
+- Tệp đổi: brain/deploy/setup.sh, docs/huong-dan-vps-bo-nao-ai.md, aisgk.md, docs/handoff/antigravity-claude-vps-bo-nao.md.
+- Kiểm thực tế: Cloudflare Worker `/api/brain/export` trả HTTP 200 {"items":[]}; python unittests `brain` 7/7 PASS; Playwright `test_help_widget.cjs` 28/28 PASS; git push `origin/main` 15d3314 thành công.
+- Việc tiếp: Chờ Thầy cung cấp thông tin VPS (hoặc Thầy dán lệnh `setup.sh` lên VPS) và điền 3 bí mật (FB_SECRET, SHEET_URL/SHEET_BRAIN_KEY, GEMINI_API_KEY) để chạy thử nghiệm; Thầy cho biết hạn nộp cuộc thi để Claude lên kế hoạch "Phân tích hiểu lầm và Ôn tập cách quãng".
