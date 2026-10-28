@@ -2876,6 +2876,31 @@ export default {
           console.error('[SHEET_LOGIN_NETWORK_ERROR]', e);
           return new Response(JSON.stringify({ detail: 'Không kết nối được Google Sheet. Hãy thử lại sau ít phút.' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
+        if (!studentCred && env.FIREBASE_DATABASE_URL) {
+          try {
+            const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
+            const hsKey = encodeURIComponent(String(student_id || '').trim().toLowerCase().replace(/[.#$[\]/]/g, '_'));
+            const rtdbHsRes = await fetch(`${env.FIREBASE_DATABASE_URL}/thi_hs/${hsKey}.json`, {
+              headers: getRtdbHeaders(rtdbAccessToken)
+            });
+            if (rtdbHsRes.ok) {
+              const hsData = await rtdbHsRes.json();
+              if (hsData && hsData.h) {
+                const enc = new TextEncoder();
+                const digest = await crypto.subtle.digest('SHA-256', enc.encode(hsKey + ':' + String(pin).trim()));
+                const hex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+                if (hex === hsData.h) {
+                  const lop = String(hsData.lop || '').trim();
+                  const g = Number(hsData.khoi) || parseInt((lop.match(/^\d+/) || ['0'])[0], 10);
+                  studentCred = { name: hsData.ten || student_id, class_code: lop, grade: g, canonical_id: String(hsData.ma || student_id) };
+                  sheetVerified = true;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('[RTDB_THI_HS_FALLBACK_ERROR]', e);
+          }
+        }
       } else if (env.FIREBASE_DATABASE_URL) {
         // [REAL_DRIVER]: Fetch from Firebase RTDB students_auth using Authorization OAuth2 Bearer token (H4, I1)
         const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
@@ -5260,8 +5285,8 @@ export default {
         }
       }
 
-      // If pool is configured and fully exhausted:
-      if (poolExhausted) {
+      // If pool is configured and fully exhausted (and no fallback GEMINI_API_KEY in env):
+      if (poolExhausted && !env.GEMINI_API_KEY) {
         await gateStub.fetch('http://do/refund-gemini-limit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
