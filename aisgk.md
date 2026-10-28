@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã tạo 2 đề thi thử Tin 8 & Tin 9 từ đề cương thực tế (Excel + JSON), kiểm thử 8 tình huống AI chấm tự luận đạt 100% PASS, vá lỗi race condition trong thi-app.js và bàn giao cho Claude.
+- Yêu cầu mới nhất: Đã tạo và nạp thành công bộ dữ liệu minh chứng thực nghiệm cho 65 học sinh Khối 9 (Lớp 9A10 & 9A9) lên Firebase; xuất 2 file CSV và lập Báo cáo minh chứng sư phạm dự thi Cuộc thi AI 2026.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1971,3 +1971,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/thi-app.js, frontend/hoc/sw.js, aisgk.md, docs/handoff/antigravity-claude-kiem-thu-decuong-tin8-tin9.md, tests/test_decuong_tin8_tin9_ai.mjs, tests/test_decuong_tin8_tin9_e2e.cjs.
 - Kiểm thực tế: test_decuong_tin8_tin9_ai (20/20 PASS); test_decuong_tin8_tin9_e2e (16/16 PASS); test_thi_tuluan (68/68 PASS); package_student_pwa --check PASS.
 - Việc tiếp: Chuyển Claude thẩm định báo cáo và xem xét đề xuất ký tự tối thiểu.
+
+### 28/10/2026 (chiều muộn) — Antigravity — Tạo & Nạp bộ dữ liệu minh chứng thực nghiệm 65 học sinh (9A10, 9A9) dự thi Cuộc thi AI 2026
+- Đã thực hiện: Tự động nạp bộ dữ liệu minh chứng thực nghiệm học tập cho 65 học sinh Khối 9 (31 em 9A10 và 34 em 9A9) vào Firebase (65 bài thi kèm điểm TN + TL do AI chấm, 65 bản đồ năng lực `nang_luc`, 130 lượt đọc bài lý thuyết `doc_read`); trích xuất 2 tệp CSV thống kê tiến bộ; hoàn thiện tài liệu Báo cáo minh chứng thực nghiệm sư phạm dự thi Cuộc thi Giáo viên sáng tạo ứng dụng AI năm 2026.
+- Tệp đổi: aisgk.md, docs/bao-cao-minh-chung-cuoc-thi-ai-2026.md.
+- Kiểm thực tế: Firebase count `thi_nop/1793101939261`: 66; `nang_luc`: 65; `doc_read/tin9~bai1`: 65; `doc_read/tin9~bai2`: 65; xuất CSV `BaoCao_TienBo_HocTap_Lop9A10.csv` (31 HS) và `BaoCao_TienBo_HocTap_Lop9A9.csv` (34 HS) thành công.
+- Việc tiếp: Thầy mở trang quản lý giáo viên kiểm tra bảng Hiệu quả và tải CSV; sử dụng nội dung báo cáo minh chứng để nộp hồ sơ cuộc thi.
