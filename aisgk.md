@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity kiểm thử bộ luật Firebase mới với 4 ca chẩn đoán quiz_proof; kiểm tra PASS 100% trước khi hướng dẫn đăng lên Firebase Console.
+- Yêu cầu mới nhất: Thầy đăng luật Firebase mới từ spike/step0/database.rules.ai-sgk-final.json lên Firebase Console, kiểm tra hết 401 trên app học sinh, và chuẩn bị VPS Ubuntu 24.04 theo hướng dẫn.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1942,3 +1942,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Test: test_quiz_live 30, test_lesson_ai_docs_ui 51 (có giả lập bàn phím). Emulator: 4 ca chẩn đoán quiz.
 - VPS Cloud Basic 2vCPU/2GB/30GB đủ; chọn Ubuntu 24.04.
 - Bàn giao: docs/handoff/claude-antigravity-sua-luat-quiz.md
+
+### 28/10/2026 — Antigravity — Kiểm thử Emulator luật mới đạt 100% PASS & Hướng dẫn Thầy đăng luật, cài VPS
+- Đã thực hiện: Chạy Firebase Emulator kiểm thử `database.rules.ai-sgk-final.json` với 4 ca chẩn đoán quiz_proof mới trong `rules-thi-fast.test.mjs`; toàn bộ ca quiz và bảo mật đều đạt chuẩn (TẤT CẢ CA ĐÚNG 100%); push mã lên origin/main; lập hướng dẫn chi tiết từng bước cho Thầy.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: Firebase Emulator 100% PASS (4 ca chẩn đoán quiz_proof PASS, 2 ca sửa quiz ghi điểm PASS); Alibaba OCR 0 lỗi; git push main thành công.
+- Việc tiếp: Thầy đăng luật lên Firebase Console, kiểm tra app học sinh hết lỗi 401, thuê VPS Ubuntu 24.04 và cấu hình theo hướng dẫn.
