@@ -15,7 +15,7 @@
   + Bổ sung cơ chế fallback xác thực học sinh từ Firebase RTDB `thi_hs` nếu Google Sheet chưa kịp đồng bộ.
   + Bổ sung cơ chế fallback trực tiếp sang `env.GEMINI_API_KEY` nếu bể khóa DO Key Pool đang trong thời gian cooldown.
 - **Triển khai live**: Version ID `4f33b016-6b04-47ad-8914-5b1c344e35c4`.
-- **Đồng bộ VPS**: Đã cập nhật `GEMINI_MODEL=gemini-3.5-flash-lite` trong `/opt/brain/.env` trên VPS `160.191.242.28`.
+- **Đồng bộ VPS**: Đã cập nhật `GEMINI_MODEL=gemini-3.5-flash-lite` trong `/opt/brain/.env` trên VPS `<IP VPS>`.
 
 ### 1.3. Kiểm thử thật toàn trình (Playwright Live E2E Test) trên `https://aihoctap.online`
 Đã chạy kịch bản Playwright kiểm thử thực tế trên mạng thật với tài khoản thử nghiệm `DEMO01`:
@@ -45,7 +45,7 @@
 3. **Sau khi học sinh nộp bài**:
    - **Bật lại Bộ não trên VPS**:
      ```bash
-     ssh -i ~/.ssh/vps_brain root@160.191.242.28
+     ssh -i ~/.ssh/vps_brain root@<IP VPS>
      systemctl enable --now brain.timer
      sudo -u brain python3 -m brain run --env /opt/brain/.env
      ```

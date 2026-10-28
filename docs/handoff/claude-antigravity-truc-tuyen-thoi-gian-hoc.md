@@ -40,12 +40,14 @@
    - Kiểm: `curl -s "<DB_URL>/thoi_gian.json?shallow=true"` trả `null` hoặc danh sách ngày (không phải "Permission denied").
 3. **Worker:**
    - `git pull`.
-   - Đặt biến `GEMINI_FALLBACK_MODEL` = một mô hình Flash-Lite đang có trong tài khoản (xem danh sách ở Google AI Studio; ví dụ dạng `gemini-…-flash-lite`).
+   - Đặt biến `GEMINI_FALLBACK_MODEL` = một mô hình **khác** `GEMINI_MODEL` (đang là `gemini-3.5-flash-lite`), ví dụ một mô hình Flash khác còn lượt trong Google AI Studio. Hạn mức tính riêng theo từng mô hình, nên mô hình dự phòng vẫn chạy khi mô hình chính hết lượt.
    - `npx wrangler deploy`.
    - Chạy `npx wrangler tail`, bấm "AI soạn câu hỏi" 1 lần. Nếu thấy `[GEMINI_FAIL] 429 … PerDay` → khóa hết lượt ngày: thêm 1–2 khóa Gemini (Hồ sơ → Khóa Gemini). **Không** ghi khóa vào báo cáo.
 4. **VPS:** chạy lại `setup.sh` (giữ `.env`) → 20 ca OK → `python -m brain quick` chạy không lỗi.
-   - Bật lại báo cáo tối sau bài thi hôm nay: `systemctl enable --now brain.timer`.
-5. Việc treo từ trước: bỏ `http://aihoctap.online` khỏi `ALLOWED_ORIGIN` (HTTPS đã chạy).
+5. **Bảo mật VPS:** địa chỉ IP VPS từng bị ghi trong một báo cáo bàn giao công khai (Claude đã xóa khỏi tệp, nhưng lịch sử git vẫn còn).
+   - Kiểm tra SSH chỉ cho đăng nhập bằng khóa: `PasswordAuthentication no`, `PermitRootLogin prohibit-password`, rồi `systemctl restart ssh`.
+   - Nếu VPS vẫn dùng mật khẩu root như lúc thầy chụp màn hình: đổi mật khẩu.
+   - Từ nay không ghi IP, mật khẩu, khóa vào `docs/`.
 6. **Thử thật:**
    - Máy A đăng nhập học sinh giả, để app mở 3 phút.
    - Máy B (giáo viên) → Tài khoản: em đó hiện chấm xanh "Đang học"; sau ~3 phút cột Hôm nay ≥ 2 phút.

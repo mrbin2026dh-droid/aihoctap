@@ -11,7 +11,7 @@
 - **Cơ chế dự phòng**: Fallback tự động sang `env.GEMINI_API_KEY` nếu bể khóa DO Key Pool cooldown; Fallback xác thực qua Firebase `thi_hs` cho tài khoản học sinh.
 - **Triển khai live**: Version ID `efdc82a0-45cd-4ea3-859d-a387c0d455d6`.
 
-### 1.2. Máy chủ VPS Bộ não (`160.191.242.28`)
+### 1.2. Máy chủ VPS Bộ não
 - **Cập nhật mã nguồn & dịch vụ**: Chạy hoàn tất `setup.sh`.
 - **Kiểm thử tự động**: Chạy 18/18 Unit Tests PASS (`Ran 18 tests in 0.825s: OK`).
 - **Quản lý Systemd Timers**:
