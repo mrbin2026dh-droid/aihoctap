@@ -14,5 +14,6 @@ new_sqlite_classes = ["GateDurableObject"]
 
 [vars]
 GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_FALLBACK_MODEL = "gemini-flash-lite-latest"
 # Đăng nhập học sinh bằng Google Sheet "HocSinh" (Mã học sinh + Mã PIN). Xóa dòng này để quay lại tài khoản Firebase cũ.
 SHEET_LOGIN_URL = "https://script.google.com/macros/s/AKfycbwOStBHPAZfMUOyOJEWX4ALrpKiCnJG88u0wElu5fdYvb6scqNDDDq8NpsSpC6h0UbdtA/exec"
