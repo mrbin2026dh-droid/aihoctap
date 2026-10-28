@@ -2085,3 +2085,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc tiếp: Chờ GitHub cấp chứng chỉ SSL (khoảng 10-15 phút) để kích hoạt `Enforce HTTPS`; thử gửi link xem trước trên Zalo/Facebook; báo học sinh mở `https://aihoctap.online` và cài lại ứng dụng PWA; ngày mai 29/10 cho 2 lớp làm bài thi thật.
 
 
+
+### 28/10/2026 (khuya) — Claude — Mở bằng trình duyệt (Zalo), cài app thông minh, loading, Gia sư tự chọn bài, Bộ não lượt nhanh
+- Đã làm: install.js (phát hiện Zalo/Facebook…, mở Chrome bằng intent / Safari bằng x-safari; bảng cài theo thiết bị; gợi ý cài chỉ khi chưa cài); netbar.js + khối ld-box + vòng xoay nút aria-busy; Gia sư không chọn bài → Worker routeLesson chọn bài khớp nhất (không khớp: không gọi AI, không trừ lượt); Bộ não lệnh quick + brain-quick.timer 30 phút 6:00–22:00.
+- Kiểm thử: test_install_browser 25, test_loading_states 11, test_tutor_auto_lesson 11 (mới); 21 bộ giao diện + toàn bộ test Worker + Bộ não 18 đạt.
+- Việc tiếp: docs/handoff/claude-antigravity-zalo-cai-app-loading-gia-su.md (deploy Worker, cập nhật VPS, HTTPS, thử trên điện thoại thật qua Zalo).

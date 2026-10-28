@@ -257,7 +257,7 @@ function qeCollect(allowEmpty = false) {
   return { questions: out };
 }
 async function qeLoad(/** @type {any} */ e) {
-  qeLoaded = false; $('thi-q-editor').hidden = false; $('thi-qe-list').replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted', textContent: 'Đang tải câu hỏi…' }));
+  qeLoaded = false; $('thi-q-editor').hidden = false; $('thi-qe-list').replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted ld-box', textContent: 'Đang tải câu hỏi…' }));
   $('thi-qe-note').textContent = e.che_do === 'that' ? `Câu hỏi thi thật dùng chung trang DeThi của khối ${e.khoi}: lưu ở đây sẽ thay các câu khối ${e.khoi} trong Google Sheet.` : 'Sửa đề bài, phương án, đáp án đúng, điểm rồi bấm Lưu thay đổi.';
   try {
     const r = await call({ action: 'gv_questions', ma_de: e.ma_de }); if (editing !== e.ma_de) return;
@@ -278,7 +278,7 @@ function metric(/** @type {HTMLElement} */ m, /** @type {[string, number][]} */ 
 function renderList() {
   const box = $('thi-list'); box.replaceChildren();
   const exams = info?.exams || [];
-  if (!info) return;
+  if (!info) { if (busyCount) { const p = document.createElement('p'); p.className = 't-muted ld-box'; p.textContent = 'Đang tải danh sách bài thi từ Google Sheet…'; box.append(p); } return; }   // lỗi → khối tải biến mất, thông báo lỗi ở trên
   if (!exams.length) { const p = document.createElement('p'); p.className = 't-muted'; p.textContent = 'Chưa có bài thi nào. Mở tab "Tạo đề thi" để tạo bài đầu tiên.'; box.append(p); return; }
   for (const e0 of exams) {
     const e = counts(e0), open = e.trang_thai === 'mo';
@@ -407,7 +407,7 @@ function endEdit() {
 /** @param {HTMLButtonElement|null} btn @param {() => Promise<any>} fn @param {string} okMsg */
 async function run(btn, fn, okMsg) {
   if (!getPass()) { status('Đăng xuất rồi đăng nhập lại tài khoản giáo viên để dùng menu Thi.', 'error'); return; }
-  busyCount++; if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
+  busyCount++; document.body.classList.add('t-busy'); if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
   try {
     const r = await fn();
     if (r.students) stats = r; else { info = r; if (stats && !r.exams.some((/** @type {any} */ x) => x.ma_de === stats.exam.ma_de)) stats = null; syncExamFb(); }
@@ -418,7 +418,7 @@ async function run(btn, fn, okMsg) {
     else status(okMsg, okMsg ? 'success' : '');
   }
   catch (e) { status(e instanceof Error ? e.message : 'Chưa kết nối được Google Sheet.', 'error'); }
-  finally { busyCount--; if (btn) { btn.removeAttribute('aria-busy'); btn.disabled = false; render(); } }
+  finally { busyCount--; if (!busyCount) document.body.classList.remove('t-busy'); if (btn) { btn.removeAttribute('aria-busy'); btn.disabled = false; render(); } }
 }
 const load = () => run(null, () => call({ action: 'gv_list' }), '');
 /** Làm mới màn hình đang xem (danh sách hoặc thống kê). */

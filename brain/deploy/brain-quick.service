@@ -1,0 +1,17 @@
+[Unit]
+Description=Bộ não AI — lượt nhanh (thu thập + cập nhật hiểu lầm cho Gia sư, không gọi AI)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=brain
+Group=brain
+WorkingDirectory=/opt/brain
+ExecStart=/usr/bin/python3 -m brain quick --env /opt/brain/.env
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/brain
+TimeoutStartSec=600

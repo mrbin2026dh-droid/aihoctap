@@ -36,9 +36,9 @@ cd /opt/brain
 sudo -u brain python3 -m unittest discover -s brain/tests -t .
 
 echo "[6/6] Cài đặt dịch vụ systemd (brain.service & brain.timer)..."
-cp /opt/brain/brain/deploy/brain.service /opt/brain/brain/deploy/brain.timer /etc/systemd/system/
+cp /opt/brain/brain/deploy/brain.service /opt/brain/brain/deploy/brain.timer /opt/brain/brain/deploy/brain-quick.service /opt/brain/brain/deploy/brain-quick.timer /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now brain.timer
+systemctl enable --now brain.timer brain-quick.timer
 
 # Chuẩn bị tệp .env nếu chưa có
 if [ ! -f /opt/brain/.env ]; then

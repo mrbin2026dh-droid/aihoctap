@@ -1,5 +1,6 @@
 // @ts-check
 import {api, ApiError, API_BASE} from './api.js';
+import './netbar.js';
 import * as db from './db.js';
 import * as ui from './teacher-ui.js?v=20261028a';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
@@ -221,7 +222,7 @@ async function downloadExamTemplate() {
 }
 /** @param {File} file */
 async function importExamFile(file) {
-  const target = node('exam-import-preview'); target.replaceChildren(el('p', 'Đang kiểm tra file…', 't-muted'));
+  const target = node('exam-import-preview'); target.replaceChildren(el('p', 'Đang kiểm tra file…', 't-muted ld-box'));
   importedExam = {questions: [], total_points: 0};
   if (!/\.xlsx$/i.test(file.name)) { target.replaceChildren(el('p', 'Chỉ nhận file .xlsx. Hãy dùng file tải từ "Tải mẫu Excel đề".', 'notice error')); return; }
   if (file.size > 2 * 1024 * 1024) { target.replaceChildren(el('p', 'File lớn hơn 2 MB. Hãy tách thành nhiều đề.', 'notice error')); return; }
@@ -570,7 +571,7 @@ function renderOverview() {
 }
 async function loadAnalytics() {
   const captured = generation;
-  const target = node('teacher-analytics'); target.replaceChildren(h('p', 'Đang tải báo cáo…', 't-muted'));
+  const target = node('teacher-analytics'); target.replaceChildren(h('p', 'Đang tải báo cáo…', 't-muted ld-box'));
   const select = /** @type {HTMLSelectElement} */ (node('overview-class'));
   const cls = select.value;
   /** @type {any} */ let data;
@@ -1324,7 +1325,7 @@ async function readStudentFile(file) {
   const target = node('student-import-preview'); const run = /** @type {HTMLButtonElement} */ (node('student-import-run'));
   const dl = /** @type {HTMLButtonElement} */ (node('student-import-download'));
   studentImportRows = []; createdAccounts = []; run.disabled = true; dl.hidden = true; run.textContent = 'Tạo tài khoản';
-  target.replaceChildren(el('p', 'Đang kiểm tra file…', 't-muted'));
+  target.replaceChildren(el('p', 'Đang kiểm tra file…', 't-muted ld-box'));
   if (!/\.xlsx$/i.test(file.name)) { target.replaceChildren(el('p', 'Chỉ nhận file .xlsx. Hãy dùng file tải từ "Tải mẫu Excel".', 'notice error')); return; }
   if (file.size > 2 * 1024 * 1024) { target.replaceChildren(el('p', 'File lớn hơn 2 MB. Hãy tách thành nhiều file.', 'notice error')); return; }
   /** @type {unknown[][]} */ let rows;

@@ -2182,6 +2182,34 @@ const VI_STOP = new Set('là của và có các những một cho em thầy cô 
 const viTokens = t => String(t || '').toLowerCase().normalize('NFC').split(/[^\p{L}\p{N}]+/u).filter(w => w.length > 1 && !VI_STOP.has(w));
 
 /**
+ * Gia sư tự chọn bài khi học sinh hỏi mà chưa chọn bài: chấm điểm câu hỏi với từng bài (từ + cụm 2 từ, tên bài nặng gấp 3,
+ * trọng số hiếm/phổ biến như tìm kiếm). Trả {index, score, hits}; index = -1 khi không bài nào khớp đủ (khi đó KHÔNG gọi AI).
+ * @param {string} question @param {{title?:string, content_markdown?:string}[]} lessons
+ */
+export function routeLesson(question, lessons) {
+  const grams = (/** @type {string} */ t) => { const w = viTokens(t); const out = new Set(w); for (let i = 0; i + 1 < w.length; i++) out.add(w[i] + ' ' + w[i + 1]); return out; };
+  const q = grams(question);
+  const short = viTokens(question).length <= 2;   // câu hỏi 1–2 từ khóa: khớp 1 từ hiếm là đủ
+  if (!q.size || !lessons.length) return { index: -1, score: 0, hits: 0 };
+  const docs = lessons.map(l => ({ title: grams(l?.title || ''), body: grams(l?.content_markdown || '') }));
+  const df = new Map();
+  for (const d of docs) for (const g of new Set([...d.title, ...d.body])) df.set(g, (df.get(g) || 0) + 1);
+  let best = { index: -1, score: 0, hits: 0 };
+  docs.forEach((d, i) => {
+    let score = 0, hits = 0, pairs = 0;
+    for (const g of q) {
+      const inT = d.title.has(g), inB = d.body.has(g);
+      if (!inT && !inB) continue;
+      const idf = Math.log(1 + docs.length / (df.get(g) || 1));
+      const pair = g.includes(' ');
+      score += idf * (pair ? 2 : 1) * (inT ? 3 : 1); hits++; if (pair) pairs++;
+    }
+    if (hits && (pairs >= 1 || hits >= 2 || short) && score > best.score) best = { index: i, score, hits };
+  });
+  return best.score >= 1.2 ? best : { index: -1, score: best.score, hits: best.hits };
+}
+
+/**
  * Chọn phần bài học liên quan nhất tới câu hỏi (RAG gọn, không cần CSDL vector).
  * Bài ngắn → giữ nguyên. Bài dài → giữ đoạn mở đầu + các đoạn khớp từ khóa nhiều nhất, theo đúng thứ tự trong bài.
  * @param {string} markdown @param {string} query @param {number} [limit]
@@ -5111,8 +5139,8 @@ export default {
       const studentUid = authResult.payload.uid;
       const requestData = await request.json().catch(() => ({}));
       const { message, context, history } = requestData;
-      const courseId = requestData.course_id || context?.course_id;
-      const lessonId = requestData.lesson_id || context?.lesson_id;
+      let courseId = requestData.course_id || context?.course_id;
+      let lessonId = requestData.lesson_id || context?.lesson_id;
       const questionId = requestData.question_id || context?.question_id || context?.current_question_id;
 
       // F2: Resolve correct answer text on server (packages_private + packages / test stores)
@@ -5137,9 +5165,26 @@ export default {
       }
 
       // Căn cứ trả lời lấy từ máy chủ; ở môi trường thật, thiếu bài học thì không gọi AI và không tốn lượt.
-      const lessonForTutor = await loadPublicLesson(env, courseId, lessonId);
+      let lessonForTutor = await loadPublicLesson(env, courseId, lessonId);
       // Nhận xét bài THI THỬ đã nộp (không gắn bài học): app gửi câu hỏi + đúng/sai, KHÔNG gửi đáp án đúng.
       const isExamReview = requestData.mode === 'exam_review' && requestData.review && typeof requestData.review === 'object';
+      // Học sinh hỏi mà CHƯA chọn bài: tự tìm bài khớp nhất trong các bài của khối em (app gửi danh sách), lấy làm căn cứ.
+      /** @type {{course_id:string, lesson_id:string, title:string}|null} */ let routedLesson = null;
+      if (!lessonForTutor && !isExamReview && Array.isArray(requestData.candidates) && TutorContract.isValidMessage(message)) {
+        const cands = requestData.candidates.filter(c => c && IdValidationContract.isValidId(String(c.course_id || '')) && IdValidationContract.isValidId(String(c.lesson_id || ''))).slice(0, 40);
+        const loaded = (await Promise.all(cands.map(c => loadPublicLesson(env, String(c.course_id), String(c.lesson_id)).catch(() => null)))).map((l, i) => ({ l, c: cands[i] })).filter(x => x.l);
+        const r = routeLesson(String(message), loaded.map(x => x.l));
+        if (r.index >= 0) {
+          const pick = loaded[r.index];
+          lessonForTutor = pick.l; courseId = String(pick.c.course_id); lessonId = String(pick.c.lesson_id);
+          routedLesson = { course_id: courseId, lesson_id: lessonId, title: String(pick.l.title || '').slice(0, 120) };
+          effectiveContext.course_id = courseId; effectiveContext.lesson_id = lessonId;   // nhật ký Bộ não ghi đúng bài
+        } else {
+          return new Response(JSON.stringify({ reply: 'Gia sư chưa tìm thấy bài học nào nói về điều em hỏi. Em chọn một bài trong danh sách bên dưới, hoặc hỏi lại bằng từ khóa trong sách (ví dụ "mã nhị phân", "thông tin số"). Câu này không trừ lượt của em.', no_match: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
       if (!lessonForTutor && !isExamReview && !SecurityConfigContract.isMockModeAllowed(env)) {
         return new Response(JSON.stringify({ detail: 'Hãy chọn một bài học để hỏi gia sư về bài đó.' }), {
           status: 400,
@@ -5442,7 +5487,8 @@ export default {
             reply: cleanReply,
             status: 'success',
             driver: driverLabel,
-            student: studentUid
+            student: studentUid,
+            ...(routedLesson ? { lesson: routedLesson } : {})
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -5471,7 +5517,8 @@ export default {
           reply: cleanReply,
           status: 'success',
           driver: 'mock_offline',
-          student: studentUid
+          student: studentUid,
+          ...(routedLesson ? { lesson: routedLesson } : {})
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

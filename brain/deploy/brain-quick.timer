@@ -1,0 +1,11 @@
+[Unit]
+Description=Bộ não AI lượt nhanh mỗi 30 phút, 6:00–22:00 (giờ máy chủ Asia/Ho_Chi_Minh)
+
+[Timer]
+OnCalendar=*-*-* 06..21:00,30:00
+OnCalendar=*-*-* 22:00:00
+Persistent=false
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

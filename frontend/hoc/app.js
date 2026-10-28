@@ -9,6 +9,8 @@ import * as thiApp from './thi-app.js';
 import { typeOut } from './typing.js';
 import * as readProgress from './read-progress.js';
 import * as support from './support.js';
+import * as install from './install.js';
+import './netbar.js';
 import * as mastery from './mastery.js';
 import * as quiz from './quiz-play.js';
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
@@ -64,9 +66,9 @@ function updateTutorStatus() {
   const offlineBanner = document.getElementById('tutor-offline-banner');
   if (offlineBanner) offlineBanner.hidden = isOnline;
   const input = /** @type {HTMLInputElement|null} */ (document.getElementById('tutor-input'));
-  if (input) input.disabled = !isOnline || tutorPending || !tutorLesson;
+  if (input) input.disabled = !isOnline || tutorPending;   // chưa chọn bài vẫn hỏi được: Gia sư tự tìm bài phù hợp
   const submit = /** @type {HTMLButtonElement|null} */ (document.getElementById('tutor-submit'));
-  if (submit) submit.disabled = !isOnline || tutorPending || !tutorLesson;
+  if (submit) submit.disabled = !isOnline || tutorPending;
 }
 
 async function refreshTutorQuota() {
@@ -113,7 +115,7 @@ function chooseTutorLesson() {
   tutorLesson = null; tutorHistory = [];
   node('tutor-context-note').textContent = 'Chọn bài để hỏi';
   const msgs = node('tutor-messages'); msgs.replaceChildren();
-  const intro = el('div', '', 'tutor-msg tutor-bot'); intro.append(el('p', 'Em muốn hỏi về bài nào? Gia sư chỉ trả lời dựa trên nội dung bài học.')); msgs.append(intro);
+  const intro = el('div', '', 'tutor-msg tutor-bot'); intro.append(el('p', 'Em cứ gõ câu hỏi, Gia sư sẽ tự tìm bài học phù hợp để gợi ý. Hoặc chọn một bài bên dưới.')); msgs.append(intro);
   const grade = session?.identity.grade; const list = el('div', '', 'tutor-picks');
   for (const course of (catalog?.courses || []).filter(item => item.grade === grade)) for (const lesson of course.lessons) {
     list.append(button(lesson.title, () => setTutorLesson({course_id: course.id, lesson_id: lesson.id, title: lesson.title}), 'tutor-pick'));
@@ -136,7 +138,7 @@ function openTutor(questionId = null) {
   const tb = document.querySelector('.topbar'); document.body.style.setProperty('--tb-h', `${tb && getComputedStyle(tb).position === 'sticky' ? Math.round(tb.getBoundingClientRect().height) : 0}px`);
   if (!dialog.open) dialog.show();   // máy tính rộng: cột chat bên phải, nội dung dịch sang trái; màn nhỏ: khung nổi / tấm trượt
   document.body.classList.add('tutor-open'); fitTutor(); queueMicrotask(readProgress.refresh);
-  if (tutorLesson) /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
+  /** @type {HTMLInputElement} */ (node('tutor-input')).focus();
 }
 
 /** Điện thoại: khung chat bám vùng nhìn thấy (bàn phím bật thì thu lại, không đẩy tiêu đề ra khỏi màn hình). */
@@ -638,7 +640,7 @@ function percentOf(item) { return item.total ? Math.round(100 * item.correct / i
 /** Vẽ Tổng quan ngoài màn hình rồi thay một lần (không xóa trắng trước → không giật khi bấm đồng bộ). */
 async function progress() {
   show('progress'); const syncButton = node('sync'), shown = node('progress');
-  if (!shown.childElementCount) node('progress-view').prepend(syncButton);
+  if (!shown.childElementCount) { node('progress-view').prepend(syncButton); shown.append(el('p', 'Đang tải tổng quan học tập của em…', 'ld-box ld-lg')); }
   const generation = viewGeneration, frag = document.createDocumentFragment(), focused = document.activeElement === syncButton;
   syncButton.classList.add('is-spinning'); syncButton.setAttribute('aria-busy', 'true');
   try {
@@ -1230,29 +1232,15 @@ if ('serviceWorker' in navigator) {
 if (document.getElementById('check-update')) {
   on('check-update', () => withBusy(/** @type {HTMLButtonElement} */ (node('check-update')), 'Đang kiểm tra…', () => checkForUpdate(true)));
 }
-/** @type {Event & {prompt:()=>Promise<void> }|null} */ let installPrompt = null;
-let installedThisSession = false;
-function installState() {
-  const standalone = matchMedia('(display-mode: standalone)').matches;
-  let label = 'Cài ứng dụng'; let detail = 'Trang hiện đang mở trong trình duyệt. Làm theo hướng dẫn phù hợp với thiết bị.';
-  if (installedThisSession) {label = 'Đã cài ứng dụng'; detail = 'Trình duyệt đã xác nhận cài đặt. Em có thể mở từ biểu tượng AI Học Tập.';}
-  if (standalone) {label = 'Đang dùng ứng dụng'; detail = 'Em đang mở ứng dụng ở chế độ độc lập.';}
-  node('install-label').textContent = label; node('install').setAttribute('aria-label', label); node('install').title = label; node('install-state').textContent = detail;
-}
-window.addEventListener('beforeinstallprompt', event => {event.preventDefault(); installPrompt = /** @type {typeof installPrompt} */ (event);});
-window.addEventListener('appinstalled', () => {installPrompt = null; installedThisSession = true; installState(); notify('Trình duyệt đã xác nhận cài ứng dụng. Mở từ biểu tượng AI Học Tập để dùng.');});
-on('install', async () => {
-  if (installPrompt) {const pwaPrompt = installPrompt; installPrompt = null; await pwaPrompt.prompt();}
-  else {installState(); /** @type {HTMLDialogElement} */ (node('install-help-dialog')).showModal();}
-});
-on('close-install', () => /** @type {HTMLDialogElement} */ (node('install-help-dialog')).close());
+// Cài ứng dụng + mở đúng trình duyệt (Zalo/Facebook): xem install.js
+install.init({ notify, busy: () => document.body.classList.contains('tutor-open') || Boolean(document.querySelector('dialog[open]')) || thiApp.inExam() });
 on('ask-tutor', () => openTutor(null));
 on('open-tutor', () => openTutor(null));
 on('close-tutor', closeTutor);
 form('tutor-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (!navigator.onLine) { notify('Cần kết nối mạng để gửi câu hỏi.', true); return; }
-  if (!tutorLesson || tutorPending) return;
+  if (tutorPending) return;
   if (thiApp.realExamOpen() || thiApp.inExam()) { const m = el('div', '', 'tutor-msg tutor-bot'); m.append(el('p', thiApp.inExam() ? 'Em đang làm bài thi. Gia sư tạm nghỉ đến khi em nộp bài để điểm phản ánh đúng sức em.' : 'Lớp em đang có bài thi thật đang mở. Gia sư tạm nghỉ đến khi em nộp bài hoặc thầy cô khóa bài thi.')); node('tutor-messages').append(m); return; }
   const input = /** @type {HTMLInputElement} */ (node('tutor-input'));
   const text = input.value.trim();
@@ -1273,24 +1261,32 @@ form('tutor-form').addEventListener('submit', async event => {
   updateTutorStatus();
 
   try {
+    const grade = session?.identity.grade;
     const payload = {
-      course_id: tutorLesson.course_id,
-      lesson_id: tutorLesson.lesson_id,
+      course_id: tutorLesson?.course_id,
+      lesson_id: tutorLesson?.lesson_id,
+      // Chưa chọn bài: gửi danh sách bài của khối em để Gia sư (máy chủ) tự chọn bài khớp câu hỏi nhất.
+      candidates: tutorLesson ? undefined : (catalog?.courses || []).filter(c => c.grade === grade).flatMap(c => c.lessons.map(l => ({course_id: c.id, lesson_id: l.id}))).slice(0, 40),
       message: text,
       history: tutorHistory,
-      question_id: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
-      selected_option: active && tutorQuestionId && tutorLesson.lesson_id === active.lesson_id && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
+      question_id: active && tutorQuestionId && tutorLesson?.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
+      selected_option: active && tutorQuestionId && tutorLesson?.lesson_id === active.lesson_id && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
       attempt_count: 1,
       context: session ? { weak_topics: mastery.weakTopics(session.identity.uid) } : undefined   // Bản đồ năng lực: Gia sư củng cố đúng chủ đề em còn yếu
     };
     /** @type {import('./contracts').TutorResponse} */
     const res = await api('/pwa/tutor', { method: 'POST', body: payload, token: session?.token });
     loadingMsg.remove();
+    if (!tutorLesson && res.lesson?.lesson_id) {   // Gia sư đã tự chọn bài: các câu sau bám theo bài này
+      tutorLesson = { course_id: res.lesson.course_id, lesson_id: res.lesson.lesson_id, title: res.lesson.title || 'Bài học' };
+      node('tutor-context-note').textContent = tutorLesson.title;
+      msgs.querySelector('.tutor-picks')?.remove();
+      msgs.append(el('p', `Gia sư dùng bài: ${tutorLesson.title}`, 'tutor-routed'));
+    }
     const botMsg = el('div', '', 'tutor-msg tutor-bot');
     msgs.append(botMsg);
     await typeOut(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.', () => { msgs.scrollTop = msgs.scrollHeight; });
-    tutorHistory.push({ role: 'user', content: text });
-    tutorHistory.push({ role: 'model', content: res.reply || '' });
+    if (!res.no_match) { tutorHistory.push({ role: 'user', content: text }); tutorHistory.push({ role: 'model', content: res.reply || '' }); }
     refreshTutorQuota().catch(() => {});
   } catch (err) {
     loadingMsg.remove();
@@ -1317,7 +1313,7 @@ form('tutor-form').addEventListener('submit', async event => {
     input.focus();
   }
 });
-installState(); updateConnection();
+updateConnection();
 start().catch(error => {catalogUnavailable('Kiểm tra quyền lưu trữ của trình duyệt rồi thử lại.'); report(error);});
 void support.init();
 

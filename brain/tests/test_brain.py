@@ -254,6 +254,10 @@ class Pipeline(unittest.TestCase):
                                                              "SHEET_BRAIN_KEY=ks", "GEMINI_API_KEY=g", f"GEMINI_URL={base}/gem", f"DB_PATH={d}/b.sqlite3"]))
             old = {k: os.environ.pop(k, None) for k in ("NO_PROXY", "no_proxy", "HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy")}
             try:
+                gem0 = seen["gem"]
+                self.assertEqual(main(["quick", "--env", env]), 0)   # lượt nhanh: gửi hiểu lầm, không gọi AI, không gửi Sheet
+                self.assertEqual((seen["gem"], seen["sheet"], len(seen["hl"])), (gem0, None, 1))
+                seen["hl"].clear(); seen["hl_key"].clear()
                 self.assertEqual(main(["run", "--dry-run", "--env", env]), 0)
                 self.assertEqual(seen["hl"], [], "chạy thử: không gửi Gia sư")
                 self.assertEqual(main(["run", "--env", env]), 0)

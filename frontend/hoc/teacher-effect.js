@@ -109,7 +109,7 @@ function render() {
 /* ---------- Bộ não AI (VPS): báo cáo tuần từng lớp, đọc từ Google Sheet (trang NaoAI) ---------- */
 /** @type {any[]|null} */ let brain = null;
 async function loadBrain() {
-  const box = $('eff-brain'); box.replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted', textContent: 'Đang tải báo cáo…' }));
+  const box = $('eff-brain'); box.replaceChildren(Object.assign(document.createElement('p'), { className: 't-muted ld-box', textContent: 'Đang tải báo cáo…' }));
   try {
     const c = (() => { try { return { gv: sessionStorage.getItem('thi-gv-mk') || '', gv_ma: sessionStorage.getItem('thi-gv-ma') || '' }; } catch { return { gv: '', gv_ma: '' }; } })();
     if (!SHEET_API) throw new Error('Chưa cài địa chỉ Google Sheet.');

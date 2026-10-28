@@ -3,6 +3,7 @@
 run      : thu thập → lưu lịch sử → phân tích từng lớp → báo cáo (Gemini) → gửi Google Sheet
 collect  : chỉ thu thập + lưu lịch sử
 report   : in báo cáo một lớp ra màn hình (không gửi): python -m brain report 9A
+quick    : lượt nhanh ban ngày (mỗi 30 phút, 6:00–22:00): thu thập + gửi hiểu lầm riêng cho Gia sư; không gọi AI, không gửi báo cáo
 diag     : chẩn đoán dữ liệu hiểu lầm / chất lượng câu hỏi (chỉ số tổng hợp, không có tên)
 """
 from __future__ import annotations
@@ -63,7 +64,7 @@ def build_reports(cfg: Config, db, use_ai: bool = True) -> list[dict]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="brain", description="Bộ não AI — Góc học tập")
-    ap.add_argument("cmd", choices=["run", "collect", "report", "diag"])
+    ap.add_argument("cmd", choices=["run", "collect", "report", "diag", "quick"])
     ap.add_argument("lop", nargs="?")
     ap.add_argument("--env", default=".env")
     ap.add_argument("--dry-run", action="store_true", help="không gửi Google Sheet")
@@ -75,10 +76,18 @@ def main(argv: list[str] | None = None) -> int:
         if a.cmd == "diag":   # chỉ đọc SQLite trên VPS, không gọi mạng, không in tên học sinh
             print("\n".join(analyze.diagnose(db)))
             return 0
-        if a.cmd in ("run", "collect"):
+        if a.cmd in ("run", "collect", "quick"):
             print("Thu thập:", collect(cfg, db))
             if a.cmd == "collect":
                 return 0
+        if a.cmd == "quick":   # sau giờ thi, Gia sư biết em hay nhầm gì trong vòng 30 phút (không chờ báo cáo buổi tối)
+            hl = analyze.personal_misconceptions(db)
+            if a.dry_run or not (cfg.worker_url and cfg.brain_key):
+                print(f"Hiểu lầm riêng: {len(hl)} em (chưa gửi Gia sư).")
+                return 0
+            r = sources.worker_push_hieu_lam(cfg.worker_url, cfg.brain_key, hl)
+            print(f"Đã gửi hiểu lầm riêng cho Gia sư: {r.get('saved')} em, xóa {r.get('cleared')} em đã hết nhầm.")
+            return 0
         if a.cmd == "report":
             f = analyze.class_facts(db, a.lop or "", today(cfg), cfg.tz_offset_hours)
             print(json.dumps(f, ensure_ascii=False, indent=2)); print(); print(report.fallback_md(f))

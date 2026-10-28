@@ -114,7 +114,7 @@
 <div class="t-field"><label for="published">Bài đã xuất bản</label><select id="published"><option value="">Chọn bài</option></select>
 </div><button type="button" id="load-lesson" class="t-button" data-action="open-selected-lesson" >Mở bài đã chọn</button>
 </div>
-</details><div id="lesson-list" class="t-list-items" aria-live="polite"><p class="t-muted">Đang tải danh sách bài học…</p></div>
+</details><div id="lesson-list" class="t-list-items" aria-live="polite"><p class="t-muted ld-box">Đang tải danh sách bài học…</p></div>
 </section>
 <section id="detail-lessons" hidden class="t-detail"><button type="button" id="act-lessons-back" class="t-button" data-action="back-lessons" data-target="list-lessons">Quay lại danh sách</button>
 <h2 class="t-detail-title">Soạn nội dung bài học</h2>
@@ -254,7 +254,7 @@
 <div role="tabpanel" id="tabpanel-thi-list" aria-labelledby="tab-thi-list">
 <div class="t-toolbar t-toolbar-actions-only"><button type="button" id="thi-list-refresh" class="t-button">Làm mới</button><button type="button" id="thi-publish" class="t-button t-primary">Cập nhật lên Firebase</button></div>
 <p class="t-muted thi-live-line" id="thi-live-line" hidden><span id="thi-live-status" role="status"></span> <button type="button" id="thi-live-relogin" class="t-button" hidden>Đăng nhập lại</button></p>
-<div id="thi-list" class="t-list-items" aria-live="polite"><p class="t-muted">Đang tải danh sách bài thi…</p></div>
+<div id="thi-list" class="t-list-items" aria-live="polite"><p class="t-muted ld-box">Đang tải danh sách bài thi…</p></div>
 
 </div>
 <div role="tabpanel" id="tabpanel-thi-new" aria-labelledby="tab-thi-new" hidden>
@@ -441,7 +441,7 @@
 <th scope="col">Thao tác</th>
 </tr>
 </thead>
-<tbody id="students-tbody"><tr><td colspan="6">Đang tải danh sách học sinh…</td></tr></tbody>
+<tbody id="students-tbody"><tr><td colspan="6" class="ld-inline">Đang tải danh sách học sinh…</td></tr></tbody>
 </table>
 </section>
 <section id="detail-accounts-import" hidden class="t-detail"><button type="button" id="act-accounts-import-back" class="t-button" data-action="back-accounts" data-target="list-accounts">Quay lại danh sách</button>

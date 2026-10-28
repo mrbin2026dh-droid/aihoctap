@@ -65,7 +65,7 @@ export async function renderExamList(target, loggedIn) {
   }
   await fb.ready();
   if (!loggedIn || (!host?.getToken() && !fb.hasSession())) { note('Đăng nhập để xem bài kiểm tra', 'Bài kiểm tra do giáo viên mở cho lớp của em sẽ hiện ở đây.'); return; }
-  target.append(el('p', 'Đang tải danh sách bài kiểm tra…', 'muted'));
+  target.append(el('p', 'Đang tải danh sách bài kiểm tra…', 'muted ld-box'));
   // Hai nguồn đề chạy song song: Worker (cũ) và Firebase (đề có backend 'firebase'). Một nguồn lỗi vẫn hiện nguồn còn lại.
   const token = host?.getToken() || '';
   const [w, f] = await Promise.allSettled([
