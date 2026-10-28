@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã kiểm tra GitHub Pages đã phát hành thành công bản mới (Actions ID 40639273765), test_auto_update_login (11) và test_pwa_update_integrity (7) đạt 100% PASS; hướng dẫn Thầy thử màn hình tự cập nhật khi học sinh đăng nhập.
+- Yêu cầu mới nhất: Antigravity đã cài đặt Obsidian v1.14.5, chạy thực nghiệm 3 ứng viên Bộ não thứ 2 (Obsidian + LLM Wiki) với 6 tệp giả lập, trích xuất đồ thị tri thức 18 đỉnh/83 cạnh, phát hiện rào cản WSL của Kho B và lập báo cáo khảo sát tại docs/handoff/antigravity-claude-bo-nao-thu-2-khao-sat.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1983,3 +1983,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: GitHub Pages build success; test_auto_update_login 11/11 PASS; test_pwa_update_integrity 7/7 PASS; package_student_pwa --check PASS.
 - Việc tiếp: Thầy mở máy học sinh/điện thoại kiểm tra chấm đỏ nhấp nháy, đăng nhập và xem màn hình cập nhật 3 bước.
+
+### 28/10/2026 (chiều) — Antigravity — Khảo sát thực nghiệm 3 ứng viên "Bộ não thứ 2" (Obsidian + LLM Wiki theo Karpathy)
+- Đã thực hiện: Cài đặt Obsidian v1.14.5 cho máy Thầy; thiết lập 6 tệp dữ liệu giả lập; thử nghiệm và đối chiếu 3 ứng viên (A: second-brain, B: claude-obsidian, C: karpathy-llm-wiki) cùng 3 kho tham khảo; phát hiện Kho B bị khóa trên Windows do bắt buộc WSL, Kho A thiếu giấy phép bản quyền; xuất đồ thị tương tác 18 đỉnh/83 cạnh (graph-network-candidate-a.html); lập báo cáo toàn diện cho Claude.
+- Tệp đổi: docs/handoff/antigravity-claude-bo-nao-thu-2-khao-sat.md, aisgk.md.
+- Kiểm thực tế: Obsidian cài đặt thành công và khởi chạy mượt mà; Ingest 6 tệp đạt 20 trang wiki; Lint kiểm tra liên kết 100% HEALTHY (0 broken links); 3 câu hỏi truy vấn trả lời chính xác 100% có dẫn nguồn.
+- Việc tiếp: Chuyển Claude đọc báo cáo khảo sát và tiến hành thiết kế cấu trúc bộ não thật cho học sinh và công việc của Thầy.
