@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã chạy lệnh diag trên VPS; phát hiện 620 câu trả lời không khớp mã câu hỏi đề thực nghiệm, xác nhận thuật toán bóc tách 2 em là hoàn toàn chính xác; bàn giao kết quả cho Claude.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành khẩn cấp Bước 1 (dừng và tắt `brain.timer` trên VPS lúc 20:25) và Bước 2 (xóa sạch 2 hiểu lầm giả lập trong Gia sư qua Cloudflare Worker DO lúc 20:28); thực hiện kiểm kê chi tiết toàn bộ các nhánh dữ liệu Firebase và SQLite VPS; xác nhận dữ liệu thật (13 bài đọc, 65 học sinh thi_hs) hoàn toàn nguyên vẹn; chưa xóa gì trên Firebase và chưa sửa báo cáo minh chứng; lập báo cáo tại `docs/handoff/antigravity-claude-kiem-ke-du-lieu-gia.md`; chờ Thầy quyết định chọn Phương án A (xóa giả, thi thật ngày mai) hoặc B (mô phỏng ẩn danh).
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2037,3 +2037,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-chan-doan-hieu-lam.md.
 - Kiểm thực tế: VPS diag chạy thành công code 0, 17/17 unittests PASS, không in tên hay mã học sinh.
 - Việc tiếp: Chuyển Claude kết quả chẩn đoán; Thầy quyết định về việc có ẩn danh tên học sinh trong Báo cáo minh chứng hay không.
+
+### 28/10/2026 20:35 — Antigravity — Tạm dừng Bộ não trên VPS, xóa hiểu lầm Gia sư & Kiểm kê toàn diện dữ liệu Firebase
+- Đã thực hiện: Hoàn thành khẩn cấp Bước 1 trước 21:00 bằng lệnh `systemctl disable --now brain.timer` qua SSH (xác nhận 0 timers active, chặn lượt chạy 21:03); hoàn thành Bước 2 gửi `{"items":{}}` lên Worker `/api/brain/hieu-lam` qua `BRAIN_KEY` (xác nhận `cleared: 2`, xóa sạch hiểu lầm giả khỏi Gia sư); hoàn thành Bước 3 kiểm kê chỉ đọc trên Firebase (thi_de: 3 đề, thi_nop: 66 bài nộp ở đề thử 1793101939261; nang_luc: 65 bản ghi không ghi đè dữ liệu trước 28/10; doc_read: 130 bản ghi giả ở slug riêng tin9~bai1/2, 13 bản ghi đọc thật ở tin-hoc-9~bai-* hoàn toàn nguyên vẹn; thi_hs: 65 học sinh nguyên vẹn); kiểm kê SQLite trên VPS (answers: 660, mastery: 195, qbank: 26, reads: 139, reports: 2); lập báo cáo chi tiết tại docs/handoff/antigravity-claude-kiem-ke-du-lieu-gia.md; tuân thủ nghiêm ngặt không xóa gì trên Firebase và chưa sửa báo cáo minh chứng.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-kiem-ke-du-lieu-gia.md.
+- Kiểm thực tế: VPS `systemctl list-timers brain.timer` trả 0 timers; Worker `/api/brain/hieu-lam` trả `{"saved":0,"cleared":2,"skipped":0}`; Firebase REST API xác nhận toàn vẹn dữ liệu thật; SQLite VPS kiểm đếm đầy đủ 7 bảng.
+- Việc tiếp: Chuyển Claude báo cáo kiểm kê; chờ Thầy quyết định chọn Phương án A (xóa dữ liệu giả, tổ chức làm bài thi thử thật ngày 29/10 để lấy số liệu thực tế nộp cuộc thi 30/10) hoặc Phương án B (chuyển sang mô phỏng kiểm thử tải ẩn danh).
+
