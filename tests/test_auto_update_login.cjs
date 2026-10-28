@@ -1,0 +1,45 @@
+// Có bản cập nhật mới: icon đồng bộ có chấm đỏ; học sinh đăng nhập thì màn hình "Đang cập nhật" chạy rồi tự khởi động lại bằng bản mới.
+const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
+const root=path.resolve(__dirname,'../frontend/hoc');const DB='https://test-upd-default-rtdb.asia-southeast1.firebasedatabase.app';
+let swSuffix='';
+const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/index.html';const f=path.join(root,p);if(!fs.existsSync(f)){r.statusCode=404;return r.end()}
+ let body=fs.readFileSync(f);if(p==='/presence-config.js')body=Buffer.from(`export const PRESENCE_CONFIG = {apiKey:'K', dbUrl:'${DB}'};`);
+ if(p==='/sw.js')body=Buffer.from(body.toString().replace('aisgk-student-shell-','aisgk-student-shell-'+swSuffix));
+ r.setHeader('cache-control','no-store');r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml'}[path.extname(f)]||'x');r.end(body)}).listen(8209);
+const hh=(ma,pin)=>crypto.createHash('sha256').update(ma.toLowerCase()+':'+pin).digest('hex');
+const db={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:hh('hs01','123456')}},thi_bai:{}};
+const at=p=>p.split('/').filter(Boolean).reduce((o,k)=>(o===null||o===undefined)?undefined:o[k],db);
+(async()=>{const b=await chromium.launch();let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
+ try{
+  const c=await b.newContext({viewport:{width:390,height:800}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+  await c.route(DB+'/**',r=>{const u=new URL(r.request().url());const k=u.pathname.replace(/\.json$/,'').replace(/^\//,'');
+   if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`retry: 60000\nevent: put\ndata: ${JSON.stringify({path:'/',data:at(k)??null})}\n\n`});
+   r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(at(k)??null)})});
+  await c.route('**/api/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({schema_version:1,revision:'r',courses:[],token:'w'})}));
+  await p.goto('http://localhost:8209/');await p.waitForFunction(()=>navigator.serviceWorker.controller||navigator.serviceWorker.ready.then(()=>false),null,{timeout:15000});
+  await p.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:15000}).catch(()=>{});
+  if(!(await p.evaluate(()=>!!navigator.serviceWorker.controller)))await p.reload();
+  await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  ok(await p.locator('#update-overlay').isHidden()&&await p.locator('#update-notice').isHidden(),'chưa có bản mới: không icon, không màn hình chờ');
+  // Phát hành bản mới khi học sinh chưa đăng nhập
+  swSuffix='v2-';await p.evaluate(()=>navigator.serviceWorker.getRegistration().then(r=>r.update()));
+  await p.waitForSelector('#update-notice:not([hidden])',{timeout:15000});
+  ok(await p.locator('#update-notice .badge-dot').isVisible(),'có bản mới: hiện icon cập nhật kèm chấm đỏ');
+  ok(await p.locator('#update-overlay').isHidden(),'chưa đăng nhập: chưa chạy màn hình cập nhật');
+  const anim=await p.$eval('#update-notice .badge-dot',e=>getComputedStyle(e).animationName);ok(anim.includes('uo-ping'),'chấm đỏ nhấp nháy để dễ thấy');
+  await p.waitForSelector('#gate-student');await p.click('#gate-student');await p.waitForSelector('#login-dialog[open]');
+  ok(await p.locator('#login-update-hint').isVisible(),'ô đăng nhập báo "có bản cập nhật, sẽ tự cập nhật sau đăng nhập"');
+  const nav=new Promise(res=>p.once('framenavigated',()=>res(true)));
+  await p.fill('#student-code','HS01');await p.fill('#student-pin','123456');await p.click('#login-form button[type=submit]');
+  await p.waitForSelector('#update-overlay:not([hidden])',{timeout:15000});
+  ok((await p.textContent('#uo-title')).includes('Đang cập nhật'),'đăng nhập xong: hiện màn hình "Đang cập nhật ứng dụng"');
+  await p.waitForFunction(()=>document.querySelectorAll('#update-overlay .uo-steps li.done').length>=1);
+  ok(parseInt(await p.$eval('#uo-fill',e=>e.style.width))>10,'thanh tiến trình chạy theo từng bước');
+  await nav;await p.waitForLoadState('load');await p.waitForFunction(()=>(document.documentElement.dataset.build||'').length>0,null,{timeout:15000}).catch(()=>{});
+  await p.waitForTimeout(500);
+  ok(await p.locator('#update-overlay').isHidden(),'sau khởi động lại: tắt màn hình chờ');
+  ok(await p.locator('#update-notice').isHidden(),'dùng bản mới: icon cập nhật biến mất');
+  const keys=await p.evaluate(()=>caches.keys());ok(keys.some(k=>k.includes('v2-'))&&!keys.some(k=>!k.includes('v2-')&&k.startsWith('aisgk-student-shell-')),'bộ nhớ offline chuyển sang bản mới, bản cũ bị xóa');
+  ok(errs.length===0,'không lỗi script: '+errs.join('|'));
+  console.log('AUTO UPDATE OK',n);
+ }finally{await b.close();srv.close();}})().catch(e=>{console.error(e);process.exit(1)});
