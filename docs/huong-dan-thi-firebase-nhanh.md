@@ -81,3 +81,13 @@
 - Điện thoại: thanh menu giáo viên luôn hiện. Giáo viên lớp có **Cài đặt**: Đổi mã PIN, Hỗ trợ học sinh qua Zalo, Đăng xuất.
 - **Nút "Hỏi thầy cô" (Zalo)**: Cài đặt → Hỗ trợ học sinh qua Zalo → nhập số Zalo. Quản trị = số chung; giáo viên lớp = số riêng cho lớp mình.
 - Học ngoại tuyến: có mạng thì app tự tải mọi bài của khối về máy; mất mạng vẫn mở và đọc bài được.
+
+## Tiện ích: Trò chơi câu hỏi trên lớp (28/10/2026)
+1. Trang giáo viên → **Tiện ích** → **Tạo bộ câu hỏi**: đặt tên, chọn lớp, thời gian mỗi câu. Thêm câu bằng cách tự nhập, **AI soạn câu hỏi theo bài** (câu AI soạn phải đánh dấu Đã duyệt), hoặc **Lấy câu từ đề thi thử** → Lưu.
+2. Bấm **Trình chiếu** (nên mở trên máy chiếu). Màn hình hiện mã phòng; học sinh lớp đó mở app là thấy thẻ **"Vào chơi"**, không phải gõ mã.
+3. Đủ học sinh thì bấm **Bắt đầu**. Mỗi câu có đồng hồ đếm ngược; học sinh chọn 1 trong 4 ô màu trên điện thoại. Hết giờ hoặc cả lớp đã trả lời thì máy chiếu hiện đáp án, số em chọn mỗi phương án và bảng xếp hạng. Đúng và nhanh thì được nhiều điểm hơn.
+4. Kết thúc: bục vinh danh top 3, bảng từng câu (tỉ lệ đúng, phương án sai bị chọn nhiều nhất), danh sách em cần hỗ trợ. Bấm **AI phân tích lớp hiểu bài** (AI chỉ nhận số liệu, không nhận tên học sinh), **Tải kết quả CSV**.
+5. Đáp án chỉ nằm trên máy giáo viên đến lúc công bố. Học sinh không điều khiển được phòng và không đổi được câu đã trả lời.
+
+## Bộ não AI (VPS) — báo cáo tuần
+Cài theo `docs/huong-dan-vps-bo-nao-ai.md`. Mỗi tối 21:00, báo cáo từng lớp hiện ở **Hiệu quả → Bộ não AI: báo cáo tuần**: xu hướng chủ đề, học sinh hay hỏi gì, học sinh cần chú ý, đề xuất tuần tới.

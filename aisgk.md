@@ -1897,3 +1897,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ## 28/10/2026 06:55 — Claude: Zalo mặc định + phân tích "bộ não thứ hai" trên Render
 - Thêm frontend/hoc/support-config.js (Zalo mặc định https://zalo.me/0818810007); Zalo nhập ở trang giáo viên vẫn ưu tiên. Test lesson/thi/teacher/offline PASS.
 - Phân tích Render free cho bộ não thứ hai bằng Python: trả lời trong chat (không triển khai).
+
+## 28/10/2026 07:10 — Claude: Tiện ích trò chơi câu hỏi + Bộ não AI trên VPS
+- Tiện ích: trò chơi câu hỏi giáo viên điều khiển (Firebase, khóa phòng quiz_key/quiz_proof, đáp án chỉ ở máy giáo viên, điểm đúng+nhanh, xếp hạng, AI phân tích lớp hiểu bài, CSV); học sinh: thẻ Vào chơi + màn 4 ô màu.
+- Bộ não AI: Python brain/ (stdlib, chỉ gọi ra ngoài), SQLite lịch sử, phân tích lớp, báo cáo Gemini (ẩn tên), gửi Sheet NaoAI; Worker ghi câu hỏi Gia sư + /api/brain/export (BRAIN_KEY); thẻ báo cáo trong Hiệu quả; hướng dẫn VPS.
+- Zalo mặc định https://zalo.me/0818810007 (support-config.js).
+- Test: test_quiz_live (29), test_teacher_effect, test_brain_export, test_teacher_ai, brain unittest (7), test_sheet_exam_gs PASS. Emulator luật chưa chạy được ở đây.
+- Bàn giao: docs/handoff/claude-antigravity-tien-ich-bo-nao.md
