@@ -219,6 +219,29 @@ def question_quality(db: sqlite3.Connection, ma_list: list[str], top: int = 5) -
     return out[:top]
 
 
+def diagnose(db: sqlite3.Connection) -> list[str]:
+    """Chẩn đoán dữ liệu hiểu lầm / chất lượng câu hỏi: chỉ số tổng hợp, KHÔNG in tên hay mã học sinh."""
+    out: list[str] = []
+    titles = {r["exam"]: r["title"] for r in db.execute("SELECT exam, title FROM exams GROUP BY exam")}
+    for r in db.execute("SELECT DISTINCT exam FROM answers UNION SELECT DISTINCT exam FROM qbank ORDER BY 1"):
+        e = r["exam"]
+        nq = db.execute("SELECT COUNT(*) FROM qbank WHERE exam=?", (e,)).fetchone()[0]
+        na = db.execute("SELECT COUNT(DISTINCT ma) FROM answers WHERE exam=?", (e,)).fetchone()[0]
+        out.append(f"Đề {e} “{titles.get(e, '')}”: {na} em có câu trả lời, {nq} câu trắc nghiệm trong đề")
+        for it in item_analysis(db, e, min_n=1):
+            wrong = db.execute("SELECT COUNT(*) FROM answers a JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid WHERE a.exam=? AND a.qid=? AND a.chosen<>q.answer", (e, it["qid"])).fetchone()[0]
+            out.append(f"  câu {it['qid']}: đúng {it['ti_le_dung']}%, D = {it['do_phan_biet']}, mức {it['muc']}, {wrong} em chọn sai" + (f" | {'; '.join(it['van_de'])}" if it["van_de"] else ""))
+    orphan_q = db.execute("SELECT COUNT(*) FROM answers a LEFT JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid WHERE q.qid IS NULL").fetchone()[0]
+    orphan_s = db.execute("SELECT COUNT(*) FROM answers a LEFT JOIN students s ON s.ma=a.ma WHERE s.ma IS NULL").fetchone()[0]
+    bad_letter = db.execute("SELECT COUNT(*) FROM answers a JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid WHERE instr(q.options, '\"' || a.chosen || '\"') = 0").fetchone()[0]
+    wrong_all = db.execute("SELECT COUNT(DISTINCT a.ma) FROM answers a JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid WHERE a.chosen<>q.answer").fetchone()[0]
+    sus = suspect_items(db)
+    out.append(f"Câu nghi sai đáp án (bị loại khỏi hiểu lầm): {len(sus)}")
+    out.append(f"Câu trả lời không khớp câu hỏi trong đề: {orphan_q}; không khớp học sinh trong danh sách: {orphan_s}; lựa chọn không có trong phương án: {bad_letter}")
+    out.append(f"Học sinh có ít nhất 1 câu sai: {wrong_all} em; sau khi loại câu nghi sai đáp án và lọc, gửi Gia sư: {len(personal_misconceptions(db))} em")
+    return out
+
+
 def class_facts(db: sqlite3.Connection, lop: str, today: str, tz_hours: int = 7) -> dict[str, Any]:
     """Số liệu một lớp hôm nay so với 7 ngày trước."""
     studs = {r["ma"]: r["ten"] for r in db.execute("SELECT ma, ten FROM students WHERE lower(lop)=lower(?)", (lop,))}

@@ -2027,7 +2027,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc tiếp: Chuyển Claude hai số liệu (answers: 660, qbank: 12); Thầy phản hồi Claude về phương án chấm tự luận (cách 1).
 
 ### 28/10/2026 (tối) — Antigravity — Deploy Worker 07a961b8, cập nhật VPS 16/16 PASS, gửi hiểu lầm cho Gia sư & gửi Sheet NaoAI
-- Đã thực hiện: Deploy Cloudflare Worker bản `07a961b8` (thêm endpoint `/api/brain/hieu-lam`, kiểm thử 16 ca test_brain_hieu_lam.mjs PASS); cập nhật mã nguồn trên VPS qua SSH; chạy 16 unittests trên VPS đạt 100% PASS; chạy Bộ não AI thật thu thập 65 học sinh, tính hiểu lầm riêng và gửi cho 2 em (9A10009, 9A9001) lên Worker Durable Object của Gia sư; gửi báo cáo tuần 2 lớp vào Google Sheet NaoAI; lập báo cáo tại docs/handoff/antigravity-claude-bo-nao-gia-su-xong.md.
+- Đã thực hiện: Deploy Cloudflare Worker bản `07a961b8` (thêm endpoint `/api/brain/hieu-lam`, kiểm thử 16 ca test_brain_hieu_lam.mjs PASS); cập nhật mã nguồn trên VPS qua SSH; chạy 16 unittests trên VPS đạt 100% PASS; chạy Bộ não AI thật thu thập 65 học sinh, tính hiểu lầm riêng và gửi cho 2 em ([mã HS], [mã HS]) lên Worker Durable Object của Gia sư; gửi báo cáo tuần 2 lớp vào Google Sheet NaoAI; lập báo cáo tại docs/handoff/antigravity-claude-bo-nao-gia-su-xong.md.
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-bo-nao-gia-su-xong.md.
 - Kiểm thực tế: Worker `/api/brain/hieu-lam` trả 403 (không khóa) / 200 (có khóa); test_brain_hieu_lam 16/16 PASS; VPS unittests 16/16 PASS; VPS run thật: `Đã gửi hiểu lầm riêng cho Gia sư: 2 em, xóa 0 em đã hết nhầm. Đã gửi Google Sheet: 2 lớp`.
-- Việc tiếp: Chuyển Claude đọc báo cáo hoàn tất; Thầy có thể đăng nhập bằng tài khoản 9A10009 hoặc 9A9001 để thử tính năng Gia sư gợi mở theo hiểu lầm riêng.
+- Việc tiếp: Chuyển Claude đọc báo cáo hoàn tất; Thầy có thể đăng nhập bằng tài khoản [mã HS] hoặc [mã HS] để thử tính năng Gia sư gợi mở theo hiểu lầm riêng.

@@ -3,6 +3,7 @@
 run      : thu thập → lưu lịch sử → phân tích từng lớp → báo cáo (Gemini) → gửi Google Sheet
 collect  : chỉ thu thập + lưu lịch sử
 report   : in báo cáo một lớp ra màn hình (không gửi): python -m brain report 9A
+diag     : chẩn đoán dữ liệu hiểu lầm / chất lượng câu hỏi (chỉ số tổng hợp, không có tên)
 """
 from __future__ import annotations
 import argparse
@@ -62,7 +63,7 @@ def build_reports(cfg: Config, db, use_ai: bool = True) -> list[dict]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="brain", description="Bộ não AI — Góc học tập")
-    ap.add_argument("cmd", choices=["run", "collect", "report"])
+    ap.add_argument("cmd", choices=["run", "collect", "report", "diag"])
     ap.add_argument("lop", nargs="?")
     ap.add_argument("--env", default=".env")
     ap.add_argument("--dry-run", action="store_true", help="không gửi Google Sheet")
@@ -71,6 +72,9 @@ def main(argv: list[str] | None = None) -> int:
     cfg = Config.from_env(a.env)
     db = store.open_db(cfg.db_path)
     try:
+        if a.cmd == "diag":   # chỉ đọc SQLite trên VPS, không gọi mạng, không in tên học sinh
+            print("\n".join(analyze.diagnose(db)))
+            return 0
         if a.cmd in ("run", "collect"):
             print("Thu thập:", collect(cfg, db))
             if a.cmd == "collect":

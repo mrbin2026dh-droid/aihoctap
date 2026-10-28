@@ -21,7 +21,7 @@
   + Đã gửi báo cáo tuần cập nhật đầy đủ vào Google Sheet trang `NaoAI`.
 
 ## 3. Hướng dẫn kiểm thử thực tế cho Thầy
-- Thầy có thể cho 1 trong 2 học sinh (`9A10009` hoặc `9A9001`) đăng nhập ứng dụng PWA.
+- Thầy có thể cho 1 trong 2 học sinh có hiểu lầm (mã xem trên VPS, không ghi vào kho công khai) đăng nhập ứng dụng PWA.
 - Khi học sinh mở bài học và nhắn tin hỏi Gia sư AI về kiến thức liên quan:
   + Gia sư AI sẽ chủ động hỏi gợi mở dựa trên câu hỏi em từng chọn nhầm.
   + Gia sư AI **tuyệt đối không đưa đáp án đúng** theo đúng nguyên tắc sư phạm.

@@ -89,6 +89,13 @@ class ItemAnalysis(unittest.TestCase):
         self.assertTrue(all(c["de"] == "Thi thử chương 1" and c["so_em"] == 20 for c in q))   # thống kê trên cả 2 lớp
         self.assertIn("Chất lượng câu hỏi", report.fallback_md(analyze.class_facts(self.db, "9A", "2026-10-28")))
 
+    def test_diagnose_no_names(self):
+        txt = "\n".join(analyze.diagnose(self.db))
+        self.assertIn("20 em có câu trả lời, 9 câu trắc nghiệm", txt)
+        self.assertIn("Câu nghi sai đáp án (bị loại khỏi hiểu lầm): 1", txt)
+        self.assertIn("không khớp câu hỏi trong đề: 0; không khớp học sinh trong danh sách: 0; lựa chọn không có trong phương án: 0", txt)
+        self.assertNotIn("s0", txt.replace("s0 ", "")); self.assertNotIn("Em ", txt)
+
     def test_too_few_students(self):
         self.assertEqual(analyze.item_analysis(self.db, "t9", min_n=21), [])
 
