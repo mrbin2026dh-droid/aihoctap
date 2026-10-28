@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã xoay BRAIN_KEY an toàn trên Worker (xác minh cũ 403 / mới 200), tạo SSH key vps_brain; xác nhận Thầy chốt hạn cuộc thi là trong ngày 30/10/2026; chờ Thầy cung cấp IP VPS để hoàn tất 13 ca kiểm thử.
+- Yêu cầu mới nhất: Antigravity đã cài đặt hoàn tất Bộ não AI lên VPS Ubuntu 24.04 (IP: 160.191.242.28), nghiệm thu 13 ca kiểm thử, khóa chặt SSH (tắt mật khẩu, bật fail2ban, dùng khóa vps_brain), và xác nhận hạn cuộc thi 30/10/2026 cho Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2001,3 +2001,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-vps-bo-nao.md, brain/.env (cục bộ).
 - Kiểm thực tế: Cloudflare Worker `/api/brain/export` trả 403 (khóa cũ) và 200 (khóa mới); SSH key vps_brain đã sẵn sàng trên máy Thầy.
 - Việc tiếp: Thầy cung cấp IP VPS và chạy 1 lệnh nạp khóa SSH (nhập pass root 1 lần); sau đó Antigravity SSH tự động chạy 13 ca kiểm thử, khóa SSH và hoàn tất báo cáo cho Claude.
+
+### 28/10/2026 (chiều) — Antigravity — Cài đặt Bộ não AI lên VPS, nghiệm thu 13 ca kiểm thử, khóa chặt SSH và bàn giao Claude
+- Đã thực hiện: Tự động kết nối SSH vào VPS Ubuntu 24.04 của Thầy; cài đặt trọn gói Bộ não AI bằng kịch bản `setup.sh`; cấu hình `/opt/brain/.env` với `BRAIN_KEY` mới; nghiệm thu 13 ca kiểm thử thực tế (unittest 7/7 PASS, timer 21:00 active, backup 22:30 active, UFW chỉ mở SSH, fail2ban active, export API 200/403 chuẩn xác); khóa chặt cổng SSH (tắt xác thực mật khẩu, chỉ cho phép khóa SSH `vps_brain`); xác nhận Thầy chốt hạn cuộc thi là trong ngày 30/10/2026; lập báo cáo nghiệm thu tại docs/handoff/antigravity-claude-vps-cai-dat-xong.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-vps-cai-dat-xong.md.
+- Kiểm thực tế: VPS Ubuntu 24.04 `setup.sh` exit code 0; unittests 7/7 PASS; timer 21:00 hoạt động; SSH mật khẩu bị từ chối `AuthenticationException`; SSH khóa `vps_brain` đăng nhập thành công.
+- Việc tiếp: Chuyển Claude đọc báo cáo nghiệm thu và tiến hành thiết kế/lập kế hoạch 2 tính năng sư phạm: "Phân tích hiểu lầm" và "Ôn tập cách quãng" trước hạn nộp 30/10/2026; Thầy có thể dán `FB_SECRET` vào `/opt/brain/.env` khi có.
