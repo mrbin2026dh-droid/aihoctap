@@ -5,8 +5,8 @@ from typing import Any
 
 PROMPT = """Em là trợ lý chuyên môn của giáo viên Tin học THCS. Viết BÁO CÁO TUẦN cho giáo viên về lớp {lop} dựa ĐÚNG số liệu JSON dưới đây (máy đã tính, không bịa thêm số).
 Mục tiêu: giáo viên biết học sinh đang học thế nào, hay hỏi gì, ai cần chú ý, và tuần tới nên làm gì.
-Viết tiếng Việt, ngắn gọn, markdown, tối đa 380 từ, đúng 6 mục có tiêu đề in đậm:
-**Tóm tắt** (2–3 câu) · **Xu hướng chủ đề** (chủ đề yếu nhất, chủ đề tiến bộ/sa sút nếu có số tuần trước) · **Học sinh hay hỏi gì** (suy ra hiểu lầm từ cụm từ và ví dụ câu hỏi; nêu nếu có em cố xin đáp án) · **Hiểu lầm phổ biến** (từ trường hieu_lam: câu nào nhiều em sai, em hay chọn nhầm điều gì, gợi ý cách chữa 1 câu; nếu trường rỗng ghi "chưa đủ dữ liệu thi") · **Học sinh cần chú ý** (tên + lý do, tối đa 6 em) · **Đề xuất tuần tới** (3–4 việc cụ thể: dạy lại 5–10 phút chủ đề nào, ra thi thử/trò chơi câu hỏi chủ đề nào, gặp riêng em nào).
+Viết tiếng Việt, ngắn gọn, markdown, tối đa 450 từ, đúng 7 mục có tiêu đề in đậm:
+**Tóm tắt** (2–3 câu) · **Xu hướng chủ đề** (chủ đề yếu nhất, chủ đề tiến bộ/sa sút nếu có số tuần trước) · **Học sinh hay hỏi gì** (suy ra hiểu lầm từ cụm từ và ví dụ câu hỏi; nêu nếu có em cố xin đáp án) · **Hiểu lầm phổ biến** (từ trường hieu_lam: câu nào nhiều em sai, em hay chọn nhầm điều gì, gợi ý cách chữa 1 câu; nếu trường rỗng ghi "chưa đủ dữ liệu thi") · **Chất lượng câu hỏi** (từ trường chat_luong_cau_hoi: câu nào cần xem lại và vì sao, giữ nguyên nhận định của máy, ví dụ nghi sai đáp án / quá khó / phân biệt thấp; nếu rỗng ghi "chưa thấy câu cần xem lại") · **Học sinh cần chú ý** (tên + lý do, tối đa 6 em) · **Đề xuất tuần tới** (3–4 việc cụ thể: dạy lại 5–10 phút chủ đề nào, ra thi thử/trò chơi câu hỏi chủ đề nào, gặp riêng em nào).
 Báo cáo này chỉ giáo viên đọc: chỉ nêu đáp án của câu trong mục Hiểu lầm phổ biến để giáo viên dạy lại, không nêu đáp án nơi khác. Trả về DUY NHẤT JSON: {{"md": "nội dung markdown"}}.
 
 SỐ LIỆU:
@@ -57,6 +57,9 @@ def fallback_md(f: dict[str, Any]) -> str:
     hl = f.get("hieu_lam") or []
     if hl:
         lines.append("**Hiểu lầm phổ biến** " + "; ".join(f"“{h['cau'][:80]}” {h['ti_le_sai']}% sai, hay chọn nhầm “{h['hay_chon_sai'][:60]}” (đúng: “{h['dap_an_dung'][:60]}”)" for h in hl[:3]) + ".")
+    cl = f.get("chat_luong_cau_hoi") or []
+    if cl:
+        lines.append("**Chất lượng câu hỏi** " + "; ".join(f"“{c['cau'][:70]}” ({c['de']}): {', '.join(c['van_de'])}" for c in cl[:3]) + ".")
     risk = f.get("can_chu_y") or []
     if risk:
         lines.append("**Học sinh cần chú ý** " + "; ".join(f"{r['ten']} ({', '.join(r['ly_do'])})" for r in risk[:6]) + ".")

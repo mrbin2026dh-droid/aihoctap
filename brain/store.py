@@ -81,6 +81,13 @@ def snapshot(db: sqlite3.Connection, day: str, data: dict[str, Any]) -> dict[str
                 if isinstance(q, dict) and q.get("kind") != "tl" and q.get("id") and isinstance(q.get("options"), dict) and q.get("answer"):
                     db.execute("INSERT OR REPLACE INTO qbank VALUES(?,?,?,?,?,?)", (exam, str(q["id"]), str(q.get("text") or "")[:300], str(q.get("topic") or ""),
                                str(q["answer"]).upper(), json.dumps(q["options"], ensure_ascii=False)))
+        # Đề đã bị xóa / không còn là thi thử, thi thật → bỏ câu trả lời cũ (để hiểu lầm không nằm mãi)
+        if "thi_nop" in data:
+            keep = [e for e, by in nop.items() if isinstance(by, dict)]
+            db.execute(f"DELETE FROM answers WHERE exam NOT IN ({','.join('?' * len(keep))})" if keep else "DELETE FROM answers", keep)
+        if "thi_de" in data:
+            keep = list(de)
+            db.execute(f"DELETE FROM qbank WHERE exam NOT IN ({','.join('?' * len(keep))})" if keep else "DELETE FROM qbank", keep)
         for exam, by in nop.items():
             if not isinstance(by, dict):
                 continue

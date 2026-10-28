@@ -42,6 +42,11 @@ def worker_questions(worker_url: str, brain_key: str, since: int) -> list[dict[s
     return list((d or {}).get("items") or [])
 
 
+def worker_push_hieu_lam(worker_url: str, brain_key: str, items: dict[str, list[dict[str, str]]]) -> dict[str, Any]:
+    """Gửi hiểu lầm riêng từng em lên Worker (thay toàn bộ bản cũ) để Gia sư hỏi gợi mở đúng chỗ."""
+    return http("POST", f"{worker_url}/api/brain/hieu-lam", body={"items": items}, headers={"X-Brain-Key": brain_key}) or {}
+
+
 def sheet_save(sheet_url: str, key: str, reports: list[dict[str, Any]]) -> Any:
     # Apps Script nhận text/plain; urllib tự theo chuyển hướng 302 của Google để lấy kết quả.
     req = urllib.request.Request(sheet_url, data=json.dumps({"action": "brain_save", "key": key, "reports": reports}, ensure_ascii=False).encode("utf-8"),

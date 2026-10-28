@@ -21,6 +21,98 @@ def topics(**kv):
     return {"topics": {k: {"ten": v[0], "d": v[1], "n": v[2]} for k, v in kv.items()}}
 
 
+def exam20():
+    """Đề giả lập 20 em (i = 0 giỏi nhất). 6 câu tốt g1..g6 (đúng nếu i < t) quyết định thứ hạng.
+    m: ghi đáp án 'A' nhưng 8 em giỏi nhất chọn 'B' (nghi sai đáp án). e: ai cũng đúng (quá dễ).
+    x: đúng ở đúng 2 em mỗi nhóm 5 em (cao, thấp) → D = 0 (phân biệt thấp). Phương án D của g1 không ai chọn."""
+    hs = {f"s{i:02d}": {"ten": f"Em {i}", "lop": "9A" if i % 2 == 0 else "9B"} for i in range(20)}
+    de = [{"id": f"g{k}", "text": f"Câu tốt {k}", "options": {"A": "đúng", "B": "sai1", "C": "sai2", "D": "sai3"}, "answer": "A", "topic": "T"} for k in range(1, 7)]
+    de += [{"id": "m", "text": "Câu nghi sai đáp án", "options": {"A": "đáp án ghi", "B": "đáp án thật"}, "answer": "A", "topic": "T"},
+           {"id": "e", "text": "Câu quá dễ", "options": {"A": "x", "B": "y"}, "answer": "A", "topic": "T"},
+           {"id": "x", "text": "Câu phân biệt thấp", "options": {"A": "x", "B": "y"}, "answer": "A", "topic": "T"}]
+    nop = {}
+    for i in range(20):
+        tl = {f"g{k}": ("A" if i < t else ("B" if i % 2 else "C")) for k, t in zip(range(1, 7), (14, 13, 12, 11, 10, 9))}
+        tl["m"] = "B" if i < 8 else "A"
+        tl["e"] = "A"
+        tl["x"] = "A" if i in (0, 1, 17, 18) else "B"
+        nop[f"s{i:02d}"] = {"diem": 1, "tong": 9, "tra_loi": tl}
+    return {"thi_hs": hs, "nang_luc": {}, "doc_read": {}, "thi_bai": {"t9": {"tieu_de": "Thi thử chương 1", "che_do": "thu"}}, "thi_nop": {"t9": nop}, "thi_de": {"t9": de}}
+
+
+class ItemAnalysis(unittest.TestCase):
+    def setUp(self):
+        self.db = store.open_db(":memory:")
+        store.snapshot(self.db, "2026-10-28", exam20())
+        self.items = {it["cau"]: it for it in analyze.item_analysis(self.db, "t9")}
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_good_item_no_issue(self):
+        g = self.items["Câu tốt 3"]   # đúng nếu i < 12: nhóm cao (5 em) đúng hết, nhóm thấp sai hết
+        self.assertEqual((g["ti_le_dung"], g["do_phan_biet"]), (60, 1.0))
+        self.assertEqual(g["muc"], 1); self.assertEqual(len(g["van_de"]), 1)   # chỉ nhắc phương án D không ai chọn
+
+    def test_miskey_detected(self):
+        m = self.items["Câu nghi sai đáp án"]
+        self.assertEqual(m["muc"], 3)
+        # Câu sai đáp án trừ điểm chính các em giỏi → một em chọn "đáp án ghi" lọt vào nhóm cao (4 so với 1), vẫn phát hiện
+        self.assertIn("“đáp án thật” (4 em) nhiều hơn đáp án đang ghi “đáp án ghi” (1 em)", m["van_de"][0])
+
+    def test_easy_and_low_discrimination(self):
+        self.assertEqual(self.items["Câu quá dễ"]["muc"], 1); self.assertIn("quá dễ (100% đúng)", self.items["Câu quá dễ"]["van_de"][0])
+        x = self.items["Câu phân biệt thấp"]   # câu khó: nhóm cao chọn B (3) nhiều hơn A (2) nhưng nhóm thấp chọn B còn nhiều hơn (4) → KHÔNG nghi sai đáp án
+        self.assertEqual((x["ti_le_dung"], x["do_phan_biet"], x["muc"]), (20, 0.2, 2))
+        self.assertEqual(x["van_de"], ["quá khó (20% đúng)"])
+
+    def test_low_discrimination(self):
+        db = store.open_db(":memory:")   # 10 em, 5 câu neo (đúng nếu i < t) quyết định thứ hạng; câu y đúng ở s0, s5, s9
+        de = [{"id": f"a{k}", "text": f"Neo {k}", "options": {"A": "đ", "B": "s"}, "answer": "A"} for k in range(5)]
+        de.append({"id": "y", "text": "Câu y", "options": {"A": "đ", "B": "s"}, "answer": "A"})
+        nop = {f"s{i}": {"diem": 1, "tong": 6, "tra_loi": {**{f"a{k}": ("A" if i < t else "B") for k, t in enumerate((8, 7, 6, 5, 4))}, "y": "A" if i in (0, 5, 9) else "B"}} for i in range(10)}
+        store.snapshot(db, "2026-10-28", {"thi_hs": {f"s{i}": {"ten": str(i), "lop": "9A"} for i in range(10)}, "thi_nop": {"t": nop}, "thi_de": {"t": de}, "thi_bai": {"t": {"tieu_de": "T", "che_do": "thu"}}})
+        y = next(it for it in analyze.item_analysis(db, "t") if it["cau"] == "Câu y")
+        # nhóm cao (3 em) = s0, s1, s2 → 1/3 đúng; nhóm thấp = s7, s9, s8 → 1/3 đúng → D = 0; p = 30%
+        self.assertEqual((y["ti_le_dung"], y["do_phan_biet"], y["muc"]), (30, 0.0, 2))
+        self.assertIn("độ phân biệt thấp (D = 0.00)", y["van_de"][0])
+        db.close()
+
+    def test_dead_distractor(self):
+        self.assertTrue(any("không em nào chọn: “sai3”" in v for v in self.items["Câu tốt 1"]["van_de"]))
+        self.assertEqual(self.items["Câu tốt 1"]["muc"], 1)
+
+    def test_class_quality_list(self):
+        q = analyze.class_facts(self.db, "9A", "2026-10-28")["chat_luong_cau_hoi"]
+        self.assertEqual([c["cau"] for c in q][0], "Câu nghi sai đáp án")   # nặng nhất lên đầu
+        self.assertNotIn("Câu quá dễ", [c["cau"] for c in q])   # mức 1 không đưa vào báo cáo
+        self.assertTrue(all(c["de"] == "Thi thử chương 1" and c["so_em"] == 20 for c in q))   # thống kê trên cả 2 lớp
+        self.assertIn("Chất lượng câu hỏi", report.fallback_md(analyze.class_facts(self.db, "9A", "2026-10-28")))
+
+    def test_too_few_students(self):
+        self.assertEqual(analyze.item_analysis(self.db, "t9", min_n=21), [])
+
+
+class Personal(unittest.TestCase):
+    def test_personal_misconceptions(self):
+        db = store.open_db(":memory:")
+        d = exam20()
+        d["thi_hs"]["s19"] = {"ten": "Em 19", "lop": "9B"}
+        store.snapshot(db, "2026-10-28", d)
+        hl = analyze.personal_misconceptions(db)
+        every = [x for v in hl.values() for x in v]
+        self.assertFalse(any(x["cau"] == "Câu nghi sai đáp án" for x in every), "câu nghi sai đáp án: không nói em chọn 'sai' (có thể em đúng)")
+        self.assertNotIn("s00", hl)   # s00 chỉ "sai" ở câu nghi sai đáp án → không có hiểu lầm nào
+        s19 = hl["s19"]
+        self.assertEqual(len(s19), 3)
+        self.assertTrue(all(set(x) == {"cau", "chon", "chu_de"} for x in s19))
+        self.assertFalse(any(x["chon"] in ("đúng", "x") for x in every), "không bao giờ là đáp án đúng")
+        self.assertEqual(s19[0], {"cau": "Câu phân biệt thấp", "chon": "y", "chu_de": "T"})   # lỗi nhiều bạn cùng mắc nhất (16 em) lên trước
+        self.assertEqual(analyze.class_facts(db, "9A", "2026-10-28")["hieu_lam"][0]["cau"], "Câu phân biệt thấp")
+        self.assertNotIn("Câu nghi sai đáp án", [h["cau"] for h in analyze.class_facts(db, "9A", "2026-10-28")["hieu_lam"]])
+        db.close()
+
+
 class Analyze(unittest.TestCase):
     def setUp(self):
         self.db = store.open_db(":memory:")
@@ -105,8 +197,9 @@ class Pipeline(unittest.TestCase):
         db.close()
 
     def test_run_end_to_end(self):
-        fb = fixture_day({"a": topics(mnp=("Mã nhị phân", 2, 10))}, nop={"a": {"diem": 2, "tong": 10, "lan": 1}})
-        seen = {"sheet": None, "auth": [], "brain": [], "gem": 0}
+        fb = fixture_day({"a": topics(mnp=("Mã nhị phân", 2, 10))}, nop={"a": {"diem": 2, "tong": 10, "lan": 1, "tra_loi": {"q1": "A"}}})
+        fb["thi_de"] = {"t1": [{"id": "q1", "text": "1 byte bằng bao nhiêu bit?", "options": {"A": "4", "B": "8"}, "answer": "B", "topic": "Đơn vị"}]}
+        seen = {"sheet": None, "auth": [], "brain": [], "gem": 0, "hl": [], "hl_key": []}
 
         class H(BaseHTTPRequestHandler):
             def log_message(self, *a): pass
@@ -129,6 +222,9 @@ class Pipeline(unittest.TestCase):
                 if self.path.startswith("/gem/"):
                     seen["gem"] += 1; seen.setdefault("prompts", []).append(json.dumps(body, ensure_ascii=False))
                     return self._send({"candidates": [{"content": {"parts": [{"text": json.dumps({"md": "**Tóm tắt** Lớp 9A cần ôn mã nhị phân."})}]}}]})
+                if self.path == "/api/brain/hieu-lam":
+                    seen["hl"].append(body); seen["hl_key"].append(self.headers.get("X-Brain-Key"))
+                    return self._send({"saved": len(body["items"]), "cleared": 0, "skipped": 0})
                 if self.path == "/sheet":
                     seen["sheet"] = body; return self._send({"ok": True, "saved": len(body["reports"])})
                 self._send({}, 404)
@@ -141,6 +237,8 @@ class Pipeline(unittest.TestCase):
                                                              "SHEET_BRAIN_KEY=ks", "GEMINI_API_KEY=g", f"GEMINI_URL={base}/gem", f"DB_PATH={d}/b.sqlite3"]))
             old = {k: os.environ.pop(k, None) for k in ("NO_PROXY", "no_proxy", "HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy")}
             try:
+                self.assertEqual(main(["run", "--dry-run", "--env", env]), 0)
+                self.assertEqual(seen["hl"], [], "chạy thử: không gửi Gia sư")
                 self.assertEqual(main(["run", "--env", env]), 0)
                 self.assertEqual(main(["run", "--env", env]), 0)   # chạy lại cùng ngày: không nhân đôi dữ liệu
             finally:
@@ -156,6 +254,8 @@ class Pipeline(unittest.TestCase):
         r9a = next(r for r in sheet["reports"] if r["lop"] == "9A")
         self.assertIn("cần ôn mã nhị phân", r9a["md"]); self.assertEqual(r9a["facts"]["cau_hoi"]["tong_7_ngay"] >= 0, True)
         self.assertGreaterEqual(seen["gem"], 1)
+        self.assertEqual(seen["hl_key"], ["kb", "kb"])
+        self.assertEqual(seen["hl"][-1], {"items": {"a": [{"cau": "1 byte bằng bao nhiêu bit?", "chon": "4", "chu_de": "Đơn vị"}]}}, "gửi lựa chọn sai, KHÔNG có đáp án đúng, không có tên")
         self.assertFalse(any("An" in json.loads(p)["contents"][0]["parts"][0]["text"].split("SỐ LIỆU")[1] for p in seen["prompts"]), "không gửi tên học sinh cho Gemini")
 
 

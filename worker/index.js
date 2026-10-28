@@ -1060,6 +1060,22 @@ export class GateDurableObject {
       if (e && e.uid) { const list = (await this.storage.get('brain_log')) || []; list.push({ uid: String(e.uid).slice(0, 64), lop: String(e.lop || '').slice(0, 20), course: String(e.course || '').slice(0, 80), lesson: String(e.lesson || '').slice(0, 80), q: String(e.q || '').slice(0, 300), blocked: !!e.blocked, at: Number(e.at) || Date.now() }); await this.storage.put('brain_log', list.slice(-3000)); }
       return new Response('{"ok":true}', { headers: { 'Content-Type': 'application/json' } });
     }
+    if (action === '/brain-hl-put') {   // Bộ não AI gửi hiểu lầm riêng từng em: thay toàn bộ bản cũ (em đã hết nhầm thì xóa)
+      const { items } = await request.json().catch(() => ({}));
+      const next = Object.entries(items || {});
+      const old = (await this.storage.get('hl_keys')) || [];
+      const keep = new Set(next.map(([k]) => k));
+      const stale = old.filter(k => !keep.has(k)).map(k => `hl:${k}`);
+      for (let i = 0; i < stale.length; i += 100) await this.storage.delete(stale.slice(i, i + 100));
+      for (let i = 0; i < next.length; i += 100) await this.storage.put(Object.fromEntries(next.slice(i, i + 100).map(([k, v]) => [`hl:${k}`, v])));
+      await this.storage.put('hl_keys', [...keep]);
+      return new Response(JSON.stringify({ saved: next.length, cleared: stale.length }), { headers: { 'Content-Type': 'application/json' } });
+    }
+    if (action === '/brain-hl-get') {
+      const { uid } = await request.json().catch(() => ({}));
+      const list = uid ? (await this.storage.get(`hl:${uid}`)) || [] : [];
+      return new Response(JSON.stringify({ items: list }), { headers: { 'Content-Type': 'application/json' } });
+    }
     if (action === '/brain-export') {
       const { since } = await request.json().catch(() => ({}));
       const list = ((await this.storage.get('brain_log')) || []).filter(x => x.at > (Number(since) || 0));
@@ -1178,10 +1194,12 @@ export class MapStorage {
     const val = this.map.get(key);
     return val !== undefined ? JSON.parse(JSON.stringify(val)) : undefined;
   }
-  async put(key, value) {
+  async put(key, value) {   // giống Durable Object thật: put(key, value) hoặc put({k1: v1, k2: v2})
+    if (key && typeof key === 'object') { for (const [k, v] of Object.entries(key)) this.map.set(k, JSON.parse(JSON.stringify(v))); return; }
     this.map.set(key, JSON.parse(JSON.stringify(value)));
   }
-  async delete(key) {
+  async delete(key) {   // delete(key) → true/false; delete([k1, k2]) → số khóa đã xóa
+    if (Array.isArray(key)) return key.reduce((n, k) => n + (this.map.delete(k) ? 1 : 0), 0);
     return this.map.delete(key);
   }
   async list({ prefix = '' } = {}) {
@@ -1338,6 +1356,23 @@ export function weakTopicsLine(list) {
   const items = (Array.isArray(list) ? list : []).map(x => String(x || '').replace(/[\r\n"`]/g, ' ').trim().slice(0, 70)).filter(Boolean).slice(0, 5);
   if (!items.length) return '';
   return `BẢN ĐỒ NĂNG LỰC CỦA EM NÀY: còn yếu các chủ đề: ${items.join('; ')}. Khi phù hợp với câu hỏi, liên hệ và củng cố các chủ đề này (giải thích lại ngắn gọn, gợi ý ôn), vẫn tuyệt đối không đưa đáp án.`;
+}
+
+/** Khóa học sinh giống Firebase/Bộ não (thi-store.keyOf, brain.analyze.keyof). @param {unknown} s */
+export const brainKeyOf = s => String(s || '').trim().toLowerCase().replace(/[.#$\[\]/]/g, '_');
+const hlText = (/** @type {unknown} */ v, /** @type {number} */ n) => String(v ?? '').replace(/[\u0000-\u001f\u007f"`]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+/** Hiểu lầm riêng của một em (Bộ não AI gửi lên): tối đa 3 mục {cau, chon, chu_de}, lọc ký tự lạ. @param {unknown} list */
+export function cleanHieuLam(list) {
+  return (Array.isArray(list) ? list : []).map(x => ({ cau: hlText(x?.cau, 160), chon: hlText(x?.chon, 120), chu_de: hlText(x?.chu_de, 60) }))
+    .filter(x => x.cau && x.chon).slice(0, 3);
+}
+/** Dòng nhắc Gia sư: em này từng chọn sai điều gì (KHÔNG có đáp án đúng). @param {unknown} list */
+export function misconceptionLine(list) {
+  const items = cleanHieuLam(list);
+  if (!items.length) return '';
+  return 'HIỂU LẦM GẦN ĐÂY CỦA EM NÀY (Bộ não AI rút ra từ bài thi thử; chỉ ghi lựa chọn em đã chọn sai, không có đáp án đúng): '
+    + items.map((x, i) => `${i + 1}) Câu "${x.cau}", em đã chọn "${x.chon}"${x.chu_de ? ` (chủ đề ${x.chu_de})` : ''}`).join('; ')
+    + '. Chỉ khi câu hỏi của em liên quan tới một hiểu lầm trên: hỏi gợi mở để em tự nhận ra vì sao lựa chọn đó chưa đúng (hỏi lý do em chọn, gợi nhớ định nghĩa trong bài). Được nói lựa chọn đó chưa đúng, nhưng tuyệt đối không nói hay ám chỉ đáp án đúng. Nếu không liên quan thì bỏ qua, không nhắc.';
 }
 
 /* ---------- AI cho giáo viên: soạn đề theo ma trận, gợi ý chấm thực hành ---------- */
@@ -4599,6 +4634,24 @@ export default {
       return new Response(await r.text(), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
     }
 
+    // Bộ não AI gửi lên hiểu lầm riêng của từng em (để Gia sư hỏi gợi mở đúng chỗ). Chỉ máy chủ có BRAIN_KEY.
+    if (url.pathname === '/api/brain/hieu-lam' && request.method === 'POST') {
+      const jr = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+      const k = request.headers.get('X-Brain-Key') || '';
+      if (!env.BRAIN_KEY || String(env.BRAIN_KEY).length < 24 || !TeacherAuthContract.isValidSecret(k, env.BRAIN_KEY)) return jr(403, { detail: 'Không có quyền.' });
+      const body = await request.json().catch(() => null);
+      const raw = body && typeof body.items === 'object' && !Array.isArray(body.items) ? Object.entries(body.items) : null;
+      if (!raw || raw.length > 20000) return jr(400, { detail: 'Dữ liệu không hợp lệ.' });
+      /** @type {Record<string, any[]>} */ const items = {}; let skipped = 0;
+      for (const [key, list] of raw) {   // mã chưa chuẩn hóa → bỏ riêng mã đó (không ghi nhầm em, không làm hỏng cả lớp)
+        if (!/^[^.#$\[\]/\s]{1,64}$/.test(key) || key !== brainKeyOf(key)) { skipped++; continue; }
+        const clean = cleanHieuLam(list);
+        if (clean.length) items[key] = clean;
+      }
+      const r = await gateStub.fetch('http://do/brain-hl-put', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) });
+      return jr(200, { ...(await r.json()), skipped });
+    }
+
     // AI cho giáo viên: soạn câu hỏi theo ma trận (giáo viên duyệt trước khi lưu) và gợi ý chấm thực hành.
     // Học sinh nộp bài THI THỬ có tự luận: AI chấm theo gợi ý đáp án của giáo viên (giới hạn lượt mỗi ngày).
     if (url.pathname === '/api/pwa/exam-essay' && request.method === 'POST') {
@@ -5205,7 +5258,13 @@ export default {
           }
 
           if (isExamReview) systemText = buildExamReviewPrompt(requestData.review);
-          else { systemText += '\n' + TUTOR_STYLE_RULES; const wt = weakTopicsLine(context?.weak_topics); if (wt) systemText += '\n' + wt; }
+          else {
+            systemText += '\n' + TUTOR_STYLE_RULES; const wt = weakTopicsLine(context?.weak_topics); if (wt) systemText += '\n' + wt;
+            try {   // Bộ não AI: hiểu lầm riêng của em (tra theo tài khoản trong token, không tin dữ liệu từ máy học sinh)
+              const hr = await gateStub.fetch('http://do/brain-hl-get', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: brainKeyOf(studentUid) }) });
+              const ml = misconceptionLine((await hr.json())?.items); if (ml) systemText += '\n' + ml;
+            } catch { /* không có thì thôi */ }
+          }
 
           // Build multi-turn contents from history if available
           const contents = [];

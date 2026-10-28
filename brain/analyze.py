@@ -64,6 +64,14 @@ def keywords(questions: list[str], top: int = 10) -> list[dict[str, Any]]:
     return out
 
 
+def suspect_items(db: sqlite3.Connection) -> set[tuple[str, str]]:
+    """Câu nghi ghi sai đáp án / đề mơ hồ (mức 3): không được coi lựa chọn của học sinh ở câu này là "hiểu lầm"."""
+    out: set[tuple[str, str]] = set()
+    for r in db.execute("SELECT DISTINCT exam FROM qbank"):
+        out |= {(r["exam"], it["qid"]) for it in item_analysis(db, r["exam"]) if it["muc"] >= 3}
+    return out
+
+
 def misconceptions(db: sqlite3.Connection, ma_list: list[str], min_n: int = 4, min_wrong: int = 30, top: int = 5) -> list[dict[str, Any]]:
     """Hiểu lầm phổ biến: câu trắc nghiệm có nhiều em sai (>= min_wrong %) và đáp án sai nào được chọn nhiều nhất.
 
@@ -75,7 +83,10 @@ def misconceptions(db: sqlite3.Connection, ma_list: list[str], min_n: int = 4, m
     rows = db.execute(f"SELECT a.exam, a.qid, a.chosen, q.text, q.topic, q.answer, q.options FROM answers a "
                       f"JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid WHERE a.ma IN ({ph})", ma_list).fetchall()
     groups: dict[tuple[str, str], dict[str, Any]] = {}
+    bad = suspect_items(db)
     for r in rows:
+        if (r["exam"], r["qid"]) in bad:
+            continue
         g = groups.setdefault((r["exam"], r["qid"]), {"r": r, "n": 0, "sai": Counter()})
         g["n"] += 1
         if r["chosen"] != r["answer"]:
@@ -94,6 +105,117 @@ def misconceptions(db: sqlite3.Connection, ma_list: list[str], min_n: int = 4, m
         out.append({"cau": r["text"][:160], "chu_de": r["topic"], "so_em": g["n"], "ti_le_sai": pct(wrong, g["n"]),
                     "dap_an_dung": str(opts.get(r["answer"], r["answer"]))[:120], "hay_chon_sai": str(opts.get(k, k))[:120], "so_em_chon_sai_nay": c})
     out.sort(key=lambda x: (-x["ti_le_sai"], -x["so_em"], x["cau"]))
+    return out[:top]
+
+
+def _opts(raw: Any) -> dict[str, str]:
+    try:
+        o = json.loads(raw) if isinstance(raw, str) else raw
+    except (TypeError, ValueError):
+        return {}
+    return {str(k).upper(): str(v) for k, v in (o or {}).items()} if isinstance(o, dict) else {}
+
+
+def personal_misconceptions(db: sqlite3.Connection, top: int = 3) -> dict[str, list[dict[str, str]]]:
+    """Hiểu lầm riêng từng em (để Gia sư hỏi gợi mở đúng chỗ): các câu em chọn sai ở lần làm gần nhất.
+
+    Ưu tiên lỗi nhiều bạn cùng mắc (cùng câu, cùng lựa chọn sai = hiểu lầm phổ biến, đáng chữa trước), rồi theo bài/câu cho ổn định.
+    KHÔNG kèm đáp án đúng (Gia sư không được biết để không lỡ lộ). Chỉ học sinh còn trong danh sách lớp.
+    """
+    rows = db.execute("SELECT a.ma, a.exam, a.qid, a.chosen, q.text, q.topic, q.answer, q.options FROM answers a "
+                      "JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid JOIN students s ON s.ma=a.ma WHERE a.chosen<>q.answer").fetchall()
+    bad = suspect_items(db)   # câu nghi sai đáp án: em chọn "sai" có thể lại là đúng → không nhắc em
+    rows = [r for r in rows if (r["exam"], r["qid"]) not in bad]
+    freq: Counter[tuple[str, str, str]] = Counter((r["exam"], r["qid"], r["chosen"]) for r in rows)
+    per: dict[str, list] = defaultdict(list)
+    for r in rows:
+        txt = _opts(r["options"]).get(r["chosen"])
+        if not txt:   # lựa chọn không có trong đề (dữ liệu lạ) → bỏ, không đoán
+            continue
+        per[r["ma"]].append((-freq[(r["exam"], r["qid"], r["chosen"])], r["exam"], r["qid"], {"cau": str(r["text"])[:160], "chon": txt[:120], "chu_de": str(r["topic"] or "")[:60]}))
+    out: dict[str, list[dict[str, str]]] = {}
+    for ma, items in per.items():
+        items.sort(key=lambda x: x[:3])
+        seen, lst = set(), []
+        for *_k, it in items:
+            if it["cau"] in seen:   # cùng một câu xuất hiện ở hai đề → giữ một
+                continue
+            seen.add(it["cau"]); lst.append(it)
+            if len(lst) >= top:
+                break
+        k = keyof(ma)
+        if lst and re.fullmatch(r"[^.#$\[\]/\s]{1,64}", k):   # đúng định dạng Worker nhận
+            out[k] = lst
+    return out
+
+
+def item_analysis(db: sqlite3.Connection, exam: str, min_n: int = 10) -> list[dict[str, Any]]:
+    """Phân tích câu hỏi kiểu khảo thí cổ điển cho một đề (tính trên MỌI em đã làm đề, mọi lớp, để đủ số liệu).
+
+    p = tỉ lệ đúng (em bỏ trống tính là sai). D = p(nhóm 27% điểm cao) − p(nhóm 27% điểm thấp).
+    Ngưỡng D theo Ebel & Frisbie: ≥0,4 rất tốt; 0,3–0,39 tốt; 0,2–0,29 tạm; <0,2 kém.
+    """
+    qs = db.execute("SELECT qid, text, answer, options FROM qbank WHERE exam=? ORDER BY qid", (exam,)).fetchall()
+    if not qs:
+        return []
+    ch: dict[str, dict[str, str]] = defaultdict(dict)
+    for r in db.execute("SELECT ma, qid, chosen FROM answers WHERE exam=?", (exam,)):
+        ch[r["ma"]][r["qid"]] = r["chosen"]
+    n = len(ch)
+    if n < min_n:
+        return []
+    key = {q["qid"]: q["answer"] for q in qs}
+    score = {m: sum(1 for qid, a in key.items() if c.get(qid) == a) for m, c in ch.items()}
+    order = sorted(ch, key=lambda m: (-score[m], m))   # sắp xếp ổn định: cùng điểm thì theo mã
+    g = max(3, round(0.27 * n))
+    up, lo = order[:g], order[-g:]
+    out = []
+    for q in qs:
+        qid, ans, opts = q["qid"], q["answer"], _opts(q["options"])
+        right = sum(1 for m in ch if ch[m].get(qid) == ans)
+        p = right / n
+        pu = sum(1 for m in up if ch[m].get(qid) == ans) / g
+        pl = sum(1 for m in lo if ch[m].get(qid) == ans) / g
+        d = pu - pl
+        cnt_all = Counter(ch[m].get(qid, "") for m in ch)
+        cnt_up = Counter(ch[m].get(qid, "") for m in up)
+        cnt_lo = Counter(ch[m].get(qid, "") for m in lo)
+        issues, sev = [], 0
+        rival = max((o for o in opts if o != ans), key=lambda o: (cnt_up[o], o), default=None)
+        # Dấu hiệu ghi sai đáp án: một phương án "hành xử như đáp án đúng" — nhóm điểm cao chọn nhiều hơn cả đáp án đang ghi
+        # VÀ nhiều hơn nhóm điểm thấp. (Câu khó thì nhóm cao cũng có thể chọn sai nhiều, nhưng nhóm thấp còn chọn sai nhiều hơn.)
+        if rival and cnt_up[rival] > cnt_up[ans] and cnt_up[rival] >= 2 and cnt_up[rival] > cnt_lo[rival]:
+            issues.append(f"nhóm điểm cao chọn “{opts[rival][:60]}” ({cnt_up[rival]} em) nhiều hơn đáp án đang ghi “{opts.get(ans, ans)[:60]}” ({cnt_up[ans]} em): kiểm tra lại đáp án"); sev = 3
+        elif d < 0:
+            issues.append(f"nhóm điểm cao làm sai nhiều hơn nhóm điểm thấp (D = {d:.2f}): xem lại đề có mơ hồ không"); sev = 3
+        if p >= 0.9:
+            issues.append(f"quá dễ ({round(p * 100)}% đúng), ít giá trị phân loại"); sev = max(sev, 1)
+        elif p <= 0.2 and sev < 3:
+            issues.append(f"quá khó ({round(p * 100)}% đúng)"); sev = max(sev, 2)
+        elif 0 <= d < 0.2 and sev < 3:
+            issues.append(f"độ phân biệt thấp (D = {d:.2f}): chưa tách được em hiểu bài với em chưa hiểu"); sev = max(sev, 2)
+        if n >= 20:
+            dead = [opts[o][:40] for o in sorted(opts) if o != ans and cnt_all[o] == 0]
+            if dead:
+                issues.append("phương án nhiễu không em nào chọn: " + ", ".join(f"“{x}”" for x in dead)); sev = max(sev, 1)
+        out.append({"qid": qid, "cau": str(q["text"])[:160], "so_em": n, "ti_le_dung": round(p * 100), "do_phan_biet": round(d, 2), "muc": sev, "van_de": issues})
+    return out
+
+
+def question_quality(db: sqlite3.Connection, ma_list: list[str], top: int = 5) -> list[dict[str, Any]]:
+    """Các câu cần giáo viên xem lại, trong những đề lớp này đã làm (thống kê trên mọi em làm đề đó)."""
+    if not ma_list:
+        return []
+    ph = ",".join("?" * len(ma_list))
+    exams = [(r["exam"], r["title"]) for r in db.execute(
+        f"SELECT DISTINCT a.exam, COALESCE((SELECT title FROM exams e WHERE e.exam=a.exam ORDER BY day DESC LIMIT 1), a.exam) AS title "
+        f"FROM answers a WHERE a.ma IN ({ph}) ORDER BY a.exam", ma_list)]
+    out = []
+    for eid, title in exams:
+        for it in item_analysis(db, eid):
+            if it["muc"] >= 2:
+                out.append({"de": str(title)[:80], **it})
+    out.sort(key=lambda x: (-x["muc"], x["do_phan_biet"], x["cau"]))
     return out[:top]
 
 
@@ -193,5 +315,6 @@ def class_facts(db: sqlite3.Connection, lop: str, today: str, tz_hours: int = 7)
                     "em_hoi_nhieu": [{"ten": studs[m], "n": n} for m, n in per_q.most_common(5)]},
         "thi_thu": exams,
         "hieu_lam": misconceptions(db, ma_list),
+        "chat_luong_cau_hoi": question_quality(db, ma_list),
         "doc_bai_tb": (lambda r: round(r) if r is not None else None)(db.execute(f"SELECT AVG(pct) AS a FROM reads WHERE day=? AND ma IN ({ph})", (d_rd, *ma_list)).fetchone()["a"]) if d_rd else None,
     }

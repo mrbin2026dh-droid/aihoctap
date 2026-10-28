@@ -81,6 +81,15 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         reps = build_reports(cfg, db, use_ai=not a.no_ai)
         print(f"Đã viết {len(reps)} báo cáo lớp.")
+        hl = analyze.personal_misconceptions(db)
+        if a.dry_run or not (cfg.worker_url and cfg.brain_key):
+            print(f"Hiểu lầm riêng: {sum(1 for v in hl.values() if v)} em (chạy thử: chưa gửi Gia sư).")
+        else:
+            try:
+                r = sources.worker_push_hieu_lam(cfg.worker_url, cfg.brain_key, hl)
+                print(f"Đã gửi hiểu lầm riêng cho Gia sư: {r.get('saved')} em, xóa {r.get('cleared')} em đã hết nhầm.")
+            except Exception as e:   # Gia sư lỗi không làm hỏng báo cáo
+                print(f"[Gia sư] chưa gửi được hiểu lầm riêng: {e}", file=sys.stderr)
         if a.dry_run or not (cfg.sheet_url and cfg.sheet_brain_key):
             for r in reps:
                 print(f"\n===== Lớp {r['lop']} =====\n{r['md']}")
