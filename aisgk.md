@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã hoàn thành Bước 1 (cập nhật secret ALLOWED_ORIGIN đa tên miền, deploy Worker de3a4d7f, kiểm thử CORS OPTIONS đạt 200 có Vary: Origin; unit test 8/8 và 28/28 PASS); thực hiện Bước 4 gắn CNAME aihoctap.online trên GitHub Pages; đang hướng dẫn Thầy thực hiện Bước 2 cấu hình 4 bản ghi A và 1 CNAME trên Hostinger để kích hoạt HTTPS.
+- Yêu cầu mới nhất: Antigravity và Thầy đã hoàn thành xuất sắc toàn bộ quy trình gắn tên miền `aihoctap.online` (Worker đa miền de3a4d7f, 4 bản ghi A và 1 CNAME trên Hostinger đã thông mạng toàn cầu, Pages CNAME đã trỏ, Playwright live test HTTP 200 console sạch 0 lỗi; chứng chỉ SSL đang trong hàng đợi cấp tự động của GitHub); Thầy đã quyết định bỏ Zalo Bot và giữ kênh hỗ trợ Zalo cá nhân trực tiếp; lập báo cáo tại `docs/handoff/antigravity-claude-ten-mien-xong.md`.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2077,4 +2077,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md.
 - Kiểm thực tế: Worker OPTIONS trả 200 cho cả `aihoctap.online` và `github.io`; GitHub Pages API trả `"cname": "aihoctap.online"`; unit tests 8/8 và 28/28 PASS.
 - Việc tiếp: Hướng dẫn Thầy đăng nhập Hostinger cập nhật 4 bản ghi A và 1 CNAME; sau khi DNS trỏ đúng, Antigravity kích hoạt HTTPS và kiểm tra xem trước link trên Zalo/Facebook.
+
+### 28/10/2026 22:42 — Antigravity — Hoàn thành cấu hình tên miền aihoctap.online, Kiểm thử Live Playwright 0 lỗi
+- Đã thực hiện: Thầy đã cấu hình thành công 4 bản ghi A và 1 bản ghi CNAME trên Hostinger; Antigravity kiểm tra phân giải DNS (`nslookup aihoctap.online 8.8.8.8`) xác nhận trả về đầy đủ 4 IP GitHub Pages (`185.199.108.153`, `109`, `110`, `111`) và CNAME `www` trỏ về `mrbin2026dh-droid.github.io`; kiểm tra live HTTP trả về HTTP 200 từ máy chủ GitHub; kiểm tra assets `/robots.txt`, `/sitemap.xml`, `/seo/og-image.png` (956KB), `/teacher.html` đều trả HTTP 200; chạy kiểm thử Playwright tự động trên trang web thật `http://aihoctap.online` xác nhận tải trang mượt mà, console F12 sạch 0 lỗi; cập nhật secret `ALLOWED_ORIGIN` đa miền cả HTTP và HTTPS; chứng chỉ SSL đang trong hàng đợi kiểm tra tự động của GitHub; lập báo cáo tại docs/handoff/antigravity-claude-ten-mien-xong.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-ten-mien-xong.md.
+- Kiểm thực tế: DNS 4 IP A và CNAME verified; Live HTTP 200 verified; Playwright live test 0 console errors verified; CNAME `aihoctap.online` active.
+- Việc tiếp: Chờ GitHub cấp chứng chỉ SSL (khoảng 10-15 phút) để kích hoạt `Enforce HTTPS`; thử gửi link xem trước trên Zalo/Facebook; báo học sinh mở `https://aihoctap.online` và cài lại ứng dụng PWA; ngày mai 29/10 cho 2 lớp làm bài thi thật.
+
 
