@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity hướng dẫn Người dùng dán Code.gs mới (hiệu năng 1000 học sinh, pull_ theo bài, lưu Drive theo lô 15 bài, tự động tạo TaiLieu) theo docs/handoff/claude-antigravity-cap-nhat-gs-hieu-nang.md.
+- Yêu cầu mới nhất: Antigravity đã hoàn thành deploy Worker bản 294ac865 kèm BRAIN_KEY; chạy Emulator phát hiện 2 ca SAI ở luật quiz_proof; chặn đăng luật và chuyển Claude xử lý theo quy tắc bảo mật.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -1928,3 +1928,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Zalo mặc định https://zalo.me/0818810007 (support-config.js).
 - Test: test_quiz_live (29), test_teacher_effect, test_brain_export, test_teacher_ai, brain unittest (7), test_sheet_exam_gs PASS. Emulator luật chưa chạy được ở đây.
 - Bàn giao: docs/handoff/claude-antigravity-tien-ich-bo-nao.md
+
+### 28/10/2026 — Antigravity — Deploy Worker 294ac865 & Kiểm thử Emulator phát hiện lỗi luật quiz_proof
+- Đã thực hiện: Hợp nhất Tiện ích Trò chơi câu hỏi & Bộ não AI; deploy Cloudflare Worker 294ac865 với secret BRAIN_KEY (lưu rollback 675db789); chạy kiểm thử Emulator phát hiện 2 ca SAI ở quiz và quiz_lop (quiz_proof bị lưu cố định trong DB khiến học sinh ghi lậu được); chặn đăng luật và lập báo cáo phân tích cho Claude.
+- Tệp đổi: brain/__main__.py, brain/tests/test_brain.py, frontend/hoc/quiz-play.js, frontend/hoc/support.js, frontend/hoc/sw.js, tests/test_*, aisgk.md, docs/handoff/antigravity-claude-luat-quiz-proof-fail.md.
+- Kiểm thực tế: Worker /api/brain/export live trả 200 (có khóa) / 403 (không khóa); test_sheet_exam_gs 101/101 PASS; brain unittests 7/7 PASS; emulator 2 ca SAI được ghi nhận chính xác.
+- Việc tiếp: Chuyển Claude sửa lại cấu trúc luật quiz_proof; sau đó Antigravity cùng Thầy cập nhật luật và cài VPS.
