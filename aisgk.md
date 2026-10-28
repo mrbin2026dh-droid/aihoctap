@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã nạp đủ FB_SECRET và SHEET_BRAIN_KEY lên VPS; Bộ não AI đã chạy thực tế thu thập 65 học sinh, phân tích 2 lớp (9A10, 9A9), gửi báo cáo vào Google Sheet NaoAI thành công 100%; systemd timer 21:00 và backup 22:30 hoạt động tốt.
+- Yêu cầu mới nhất: Antigravity đã kiểm tra trực tiếp trên VPS: bảng answers có 660 dòng, qbank có 12 dòng (không in dữ liệu học sinh); bàn giao 2 số liệu cho Claude tiếp tục phân tích.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2019,3 +2019,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-vps-hoan-tat.md.
 - Kiểm thực tế: VPS live run: `Thu thập: {'students': 65, 'mastery': 195, 'exams': 66, 'reads': 134, 'questions': 0}`; `Đã gửi Google Sheet: 2 lớp`; systemd timer next run 21:03; backup file `brain-2026-10-28.sqlite3` (204KB) verified.
 - Việc tiếp: Chuyển Claude đọc báo cáo hoàn tất; Thầy mở Google Sheet xem trang NaoAI và mở trang giáo viên mục Hiệu quả xem báo cáo tuần; chuẩn bị hoàn thiện các nội dung dự thi trước hạn 30/10/2026.
+
+### 28/10/2026 (tối) — Antigravity — Truy vấn số lượng answers và qbank trên VPS cho Claude
+- Đã thực hiện: Chạy truy vấn `select count() from answers; select count() from qbank;` trên SQLite VPS `/var/lib/brain/brain.sqlite3` qua SSH.
+- Tệp đổi: aisgk.md.
+- Kiểm thực tế: `answers` = 660; `qbank` = 12; bảo toàn 100% dữ liệu riêng tư của học sinh (không trích xuất dữ liệu cá nhân).
+- Việc tiếp: Chuyển Claude hai số liệu (answers: 660, qbank: 12); Thầy phản hồi Claude về phương án chấm tự luận (cách 1).
