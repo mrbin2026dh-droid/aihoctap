@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã cập nhật Bộ não AI (tính năng Hiểu lầm phổ biến) lên VPS, chạy 8/8 unittests PASS; cấu hình sẵn 8/10 biến trong .env; chờ Thầy dán FB_SECRET và SHEET_BRAIN_KEY để hoàn tất thu thập dữ liệu thật.
+- Yêu cầu mới nhất: Antigravity đã nạp đủ FB_SECRET và SHEET_BRAIN_KEY lên VPS; Bộ não AI đã chạy thực tế thu thập 65 học sinh, phân tích 2 lớp (9A10, 9A9), gửi báo cáo vào Google Sheet NaoAI thành công 100%; systemd timer 21:00 và backup 22:30 hoạt động tốt.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2013,3 +2013,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-hieu-lam-vps.md.
 - Kiểm thực tế: VPS Ubuntu 24.04 unittests 8/8 PASS; kiểm tra fail-closed khi thiếu key trả đúng lỗi; SSH key authentication hoạt động trơn tru.
 - Việc tiếp: Thầy mở `nano /opt/brain/.env` dán `FB_SECRET` và `SHEET_BRAIN_KEY`; Bộ não AI sẽ tự động kích hoạt gửi báo cáo tuần vào Google Sheet NaoAI lúc 21:00 hàng tối.
+
+### 28/10/2026 (tối) — Antigravity — Bộ não AI trên VPS vận hành thực tế 100% thành công, gửi báo cáo 2 lớp vào Google Sheet NaoAI
+- Đã thực hiện: Nạp khóa `FB_SECRET` và `SHEET_BRAIN_KEY` vào `/opt/brain/.env` trên VPS (quyền 600, người dùng brain); chạy kiểm thử `unittest` (8/8 PASS); chạy thu thập dữ liệu thật từ Firebase (65 học sinh, 195 năng lực, 66 bài thi, 134 lượt đọc); Gemini AI viết báo cáo sư phạm 6 mục cho 2 lớp 9A10 và 9A9; gửi thành công vào Google Sheet (trang NaoAI); dịch vụ systemd `brain.service` kích hoạt thành công (status=0/SUCCESS); sao lưu cơ sở dữ liệu SQLite đạt 204KB; lập báo cáo tại docs/handoff/antigravity-claude-vps-hoan-tat.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-vps-hoan-tat.md.
+- Kiểm thực tế: VPS live run: `Thu thập: {'students': 65, 'mastery': 195, 'exams': 66, 'reads': 134, 'questions': 0}`; `Đã gửi Google Sheet: 2 lớp`; systemd timer next run 21:03; backup file `brain-2026-10-28.sqlite3` (204KB) verified.
+- Việc tiếp: Chuyển Claude đọc báo cáo hoàn tất; Thầy mở Google Sheet xem trang NaoAI và mở trang giáo viên mục Hiệu quả xem báo cáo tuần; chuẩn bị hoàn thiện các nội dung dự thi trước hạn 30/10/2026.
