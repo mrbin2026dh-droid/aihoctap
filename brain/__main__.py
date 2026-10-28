@@ -23,9 +23,11 @@ def collect(cfg: Config, db) -> dict:
     for k in ("thi_hs", "nang_luc", "doc_read", "thi_bai"):
         data[k] = sources.fb_get(cfg.fb_url, cfg.fb_secret, k) or {}
     data["thi_nop"] = {}
+    data["thi_de"] = {}
     for eid, b in (data["thi_bai"] or {}).items():   # tải từng bài (không tải cả cây)
         if isinstance(b, dict) and b.get("che_do") in ("thu", "that"):
             data["thi_nop"][eid] = sources.fb_get(cfg.fb_url, cfg.fb_secret, f"thi_nop/{eid}") or {}
+            data["thi_de"][eid] = sources.fb_get(cfg.fb_url, cfg.fb_secret, f"thi_de/{eid}") or []
     day = today(cfg)
     stats = store.snapshot(db, day, data)
     if cfg.worker_url and cfg.brain_key:

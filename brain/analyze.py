@@ -3,6 +3,7 @@
 Mọi con số trong báo cáo đều đến từ đây; AI (report.py) chỉ diễn đạt thành lời và gợi ý hành động.
 """
 from __future__ import annotations
+import json
 import re
 import sqlite3
 from collections import Counter, defaultdict
@@ -61,6 +62,39 @@ def keywords(questions: list[str], top: int = 10) -> list[dict[str, Any]]:
         if len(out) >= top:
             break
     return out
+
+
+def misconceptions(db: sqlite3.Connection, ma_list: list[str], min_n: int = 4, min_wrong: int = 30, top: int = 5) -> list[dict[str, Any]]:
+    """Hiểu lầm phổ biến: câu trắc nghiệm có nhiều em sai (>= min_wrong %) và đáp án sai nào được chọn nhiều nhất.
+
+    Mỗi lựa chọn sai thường ứng với một cách hiểu sai → giáo viên biết dạy lại đúng chỗ. Chỉ dùng số đếm, không có tên học sinh.
+    """
+    if not ma_list:
+        return []
+    ph = ",".join("?" * len(ma_list))
+    rows = db.execute(f"SELECT a.exam, a.qid, a.chosen, q.text, q.topic, q.answer, q.options FROM answers a "
+                      f"JOIN qbank q ON q.exam=a.exam AND q.qid=a.qid WHERE a.ma IN ({ph})", ma_list).fetchall()
+    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    for r in rows:
+        g = groups.setdefault((r["exam"], r["qid"]), {"r": r, "n": 0, "sai": Counter()})
+        g["n"] += 1
+        if r["chosen"] != r["answer"]:
+            g["sai"][r["chosen"]] += 1
+    out = []
+    for g in groups.values():
+        wrong = sum(g["sai"].values())
+        if g["n"] < min_n or pct(wrong, g["n"]) < min_wrong:
+            continue
+        r = g["r"]
+        try:
+            opts = json.loads(r["options"])
+        except (TypeError, ValueError):
+            opts = {}
+        k, c = g["sai"].most_common(1)[0]
+        out.append({"cau": r["text"][:160], "chu_de": r["topic"], "so_em": g["n"], "ti_le_sai": pct(wrong, g["n"]),
+                    "dap_an_dung": str(opts.get(r["answer"], r["answer"]))[:120], "hay_chon_sai": str(opts.get(k, k))[:120], "so_em_chon_sai_nay": c})
+    out.sort(key=lambda x: (-x["ti_le_sai"], -x["so_em"], x["cau"]))
+    return out[:top]
 
 
 def class_facts(db: sqlite3.Connection, lop: str, today: str, tz_hours: int = 7) -> dict[str, Any]:
@@ -158,5 +192,6 @@ def class_facts(db: sqlite3.Connection, lop: str, today: str, tz_hours: int = 7)
                     "vi_du": [r["q"] for r in qrows if not r["blocked"]][-8:],
                     "em_hoi_nhieu": [{"ten": studs[m], "n": n} for m, n in per_q.most_common(5)]},
         "thi_thu": exams,
+        "hieu_lam": misconceptions(db, ma_list),
         "doc_bai_tb": (lambda r: round(r) if r is not None else None)(db.execute(f"SELECT AVG(pct) AS a FROM reads WHERE day=? AND ma IN ({ph})", (d_rd, *ma_list)).fetchone()["a"]) if d_rd else None,
     }

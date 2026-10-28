@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS mastery(day TEXT, ma TEXT, topic TEXT, ten TEXT, d RE
 CREATE TABLE IF NOT EXISTS exams(day TEXT, exam TEXT, title TEXT, mode TEXT, ma TEXT, diem REAL, tong REAL, dau REAL, best REAL, lan INTEGER, PRIMARY KEY(day, exam, ma));
 CREATE TABLE IF NOT EXISTS reads(day TEXT, ma TEXT, lesson TEXT, pct REAL, PRIMARY KEY(day, ma, lesson));
 CREATE TABLE IF NOT EXISTS questions(at INTEGER, ma TEXT, lop TEXT, course TEXT, lesson TEXT, q TEXT, blocked INTEGER, PRIMARY KEY(at, ma));
+CREATE TABLE IF NOT EXISTS qbank(exam TEXT, qid TEXT, text TEXT, topic TEXT, answer TEXT, options TEXT, PRIMARY KEY(exam, qid));
+CREATE TABLE IF NOT EXISTS answers(exam TEXT, ma TEXT, qid TEXT, chosen TEXT, PRIMARY KEY(exam, ma, qid));
 CREATE TABLE IF NOT EXISTS reports(day TEXT, lop TEXT, md TEXT, facts TEXT, PRIMARY KEY(day, lop));
 CREATE INDEX IF NOT EXISTS ix_mastery_ma ON mastery(ma, day);
 CREATE INDEX IF NOT EXISTS ix_questions_lop ON questions(lop, at);
@@ -50,6 +52,7 @@ def snapshot(db: sqlite3.Connection, day: str, data: dict[str, Any]) -> dict[str
     dr = data.get("doc_read") or {}
     bai = data.get("thi_bai") or {}
     nop = data.get("thi_nop") or {}
+    de = data.get("thi_de") or {}
     with db:
         for k, s in hs.items():
             if isinstance(s, dict):
@@ -70,6 +73,23 @@ def snapshot(db: sqlite3.Connection, day: str, data: dict[str, Any]) -> dict[str
                     db.execute("INSERT INTO exams VALUES(?,?,?,?,?,?,?,?,?,?)", (day, exam, str(meta.get("tieu_de") or exam), str(meta.get("che_do") or ""), ma,
                                num(r.get("diem")), num(r.get("tong")), num(r.get("dau", r.get("diem"))), num(r.get("cao_nhat", r.get("diem"))), int(num(r.get("lan"), 1))))
                     n_e += 1
+        # Câu hỏi + lựa chọn của từng học sinh (để phân tích hiểu lầm): chỉ trắc nghiệm, ghi đè theo bài thi
+        for exam, items in de.items():
+            rows = items.values() if isinstance(items, dict) else (items or [])
+            db.execute("DELETE FROM qbank WHERE exam=?", (exam,))
+            for q in rows:
+                if isinstance(q, dict) and q.get("kind") != "tl" and q.get("id") and isinstance(q.get("options"), dict) and q.get("answer"):
+                    db.execute("INSERT OR REPLACE INTO qbank VALUES(?,?,?,?,?,?)", (exam, str(q["id"]), str(q.get("text") or "")[:300], str(q.get("topic") or ""),
+                               str(q["answer"]).upper(), json.dumps(q["options"], ensure_ascii=False)))
+        for exam, by in nop.items():
+            if not isinstance(by, dict):
+                continue
+            db.execute("DELETE FROM answers WHERE exam=?", (exam,))
+            for ma, r in by.items():
+                tl = (r or {}).get("tra_loi") if isinstance(r, dict) else None
+                for qid, ch in (tl.items() if isinstance(tl, dict) else []):
+                    if isinstance(ch, str) and ch.strip():
+                        db.execute("INSERT OR REPLACE INTO answers VALUES(?,?,?,?)", (exam, ma, str(qid), ch.strip().upper()[:1]))
         for lesson, by in dr.items():
             for ma, v in (by or {}).items():
                 if isinstance(v, dict):

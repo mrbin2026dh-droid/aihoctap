@@ -83,6 +83,27 @@ class Analyze(unittest.TestCase):
 
 class Pipeline(unittest.TestCase):
     """Chạy thật 'python -m brain run' với Firebase / Worker / Gemini / Google Sheet giả lập trên máy."""
+    def test_misconceptions(self):
+        db = store.open_db(":memory:")
+        de = {"t1": [{"id": "q1", "text": "1 byte bằng bao nhiêu bit?", "options": {"A": "4", "B": "8", "C": "16", "D": "2"}, "answer": "B", "topic": "Đơn vị thông tin"},
+                     {"id": "q2", "text": "Thiết bị vào?", "options": {"A": "Loa", "B": "Bàn phím"}, "answer": "B", "topic": "Phần cứng"},
+                     {"id": "q3", "kind": "tl", "text": "Tự luận", "goi_y": "x"}]}
+        # lớp 9A có 4 em (e học lớp 9B): q1 cả 4 sai (3 em chọn A "4"); q2 chỉ 1/4 sai (25% < 30%); q3 tự luận bị bỏ qua
+        nop = {m: {"diem": 1, "tong": 2, "tra_loi": tl} for m, tl in {
+            "a": {"q1": "A", "q2": "B"}, "b": {"q1": "A", "q2": "B"}, "c": {"q1": "A", "q2": "B"}, "d": {"q1": "C", "q2": "A"}, "e": {"q1": "B", "q2": "B"}}.items()}
+        data = fixture_day({}, nop=nop); data["thi_de"] = de
+        store.snapshot(db, "2026-10-28", data)
+        hl = analyze.class_facts(db, "9A", "2026-10-28")["hieu_lam"]
+        self.assertEqual(len(hl), 1)
+        self.assertEqual((hl[0]["ti_le_sai"], hl[0]["so_em"], hl[0]["hay_chon_sai"], hl[0]["dap_an_dung"], hl[0]["so_em_chon_sai_nay"]), (100, 4, "4", "8", 3))
+        self.assertIn("hay chọn nhầm “4”", report.fallback_md(analyze.class_facts(db, "9A", "2026-10-28")))
+        store.snapshot(db, "2026-10-28", data)   # chạy lại: không nhân đôi
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM answers").fetchone()[0], 10)
+        self.assertEqual(analyze.misconceptions(db, []), [])
+        anon, _ = report.anonymize(analyze.class_facts(db, "9A", "2026-10-28"))
+        self.assertNotIn("Bình", json.dumps(anon["hieu_lam"], ensure_ascii=False))
+        db.close()
+
     def test_run_end_to_end(self):
         fb = fixture_day({"a": topics(mnp=("Mã nhị phân", 2, 10))}, nop={"a": {"diem": 2, "tong": 10, "lan": 1}})
         seen = {"sheet": None, "auth": [], "brain": [], "gem": 0}

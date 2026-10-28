@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã cài đặt hoàn tất Bộ não AI lên VPS Ubuntu 24.04 (IP: 160.191.242.28), nghiệm thu 13 ca kiểm thử, khóa chặt SSH (tắt mật khẩu, bật fail2ban, dùng khóa vps_brain), và xác nhận hạn cuộc thi 30/10/2026 cho Claude.
+- Yêu cầu mới nhất: Antigravity đã cài đặt hoàn tất Bộ não AI lên VPS Ubuntu 24.04, nghiệm thu 13 ca kiểm thử, khóa chặt SSH (tắt mật khẩu, bật fail2ban, dùng khóa vps_brain), và xác nhận hạn cuộc thi 30/10/2026 cho Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.

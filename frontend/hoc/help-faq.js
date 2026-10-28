@@ -27,7 +27,7 @@ export const FAQ = [
   {g: 'gv', q: 'Câu hỏi do AI soạn có đáng tin không?', a: 'Câu AI soạn chỉ là bản nháp. Giáo viên phải xem từng câu và đánh dấu "Đã duyệt" thì mới lưu được vào đề, nên giáo viên luôn là người quyết định cuối cùng.'},
   {g: 'gv', q: 'Làm sao biết em nào cần hỗ trợ?', a: 'Trang giáo viên hiện bản đồ năng lực cả lớp và danh sách học sinh cần chú ý (điểm thấp, điểm giảm, hay xin đáp án, lâu không học). Mỗi tuần, Bộ não AI còn viết báo cáo tóm tắt cho từng lớp.'},
 
-  {g: 'an', q: 'Dữ liệu học sinh có an toàn không?', a: 'Học sinh đăng nhập bằng mã và PIN, không thu email hay thông tin nhạy cảm. Khóa dịch vụ AI nằm trên máy chủ, không nằm trong điện thoại học sinh. Đáp án đề thi không gửi xuống máy học sinh trước khi nộp. Giáo viên lớp chỉ thấy lớp của mình.'},
+  {g: 'an', q: 'Dữ liệu học sinh có an toàn không?', a: 'Học sinh đăng nhập bằng mã và PIN, không thu email hay thông tin nhạy cảm. Khóa dịch vụ AI nằm trên máy chủ, không nằm trong điện thoại học sinh. Bài luyện tập được chấm ở máy chủ nên đáp án không gửi xuống máy em. Với đề thi thử, ứng dụng không hiển thị đáp án trước khi nộp; thi chính thức nên tổ chức có giám sát ở lớp. Giáo viên lớp chỉ thấy lớp của mình.'},
   {g: 'an', q: 'Khi báo cáo cho AI có lộ tên học sinh không?', a: 'Bộ não AI thay tên học sinh bằng ký hiệu (HS1, HS2…) trước khi gửi cho AI viết báo cáo, rồi ghép tên lại trên máy chủ riêng của giáo viên.'},
   {g: 'an', q: 'Ban giám khảo xem thử bằng cách nào?', a: 'Bấm "Nhắn Zalo cho giáo viên" ở cuối khung này để nhận tài khoản xem thử. Học sinh đăng nhập bằng mã và PIN; phần giáo viên vào trang "Góc dành cho Giáo viên" (biểu tượng màn hình ở thanh trên).'}
 ];
