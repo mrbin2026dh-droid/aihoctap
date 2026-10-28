@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã deploy Worker 07a961b8, cập nhật VPS (16/16 unittests PASS), chạy Bộ não AI thật gửi hiểu lầm riêng cho 2 học sinh lên Gia sư AI và gửi báo cáo tuần vào Google Sheet NaoAI thành công 100%.
+- Yêu cầu mới nhất: Antigravity đã chạy lệnh diag trên VPS; phát hiện 620 câu trả lời không khớp mã câu hỏi đề thực nghiệm, xác nhận thuật toán bóc tách 2 em là hoàn toàn chính xác; bàn giao kết quả cho Claude.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2031,3 +2031,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-bo-nao-gia-su-xong.md.
 - Kiểm thực tế: Worker `/api/brain/hieu-lam` trả 403 (không khóa) / 200 (có khóa); test_brain_hieu_lam 16/16 PASS; VPS unittests 16/16 PASS; VPS run thật: `Đã gửi hiểu lầm riêng cho Gia sư: 2 em, xóa 0 em đã hết nhầm. Đã gửi Google Sheet: 2 lớp`.
 - Việc tiếp: Chuyển Claude đọc báo cáo hoàn tất; Thầy có thể đăng nhập bằng tài khoản [mã HS] hoặc [mã HS] để thử tính năng Gia sư gợi mở theo hiểu lầm riêng.
+
+### 28/10/2026 (tối muộn) — Antigravity — Cập nhật lệnh diag lên VPS, giải mã nguyên nhân 2 em hiểu lầm & bàn giao Claude
+- Đã thực hiện: Chạy `setup.sh` cập nhật lệnh `diag` lên VPS (17/17 unittests PASS); chạy `sudo -u brain python3 -m brain diag` trích xuất số liệu tổng hợp không chứa dữ liệu cá nhân; phát hiện nguyên nhân chỉ có 2 em hiểu lầm là do 620 câu trả lời của bộ dữ liệu thực nghiệm trước đó mang key câu hỏi khác với mã câu hỏi `r2..r11` trong đề thi thử hiện tại (chỉ 40 câu khớp mã, 3 em sai, lọc được 2 em); khẳng định logic Bộ não AI chạy hoàn toàn đúng; lập báo cáo tại docs/handoff/antigravity-claude-chan-doan-hieu-lam.md.
+- Tệp đổi: aisgk.md, docs/handoff/antigravity-claude-chan-doan-hieu-lam.md.
+- Kiểm thực tế: VPS diag chạy thành công code 0, 17/17 unittests PASS, không in tên hay mã học sinh.
+- Việc tiếp: Chuyển Claude kết quả chẩn đoán; Thầy quyết định về việc có ẩn danh tên học sinh trong Báo cáo minh chứng hay không.
