@@ -1904,3 +1904,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Zalo mặc định https://zalo.me/0818810007 (support-config.js).
 - Test: test_quiz_live (29), test_teacher_effect, test_brain_export, test_teacher_ai, brain unittest (7), test_sheet_exam_gs PASS. Emulator luật chưa chạy được ở đây.
 - Bàn giao: docs/handoff/claude-antigravity-tien-ich-bo-nao.md
+
+## 28/10 (chiều) — Sửa 401 quiz_lop, luật quiz_proof, chat điện thoại
+- Nguyên nhân 401: luật trên mạng còn bản cũ (Antigravity chặn đăng do ca quiz_proof hỏng). Luật mới: bằng chứng MỚI mỗi lần ghi "khóa|đếm" (beginsWith khóa+'|', khác bằng chứng đang lưu); mã phòng dùng length+matches thay {6}.
+- quiz-play.js: probe() đọc thử quiz_lop trước khi nghe, lỗi thì im lặng thử lại sau 10 phút.
+- Gia sư AI trên điện thoại (≤760px): toàn màn hình, co theo visualViewport khi mở bàn phím (fitTutor trong app.js).
+- Test: test_quiz_live 30, test_lesson_ai_docs_ui 51 (có giả lập bàn phím). Emulator: 4 ca chẩn đoán quiz.
+- VPS Cloud Basic 2vCPU/2GB/30GB đủ; chọn Ubuntu 24.04.
+- Bàn giao: docs/handoff/claude-antigravity-sua-luat-quiz.md

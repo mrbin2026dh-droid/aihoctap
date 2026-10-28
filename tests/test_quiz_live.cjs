@@ -15,12 +15,12 @@ const denied=[];
 async function fbRoute(r){const u=new URL(r.request().url());const p=u.pathname.replace(/\.json$/,'').replace(/^\//,'');const m=r.request().method();
  const deny=why=>{denied.push(why);return r.fulfill({status:401,contentType:'application/json',body:'{"error":"Permission denied"}'});};
  if((r.request().headers()['accept']||'').includes('text/event-stream'))return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`retry: 200\nevent: put\ndata: ${JSON.stringify({path:'/',data:at(p)??null})}\n\n`});
- if(m==='GET'){if(p.startsWith('quiz_key')||p.startsWith('quiz_proof'))return deny('read '+p);return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(at(p)??null)});}
+ if(m==='GET'){if(p.startsWith('quiz_key')||p.startsWith('quiz_proof')||p===''||p.startsWith('quiz_proof'))return deny('read '+p);return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(at(p)??null)});}
  const v=stamp(JSON.parse(r.request().postData()||'null'));
  if(m==='PATCH'&&p===''){const proofs={};for(const [k,val] of Object.entries(v))if(k.startsWith('quiz_proof/'))proofs[k.split('/')[1]]=val;
   for(const k of Object.keys(v)){let R=null;if(/^quiz\/\d{6}\/(pub|kq)/.test(k))R=k.split('/')[1];else if(k.startsWith('quiz_lop/'))R=v[k]||at(k);else if(k.startsWith('quiz_proof/'))R=k.split('/')[1];else return deny('path '+k);
-   if(!R||!at('quiz_key/'+R)||proofs[R]!==at('quiz_key/'+R))return deny('proof '+k);}
-  for(const [k,val] of Object.entries(v))if(!k.startsWith('quiz_proof/'))setAt(k,val);return r.fulfill({status:200,contentType:'application/json',body:'{}'});}
+   const key=R&&at('quiz_key/'+R);if(!key||typeof proofs[R]!=='string'||!proofs[R].startsWith(key+'|')||proofs[R]===at('quiz_proof/'+R))return deny('proof '+k);}
+  for(const [k,val] of Object.entries(v))setAt(k,val);return r.fulfill({status:200,contentType:'application/json',body:'{}'});}
  if(m==='PUT'){if(p.startsWith('quiz_key/')&&at(p))return deny('key exists');
   if(/^quiz\/\d{6}\/ds\//.test(p)&&at(p))return deny('joined');
   const mm=p.match(/^quiz\/(\d{6})\/ans\/([^/]+)\/[^/]+$/);if(mm){const pub=at(`quiz/${mm[1]}/pub`);if(at(p)||!pub||pub.phase!=='q'||pub.q?.k!==mm[2])return deny('ans');}
@@ -57,12 +57,13 @@ try{
  // Trình chiếu
  await tp.click('.qz-play');await tp.waitForSelector('#qz-host:not([hidden]) .qz-code');const code=(await tp.textContent('.qz-code strong')).replace(/\s/g,'');
  ok(/^\d{6}$/.test(code)&&db.quiz_lop['9a']===code&&typeof db.quiz_key[code]==='string'&&db.quiz_key[code].length>=40,'mở phòng: mã 6 số, khóa phòng bí mật, gắn cho lớp 9A');
- ok(!JSON.stringify(db.quiz[code]).includes(db.quiz_key[code]),'khóa phòng không nằm ở chỗ học sinh đọc được');
+ ok(!JSON.stringify(db.quiz[code]).includes(db.quiz_key[code])&&!JSON.stringify(db.quiz_lop).includes(db.quiz_key[code]),'khóa phòng không nằm ở chỗ học sinh đọc được');
  await sp.waitForSelector('#qz-banner:not([hidden])',{timeout:8000});ok((await sp.textContent('#qz-banner')).includes('trò chơi câu hỏi'),'học sinh lớp 9A thấy thẻ "Vào chơi" ngay, không phải gõ mã');
  ok(await tp.isDisabled('#qz-start'),'chưa có học sinh → chưa bắt đầu được');
  await sp.click('.qz-join');await sp.waitForSelector('#qz-play:not([hidden]) .qz-p-wait');
  await tp.waitForFunction(()=>document.querySelectorAll('.qz-chips li').length===1);ok((await tp.textContent('.qz-chips')).includes('Nguyễn Văn An')&&!(await tp.isDisabled('#qz-start')),'máy chiếu: tên học sinh vào phòng hiện ngay');
  // Thử phá: ghi trạng thái phòng không có khóa
+ const hack2=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/.json`,{method:'PATCH',body:JSON.stringify({[`quiz/${c}/pub/phase`]:'end',[`quiz_proof/${c}`]:'doan-bua|1'})});return r.status},[DB,code]);ok(hack2===401,'đoán bừa bằng chứng → bị chặn');
  const hack=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/.json`,{method:'PATCH',body:JSON.stringify({[`quiz/${c}/pub/phase`]:'end'})});return r.status},[DB,code]);ok(hack===401&&db.quiz[code].pub.phase==='lobby','học sinh không có khóa phòng → không điều khiển được trò chơi');
  // Câu 1: đúng
  await tp.click('#qz-start');await sp.waitForSelector('.qz-p-opt',{timeout:8000});

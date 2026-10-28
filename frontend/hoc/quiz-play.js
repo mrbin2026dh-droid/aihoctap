@@ -19,10 +19,20 @@ export function start(identity) {
   const next = { ma: identity.uid, ten: identity.student_name, lop: identity.class_code };
   if (me && me.ma === next.ma && stopLop) return;
   stop(); me = next;
-  stopLop = store.listen(`quiz_lop/${store.keyOf(me.lop)}`, d => { room = typeof d === 'string' && /^\d{6}$/.test(d) ? d : ''; banner(); });
+  void probe();
+}
+/** Thử đọc một lần trước khi nghe liên tục: luật Firebase chưa có nhánh trò chơi (chưa đăng luật mới) thì không nghe → không báo lỗi liên tục; thử lại sau 10 phút. */
+let probeTimer = 0;
+async function probe() {
+  if (!me || stopLop) return;
+  const path = `quiz_lop/${store.keyOf(me.lop)}`;
+  try { await store.get(path); }
+  catch { clearTimeout(probeTimer); probeTimer = window.setTimeout(() => void probe(), 600000); return; }
+  if (!me || stopLop) return;
+  stopLop = store.listen(path, d => { room = typeof d === 'string' && /^\d{6}$/.test(d) ? d : ''; banner(); });
 }
 /** Đăng xuất. */
-export function stop() { stopLop?.(); stopLop = null; leaveRoom(); room = ''; me = null; banner(); }
+export function stop() { clearTimeout(probeTimer); stopLop?.(); stopLop = null; leaveRoom(); room = ''; me = null; banner(); }
 
 function banner() {
   let b = document.getElementById('qz-banner');

@@ -47,19 +47,25 @@ await c('nang_luc: thiếu topics / trường lạ → chặn', async () => { aw
 await c('nang_luc: đọc → được (giáo viên xem Hiệu quả)', () => assertSucceeds(get(ref(anon, 'nang_luc'))));
 await c('ho_tro: đọc → được, ghi → chặn', async () => { await assertSucceeds(get(ref(anon, 'ho_tro'))); await assertFails(set(ref(anon, 'ho_tro/zalo'), 'https://evil')); });
 await c('thi_th: học sinh không tự ghi điểm thực hành', () => assertFails(set(ref(anon, 'thi_th/mo/hs01/diem_th'), 10)));
-// 28/10: Trò chơi câu hỏi — chỉ chủ phòng (có khóa bí mật, không ai đọc được) điều khiển; học sinh vào phòng, trả lời một lần, đúng câu, trong giờ
-const KEY = 'k'.repeat(40);
+// 28/10: Trò chơi câu hỏi — chỉ chủ phòng (biết khóa bí mật, không ai đọc được) điều khiển: mỗi lần ghi phải kèm bằng chứng MỚI "khóa|số đếm".
+const KEY = 'k'.repeat(40); let pn = 0; const P = () => `${KEY}|${++pn}`;
 await c('quiz_key: tạo khóa phòng → được; tạo lại → chặn; đọc → chặn', async () => { await assertSucceeds(set(ref(anon, 'quiz_key/123456'), KEY)); await assertFails(set(ref(anon, 'quiz_key/123456'), 'x'.repeat(40))); await assertFails(get(ref(anon, 'quiz_key/123456'))); });
-await c('quiz: ghi trạng thái KHÔNG có khóa → chặn', () => assertFails(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby', n: 1 } })));
-await c('quiz: ghi trạng thái với khóa SAI → chặn', () => assertFails(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby' }, 'quiz_proof/123456': 'z'.repeat(40) })));
-await c('quiz: chủ phòng (khóa đúng) mở phòng + gắn lớp → được', () => assertSucceeds(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby', n: 1 }, 'quiz_lop/9a': '123456', 'quiz_proof/123456': KEY })));
+await c('quiz_key: mã phòng không phải 6 chữ số → chặn', () => assertFails(set(ref(anon, 'quiz_key/12ab56'), KEY)));
+await c('quiz chẩn đoán 1: ghi riêng bằng chứng đúng khóa → được', () => assertSucceeds(set(ref(anon, 'quiz_proof/123456'), P())));
+await c('quiz chẩn đoán 2: bằng chứng sai khóa → chặn', () => assertFails(set(ref(anon, 'quiz_proof/123456'), 'z'.repeat(40) + '|9')));
+await c('quiz chẩn đoán 3: ghi lại đúng bằng chứng cũ → chặn', async () => { const p = P(); await assertSucceeds(set(ref(anon, 'quiz_proof/123456'), p)); await assertFails(set(ref(anon, 'quiz_proof/123456'), p)); });
+await c('quiz chẩn đoán 4: pub + bằng chứng mới trong cùng một lần cập nhật → được', () => assertSucceeds(update(ref(anon), { 'quiz/123456/pub': { phase: 'lobby', n: 1 }, 'quiz_proof/123456': P() })));
+await c('quiz: ghi trạng thái KHÔNG kèm bằng chứng (dù chủ phòng đã ghi trước đó) → chặn', async () => { await assertFails(update(ref(anon), { 'quiz/123456/pub/phase': 'end' })); await assertFails(set(ref(anon, 'quiz/123456/pub/phase'), 'end')); });
+await c('quiz: ghi trạng thái với bằng chứng khóa SAI → chặn', () => assertFails(update(ref(anon), { 'quiz/123456/pub/phase': 'end', 'quiz_proof/123456': 'z'.repeat(40) + '|1' })));
+await c('quiz: chủ phòng gắn lớp → được', () => assertSucceeds(update(ref(anon), { 'quiz_lop/9a': '123456', 'quiz_proof/123456': P() })));
+await c('quiz_lop: gắn lớp không kèm bằng chứng → chặn', () => assertFails(set(ref(anon, 'quiz_lop/9b'), '123456')));
 await c('quiz_proof: không đọc được', () => assertFails(get(ref(anon, 'quiz_proof/123456'))));
 await c('quiz: học sinh vào phòng → được; vào lại → chặn', async () => { await assertSucceeds(set(ref(anon, 'quiz/123456/ds/hs01'), { ten: 'An', at: serverTimestamp() })); await assertFails(set(ref(anon, 'quiz/123456/ds/hs01'), { ten: 'An', at: serverTimestamp() })); });
 await c('quiz: trả lời khi chưa hỏi → chặn', () => assertFails(set(ref(anon, 'quiz/123456/ans/q0/hs01'), { a: 'A', t: serverTimestamp() })));
-await assertSucceeds(update(ref(anon), { 'quiz/123456/pub/phase': 'q', 'quiz/123456/pub/q': { k: 'q0', i: 0, text: 'Q', lim: 20, at: serverTimestamp() }, 'quiz_proof/123456': KEY }));
+await c('quiz: chủ phòng bắt đầu câu 1 → được', () => assertSucceeds(update(ref(anon), { 'quiz/123456/pub/phase': 'q', 'quiz/123456/pub/q': { k: 'q0', i: 0, text: 'Q', lim: 20, at: serverTimestamp() }, 'quiz_proof/123456': P() })));
 await c('quiz: trả lời đúng câu đang hỏi → được; lần 2 → chặn', async () => { await assertSucceeds(set(ref(anon, 'quiz/123456/ans/q0/hs01'), { a: 'B', t: serverTimestamp() })); await assertFails(set(ref(anon, 'quiz/123456/ans/q0/hs01'), { a: 'A', t: serverTimestamp() })); });
 await c('quiz: trả lời câu khác / đáp án lạ → chặn', async () => { await assertFails(set(ref(anon, 'quiz/123456/ans/q1/hs02'), { a: 'A', t: serverTimestamp() })); await assertFails(set(ref(anon, 'quiz/123456/ans/q0/hs02'), { a: 'E', t: serverTimestamp() })); });
-await c('quiz: học sinh tự ghi điểm (kq) / sửa trạng thái → chặn', async () => { await assertFails(set(ref(anon, 'quiz/123456/kq/hs01'), { p: 9999 })); await assertFails(set(ref(anon, 'quiz/123456/pub/phase'), 'end')); });
-await c('quiz_lop: gỡ thẻ lớp không có khóa → chặn; có khóa → được', async () => { await assertFails(set(ref(anon, 'quiz_lop/9a'), null)); await assertSucceeds(update(ref(anon), { 'quiz_lop/9a': null, 'quiz_proof/123456': KEY })); });
+await c('quiz: học sinh tự ghi điểm (kq) → chặn', () => assertFails(set(ref(anon, 'quiz/123456/kq/hs01'), { p: 9999 })));
+await c('quiz: chủ phòng ghi điểm + kết thúc + gỡ lớp → được', () => assertSucceeds(update(ref(anon), { 'quiz/123456/kq/hs01': { p: 900, c: 1, r: 1, n: 1 }, 'quiz/123456/pub/phase': 'end', 'quiz_lop/9a': null, 'quiz_proof/123456': P() })));
 await env.cleanup();
 console.log(fail ? `${fail} CA SAI — KHÔNG ĐĂNG LUẬT NÀY` : 'TẤT CẢ CA ĐÚNG'); process.exit(fail ? 1 : 0);
