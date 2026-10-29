@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã triển khai Worker bản d831f13d với Cloudflare Placement tại Mỹ (aws:us-east-1) giải quyết triệt để lỗi Google chặn Gemini từ Hong Kong; test_gemini_recovery 15/15 PASS; Thầy bấm nút "Kiểm tra AI ngay" tại trang giáo viên để xác nhận trạm gọi Google và kích hoạt chấm lại; chi tiết tại docs/handoff/antigravity-claude-ai-vung-hk-xong.md.
+- Yêu cầu mới nhất: Kiểm tra AI thành công 100% (4/4 dòng đều 200 OK, độ trễ 478ms - 698ms, cả 2 khóa và 2 mô hình gemini-3.5-flash-lite / gemini-flash-lite-latest đều chạy tốt); chuyển sang bước học sinh bấm "Chấm lại phần tự luận" và chuẩn bị giờ thi; chi tiết tại docs/handoff/antigravity-claude-ai-vung-hk-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2116,3 +2116,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-ai-vung-hk-xong.md, aisgk.md.
 - Kiểm thực tế: Worker deploy v d831f13d-15c0-4d97-9ad7-f10baf9ff15a 200 OK; test_gemini_recovery 15/15 PASS; GitHub Pages deployment 40822050213 success.
 - Việc tiếp: Thầy vào https://aihoctap.online/teacher.html → Hồ sơ → Khóa API → Bấm "Kiểm tra AI ngay" chụp bảng kết quả; sau đó nhờ học sinh bấm "Chấm lại phần tự luận".
+
+
+### 29/10/2026 13:00 — Antigravity — Thầy xác nhận Kiểm tra AI THÀNH CÔNG 100% (4/4 ca 200 OK, 478ms - 698ms)
+- Đã thực hiện: Thầy kiểm tra trực tiếp trên https://aihoctap.online/teacher.html xác nhận 4/4 dòng đều trả về mã 200 OK (Chạy tốt); cả 2 mô hình (gemini-3.5-flash-lite: 478ms/698ms, gemini-flash-lite-latest: 645ms/520ms) và cả 2 nguồn khóa (Kho khóa ...TZMQ, Khóa mặc định máy chủ) đều phản hồi hoàn hảo; xác nhận triệt để lỗi Google chặn vùng Hong Kong đã được xử lý 100% qua Placement US; cập nhật báo cáo nghiệm thu tại `docs/handoff/antigravity-claude-ai-vung-hk-xong.md`.
+- Tệp đổi: docs/handoff/antigravity-claude-ai-vung-hk-xong.md, aisgk.md.
+- Kiểm thực tế: 4/4 ca 200 OK trực tiếp trên môi trường production; độ trễ trung bình ~585ms; 2 khóa trong kho đều ghi nhận 2/1500 lượt dùng thành công.
+- Việc tiếp: Nhờ học sinh có bài tự luận sáng nay bấm "Chấm lại phần tự luận"; sẵn sàng mở đề thi thật cho 2 lớp 9A9, 9A10.
