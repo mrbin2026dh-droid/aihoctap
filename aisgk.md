@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Kiểm tra AI thành công 100% (4/4 dòng đều 200 OK, độ trễ 478ms - 698ms, cả 2 khóa và 2 mô hình gemini-3.5-flash-lite / gemini-flash-lite-latest đều chạy tốt); chuyển sang bước học sinh bấm "Chấm lại phần tự luận" và chuẩn bị giờ thi; chi tiết tại docs/handoff/antigravity-claude-ai-vung-hk-xong.md.
+- Yêu cầu mới nhất: Đã cài đặt Bộ não đa agent trên VPS, chạy thử AI thật (smoke test 6/6 lượt gọi 200 OK, bài mẫu 1.0/1.0 kèm bằng chứng, bài tấn công 0.0), triển khai Cloudflare Worker f8f13555; chờ Thầy thêm bản ghi A agent trên Hostinger để kích hoạt HTTPS toàn tuyến; chi tiết tại docs/handoff/antigravity-claude-cai-agent-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2123,3 +2123,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-ai-vung-hk-xong.md, aisgk.md.
 - Kiểm thực tế: 4/4 ca 200 OK trực tiếp trên môi trường production; độ trễ trung bình ~585ms; 2 khóa trong kho đều ghi nhận 2/1500 lượt dùng thành công.
 - Việc tiếp: Nhờ học sinh có bài tự luận sáng nay bấm "Chấm lại phần tự luận"; sẵn sàng mở đề thi thật cho 2 lớp 9A9, 9A10.
+
+### 29/10/2026 13:35 — Antigravity — Cài đặt Bộ não đa agent trên VPS, Kiểm thử AI thật PASS 100% & Deploy Worker f8f13555
+- Đã thực hiện: Chạy setup.sh trên VPS cài đặt Python 3.12, venv, Caddy 2.6.2, UFW; cấu hình /opt/agent/.env tự tạo AGENT_KEY ngẫu nhiên 64 ký tự, kết nối GEMINI_MODEL=gemini-3.5-flash-lite và GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest; chạy 20/20 unit tests VPS PASS trong 0.497s; khởi chạy dịch vụ agent.service chạy ngầm ổn định ở mức 36.1 MB RAM; chạy smoke test bằng AI thật với 6/6 request 200 OK, bài mẫu đạt 1.0/1.0 có bằng chứng, bài tấn công prompt injection bị chặn đạt 0.0 điểm; đưa secret AGENT_URL và AGENT_KEY lên Cloudflare Worker và deploy bản f8f13555; lập báo cáo tại docs/handoff/antigravity-claude-cai-agent-xong.md.
+- Tệp đổi: docs/handoff/antigravity-claude-cai-agent-xong.md, aisgk.md.
+- Kiểm thực tế: VPS 20 tests PASS; node tests (test_agent_bridge 12/12, test_gemini_recovery 15/15, test_essay_ai 21/21, test_thi_tuluan 70/70) PASS; smoke test AI thật SMOKE OK; RAM VPS 36.1 MB; Worker deploy version f8f13555-3107-4cd2-a40f-fcbe557320ad.
+- Việc tiếp: Thầy vào Hostinger thêm bản ghi A agent trỏ về IP VPS để Caddy cấp chứng chỉ SSL và kích hoạt HTTPS; sau đó bấm Kiểm tra AI ngay trên trang giáo viên.
