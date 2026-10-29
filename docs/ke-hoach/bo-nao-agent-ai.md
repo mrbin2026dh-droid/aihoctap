@@ -1,6 +1,6 @@
 # Kế hoạch: Bộ não đa agent AI trên VPS (Python) — tạo tính mới cho AI Học Tập
 
-> Trạng thái: **KẾ HOẠCH, chưa viết mã** (29/10/2026). Bắt đầu sau ngày 30/10 (sau cuộc thi).
+> Trạng thái (29/10/2026 chiều): **ĐÃ VIẾT** Agent Chấm tự luận + Agent Kiểm đề (`agent/`), Worker nối có đường lùi. Chờ Antigravity cài VPS, chạy thử bằng AI thật, thầy chấm bộ bài chuẩn để đo.
 > Claude viết mã và kiểm thử. Antigravity cài đặt VPS và triển khai. Thầy chấm bộ bài chuẩn và duyệt.
 
 ## 1. Mục tiêu và điểm mới (đo được, không nói suông)

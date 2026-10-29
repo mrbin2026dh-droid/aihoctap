@@ -40,3 +40,6 @@ frontend/data/exams/submissions/
 tests/.cache/
 brain/.env
 *.sqlite3
+
+agent/.env
+**/__pycache__/

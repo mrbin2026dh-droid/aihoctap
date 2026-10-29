@@ -1,0 +1,23 @@
+[Unit]
+Description=AI Hoc Tap - Bo nao da agent (cham tu luan, kiem de)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=brain
+Group=brain
+WorkingDirectory=/opt/agent
+ExecStart=/opt/agent/venv/bin/python -m agent serve --env /opt/agent/.env
+Restart=always
+RestartSec=3
+MemoryMax=450M
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/brain
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

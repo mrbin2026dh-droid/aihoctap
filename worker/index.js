@@ -1561,6 +1561,21 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
   }
   throw Object.assign(new Error(`AI chưa trả lời được (mã ${last || 'mạng'}). Thử lại sau ít phút.`), { status: 502, upstream: last });
 }
+/**
+ * Bộ não đa agent trên VPS (agent/ trong kho): gọi khi có AGENT_URL + AGENT_KEY. Lỗi / chậm / chưa cài → trả null để nơi gọi dùng đường cũ (Gemini trực tiếp).
+ * @param {any} env @param {string} path @param {any} body @param {number} [ms]
+ */
+export async function agentCall(env, path, body, ms = 28000) {
+  const base = String(env.AGENT_URL || '').replace(/\/+$/, '');
+  if (!base || !env.AGENT_KEY) return null;
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  try {
+    const r = await fetch(base + path, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Agent-Key': String(env.AGENT_KEY) }, body: body === undefined ? undefined : JSON.stringify(body), signal: ctl.signal });
+    if (!r.ok) { console.error('[AGENT_FAIL]', path, r.status, (await r.text().catch(() => '')).slice(0, 200)); return null; }
+    return await r.json();
+  } catch (e) { console.error('[AGENT_FAIL]', path, e?.name || 'error'); return null; }
+  finally { clearTimeout(t); }
+}
 /** Phân loại lỗi Gemini. Lưu ý: khóa sai Google trả 400 (API_KEY_INVALID); máy chủ đặt ở vùng bị chặn (vd Hong Kong) trả 400 "User location is not supported".
  * @param {number} status @param {string} why @returns {'key'|'region'|'model'|'busy'|'quota'|'json'|'other'} */
 export function geminiErrKind(status, why = '') {
@@ -4800,6 +4815,12 @@ export default {
       const LIMIT = Number(env.ESSAY_DAILY) || 40;
       const c = await gateStub.fetch('http://do/teacher-ai-count', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ who: 'hs:' + String(ar.payload?.uid || '').slice(0, 64) }) }).then(x => x.json()).catch(() => ({ count: 0 }));
       if ((Number(c.count) || 0) > LIMIT) return j(429, { detail: `Hôm nay em đã nhờ AI chấm ${LIMIT} lần. Mai làm tiếp nhé.` });
+      // Bộ não đa agent (VPS): chấm theo tiêu chí, kiểm bằng chứng, bỏ phiếu; lỗi/chậm thì dùng đường cũ bên dưới.
+      const ag = await agentCall(env, '/grade', { title: String(body.title || '').slice(0, 200), items: items.map(it => ({ text: it.text, guide: it.guide, answer: it.answer, max: it.max })) });
+      if (ag && Array.isArray(ag.items) && ag.items.length === items.length) {
+        const out = ag.items.map((g, i) => ({ diem: Math.max(0, Math.min(items[i].max, Math.round((Number(g?.diem) || 0) * 4) / 4)), nhan_xet: String(g?.nhan_xet || result[i].nhan_xet || '').trim().slice(0, 600) }));
+        return j(200, { items: out, tong_ket: String(ag.tong_ket || '').slice(0, 600), nguon: 'agent' });
+      }
       try {
         const text = await geminiOnce(env, gateStub, buildEssayGradePrompt({ title: body.title, items: todo.map(([it]) => it) }), { maxOutputTokens: 2048, temperature: 0.1 });
         const parsed = parseJsonLoose(text) || {};
@@ -4840,7 +4861,9 @@ export default {
       }
       let noi_chay = '';
       try { const tr = await fetch('https://www.cloudflare.com/cdn-cgi/trace').then(r => r.text()); noi_chay = ((tr.match(/colo=(\w+)/) || [])[1] || '') + ' / ' + ((tr.match(/loc=(\w+)/) || [])[1] || ''); } catch { /* bỏ qua */ }
-      return j(200, { model, fallback, results, noi_chay, vao_tu: String(request.cf?.colo || '') });
+      let agent = null;
+      if (env.AGENT_URL) { const st = await agentCall(env, '/status', undefined, 8000); agent = st ? { ok: true, version: st.version, models: st.models, khoa: st.khoa, thong_ke: st.thong_ke } : { ok: false }; }
+      return j(200, { model, fallback, results, noi_chay, vao_tu: String(request.cf?.colo || ''), agent });
     }
 
     if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz') && request.method === 'POST') {
@@ -4866,7 +4889,18 @@ export default {
           const questions = total ? cleanGeneratedQuestions(Array.isArray(parsed) ? parsed : parsed?.questions) : [];
           const essayList = essays ? cleanGeneratedEssays(parsed?.essays) : [];
           if (!questions.length && !essayList.length) return j(502, { detail: 'AI chưa soạn được câu hợp lệ. Thử lại.' });
-          return j(200, { questions, essays: essayList, lesson_title: lesson.title, remaining: Math.max(0, LIMIT - cnt.count) });
+          // Agent Kiểm đề (VPS): một agent khác tự giải từng câu; giải ra khác đáp án → loại. Chưa có agent thì giữ nguyên.
+          let kept = questions, kiem_tra = '';
+          if (questions.length) {
+            const v = await agentCall(env, '/verify-questions', { questions: questions.map(q => ({ text: q.text, options: q.options, answer: q.answer })), lesson: content.slice(0, 8000) }, 30000);
+            if (v && Array.isArray(v.ket_qua) && v.ket_qua.length === questions.length) {
+              const ok = questions.filter((_, i) => v.ket_qua[i]?.giu);
+              const bad = v.ket_qua.filter(k => !k?.giu).length;
+              if (ok.length) { kept = ok; kiem_tra = bad ? `Agent kiểm đề đã tự giải lại và loại ${bad} câu nghi sai đáp án hoặc mơ hồ.` : 'Agent kiểm đề đã tự giải lại: mọi câu khớp đáp án.'; }
+              else kiem_tra = 'Agent kiểm đề nghi tất cả các câu; thầy cô kiểm tra kỹ đáp án trước khi dùng.';
+            }
+          }
+          return j(200, { questions: kept, essays: essayList, lesson_title: lesson.title, remaining: Math.max(0, LIMIT - cnt.count), ...(kiem_tra ? { kiem_tra } : {}) });
         }
         if (url.pathname === '/api/teacher/ai-quiz') {
           if (!Array.isArray(body.questions) || !body.questions.length) return j(400, { detail: 'Chưa có kết quả trò chơi để phân tích.' });

@@ -1,0 +1,8 @@
+# Bộ não đa agent: HTTPS tự động (Let's Encrypt). Dịch vụ chỉ nghe 127.0.0.1:8787.
+agent.aihoctap.online {
+	encode gzip
+	request_body {
+		max_size 64KB
+	}
+	reverse_proxy 127.0.0.1:8787
+}

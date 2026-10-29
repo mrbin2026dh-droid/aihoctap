@@ -809,7 +809,8 @@ node('ai-check').addEventListener('click', async () => {
     const rows = (d.results || []).map((/** @type {any} */ r) => el('tr', '', '', [cell('Khóa', r.nguon), cell('Mô hình', r.mo_hinh), cell('Mã', String(r.ma || '—')), cell('Kết luận', hint(r), r.ok ? 'ai-ok' : 'ai-bad'), cell('Chi tiết', r.ly_do || (r.ok ? `${r.ms} ms` : ''))]));
     const tb = el('table', '', 't-table', [el('caption', ok ? 'AI đang chạy được (ít nhất một khóa + mô hình trả lời).' : 'AI ĐANG KHÔNG CHẠY: không khóa / mô hình nào trả lời được.'), el('thead', '', '', [head]), el('tbody', '', '', rows)]);
     const where = el('p', `Máy chủ AI đang gọi Google từ: ${d.noi_chay || 'không rõ'}${d.vao_tu ? ' · nhận yêu cầu tại: ' + d.vao_tu : ''}${/HKG|\/ HK/.test(d.noi_chay || '') ? ' (Hong Kong: Google không cho dùng Gemini)' : ''}`, 't-muted');
-    out.replaceChildren(where, tb);
+    const ag = d.agent ? el('p', d.agent.ok ? `Bộ não đa agent (VPS): đang chạy, phiên bản ${d.agent.version}, mô hình ${(d.agent.models || []).join(' → ')}, ${(d.agent.khoa || []).length} khóa. Chấm 24 giờ qua: ${d.agent.thong_ke?.cham_24h ?? 0} câu, cần giáo viên xem lại: ${d.agent.thong_ke?.can_xem_lai ?? 0}.` : 'Bộ não đa agent (VPS): KHÔNG kết nối được — AI chấm đang dùng đường dự phòng (Gemini trực tiếp).', d.agent.ok ? 'ai-ok' : 'ai-bad') : el('p', 'Bộ não đa agent (VPS): chưa cài (chưa đặt AGENT_URL).', 't-muted');
+    out.replaceChildren(where, ag, tb);
   } catch (err) { out.textContent = err instanceof Error ? err.message : 'Chưa kiểm tra được.'; }
   finally { btn.disabled = false; btn.removeAttribute('aria-busy'); }
 });

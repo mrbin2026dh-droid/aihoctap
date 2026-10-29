@@ -685,7 +685,7 @@ $('ai-q-form').addEventListener('submit', async ev => {
     const box = $('thi-qe-list'); for (const q of qs) box.append(qeRow({ ...q, ai: true })); qeNumber(); qeNote();
     if (es.length) { const tb = $('thi-tl-list'); tlRows().forEach(f => { if (!/** @type {HTMLTextAreaElement} */ (f.querySelector('.tl-text')).value.trim() && !/** @type {HTMLTextAreaElement} */ (f.querySelector('.tl-guide')).value.trim()) f.remove(); }); for (const q of es) tb.append(tlRow({ ...q, ai: true })); tlNumber(); }
     aiDlg.close();
-    status(`AI đã soạn ${qs.length} câu trắc nghiệm` + (es.length ? ` và ${es.length} câu tự luận` : '') + ` (bài "${r.lesson_title || l.title}"). Đọc kỹ, sửa nếu cần và đánh dấu "Đã duyệt" từng câu.` + (typeof r.remaining === 'number' ? ` Còn ${r.remaining} lượt AI hôm nay.` : ''), 'success');
+    status(`AI đã soạn ${qs.length} câu trắc nghiệm` + (es.length ? ` và ${es.length} câu tự luận` : '') + ` (bài "${r.lesson_title || l.title}"). Đọc kỹ, sửa nếu cần và đánh dấu "Đã duyệt" từng câu.` + (typeof r.remaining === 'number' ? ` Còn ${r.remaining} lượt AI hôm nay.` : '') + (r.kiem_tra ? ' ' + r.kiem_tra : ''), 'success');
     /** @type {HTMLElement|null} */ (box.querySelector('.thi-qe.is-ai:not(.is-approved) .qe-text'))?.focus();
   } catch (e) { $('ai-q-err').textContent = e instanceof Error ? e.message : 'AI chưa soạn được. Thử lại.'; }
   finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
