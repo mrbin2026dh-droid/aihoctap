@@ -802,13 +802,14 @@ node('ai-check').addEventListener('click', async () => {
   btn.disabled = true; btn.setAttribute('aria-busy', 'true'); out.textContent = 'Đang gọi thử AI…';
   try {
     const d = await api('/teacher/ai-check', { method: 'POST', token, body: {}, timeout: 60000 });
-    const hint = (/** @type {any} */ r) => r.ok ? 'Chạy tốt' : r.ma === 429 ? 'Hết lượt (đợi hoặc thêm khóa khác)' : r.ma === 403 || r.ma === 401 ? 'Khóa bị từ chối (khóa sai, hết hạn, bị giới hạn trang web/IP, hoặc chưa bật Gemini API)' : r.ma === 404 ? 'Sai tên mô hình AI' : r.ma >= 500 ? 'Máy chủ AI quá tải / lỗi tạm thời' : r.ma === 0 ? (r.ly_do || 'Không có khóa') : 'Lỗi khác';
+    const hint = (/** @type {any} */ r) => r.ok ? 'Chạy tốt' : /location is not supported|FAILED_PRECONDITION/i.test(r.ly_do || '') ? 'Google chặn vùng đặt máy chủ (cần đổi vị trí Worker)' : /API[_ ]?key not valid|API_KEY_INVALID/i.test(r.ly_do || '') ? 'Khóa sai hoặc đã bị xóa (tạo khóa mới ở AI Studio)' : r.ma === 429 ? 'Hết lượt (đợi hoặc thêm khóa khác)' : r.ma === 403 || r.ma === 401 ? 'Khóa bị từ chối (khóa sai, hết hạn, bị giới hạn trang web/IP, hoặc chưa bật Gemini API)' : r.ma === 404 ? 'Sai tên mô hình AI' : r.ma >= 500 ? 'Máy chủ AI quá tải / lỗi tạm thời' : r.ma === 0 ? (r.ly_do || 'Không có khóa') : 'Lỗi khác';
     const ok = (d.results || []).some((/** @type {any} */ r) => r.ok);
     const cell = (/** @type {string} */ label, /** @type {string} */ text, cls = '') => { const c = el('td', text, cls); c.dataset.label = label; return c; };
     const head = el('tr', '', '', ['Khóa', 'Mô hình', 'Mã', 'Kết luận', 'Chi tiết'].map(t => { const h = el('th', t); h.scope = 'col'; return h; }));
     const rows = (d.results || []).map((/** @type {any} */ r) => el('tr', '', '', [cell('Khóa', r.nguon), cell('Mô hình', r.mo_hinh), cell('Mã', String(r.ma || '—')), cell('Kết luận', hint(r), r.ok ? 'ai-ok' : 'ai-bad'), cell('Chi tiết', r.ly_do || (r.ok ? `${r.ms} ms` : ''))]));
     const tb = el('table', '', 't-table', [el('caption', ok ? 'AI đang chạy được (ít nhất một khóa + mô hình trả lời).' : 'AI ĐANG KHÔNG CHẠY: không khóa / mô hình nào trả lời được.'), el('thead', '', '', [head]), el('tbody', '', '', rows)]);
-    out.replaceChildren(tb);
+    const where = el('p', `Máy chủ AI đang gọi Google từ: ${d.noi_chay || 'không rõ'}${d.vao_tu ? ' · nhận yêu cầu tại: ' + d.vao_tu : ''}${/HKG|\/ HK/.test(d.noi_chay || '') ? ' (Hong Kong: Google không cho dùng Gemini)' : ''}`, 't-muted');
+    out.replaceChildren(where, tb);
   } catch (err) { out.textContent = err instanceof Error ? err.message : 'Chưa kiểm tra được.'; }
   finally { btn.disabled = false; btn.removeAttribute('aria-busy'); }
 });

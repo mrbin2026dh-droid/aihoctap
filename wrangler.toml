@@ -3,6 +3,12 @@ main = "worker/index.js"
 compatibility_date = "2026-10-24"
 compatibility_flags = ["nodejs_compat"]
 
+# Học sinh Việt Nam thường vào Cloudflare qua Hong Kong (HKG). Google KHÔNG cho gọi Gemini từ Hong Kong
+# (lỗi 400 "User location is not supported") → AI chấm / Gia sư báo 502. Đặt Worker chạy ở Mỹ (vùng được hỗ trợ).
+# Nếu wrangler báo không hỗ trợ dòng region, thay bằng: mode = "smart"
+[placement]
+region = "aws:us-east-1"
+
 [durable_objects]
 bindings = [
   { name = "GATE_DO", class_name = "GateDurableObject" }

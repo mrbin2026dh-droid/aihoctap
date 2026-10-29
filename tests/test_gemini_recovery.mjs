@@ -2,7 +2,7 @@
 // trước khi báo lỗi; báo lỗi nói rõ nguyên nhân. Giáo viên có nút "Kiểm tra AI" để thấy mã lỗi từng khóa × mô hình.
 // Chạy: node tests/test_gemini_recovery.mjs
 import assert from 'node:assert/strict';
-import worker, { MockDONamespace, registerStudentCredential, geminiOnce } from '../worker/index.js';
+import worker, { MockDONamespace, registerStudentCredential, geminiOnce, geminiErrKind } from '../worker/index.js';
 const kp = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
 await registerStudentCredential('hs_rc', '123456', 'a1b2c3d4e5f60718293a4b5c6d7e8f99', { name: 'Học sinh thử', grade: 9, class_code: '9A' });
 const env = { GATE_DO: new MockDONamespace(), SIGNING_KEYPAIR: kp, MOCK_MODE: true, GEMINI_API_KEY: 'envkey', GEMINI_MODEL: 'main-model', GEMINI_FALLBACK_MODEL: 'fb-model', ALLOWED_ORIGIN: 'https://x.github.io',
@@ -18,6 +18,8 @@ globalThis.fetch = async (u, o) => {
     const model = s.split('/models/')[1].split(':')[0], key = o.headers['x-goog-api-key'];
     calls.push({ model, key }); const st = plan(model, calls.length, key);
     if (st === 200) return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Em thử nghĩ xem CPU làm gì?' }] } }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (st === 4001) return new Response(JSON.stringify({ error: { code: 400, message: 'User location is not supported for the API use.', status: 'FAILED_PRECONDITION' } }), { status: 400 });
+    if (st === 4002) return new Response(JSON.stringify({ error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT' } }), { status: 400 });
     return new Response(JSON.stringify({ error: { code: st, message: st === 403 ? 'API key not valid. Please pass a valid API key. AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' : st === 404 ? 'models/main-model is not found' : 'The model is overloaded.' } }), { status: st });
   }
   return realFetch(u, o);
@@ -51,6 +53,19 @@ try {
   const stub = env.GATE_DO.get(env.GATE_DO.idFromName('gate'));
   const txt = await geminiOnce({ ...env, MOCK_GEMINI: undefined }, stub, 'Xin chào', { json: false });
   ok(txt && calls.length === 2 && calls[1].model === 'fb-model', 'AI chấm: 503 → thử mô hình dự phòng, chấm được');
+
+  // Vùng bị Google chặn (Cloudflare chạy ở Hong Kong): báo đúng nguyên nhân, không thử vô ích
+  ok(geminiErrKind(400, 'User location is not supported for the API use.') === 'region' && geminiErrKind(400, 'API key not valid. Please pass a valid API key.') === 'key' && geminiErrKind(400, 'Invalid JSON payload') === 'json', 'phân loại lỗi 400: vùng bị chặn / khóa sai / khác');
+  calls.length = 0; plan = () => 4001;
+  r = await ask();
+  ok(r.status === 502 && /Hong Kong/.test(r.body.detail) && calls.length === 1, 'Gia sư: vùng bị chặn → báo rõ, không thử lại vô ích ' + r.body.detail);
+  calls.length = 0;
+  let em = ''; try { await geminiOnce({ ...env, MOCK_GEMINI: undefined }, stub, 'x', { json: false }); } catch (e) { em = e.message; }
+  ok(/Hong Kong/.test(em) && calls.length === 1, 'AI chấm: vùng bị chặn → báo rõ nguyên nhân');
+  // Khóa sai (Google trả 400): đổi sang mô hình/khóa khác như 403
+  calls.length = 0; plan = (m, i, k) => (i === 1 ? 4002 : 200);
+  r = await ask();
+  ok(r.status === 200, 'Gia sư: khóa sai trả 400 → coi như khóa bị từ chối, thử cách khác');
 
   // Kiểm tra AI cho giáo viên
   calls.length = 0; plan = m => (m === 'main-model' ? 403 : 200);

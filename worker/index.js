@@ -1535,6 +1535,9 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
     last = res ? res.status : 0;
     const why = res ? (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300) : 'network';
     console.error('[GEMINI_FAIL]', m, last, why);   // không có khóa trong nội dung này
+    const kind = geminiErrKind(last, why);
+    if (kind === 'region') throw Object.assign(new Error(GEMINI_REGION_MSG), { status: 502, upstream: last });
+    if (kind === 'key' && last === 400) last = 403;   // khóa sai: Google trả 400 → xử lý như khóa bị từ chối (đổi khóa)
     if (last === 429 || last === 401 || last === 403) {
       if (pool) await report(pool.id, last === 429 ? { status: 'rate_limited', retry_after_sec: 60 } : { status: 'error' });
       const next = pool ? await acquire() : null;
@@ -1552,13 +1555,29 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
   }
   throw Object.assign(new Error(`AI chưa trả lời được (mã ${last || 'mạng'}). Thử lại sau ít phút.`), { status: 502, upstream: last });
 }
+/** Phân loại lỗi Gemini. Lưu ý: khóa sai Google trả 400 (API_KEY_INVALID); máy chủ đặt ở vùng bị chặn (vd Hong Kong) trả 400 "User location is not supported".
+ * @param {number} status @param {string} why @returns {'key'|'region'|'model'|'busy'|'quota'|'json'|'other'} */
+export function geminiErrKind(status, why = '') {
+  const w = String(why);
+  if (status === 429) return 'quota';
+  if (/location is not supported|not supported in your (country|region)|FAILED_PRECONDITION/i.test(w)) return 'region';
+  if (status === 401 || status === 403 || /API[_ ]?key not valid|API_KEY_INVALID|API key expired|PERMISSION_DENIED/i.test(w)) return 'key';
+  if (status === 404) return 'model';
+  if (status === 0 || status >= 500) return 'busy';
+  if (status === 400) return 'json';
+  return 'other';
+}
+export const GEMINI_REGION_MSG = 'Máy chủ AI đang chạy ở vùng Google không cho dùng Gemini (thường là Hong Kong). Thầy cô báo kỹ thuật đặt vị trí Worker (placement) sang vùng được hỗ trợ.';
 /**
  * Gemini trả lỗi KHÔNG phải 429 (503 quá tải, 500, 504, 404 sai tên mô hình, 401/403 khóa hỏng, mất mạng):
  * thử lại có giãn cách → đổi khóa (kho / khóa mặc định) → đổi mô hình dự phòng. Trả {res,key,model} khi được, null khi hết cách.
- * @param {any} env @param {any} gateStub @param {{body:any,key:string,model:string,status:number,poolId?:string}} o
+ * @param {any} env @param {any} gateStub @param {{body:any,key:string,model:string,status:number,poolId?:string,why?:string}} o
  */
 export async function geminiAlt(env, gateStub, o) {
   const fallback = String(env.GEMINI_FALLBACK_MODEL || '').trim();
+  const kind = geminiErrKind(o.status, o.why || '');
+  if (kind === 'region') return null;   // đổi khóa / mô hình không giúp được: phải đổi vị trí máy chủ
+  if (kind === 'key' && o.status === 400) o = { ...o, status: 403 };
   /** @type {{key:string,model:string,wait?:number}[]} */ const tries = [];
   if (o.status === 0 || o.status >= 500) tries.push({ key: o.key, model: o.model, wait: 800 }, { key: o.key, model: o.model, wait: 1600 });
   if (o.status === 401 || o.status === 403) {
@@ -4813,7 +4832,9 @@ export default {
           results.push({ nguon: k.nguon, mo_hinh: m, ma: res ? res.status : 0, ok: !!(res && res.ok), ly_do, ms: Date.now() - t0 });
         }
       }
-      return j(200, { model, fallback, results });
+      let noi_chay = '';
+      try { const tr = await fetch('https://www.cloudflare.com/cdn-cgi/trace').then(r => r.text()); noi_chay = ((tr.match(/colo=(\w+)/) || [])[1] || '') + ' / ' + ((tr.match(/loc=(\w+)/) || [])[1] || ''); } catch { /* bỏ qua */ }
+      return j(200, { model, fallback, results, noi_chay, vao_tu: String(request.cf?.colo || '') });
     }
 
     if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz') && request.method === 'POST') {
@@ -5517,12 +5538,13 @@ export default {
           if (!geminiRes.ok) {   // 503 quá tải / 500 / 404 / 403 / mạng → thử lại, đổi khóa, đổi mô hình dự phòng trước khi báo lỗi
             const errBody0 = await geminiRes.clone().text().catch(() => '');
             console.error('[GEMINI_SERVER_ERROR]', geminiRes.status, errBody0.replace(/\s+/g, ' ').slice(0, 300));
-            const alt = await geminiAlt(env, gateStub, { body: { contents, systemInstruction: { parts: [{ text: systemText }] }, generationConfig: { temperature: 0.3, maxOutputTokens: 2048 } }, key: currentKey, model: modelName, status: geminiRes.status, poolId: usedPoolKey?.id });
+            const alt = await geminiAlt(env, gateStub, { body: { contents, systemInstruction: { parts: [{ text: systemText }] }, generationConfig: { temperature: 0.3, maxOutputTokens: 2048 } }, key: currentKey, model: modelName, status: geminiRes.status, poolId: usedPoolKey?.id, why: errBody0 });
             if (alt) { geminiRes = alt.res; currentKey = alt.key; geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${alt.model}:generateContent`; if (alt.key !== usedPoolKey?.key) usedPoolKey = null; }
           }
           if (!geminiRes.ok) {
             const errBody = await geminiRes.text().catch(() => '');
             console.error('[GEMINI_SERVER_ERROR_FINAL]', geminiRes.status, errBody.replace(/\s+/g, ' ').slice(0, 300));
+            const ek = geminiErrKind(geminiRes.status, errBody);
             // J1: Atomic quota refund on Gemini server failure
             await gateStub.fetch('http://do/refund-gemini-limit', {
               method: 'POST',
@@ -5530,7 +5552,7 @@ export default {
               body: JSON.stringify({ student_id: studentUid })
             });
             return new Response(JSON.stringify({
-              detail: `Gia sư AI đang lỗi (mã ${geminiRes.status}${geminiRes.status === 503 ? ': máy chủ AI quá tải' : geminiRes.status === 403 ? ': khóa Gemini bị từ chối' : geminiRes.status === 404 ? ': sai tên mô hình AI' : ''}). Em thử lại sau ít phút.`
+              detail: ek === 'region' ? GEMINI_REGION_MSG : `Gia sư AI đang lỗi (mã ${geminiRes.status}${ek === 'busy' ? ': máy chủ AI quá tải' : ek === 'key' ? ': khóa Gemini bị từ chối' : ek === 'model' ? ': sai tên mô hình AI' : ''}). Em thử lại sau ít phút.`
             }), {
               status: 502,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
