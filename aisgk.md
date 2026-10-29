@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Chấm đỏ cập nhật tĩnh + bỏ thanh chạy ngang; Tổng quan lọc khối/môn; Học sinh đọc bài tổng hợp theo bài; Thảo luận soạn bằng nút loại câu, số câu AI nhập, đủ ô nhập; Gia sư chỉ bài liên quan; chờ Antigravity deploy Worker và thử thật theo docs/handoff/claude-antigravity-giao-dien-29-10.md.
+- Yêu cầu mới nhất: Tổng quan GV theo một ô chọn lớp (đủ lớp từ sĩ số, 5 mục có mẫu số), đăng xuất đóng bảng Cài đặt, khung xương khi tải trang học sinh, Gia sư trả JSON phạm vi và từ chối cố định câu ngoài bài (hoàn lượt); chờ Antigravity deploy Worker và thử thật theo docs/handoff/claude-antigravity-tong-quan-gia-su-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4310,4 +4310,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/styles.css, teacher.css, teacher.html, teacher.js, teacher-read.js, teacher-tl.js, tl-play.js, tl-core.js, app.js, whats-new.json, sw.js; worker/index.js; tests (loading_states, auto_update_login, teacher_thi_ui, teacher_overview, weakness_analytics, tl_live, tl_core, tutor_offtopic).
 - Kiểm thực tế: các test liên quan PASS; UI chuẩn 0 vi phạm.
 - Việc tiếp: Antigravity deploy Worker, thử thật.
+
+### 29/10/2026 21:40 — Claude: Tổng quan theo lớp, khung tải, Gia sư chỉ trả lời trong bài
+- Đã làm: H1 đóng popover Cài đặt khi đăng xuất; H2–H4 Tổng quan lấy lớp từ `thi_hs`, một ô chọn lớp cho cả trang, 5 mục đánh số tính trên sĩ số; H5 khung xương thay nút xoay; H6 Gia sư trả JSON `{pham_vi, tra_loi}`, câu `ngoai_bai` được máy chủ thay bằng lời từ chối cố định + hoàn lượt, quy tắc không bịa; chấm tự luận không nêu nội dung đáp án.
+- Tệp: worker/index.js, frontend/hoc/{teacher.js,teacher-read.js,teacher.html,teacher.css,app.js,styles.css,whats-new.json,sw.js}, tests/{test_teacher_overview,test_teacher_thi_ui,test_loading_states,test_tutor_offtopic,test_tutor_grounding}.
+- Kiểm thử PASS (đã chạy): các test Gia sư, Tổng quan, đọc bài, tải, cập nhật PWA, cách ly vai trò, Thảo luận, Luyện tập.
+- Việc dở: deploy Worker; đo chất lượng phân loại phạm vi bằng Gemini thật (Antigravity).
 

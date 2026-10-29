@@ -55,6 +55,7 @@ let gradeChosen = false;
 /** @type {ServiceWorkerRegistration|null} */ let registration = null;
 /** @type {string|null} */ let tutorQuestionId = null;
 /** @type {Array<{role:string, content:string}>} */ let tutorHistory = [];
+let tutorOffStreak = 0;   // số câu ngoài bài liên tiếp: máy chủ trả lời từ chối ngắn hơn ở lần sau (không lặp nguyên văn)
 let tutorPending = false;
 /** Bài học mà Gia sư đang hỗ trợ (có thể khác bài đang mở khi hỏi từ nút AI trên thanh đầu). @type {{course_id:string,lesson_id:string,title:string}|null} */
 let tutorLesson = null;
@@ -103,7 +104,7 @@ async function refreshTutorQuota() {
 
 /** @param {{course_id:string,lesson_id:string,title:string}} lesson */
 function setTutorLesson(lesson) {
-  if (tutorLesson && (tutorLesson.course_id !== lesson.course_id || tutorLesson.lesson_id !== lesson.lesson_id)) tutorHistory = [];
+  if (tutorLesson && (tutorLesson.course_id !== lesson.course_id || tutorLesson.lesson_id !== lesson.lesson_id)) { tutorHistory = []; tutorOffStreak = 0; }
   tutorLesson = lesson;
   node('tutor-context-note').textContent = lesson.title;
   if (!tutorHistory.length) {
@@ -115,7 +116,7 @@ function setTutorLesson(lesson) {
   updateTutorStatus();
 }
 function chooseTutorLesson() {
-  tutorLesson = null; tutorHistory = [];
+  tutorLesson = null; tutorHistory = []; tutorOffStreak = 0;
   node('tutor-context-note').textContent = 'Chọn bài để hỏi';
   const msgs = node('tutor-messages'); msgs.replaceChildren();
   const intro = el('div', '', 'tutor-msg tutor-bot'); intro.append(el('p', 'Em cứ gõ câu hỏi, Gia sư sẽ tự tìm bài học phù hợp để gợi ý. Hoặc chọn một bài bên dưới.')); msgs.append(intro);
@@ -462,7 +463,7 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
   }
   if (generation !== viewGeneration || owner !== session) return;
   active = lesson; draft = nextDraft; locked = nextLocked; practice = exerciseOnly;
-  tutorHistory = [];
+  tutorHistory = []; tutorOffStreak = 0;
   tutorQuestionId = null;
   const tutorMsgs = document.getElementById('tutor-messages');
   if (tutorMsgs) tutorMsgs.replaceChildren();
@@ -663,12 +664,20 @@ function percentOf(item) { return item.total ? Math.round(100 * item.correct / i
 /** Vẽ Tổng quan ngoài màn hình rồi thay một lần (không xóa trắng trước → không giật khi bấm đồng bộ). */
 async function progress() {
   show('progress'); const syncButton = node('sync'), shown = node('progress');
-  if (!shown.childElementCount) { node('progress-view').prepend(syncButton); shown.append(el('p', 'Đang tải tổng quan học tập của em…', 'ld-box ld-lg')); }
+  // Lần đầu (vừa đăng nhập): khung xương đúng bố cục thật, CHƯA hiện nút đồng bộ xoay một mình trên vùng trống.
+  if (!shown.childElementCount) { syncButton.hidden = true; node('progress-view').prepend(syncButton); shown.append(progressSkeleton()); }
   const generation = viewGeneration, frag = document.createDocumentFragment(), focused = document.activeElement === syncButton;
   syncButton.classList.add('is-spinning'); syncButton.setAttribute('aria-busy', 'true');
   try {
-    if (await progressBuild(frag, syncButton, generation) && generation === viewGeneration) { shown.replaceChildren(frag); if (focused) syncButton.focus({ preventScroll: true }); }
+    if (await progressBuild(frag, syncButton, generation) && generation === viewGeneration) { shown.replaceChildren(frag); syncButton.hidden = false; if (focused) syncButton.focus({ preventScroll: true }); }
   } finally { syncButton.classList.remove('is-spinning'); syncButton.removeAttribute('aria-busy'); }
+}
+/** Khung xương Tổng quan học sinh: lời chào, vòng lộ trình, 4 ô số (giữ chỗ để nội dung hiện ra không xô lệch). */
+function progressSkeleton() {
+  const box = el('div', '', 'dash-skel'); box.setAttribute('role', 'status'); box.append(el('span', 'Đang tải tổng quan học tập của em…', 'visually-hidden'));
+  const hero = el('div', '', 'sk sk-hero'); const grid = el('div', '', 'sk-grid'); grid.append(el('div', '', 'sk sk-ring'));
+  const tiles = el('div', '', 'sk-tiles'); for (let i = 0; i < 4; i++) tiles.append(el('div', '', 'sk sk-tile')); grid.append(tiles);
+  box.append(hero, grid); return box;
 }
 /** @param {DocumentFragment} target @param {HTMLElement} syncButton @param {number} generation @returns {Promise<boolean>} */
 async function progressBuild(target, syncButton, generation) {
@@ -1318,6 +1327,7 @@ form('tutor-form').addEventListener('submit', async event => {
       question_id: active && tutorQuestionId && tutorLesson?.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
       selected_option: active && tutorQuestionId && tutorLesson?.lesson_id === active.lesson_id && draft?.answers[tutorQuestionId] ? draft.answers[tutorQuestionId] : undefined,
       attempt_count: 1,
+      off_streak: tutorOffStreak,
       context: session ? { weak_topics: mastery.weakTopics(session.identity.uid) } : undefined   // Bản đồ năng lực: Gia sư củng cố đúng chủ đề em còn yếu
     };
     if (session && !session.token && session.pin) await workerToken(session.identity.uid, session.pin);
@@ -1342,6 +1352,7 @@ form('tutor-form').addEventListener('submit', async event => {
       for (const q of res.suggest.slice(0, 3)) sg.append(button(String(q), () => { const inp = /** @type {HTMLInputElement} */ (node('tutor-input')); inp.value = String(q); sg.remove(); form('tutor-form').requestSubmit(); }, 'tutor-chip'));
       msgs.append(sg); msgs.scrollTop = msgs.scrollHeight;
     }
+    tutorOffStreak = res.off_topic ? tutorOffStreak + 1 : 0;
     if (!res.no_match && !res.off_topic) { tutorHistory.push({ role: 'user', content: text }); tutorHistory.push({ role: 'model', content: res.reply || '' }); }
     refreshTutorQuota().catch(() => {});
   } catch (err) {

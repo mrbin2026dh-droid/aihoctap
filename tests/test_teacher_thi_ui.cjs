@@ -161,11 +161,13 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);await pg.fill('#teacher-login [name=pin]',PIN);await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
   await pg.click('#nav-overview');await pg.locator('#read-report').scrollIntoViewIfNeeded();await pg.waitForFunction(()=>document.querySelectorAll('#read-body tr').length>=2,null,{timeout:8000});
   ok(paths.some(p=>p.endsWith('/doc_read/tin-hoc-9~b1'))&&!paths.some(p=>/\/doc_read$/.test(p)),'đọc bài: chỉ nghe doc_read của bài đang chọn (không tải cả cây)');
-  ok((await pg.inputValue('#read-lop'))==='k:9'&&JSON.stringify(await pg.$$eval('#read-lop optgroup',a=>a.map(g=>g.label)))==='["Khối 9","Khối 8"]','đọc bài: chọn lớp theo khối (Khối 9, Khối 8), mặc định khối đông học sinh nhất');
+  await pg.waitForFunction(()=>document.getElementById('read-lop').value===document.getElementById('overview-class').value&&document.getElementById('overview-class').value!=='');
+  ok(await pg.locator('#read-lop').isHidden()&&JSON.stringify(await pg.$$eval('#read-lop optgroup',a=>a.map(g=>g.label)))==='["Khối 9","Khối 8"]','đọc bài: dùng chung lớp đã chọn ở đầu Tổng quan (một chỗ chọn lớp), lớp nhóm theo khối');
+  await pg.selectOption('#overview-class','k:9');
   await pg.waitForFunction(()=>/1\/120/.test(document.querySelector('#read-sum-body')?.textContent||''),null,{timeout:8000});
   ok((await pg.textContent('#read-sum-body')).includes('Thế giới kĩ thuật số')&&!(await pg.textContent('#read-sum-body')).includes('Máy tính'),'bảng tổng hợp mọi bài của khối: bài lớp 9 với "1/120 đã đọc hết"; không lẫn bài lớp 8');
-  await pg.selectOption('#read-lop','9A');await pg.waitForFunction(()=>/1\/60/.test(document.querySelector('#read-sum-body')?.textContent||''));ok(true,'chọn lớp 9A: tổng hợp theo 60 em của lớp');
-  await pg.selectOption('#read-lop','k:9');await pg.waitForTimeout(200);
+  await pg.selectOption('#overview-class','9A');await pg.waitForFunction(()=>/1\/60/.test(document.querySelector('#read-sum-body')?.textContent||''));ok(true,'chọn lớp 9A: tổng hợp theo 60 em của lớp');
+  await pg.selectOption('#overview-class','k:9');await pg.waitForTimeout(300);
   ok((await pg.textContent('#read-metrics')).includes('120')&&!(await pg.textContent('#read-body')).includes('Em lớp 8'),'bài lớp 9: chỉ tính học sinh khối 9');
   ok(await pg.locator('#read-body tr').count()===50&&(await pg.textContent('#read-report .t-more')).includes('50/120'),'đọc bài: 120 em → vẽ 50 dòng + Hiện thêm');
   await pg.click('#read-report .t-more button');ok(await pg.locator('#read-body tr').count()===100,'Hiện thêm → 100 dòng');

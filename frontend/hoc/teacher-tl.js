@@ -9,7 +9,7 @@
 // Chỉ máy có khóa phòng (tl_key) ghi được trạng thái phòng (luật tl_proof), như phòng luyện tập.
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261029b';
+import * as ui from './teacher-ui.js?v=20261029c';
 import { confirmBox } from './dom.js';
 import * as fx from './quiz-fx.js';
 import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible } from './tl-core.js';

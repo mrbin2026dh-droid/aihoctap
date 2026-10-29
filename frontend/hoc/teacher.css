@@ -781,3 +781,14 @@ body.qz-hosting{overflow:hidden}
 .teacher-app .read-mini-lg{width:120px}
 .teacher-app .read-none{color:var(--muted)}
 .teacher-app .read-detail{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+/* Tổng quan theo lớp (29/10 tối): mục đánh số 1–5, mẫu số là sĩ số lớp, nhóm "Chưa làm" màu xám */
+.teacher-app .a-tone-gray{border-top-color:var(--muted)}
+.teacher-app .a-sec{display:grid;gap:2px;margin:24px 0 10px}
+.teacher-app .a-sec:first-child{margin-top:0}
+.teacher-app .a-sec-title{display:flex;align-items:center;gap:10px;margin:0;font-size:1.125rem}
+.teacher-app .a-sec-no{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#0f766e;color:#fff;font-size:1rem;font-variant-numeric:tabular-nums}
+.teacher-app .a-sec .t-muted{margin:0 0 0 40px}
+.teacher-app .a-seg.a-none,.teacher-app .a-dot.a-none{background:color-mix(in srgb,var(--muted) 45%,transparent)}
+.teacher-app .a-notyet{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.teacher-app .a-notyet li{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.teacher-app .a-two{margin-bottom:0}

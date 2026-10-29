@@ -1867,3 +1867,14 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .tl-choice{background:#0f1230;border:1px solid #ffffff2e}
 .tl-dot{background:#0f1230;border:1px solid #ffffff2e}
 .tl-scale{padding:12px;border-radius:14px;background:#ffffff0a}
+/* Khung xương Tổng quan học sinh (29/10 tối): giữ đúng bố cục khi đang tải, không để nút xoay một mình trên vùng trống */
+.student-app .dash-skel{display:grid;gap:16px;margin:8px 0 16px}
+.student-app .sk{border-radius:var(--radius-card,16px);background:linear-gradient(90deg,var(--line) 0%,color-mix(in srgb,var(--line) 45%,transparent) 50%,var(--line) 100%);background-size:200% 100%;animation:sk-wave 1.4s ease-in-out infinite;opacity:.7}
+.student-app .sk-hero{height:132px}
+.student-app .sk-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.student-app .sk-ring{min-height:220px}
+.student-app .sk-tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.student-app .sk-tile{min-height:102px}
+@keyframes sk-wave{from{background-position:100% 0}to{background-position:-100% 0}}
+@media(max-width:760px){.student-app .sk-grid{grid-template-columns:1fr}.student-app .sk-ring{min-height:160px}}
+@media(prefers-reduced-motion:reduce){.student-app .sk{animation:none}}

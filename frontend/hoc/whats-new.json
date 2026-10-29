@@ -1,9 +1,8 @@
 {
-  "title": "Phiên bản 29/10/2026 (tối)",
+  "title": "Phiên bản 29/10/2026 (tối, bản 2)",
   "items": [
-    "Thảo luận: câu cho nhiều từ khóa hoặc nhiều câu hỏi hiện đủ ô để em điền một lần.",
-    "Gia sư AI chỉ ra bài có nội dung em hỏi và có nút mở bài đó.",
-    "Bỏ thanh chạy ngang ở mép trên; nút cập nhật có chấm đỏ rõ, không nhấp nháy.",
-    "Bài học mở từ đầu bài; bảng và công thức hiển thị đúng."
+    "Gia sư AI chỉ hướng dẫn nội dung có trong bài; câu ngoài bài được từ chối rõ ràng và không trừ lượt.",
+    "Gia sư gợi ý nội dung của bài để em hỏi tiếp; không đưa đáp án.",
+    "Trang Tổng quan hiện khung đúng bố cục khi đang tải, không còn biểu tượng xoay trên vùng trống."
   ]
 }

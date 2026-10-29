@@ -6,7 +6,7 @@
 // Dữ liệu: Firebase doc_read/{bài}/{mã} (học sinh tự ghi % đọc) + thi_hs (danh sách lớp). Bảng tổng hợp đọc mỗi bài MỘT lần (không nghe liên tục).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261029b';
+import * as ui from './teacher-ui.js?v=20261029c';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const sel = (/** @type {string} */ id) => /** @type {HTMLSelectElement} */ ($(id));
@@ -58,6 +58,11 @@ function fillClasses() {
     lop.append(og);
   }
   const values = [...lop.querySelectorAll('option')].map(o => o.value);
+  // Quản trị: chọn lớp MỘT chỗ ở đầu Tổng quan; ô Lớp ở thẻ này ẩn đi và đi theo lựa chọn đó.
+  const ov = /** @type {HTMLSelectElement|null} */ (document.getElementById('overview-class'))?.value || '';
+  const fieldEl = /** @type {HTMLElement|null} */ (lop.closest('.t-field')); if (fieldEl) fieldEl.hidden = !mine;
+  if (!mine) $('read-report-sub').textContent = 'Theo lớp đã chọn ở đầu trang. Bấm một bài để xem từng em.';
+  if (!mine && ov && values.includes(ov)) { lop.value = ov; return; }
   if (values.includes(keep)) { lop.value = keep; return; }
   // mặc định: khối (quản trị) hoặc lớp (giáo viên lớp) đông học sinh nhất
   const byGrade = grades.map(g => ({ v: !mine && classes.filter(l => gradeOf(l) === g).length > 1 ? 'k:' + g : classes.find(l => gradeOf(l) === g) || '', n: classes.filter(l => gradeOf(l) === g).reduce((a, l) => a + count[l], 0) })).sort((a, b) => b.n - a.n);

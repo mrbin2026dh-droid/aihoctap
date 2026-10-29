@@ -20,7 +20,8 @@ try {
   assert.ok(sys.includes('CPU là bộ xử lý trung tâm'), 'phải có nội dung bài học từ máy chủ');
   assert.ok(sys.includes('Bộ phận nào là bộ não?'), 'phải có câu hỏi hiện tại từ máy chủ');
   assert.ok(!sys.includes('TRÌNH DUYỆT TỰ BỊA'), 'không tin nội dung do trình duyệt gửi khi đã có bài học trên máy chủ');
-  assert.ok(sys.includes('Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC'), 'có quy tắc căn cứ');
+  assert.ok(sys.includes('KHÔNG BỊA') && sys.includes('phải lấy từ tài liệu được gửi kèm'), 'có quy tắc căn cứ (không bịa)');
+  assert.equal(captured.generationConfig.responseMimeType, 'application/json'); assert.deepEqual(captured.generationConfig.responseSchema.properties.pham_vi.enum, ['bai_nay','bai_khac','ngoai_bai']);
   assert.ok(!/correct_answer|Đáp án đúng/.test(JSON.stringify(captured)), 'không gửi đáp án cho AI');
   assert.equal(captured.generationConfig.temperature, 0.3);
 } finally { globalThis.fetch = realFetch; }

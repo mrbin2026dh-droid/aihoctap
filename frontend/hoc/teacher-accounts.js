@@ -5,8 +5,8 @@
 // Mỗi thay đổi Sheet tự đẩy lên Firebase, nên học sinh/giáo viên đăng nhập được ngay.
 import { SHEET_API } from './sheet-config.js';
 import { confirmBox, noticeBox } from './dom.js';
-import * as ui from './teacher-ui.js?v=20261029b';
-import * as presence from './presence.js?v=20261029b';
+import * as ui from './teacher-ui.js?v=20261029c';
+import * as presence from './presence.js?v=20261029c';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
