@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã cài đặt Bộ não đa agent trên VPS, chạy thử AI thật (smoke test 6/6 lượt gọi 200 OK, bài mẫu 1.0/1.0 kèm bằng chứng, bài tấn công 0.0), triển khai Cloudflare Worker f8f13555; chờ Thầy thêm bản ghi A agent trên Hostinger để kích hoạt HTTPS toàn tuyến; chi tiết tại docs/handoff/antigravity-claude-cai-agent-xong.md.
+- Yêu cầu mới nhất: Đã kiểm tra toàn tuyến Bộ não đa agent sau khi có DNS: agent.aihoctap.online nhận IP VPS, Caddy cấp chứng chỉ SSL Let's Encrypt thành công, /status và chấm thật POST /grade 200 OK (1.0đ, độ tin cậy 1.0 có bằng chứng); phân tích nguyên nhân lỗi "Not secure" do cache HTTP cũ của trình duyệt; chi tiết tại docs/handoff/antigravity-claude-agent-dns-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2129,3 +2129,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-cai-agent-xong.md, aisgk.md.
 - Kiểm thực tế: VPS 20 tests PASS; node tests (test_agent_bridge 12/12, test_gemini_recovery 15/15, test_essay_ai 21/21, test_thi_tuluan 70/70) PASS; smoke test AI thật SMOKE OK; RAM VPS 36.1 MB; Worker deploy version f8f13555-3107-4cd2-a40f-fcbe557320ad.
 - Việc tiếp: Thầy vào Hostinger thêm bản ghi A agent trỏ về IP VPS để Caddy cấp chứng chỉ SSL và kích hoạt HTTPS; sau đó bấm Kiểm tra AI ngay trên trang giáo viên.
+
+### 29/10/2026 14:12 — Antigravity — Kiểm tra toàn tuyến Bộ não đa agent HTTPS thành công & Phân tích lỗi Not secure
+- Đã thực hiện: Thầy đã thêm bản ghi A agent trên Hostinger; Antigravity kiểm tra nslookup agent.aihoctap.online trả về đúng IP VPS; restart Caddy trên VPS, giải quyết challenge TLS-ALPN-01 và cấp chứng chỉ Let's Encrypt thành công; kiểm tra curl HTTPS /health ra {"ok":true,"version":"1.0.0"} và /status ra 200 OK; gửi yêu cầu chấm tự luận thật qua HTTPS POST /grade nhận kết quả 1.0/1.0, độ tin cậy 1.0, trích 2 bằng chứng nguyên văn, log VPS ghi nhận POST /grade 200 OK; đính chính pip freeze (fastapi 0.162.0, uvicorn 0.54.0, pydantic 2.14.1, httpx 0.28.1, không có slowapi); phân tích nguyên nhân nhãn Not secure do cache Service Worker PWA cũ trên HTTP; lập báo cáo tại docs/handoff/antigravity-claude-agent-dns-xong.md.
+- Tệp đổi: docs/handoff/antigravity-claude-agent-dns-xong.md, aisgk.md.
+- Kiểm thực tế: DNS agent resolved; Caddy HTTPS certificate active; /health 200; /status 200; POST /grade live test 200 OK (3/3 votes gemini-3.5-flash-lite 200 OK); Playwright redirect http sang https://aihoctap.online/ 200 OK.
+- Việc tiếp: Thầy gõ https://aihoctap.online (hoặc Ctrl+Shift+R) trên trình duyệt để chuyển hẳn sang HTTPS có ổ khóa; vào teacher.html bấm Kiểm tra AI ngay để xem thẻ Bộ não đa agent (VPS).
