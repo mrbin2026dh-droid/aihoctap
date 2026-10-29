@@ -102,24 +102,29 @@ async function refreshTutorQuota() {
   }
 }
 
+/** Nguyên tắc Gia sư AI, hiện ngay khi mở (không gọi AI, không tốn lượt). Tham khảo hướng dẫn học sinh của Khanmigo (Khan Academy):
+ * hỗ trợ học chứ không làm bài thay, đúng chủ đề học tập, đối chiếu nguồn khác, không chia sẻ thông tin cá nhân. @param {string} title */
+function tutorRules(title) {
+  const box = el('div', '', 'tutor-msg tutor-bot tutor-rules'); box.setAttribute('role', 'note');
+  box.append(el('p', title ? `Gia sư AI · ${title}` : 'Gia sư AI', 'tutor-rules-title'));
+  const ul = el('ul');
+  for (const t of ['Chỉ trả lời nội dung trong bài học.', 'Không đưa đáp án, chỉ gợi ý từng bước để em tự làm.', 'Câu ngoài bài không được trả lời, không trừ lượt.', 'Đối chiếu sách giáo khoa; không gửi thông tin cá nhân.']) ul.append(el('li', t));
+  box.append(ul, el('p', title ? 'Em muốn tìm hiểu nội dung nào? Gõ tên một mục trong bài hoặc hỏi "… là gì?".' : 'Em gõ câu hỏi, Gia sư sẽ tìm bài học phù hợp; hoặc chọn một bài bên dưới.', 'tutor-rules-ask')); return box;
+}
 /** @param {{course_id:string,lesson_id:string,title:string}} lesson */
 function setTutorLesson(lesson) {
   if (tutorLesson && (tutorLesson.course_id !== lesson.course_id || tutorLesson.lesson_id !== lesson.lesson_id)) { tutorHistory = []; tutorOffStreak = 0; }
   tutorLesson = lesson;
   node('tutor-context-note').textContent = lesson.title;
   if (!tutorHistory.length) {
-    const msgs = node('tutor-messages'); msgs.replaceChildren();
-    const greeting = el('div', '', 'tutor-msg tutor-bot');
-    greeting.append(el('p', 'Chào em! Em đang vướng ở phần nào của bài? Hãy chia sẻ, mình sẽ gợi ý từng bước để em tự tìm ra đáp án.'));
-    msgs.append(greeting);
+    const msgs = node('tutor-messages'); msgs.replaceChildren(tutorRules(lesson.title)); msgs.scrollTop = 0;   // em đọc nguyên tắc từ dòng đầu
   }
   updateTutorStatus();
 }
 function chooseTutorLesson() {
   tutorLesson = null; tutorHistory = []; tutorOffStreak = 0;
   node('tutor-context-note').textContent = 'Chọn bài để hỏi';
-  const msgs = node('tutor-messages'); msgs.replaceChildren();
-  const intro = el('div', '', 'tutor-msg tutor-bot'); intro.append(el('p', 'Em cứ gõ câu hỏi, Gia sư sẽ tự tìm bài học phù hợp để gợi ý. Hoặc chọn một bài bên dưới.')); msgs.append(intro);
+  const msgs = node('tutor-messages'); msgs.replaceChildren(tutorRules(''));
   const grade = session?.identity.grade; const list = el('div', '', 'tutor-picks');
   for (const course of (catalog?.courses || []).filter(item => item.grade === grade)) for (const lesson of course.lessons) {
     list.append(button(lesson.title, () => setTutorLesson({course_id: course.id, lesson_id: lesson.id, title: lesson.title}), 'tutor-pick'));
@@ -1342,7 +1347,7 @@ form('tutor-form').addEventListener('submit', async event => {
     }
     const botMsg = el('div', '', 'tutor-msg tutor-bot');
     msgs.append(botMsg);
-    await typeOut(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.', () => { msgs.scrollTop = msgs.scrollHeight; });
+    await typeOut(botMsg, res.reply || 'Gia sư chưa có câu trả lời cho câu này.', () => { msgs.scrollTop = msgs.scrollHeight; });
     if (res.other_lesson?.lesson_id) {   // kiến thức em hỏi nằm ở bài khác: nút mở bài đó
       const ol = res.other_lesson, c = catalog?.courses.find(x => x.id === ol.course_id), sm = c?.lessons.find(x => x.id === ol.lesson_id);
       if (c && sm) { const box = el('div', '', 'tutor-suggest'); box.append(withIcon(button(`Mở bài: ${ol.title || sm.title}`, () => { closeTutor(); void loadLesson(c.id, sm.id, sm.version, false); }, 'tutor-chip tutor-open-lesson'), 'arrow', true)); msgs.append(box); msgs.scrollTop = msgs.scrollHeight; }

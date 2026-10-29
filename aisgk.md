@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Tổng quan GV theo một ô chọn lớp (đủ lớp từ sĩ số, 5 mục có mẫu số), đăng xuất đóng bảng Cài đặt, khung xương khi tải trang học sinh, Gia sư trả JSON phạm vi và từ chối cố định câu ngoài bài (hoàn lượt); chờ Antigravity deploy Worker và thử thật theo docs/handoff/claude-antigravity-tong-quan-gia-su-29-10.md.
+- Yêu cầu mới nhất: Gia sư AI hiện nguyên tắc khi mở, xưng "Gia sư", không mở đầu bằng câu từ chối đáp án khi em không xin đáp án, giảm độ chậm (nhớ đệm bài, cắt lịch sử, việc phụ chạy nền, Server-Timing); chờ Antigravity deploy và thử có bằng chứng theo docs/handoff/claude-antigravity-gia-su-nguyen-tac-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4316,4 +4316,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp: worker/index.js, frontend/hoc/{teacher.js,teacher-read.js,teacher.html,teacher.css,app.js,styles.css,whats-new.json,sw.js}, tests/{test_teacher_overview,test_teacher_thi_ui,test_loading_states,test_tutor_offtopic,test_tutor_grounding}.
 - Kiểm thử PASS (đã chạy): các test Gia sư, Tổng quan, đọc bài, tải, cập nhật PWA, cách ly vai trò, Thảo luận, Luyện tập.
 - Việc dở: deploy Worker; đo chất lượng phân loại phạm vi bằng Gemini thật (Antigravity).
+
+### 29/10/2026 22:40 — Claude: Gia sư AI nguyên tắc, xưng hô, độ chậm
+- Đã làm: viết lại lời nhắn cho AI (xưng "Gia sư", câu từ chối chỉ khi xin đáp án, gõ tên bài = tìm hiểu bài); JSON thêm `xin_dap_an` + `stripNeedlessRefusal`; khung nguyên tắc khi mở Gia sư; nhớ đệm bài 5 phút, chỉ gửi 8 tin lịch sử, việc phụ chạy nền, Server-Timing/`ms`; gõ chữ tối đa ~1 giây.
+- Tệp: worker/index.js, frontend/hoc/{app.js,typing.js,styles.css,index.html,whats-new.json,sw.js}, tests/{test_tutor_offtopic,test_tutor_exam_review,test_lesson_ai_docs_ui}.
+- Kiểm thử PASS (đã chạy): các test Gia sư, khung Gia sư, chuẩn UI học sinh, cập nhật PWA, cách ly vai trò.
+- Ghi chú: báo cáo đợt trước của Antigravity không khớp thực tế; handoff mới bắt buộc ảnh + nguyên văn + số đo. Việc dở: deploy Worker, thử Gemini thật.
 

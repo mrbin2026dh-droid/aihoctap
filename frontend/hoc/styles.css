@@ -1878,3 +1878,10 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 @keyframes sk-wave{from{background-position:100% 0}to{background-position:-100% 0}}
 @media(max-width:760px){.student-app .sk-grid{grid-template-columns:1fr}.student-app .sk-ring{min-height:160px}}
 @media(prefers-reduced-motion:reduce){.student-app .sk{animation:none}}
+/* Nguyên tắc Gia sư AI hiện khi mở (29/10 tối) */
+.student-app .tutor-rules{border-left:4px solid var(--brand,#0f766e);max-width:100%}
+.student-app .tutor-rules .tutor-rules-title{font-weight:700;margin:0 0 4px}
+.student-app .tutor-rules p{margin:0 0 6px}
+.student-app .tutor-rules ul{margin:0 0 6px;padding-left:1.2em}
+.student-app .tutor-rules li{margin:0 0 2px;padding:0;line-height:1.45}
+.student-app .tutor-rules .tutor-rules-ask{margin:6px 0 0}

@@ -26,5 +26,5 @@ console.log('TUTOR EXAM REVIEW OK');
 const { geminiText, TUTOR_STYLE_RULES } = await import('../worker/index.js');
 assert.equal(geminiText({candidates:[{content:{parts:[{text:'suy nghĩ…', thought:true},{text:'Chào em! CPU là bộ xử lí trung tâm. '},{text:'Nó điều khiển máy tính.'}]}}]}), 'Chào em! CPU là bộ xử lí trung tâm. Nó điều khiển máy tính.', 'ghép mọi phần, bỏ phần suy nghĩ');
 assert.equal(geminiText({candidates:[{finishReason:'MAX_TOKENS', content:{parts:[{text:'CPU là bộ xử lí trung tâm. Nó điều khiển mọi hoạt động. Ví dụ trong máy tính, điện tho'}]}}]}), 'CPU là bộ xử lí trung tâm. Nó điều khiển mọi hoạt động.', 'bị cắt → gọn về hết câu');
-assert.ok(TUTOR_STYLE_RULES.includes('Không chào lại') && TUTOR_STYLE_RULES.includes('GIẢI THÍCH'), 'quy tắc trình bày');
+assert.ok(TUTOR_STYLE_RULES.includes('Không chào lại') && TUTOR_STYLE_RULES.includes('không mở đầu bằng câu từ chối'), 'quy tắc trình bày');
 console.log('GEMINI TEXT OK');

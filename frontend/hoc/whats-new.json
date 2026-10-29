@@ -1,8 +1,8 @@
 {
-  "title": "Phiên bản 29/10/2026 (tối, bản 2)",
+  "title": "Phiên bản 29/10/2026 (tối, bản 3)",
   "items": [
-    "Gia sư AI chỉ hướng dẫn nội dung có trong bài; câu ngoài bài được từ chối rõ ràng và không trừ lượt.",
-    "Gia sư gợi ý nội dung của bài để em hỏi tiếp; không đưa đáp án.",
-    "Trang Tổng quan hiện khung đúng bố cục khi đang tải, không còn biểu tượng xoay trên vùng trống."
+    "Mở Gia sư AI là thấy ngay nguyên tắc: chỉ trả lời nội dung bài học, không đưa đáp án, câu ngoài bài không trừ lượt.",
+    "Gia sư AI trả lời rõ ràng hơn, xưng \"Gia sư\"; em gõ tên bài là được giới thiệu nội dung bài.",
+    "Gia sư AI trả lời nhanh hơn."
   ]
 }

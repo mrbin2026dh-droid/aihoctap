@@ -16,7 +16,7 @@ export function typeOut(target, text, onTick = () => {}) {
   const p = document.createElement('p'); p.className = 'typing'; target.append(p);
   target.setAttribute('aria-busy', 'true');
   const plain = text.replace(/\*\*|__|`/g, '');
-  const steps = Math.min(plain.length, 160), per = Math.max(1, Math.ceil(plain.length / steps));   // tối đa ~2,5 giây
+  const steps = Math.min(plain.length, 60), per = Math.max(1, Math.ceil(plain.length / steps));   // tối đa ~1 giây (trước 2,5 giây làm em tưởng Gia sư chậm)
   let i = 0;
   return new Promise(resolve => {
     const tick = () => {
