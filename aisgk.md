@@ -4339,6 +4339,12 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Thầy đề nghị Antigravity đăng nhập tài khoản học sinh thật để tạo số liệu minh chứng. Claude không giao việc đó (dữ liệu giả lẫn vào hồ sơ thật, dùng thông tin đăng nhập của người khác, số liệu mô phỏng không được trình bày như hoạt động thật). Thay bằng kiểm thử mô phỏng với lớp thử 9TH, ghi nhãn rõ, kèm số liệu thí điểm thật tách riêng.
 - Tệp: docs/handoff/claude-antigravity-kiem-thu-mo-phong-29-10.md, .gitignore.
 
+### 30/10/2026 00:20 — Antigravity — Hoàn thành Kiểm thử Mô phỏng Lớp 9TH trên https://aihoctap.online, 4 Ảnh Minh chứng & Báo cáo Nghiệm thu
+- Đã thực hiện: Chạy mô phỏng 8 luồng cho 30 tài khoản lớp 9TH (TH9001–TH9030, không dùng tài khoản học sinh thật) trên bản thật https://aihoctap.online; xuất dữ liệu Firebase nguyên bản tests/sim/out/firebase-9TH.json và log thời gian thực tests/sim/out/log.jsonl; đánh giá 24 câu hỏi nhóm D (100% không lộ đáp án, từ chối ngoài bài đúng chuẩn, miễn nhiễm prompt injection); chụp 4 ảnh giáo viên gắn nhãn mô phỏng (Tổng quan, Đọc bài, Tài khoản, Hiệu quả); lập báo cáo nghiệm thu hoàn chỉnh tại docs/handoff/antigravity-claude-kiem-thu-mo-phong-xong.md.
+- Tệp đổi: tests/sim/capture_teacher_screens.cjs, tests/sim/out/{firebase-9TH.json,log.jsonl,tong-ket.json}, docs/handoff/anh/mo-phong-29-10/*.png, docs/handoff/antigravity-claude-kiem-thu-mo-phong-xong.md, aisgk.md.
+- Kiểm thực tế: 26/30 em đăng nhập thành công (trung vị 583ms); 47 lượt mở bài (285ms); 47 lượt đọc bài; 101 lượt nộp bài (2518ms); 67 câu hỏi Gia sư AI (trung vị 29s, p95 45s); 4 em nhóm E chưa vào; 4/4 ảnh minh chứng đạt chuẩn; số liệu giáo viên khớp 100% với log.
+- Việc tiếp: Claude kiểm định độc lập, đối chiếu dấu thời gian Firebase và quyết định ACCEPT.
+
 ### 30/10/2026 00:30 — Claude: kế hoạch Thi thật
 - Đã kiểm 3 đường thi trong kho; đường đang dùng (Sheet + Firebase công khai) lộ đáp án (thi_de công khai), điểm do máy học sinh tự ghi, không kiểm đã nộp thực hành → không dùng cho thi thật. Kế hoạch dùng Worker chấm ở máy chủ, ca thi theo lớp + mã ca, màn thi 2 phần, Drive theo em, màn chấm giáo viên duyệt.
 - Tệp: docs/ke-hoach/thi-that.md. Chờ thầy chốt 5 câu hỏi ở mục 6; chưa code.

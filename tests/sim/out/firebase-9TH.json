@@ -1,0 +1,1256 @@
+{
+  "nhan": "KIỂM THỬ MÔ PHỎNG – lớp 9TH, không phải học sinh thật",
+  "thoi_diem_xuat": "2026-10-29T17:10:43.341Z",
+  "tong_quan": {
+    "so_hoc_sinh_tao": 30,
+    "so_hoc_sinh_dang_nhap": 26,
+    "so_hoc_sinh_nhom_E_bo_qua": 4
+  },
+  "doc_read": {
+    "tin-hoc-9~bai-1": {
+      "th9001": {
+        "at": 1793293008825,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Nguyễn Văn An"
+      },
+      "th9002": {
+        "at": 1793293178449,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Trần Thị Bình"
+      },
+      "th9003": {
+        "at": 1793293179104,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Lê Hoàng Cường"
+      },
+      "th9004": {
+        "at": 1793293178465,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Phạm Minh Đức"
+      },
+      "th9005": {
+        "at": 1793293178880,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Vũ Hải Đăng"
+      },
+      "th9006": {
+        "at": 1793293178472,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Đỗ Thảo Giang"
+      },
+      "th9007": {
+        "at": 1793293179061,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Hoàng Tuấn Hải"
+      },
+      "th9008": {
+        "at": 1793293178521,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Bùi Ngọc Hân"
+      },
+      "th9009": {
+        "at": 1793293242975,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Đặng Quốc Huy"
+      },
+      "th9010": {
+        "at": 1793293264948,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Dương Gia Hân"
+      },
+      "th9011": {
+        "at": 1793293295142,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Lý Quang Khải"
+      },
+      "th9012": {
+        "at": 1793293317266,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Hồ Bảo Lâm"
+      },
+      "th9013": {
+        "at": 1793293327381,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Ngô Nhật Minh"
+      },
+      "th9014": {
+        "at": 1793293327305,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Phan Trà My"
+      },
+      "th9015": {
+        "at": 1793293329241,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Mai Chí Nam"
+      },
+      "th9016": {
+        "at": 1793293330050,
+        "lop": "9TH",
+        "pct": 60,
+        "ten": "[THỬ] Trịnh Yến Nhi"
+      },
+      "th9017": {
+        "at": 1793293342154,
+        "lop": "9TH",
+        "pct": 50,
+        "ten": "[THỬ] Trương Tuấn Phong"
+      },
+      "th9018": {
+        "at": 1793293351673,
+        "lop": "9TH",
+        "pct": 60,
+        "ten": "[THỬ] Đinh Như Quỳnh"
+      },
+      "th9019": {
+        "at": 1793293359271,
+        "lop": "9TH",
+        "pct": 50,
+        "ten": "[THỬ] Lâm Minh Quân"
+      },
+      "th9020": {
+        "at": 1793293387073,
+        "lop": "9TH",
+        "pct": 60,
+        "ten": "[THỬ] Võ Diễm Quỳnh"
+      },
+      "th9021": {
+        "at": 1793293391344,
+        "lop": "9TH",
+        "pct": 50,
+        "ten": "[THỬ] Tô Hoài Sơn"
+      },
+      "th9022": {
+        "at": 1793293391576,
+        "lop": "9TH",
+        "pct": 60,
+        "ten": "[THỬ] Thái Bảo Trâm"
+      },
+      "th9023": {
+        "at": 1793293394520,
+        "lop": "9TH",
+        "pct": 40,
+        "ten": "[THỬ] Đoàn Anh Tuấn"
+      },
+      "th9024": {
+        "at": 1793293398583,
+        "lop": "9TH",
+        "pct": 50,
+        "ten": "[THỬ] Lương Cẩm Tú"
+      },
+      "th9025": {
+        "at": 1793293403667,
+        "lop": "9TH",
+        "pct": 40,
+        "ten": "[THỬ] Vương Quốc Việt"
+      },
+      "th9026": {
+        "at": 1793293414415,
+        "lop": "9TH",
+        "pct": 50,
+        "ten": "[THỬ] Hà Thảo Vy"
+      }
+    },
+    "tin-hoc-9~bai-10": {
+      "th9001": {
+        "at": 1793293026426,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Nguyễn Văn An"
+      },
+      "th9002": {
+        "at": 1793293190789,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Trần Thị Bình"
+      },
+      "th9003": {
+        "at": 1793293193158,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Lê Hoàng Cường"
+      },
+      "th9004": {
+        "at": 1793293192010,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Phạm Minh Đức"
+      },
+      "th9005": {
+        "at": 1793293193315,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Vũ Hải Đăng"
+      },
+      "th9006": {
+        "at": 1793293190932,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Đỗ Thảo Giang"
+      },
+      "th9007": {
+        "at": 1793293188419,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Hoàng Tuấn Hải"
+      },
+      "th9008": {
+        "at": 1793293187991,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Bùi Ngọc Hân"
+      },
+      "th9009": {
+        "at": 1793293253834,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Đặng Quốc Huy"
+      },
+      "th9010": {
+        "at": 1793293273509,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Dương Gia Hân"
+      },
+      "th9011": {
+        "at": 1793293304726,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Lý Quang Khải"
+      },
+      "th9012": {
+        "at": 1793293326937,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Hồ Bảo Lâm"
+      },
+      "th9013": {
+        "at": 1793293336870,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Ngô Nhật Minh"
+      },
+      "th9014": {
+        "at": 1793293335002,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Phan Trà My"
+      },
+      "th9015": {
+        "at": 1793293339390,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Mai Chí Nam"
+      }
+    },
+    "tin-hoc-9~bai-2": {
+      "th9001": {
+        "at": 1793293043227,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Nguyễn Văn An"
+      },
+      "th9002": {
+        "at": 1793293204587,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Trần Thị Bình"
+      },
+      "th9003": {
+        "at": 1793293208927,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Lê Hoàng Cường"
+      },
+      "th9004": {
+        "at": 1793293205131,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Phạm Minh Đức"
+      },
+      "th9005": {
+        "at": 1793293207306,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Vũ Hải Đăng"
+      },
+      "th9006": {
+        "at": 1793293203091,
+        "lop": "9TH",
+        "pct": 100,
+        "ten": "[THỬ] Đỗ Thảo Giang"
+      }
+    }
+  },
+  "thoi_gian": {
+    "2026-10-29": {
+      "TH9001": 2
+    },
+    "2026-10-30": {
+      "TH9001": 1,
+      "TH9002": 2,
+      "TH9003": 2,
+      "TH9004": 2,
+      "TH9005": 2,
+      "TH9006": 2,
+      "TH9007": 1,
+      "TH9008": 1,
+      "TH9009": 1,
+      "TH9010": 1,
+      "TH9012": 1,
+      "TH9013": 1,
+      "TH9014": 1,
+      "TH9015": 1,
+      "TH9023": 2,
+      "TH9024": 2,
+      "TH9025": 2,
+      "TH9026": 2
+    }
+  },
+  "presence": {
+    "TH9001": {
+      "at": 1793293235946,
+      "lop": "9TH",
+      "name": "[THỬ] Nguyễn Văn An",
+      "state": "hoc"
+    },
+    "TH9002": {
+      "at": 1793293295857,
+      "lop": "9TH",
+      "name": "[THỬ] Trần Thị Bình",
+      "state": "hoc"
+    },
+    "TH9003": {
+      "at": 1793293295939,
+      "lop": "9TH",
+      "name": "[THỬ] Lê Hoàng Cường",
+      "state": "hoc"
+    },
+    "TH9004": {
+      "at": 1793293296051,
+      "lop": "9TH",
+      "name": "[THỬ] Phạm Minh Đức",
+      "state": "hoc"
+    },
+    "TH9005": {
+      "at": 1793293295970,
+      "lop": "9TH",
+      "name": "[THỬ] Vũ Hải Đăng",
+      "state": "hoc"
+    },
+    "TH9006": {
+      "at": 1793293296043,
+      "lop": "9TH",
+      "name": "[THỬ] Đỗ Thảo Giang",
+      "state": "hoc"
+    },
+    "TH9007": {
+      "at": 1793293236310,
+      "lop": "9TH",
+      "name": "[THỬ] Hoàng Tuấn Hải",
+      "state": "hoc"
+    },
+    "TH9008": {
+      "at": 1793293236130,
+      "lop": "9TH",
+      "name": "[THỬ] Bùi Ngọc Hân",
+      "state": "hoc"
+    },
+    "TH9009": {
+      "at": 1793293299378,
+      "lop": "9TH",
+      "name": "[THỬ] Đặng Quốc Huy",
+      "state": "hoc"
+    },
+    "TH9010": {
+      "at": 1793293322604,
+      "lop": "9TH",
+      "name": "[THỬ] Dương Gia Hân",
+      "state": "hoc"
+    },
+    "TH9011": {
+      "at": 1793293292153,
+      "lop": "9TH",
+      "name": "[THỬ] Lý Quang Khải",
+      "state": "hoc"
+    },
+    "TH9012": {
+      "at": 1793293374849,
+      "lop": "9TH",
+      "name": "[THỬ] Hồ Bảo Lâm",
+      "state": "hoc"
+    },
+    "TH9013": {
+      "at": 1793293384828,
+      "lop": "9TH",
+      "name": "[THỬ] Ngô Nhật Minh",
+      "state": "hoc"
+    },
+    "TH9014": {
+      "at": 1793293385504,
+      "lop": "9TH",
+      "name": "[THỬ] Phan Trà My",
+      "state": "hoc"
+    },
+    "TH9015": {
+      "at": 1793293386382,
+      "lop": "9TH",
+      "name": "[THỬ] Mai Chí Nam",
+      "state": "hoc"
+    },
+    "TH9016": {
+      "at": 1793293328073,
+      "lop": "9TH",
+      "name": "[THỬ] Trịnh Yến Nhi",
+      "state": "hoc"
+    },
+    "TH9017": {
+      "at": 1793293339674,
+      "lop": "9TH",
+      "name": "[THỬ] Trương Tuấn Phong",
+      "state": "hoc"
+    },
+    "TH9018": {
+      "at": 1793293349273,
+      "lop": "9TH",
+      "name": "[THỬ] Đinh Như Quỳnh",
+      "state": "hoc"
+    },
+    "TH9019": {
+      "at": 1793293356995,
+      "lop": "9TH",
+      "name": "[THỬ] Lâm Minh Quân",
+      "state": "hoc"
+    },
+    "TH9020": {
+      "at": 1793293385227,
+      "lop": "9TH",
+      "name": "[THỬ] Võ Diễm Quỳnh",
+      "state": "hoc"
+    },
+    "TH9021": {
+      "at": 1793293389284,
+      "lop": "9TH",
+      "name": "[THỬ] Tô Hoài Sơn",
+      "state": "hoc"
+    },
+    "TH9022": {
+      "at": 1793293389668,
+      "lop": "9TH",
+      "name": "[THỬ] Thái Bảo Trâm",
+      "state": "hoc"
+    },
+    "TH9023": {
+      "at": 1793293512466,
+      "lop": "9TH",
+      "name": "[THỬ] Đoàn Anh Tuấn",
+      "state": "hoc"
+    },
+    "TH9024": {
+      "at": 1793293516539,
+      "lop": "9TH",
+      "name": "[THỬ] Lương Cẩm Tú",
+      "state": "hoc"
+    },
+    "TH9025": {
+      "at": 1793293521496,
+      "lop": "9TH",
+      "name": "[THỬ] Vương Quốc Việt",
+      "state": "hoc"
+    },
+    "TH9026": {
+      "at": 1793293532372,
+      "lop": "9TH",
+      "name": "[THỬ] Hà Thảo Vy",
+      "state": "hoc"
+    }
+  },
+  "thi_hs": {
+    "th9001": {
+      "ma": "TH9001",
+      "ten": "[THỬ] Nguyễn Văn An",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9002": {
+      "ma": "TH9002",
+      "ten": "[THỬ] Trần Thị Bình",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9003": {
+      "ma": "TH9003",
+      "ten": "[THỬ] Lê Hoàng Cường",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9004": {
+      "ma": "TH9004",
+      "ten": "[THỬ] Phạm Minh Đức",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9005": {
+      "ma": "TH9005",
+      "ten": "[THỬ] Vũ Hải Đăng",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9006": {
+      "ma": "TH9006",
+      "ten": "[THỬ] Đỗ Thảo Giang",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9007": {
+      "ma": "TH9007",
+      "ten": "[THỬ] Hoàng Tuấn Hải",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9008": {
+      "ma": "TH9008",
+      "ten": "[THỬ] Bùi Ngọc Hân",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9009": {
+      "ma": "TH9009",
+      "ten": "[THỬ] Đặng Quốc Huy",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9010": {
+      "ma": "TH9010",
+      "ten": "[THỬ] Dương Gia Hân",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9011": {
+      "ma": "TH9011",
+      "ten": "[THỬ] Lý Quang Khải",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9012": {
+      "ma": "TH9012",
+      "ten": "[THỬ] Hồ Bảo Lâm",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9013": {
+      "ma": "TH9013",
+      "ten": "[THỬ] Ngô Nhật Minh",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9014": {
+      "ma": "TH9014",
+      "ten": "[THỬ] Phan Trà My",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9015": {
+      "ma": "TH9015",
+      "ten": "[THỬ] Mai Chí Nam",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9016": {
+      "ma": "TH9016",
+      "ten": "[THỬ] Trịnh Yến Nhi",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9017": {
+      "ma": "TH9017",
+      "ten": "[THỬ] Trương Tuấn Phong",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9018": {
+      "ma": "TH9018",
+      "ten": "[THỬ] Đinh Như Quỳnh",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9019": {
+      "ma": "TH9019",
+      "ten": "[THỬ] Lâm Minh Quân",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9020": {
+      "ma": "TH9020",
+      "ten": "[THỬ] Võ Diễm Quỳnh",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9021": {
+      "ma": "TH9021",
+      "ten": "[THỬ] Tô Hoài Sơn",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9022": {
+      "ma": "TH9022",
+      "ten": "[THỬ] Thái Bảo Trâm",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9023": {
+      "ma": "TH9023",
+      "ten": "[THỬ] Đoàn Anh Tuấn",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9024": {
+      "ma": "TH9024",
+      "ten": "[THỬ] Lương Cẩm Tú",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9025": {
+      "ma": "TH9025",
+      "ten": "[THỬ] Vương Quốc Việt",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9026": {
+      "ma": "TH9026",
+      "ten": "[THỬ] Hà Thảo Vy",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9027": {
+      "ma": "TH9027",
+      "ten": "[THỬ] Trần Đình Vũ",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9028": {
+      "ma": "TH9028",
+      "ten": "[THỬ] Nguyễn Khánh Vy",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9029": {
+      "ma": "TH9029",
+      "ten": "[THỬ] Chu Tiến Đạt",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    },
+    "th9030": {
+      "ma": "TH9030",
+      "ten": "[THỬ] Lưu Thị Hương",
+      "lop": "9TH",
+      "khoi": 9,
+      "da_bam_pin": true
+    }
+  },
+  "mau_attempts_hoc_sinh": {
+    "TH9001": {
+      "nhom": "A",
+      "ten": "[THỬ] Nguyễn Văn An",
+      "lop": "9TH",
+      "so_luot_nop": 24,
+      "attempts": [
+        {
+          "attempt_id": "021af39c-218b-40da-b3aa-a7f2d14acce7",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293187578,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "0a32052c-5a8b-4208-92ab-52efea5e4905",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293182359,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "0b870559-c133-4359-9dce-6fbf9fa5cfec",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293037714,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "26c2dffd-18a3-434d-b183-950034979d85",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293040279,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "382fe436-43c3-4c35-8dcc-05b3bc9a17ba",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293049292,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "43c39c5c-1cd2-4672-992a-d1505de8d17a",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293203562,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "44df607c-1fe1-4aa6-a3c3-030796b34e15",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293190136,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "4cc58cd3-5a5b-472d-aa6e-a69f77907cf2",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293185079,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "5cbaf1ec-dc2e-4bbf-8f1a-4aef9181d038",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293015546,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "6a251a68-1b15-42e5-9065-2cb2d62cfe8e",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293209769,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "7c8cbc5a-6a25-41b9-9584-40831a178663",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293030421,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "8587f118-1319-46df-82c2-b997430ce43e",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293198763,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "898a3954-c88c-43df-a28d-3ae2ec6c70b7",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293201106,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "93f600bc-190e-47a5-8cee-58d2786dd980",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293046416,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "96af87fd-61c4-4d07-9f07-3e8105ea86e0",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293214967,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "b2716ae9-012d-4976-8c9c-e733ff0bf4d0",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293052338,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "b2cdc583-c880-4311-a646-ca87c7de8b2c",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293023407,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "b47da185-8654-433c-a13b-60c12fe355df",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293034882,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "c3c7fbdc-b865-44fe-a4fd-8e4661cde2cb",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293217806,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "d58ae01c-c083-4eec-ad97-4ed1098152fd",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293055287,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "e66f2c3d-2942-43f5-bbb3-275674d786f9",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293012399,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "e85a691a-1084-4666-9866-9e7a31e447a8",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293212603,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "e96e7737-77af-4f6b-be3e-75cd1c815d3e",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293196297,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "f6ea8c8a-b2f5-4595-a3a0-e8fe2fe97b3f",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293020472,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        }
+      ]
+    },
+    "TH9002": {
+      "nhom": "A",
+      "ten": "[THỬ] Trần Thị Bình",
+      "lop": "9TH",
+      "so_luot_nop": 12,
+      "attempts": [
+        {
+          "attempt_id": "0b362199-2619-42c4-bba9-cf8715b9ed4e",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293215078,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "14940fed-c03d-4497-8d18-c775734e98db",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293198943,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "41160a23-1afb-47ed-bdaf-3a82a6245764",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293184057,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "5b3c1463-0a51-442e-a291-36d6bd596ceb",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293207661,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "5ea787b6-78d0-427a-8e69-039553e59569",
+          "correct": 0,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 0,
+          "status": "submitted",
+          "submitted_at": 1793293181652,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "767feb51-d80b-4e14-87ac-67a965cebb80",
+          "correct": 3,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 7.5,
+          "status": "submitted",
+          "submitted_at": 1793293188597,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "7f0cc0a4-4574-4a34-a866-0df0b87fffb2",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293210216,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "9833fdd4-36bc-48c0-8416-ac7540e3f22e",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-2",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293212809,
+          "total": 4,
+          "version": "9c95c4d8f8b04d1a99a996c92812e813446f7c8523c57e7683daa927f942792a"
+        },
+        {
+          "attempt_id": "acf2c49c-cacc-4509-8817-ebe7ec91c143",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293196201,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "d4e075e3-86d4-4066-af4d-edecde630edd",
+          "correct": 2,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 5,
+          "status": "submitted",
+          "submitted_at": 1793293186403,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "dbbb559d-91ad-49f8-ac5c-773beb2a9a59",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293193872,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        },
+        {
+          "attempt_id": "f6d75f6f-0a96-41fe-9b6f-4faf11f597ec",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-10",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293202859,
+          "total": 4,
+          "version": "99a19c7e2a8e8d5263ac649986c4ecf38186db517c57c28c549109f76704221e"
+        }
+      ]
+    },
+    "TH9007": {
+      "nhom": "B",
+      "ten": "[THỬ] Hoàng Tuấn Hải",
+      "lop": "9TH",
+      "so_luot_nop": 2,
+      "attempts": [
+        {
+          "attempt_id": "677a5603-e0a3-4f6a-9f52-488258880d90",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293182858,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        },
+        {
+          "attempt_id": "b1d0b0b6-c615-438c-905a-635682b547ae",
+          "correct": 1,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 2.5,
+          "status": "submitted",
+          "submitted_at": 1793293185373,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        }
+      ]
+    },
+    "TH9016": {
+      "nhom": "C",
+      "ten": "[THỬ] Trịnh Yến Nhi",
+      "lop": "9TH",
+      "so_luot_nop": 1,
+      "attempts": [
+        {
+          "attempt_id": "1ed13b71-125b-492a-9d2d-03d2dbc8eb30",
+          "correct": 3,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 7.5,
+          "status": "submitted",
+          "submitted_at": 1793293333593,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        }
+      ]
+    },
+    "TH9023": {
+      "nhom": "D",
+      "ten": "[THỬ] Đoàn Anh Tuấn",
+      "lop": "9TH",
+      "so_luot_nop": 1,
+      "attempts": [
+        {
+          "attempt_id": "fd25b31e-a44d-4442-8dde-ab11e6399bc4",
+          "correct": 3,
+          "course_id": "tin-hoc-9",
+          "lesson_id": "bai-1",
+          "message": "Nộp bài thành công.",
+          "needs_review": false,
+          "score": 7.5,
+          "status": "submitted",
+          "submitted_at": 1793293397725,
+          "total": 4,
+          "version": "54e2db825945d7b08540b579a1b9450b91a4e8adaa572114b990ab04886441b6"
+        }
+      ]
+    }
+  }
+}
