@@ -8,7 +8,7 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
  let body=fs.readFileSync(f);if(p==='/sheet-config.js')body=Buffer.from(`export const SHEET_API = '${API}';`);if(p==='/presence-config.js')body=Buffer.from(`export const PRESENCE_CONFIG = {apiKey:'K', dbUrl:'${DB}'};`);
  r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.json':'application/json'}[path.extname(f)]||'x');r.end(body)}).listen(8211);
 const hh=(ma,pin)=>crypto.createHash('sha256').update(ma.toLowerCase()+':'+pin).digest('hex');
-const db={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:hh('hs01','123456')},hs02:{ma:'HS02',ten:'Trần Thị Bình',lop:'9B',khoi:9,h:hh('hs02','123456')}},thi_bai:{}};
+const db={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:hh('hs01','123456')},hs02:{ma:'HS02',ten:'Trần Thị Bình',lop:'9B',khoi:9,h:hh('hs02','123456')}},thi_lop:{'9a':{lop:'9A',khoi:9,n:1},'9b':{lop:'9B',khoi:9,n:1},'9c':{lop:'9C',khoi:9,n:40}},thi_bai:{}};
 const at=p=>p.split('/').filter(Boolean).reduce((o,k)=>(o===null||o===undefined)?undefined:o[k],db);
 const setAt=(p,v)=>{const parts=p.split('/').filter(Boolean);let o=db;parts.slice(0,-1).forEach(k=>{o=o[k]??={}});if(v===null||v===undefined)delete o[parts.at(-1)];else o[parts.at(-1)]=v;};
 const stamp=x=>Array.isArray(x)?x.map(stamp):x&&typeof x==='object'?(x['.sv']?Date.now():Object.fromEntries(Object.entries(x).map(([k,y])=>[k,stamp(y)]))):x;
@@ -53,6 +53,7 @@ try{
  await tp.click('#tab-tools-tl');await tp.waitForSelector('#tl-sets .tl-empty');ok(await tp.isHidden('#tools-p-quiz')&&(await tp.textContent('#tl-title')).includes('Thảo luận'),'bấm thẻ Thảo luận: chưa có bộ thảo luận');
  await tp.focus('#tab-tools-tl');await tp.keyboard.press('ArrowLeft');ok((await tp.getAttribute('#tab-tools-quiz','aria-selected'))==='true','phím mũi tên chuyển thẻ');await tp.click('#tab-tools-tl');
  await tp.click('#tl-new');await tp.waitForSelector('#tl-lops .qz-lop-pick');
+ ok(JSON.stringify(await tp.$$eval('#tl-lops .qz-lop-pick input',a=>a.map(x=>x.value)))==='["9A","9B","9C"]','danh sách lớp lấy từ chỉ mục thi_lop (đủ mọi lớp, không tải cả danh sách học sinh)');
  await tp.click('#tl-save');ok((await tp.getAttribute('#tl-name','aria-invalid'))==='true','thiếu tên → báo dưới trường');
  await tp.fill('#tl-name','Khởi động: Internet');await tp.click('#tl-save');ok((await tp.textContent('#tl-lops-err')).includes('Chọn ít nhất một lớp'),'chưa chọn lớp → báo');
  await tp.click('#tl-lops-all');

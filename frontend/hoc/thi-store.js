@@ -13,11 +13,11 @@ const base = () => PRESENCE_CONFIG.dbUrl.replace(/\/$/, '');
 /** Khóa Firebase của một mã học sinh (giống fbKey_ trong Code.gs). @param {string} ma */
 export const keyOf = ma => String(ma || '').trim().toLowerCase().replace(/[.#$[\]/]/g, '_');
 
-/** @param {string} path @param {RequestInit} [init] @param {number} [ms] */
-async function req(path, init = {}, ms = 8000) {
+/** @param {string} path @param {RequestInit} [init] @param {number} [ms] @param {string} [query] */
+async function req(path, init = {}, ms = 8000, query = '') {
   const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
   try {
-    const res = await fetch(`${base()}/${path}.json`, { ...init, credentials: 'omit', signal: ctl.signal });
+    const res = await fetch(`${base()}/${path}.json${query}`, { ...init, credentials: 'omit', signal: ctl.signal });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw Object.assign(new Error(res.status === 401 || res.status === 403 ? 'Bài thi đang khóa hoặc em đã nộp rồi.' : 'Mạng đang chậm, thử lại.'), { status: res.status });
     return data;
@@ -28,6 +28,8 @@ async function req(path, init = {}, ms = 8000) {
 }
 /** Đọc; mạng chập chờn (quá giờ / máy chủ lỗi tạm) → tự thử lại một lần, chờ lâu hơn. @param {string} path */
 export const get = path => req(path).catch(e => (e && (e.status === 0 || e.status >= 500)) ? req(path, {}, 15000) : Promise.reject(e));
+/** Chỉ lấy danh sách khóa con (shallow): 18.000 học sinh ≈ 0,3 MB thay vì vài MB. @param {string} path @returns {Promise<string[]>} */
+export const keys = async path => Object.keys((await req(path, {}, 15000, '?shallow=true')) || {});
 /** @param {string} path @param {unknown} val */ export const put = (path, val) => req(path, { method: 'PUT', body: JSON.stringify(val) });
 /** Ghi nhiều chỗ một lần (PATCH ở gốc khi path = ''). @param {string} path @param {Record<string, unknown>} val */ export const patch = (path, val) => req(path, { method: 'PATCH', body: JSON.stringify(val) });
 export const SERVER_TIME = { '.sv': 'timestamp' };

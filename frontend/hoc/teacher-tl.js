@@ -9,7 +9,7 @@
 // Chỉ máy có khóa phòng (tl_key) ghi được trạng thái phòng (luật tl_proof), như phòng luyện tập.
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261029c';
+import * as ui from './teacher-ui.js?v=20261029d';
 import { confirmBox } from './dom.js';
 import * as fx from './quiz-fx.js';
 import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible } from './tl-core.js';
@@ -101,6 +101,9 @@ async function removeSet(s) {
 /** @type {TSet|null} */ let editing = null;
 async function classes() {
   try { const t = JSON.parse(sessionStorage.getItem('aisgk-gv-info') || 'null'); if (t && Array.isArray(t.lop) && cred().gv_ma) return t.lop.map(String); } catch { /* bỏ qua */ }
+  // Chỉ mục lớp nhỏ (Google Sheet đẩy kèm từ 29/10); chưa có thì đọc cả danh sách học sinh như trước
+  const idx = await store.get('thi_lop').catch(() => undefined);
+  if (idx && typeof idx === 'object') return [...new Set(Object.values(idx).map((/** @type {any} */ x) => String(x?.lop || '')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
   const hs = await store.get('thi_hs').catch(() => undefined);
   if (hs === undefined) return null;
   return [...new Set(Object.values(hs || {}).map((/** @type {any} */ s) => String(s?.lop || '')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));

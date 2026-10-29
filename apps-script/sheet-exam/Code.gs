@@ -606,6 +606,9 @@ function publish_(only) {
       hs[fbKey_(ma)] = { ma: ma, ten: String(hv[r][1] || '').trim(), lop: lop, khoi: khoiOf_(lop), h: sha256_(norm_(ma) + ':' + String(hv[r][4]).trim()) };
     }
     body.thi_hs = hs;
+    // Chỉ mục lớp (rất nhỏ): danh sách lớp + sĩ số cho Thảo luận/Luyện tập, không phải tải cả thi_hs (18.000 em ≈ 3 MB)
+    var lopIdx = {}; Object.keys(hs).forEach(function (k) { var l = hs[k].lop; if (!l) return; var lk = fbKey_(l); lopIdx[lk] = lopIdx[lk] || { lop: l, khoi: hs[k].khoi, n: 0 }; lopIdx[lk].n++; });
+    body.thi_lop = lopIdx;
   }
   if (want('bai')) {
     var bai = {}, de = {}, list = exams_();
@@ -826,5 +829,29 @@ function taoMau() {
 }
 function datLaiMatKhau() { setConfig_('mat_khau_gv', ''); }
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addItem('Cài khóa Bộ não AI', 'caiKhoaNaoAI').addToUi();
+  SpreadsheetApp.getUi().createMenu('Bài thi').addItem('Tạo mẫu', 'taoMau').addItem('Cài khóa Firebase', 'caiKhoaFirebase').addItem('Cập nhật lên Firebase', 'capNhatFirebase').addItem('Tự đẩy học sinh lên Firebase khi sửa Sheet', 'batTuDongDay').addItem('Lấy điểm về Sheet', 'layDiemVeSheet').addItem('Đặt lại mật khẩu giáo viên', 'datLaiMatKhau').addItem('Cài khóa Bộ não AI', 'caiKhoaNaoAI').addToUi();
+}
+
+/* ---------- Tự đẩy tài khoản lên Firebase khi dán/sửa thẳng trong Sheet (29/10) ----------
+ * Thêm học sinh bằng cách dán vào trang HocSinh không đi qua app → trước đây không đẩy lên Firebase → học sinh không đăng nhập được,
+ * lớp không hiện ở Thảo luận/Luyện tập/Tổng quan. Bật một lần (menu Bài thi): mỗi lần sửa Sheet, sau 1 phút tự đẩy học sinh + giáo viên. */
+function batTuDongDay() {
+  var ss = SpreadsheetApp.getActive();
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'tuDongDay_') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('tuDongDay_').forSpreadsheet(ss).onEdit().create();
+  ScriptApp.newTrigger('tuDongDay_').forSpreadsheet(ss).onChange().create();
+  var n = 0; try { publish_(['hs', 'gv', 'ho_tro']); n = 1; } catch (e) { /* báo bên dưới */ }
+  SpreadsheetApp.getUi().alert(n ? 'Đã bật. Từ nay sửa hoặc dán học sinh vào Sheet, sau khoảng 1 phút danh sách tự lên Firebase. Đã đẩy danh sách hiện tại.' : 'Đã bật tự đẩy, nhưng lần đẩy đầu chưa được (kiểm tra khóa Firebase).');
+}
+function tuDongDay_(e) {
+  if (e && e.range) { var name = e.range.getSheet().getName(); if (name !== SH_HS && name !== SH_GV) return; }   // sửa trang khác: bỏ qua
+  var pr = PropertiesService.getScriptProperties();
+  if (Number(pr.getProperty('AUTO_PUSH_AT') || 0) > new Date().getTime()) return;   // đã hẹn đẩy: gộp nhiều lần sửa thành 1 lần
+  pr.setProperty('AUTO_PUSH_AT', String(new Date().getTime() + 60000));
+  ScriptApp.newTrigger('tuDongDayChay_').timeBased().after(60000).create();
+}
+function tuDongDayChay_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'tuDongDayChay_') ScriptApp.deleteTrigger(t); });
+  PropertiesService.getScriptProperties().deleteProperty('AUTO_PUSH_AT');
+  publish_(['hs', 'gv', 'ho_tro']);
 }

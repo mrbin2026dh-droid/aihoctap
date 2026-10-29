@@ -774,8 +774,9 @@ body.qz-hosting{overflow:hidden}
 /* Học sinh đọc bài: tổng hợp theo bài (29/10) */
 .teacher-app .read-filters{grid-template-columns:repeat(auto-fit,minmax(220px,320px))}
 .teacher-app .read-sum{margin-top:12px}
-.teacher-app .read-sum-open{all:unset;cursor:pointer;font-weight:700;color:var(--ink);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--brand) 50%,transparent);text-underline-offset:3px}
-.teacher-app .read-sum-open:hover{color:var(--brand)}
+.teacher-app .read-sum-open{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;cursor:pointer;font-weight:600;color:var(--ink);text-decoration:none}
+.teacher-app .read-sum-open::after{content:"›";flex:none;font-size:1.25rem;line-height:1;color:var(--muted)}
+.teacher-app .read-sum-open:hover{color:var(--brand)}.teacher-app .read-sum-open:hover::after{color:var(--brand)}
 .teacher-app .read-sum-open:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:4px}
 .teacher-app .read-sum tr.is-current td{background:color-mix(in srgb,var(--brand) 10%,transparent)}
 .teacher-app .read-mini-lg{width:120px}
@@ -792,3 +793,9 @@ body.qz-hosting{overflow:hidden}
 .teacher-app .a-notyet{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
 .teacher-app .a-notyet li{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .teacher-app .a-two{margin-bottom:0}
+
+/* Bỏ gạch chân chấm mặc định của <abbr> trong bảng (29/10): giải thích đặt ở chú thích dưới bảng */
+.teacher-app abbr[title]{text-decoration:none;border:0;cursor:help}
+.teacher-app .acc-legend{margin:8px 0 0}
+.teacher-app .acc-sync{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin:0 0 12px}
+.teacher-app .acc-sync p{margin:0;flex:1 1 320px}

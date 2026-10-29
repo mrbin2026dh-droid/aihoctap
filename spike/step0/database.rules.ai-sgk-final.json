@@ -37,6 +37,7 @@
       ".read": true,
       ".write": false
     },
+    "thi_lop": { ".read": true, ".write": false },
     "thi_bai": {
       ".read": true,
       ".write": false

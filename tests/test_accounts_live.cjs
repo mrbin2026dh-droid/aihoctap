@@ -1,4 +1,4 @@
-// Tài khoản → Học sinh: cột Trực tuyến (Firebase presence), phút học hôm nay / 7 ngày (thoi_gian), thẻ thống kê bấm để lọc, bộ lọc, chuyên cần.
+// Tài khoản → Học sinh (29/10 tối: thêm lưu danh sách trên máy, báo học sinh chưa lên Firebase, lớp nhóm theo khối, không gạch chân): cột Trực tuyến (Firebase presence), phút học hôm nay / 7 ngày (thoi_gian), thẻ thống kê bấm để lọc, bộ lọc, chuyên cần.
 // Chạy: NODE_PATH=$(npm root -g) node tests/test_accounts_live.cjs
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert');
 const {goNav}=require('./helpers/teacher-nav.cjs');
@@ -12,7 +12,7 @@ for(const vp of [{width:1280,height:900,n:'d'},{width:390,height:844,n:'m'}]){
 const T=vp.n+' ';
 const ctx=await b.newContext({viewport:{width:vp.width,height:vp.height},serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 const STU=[{ma:'HS01',ten:'An',lop:'9A',trang_thai:'Hoạt động'},{ma:'hs02',ten:'Bình',lop:'9A',trang_thai:'Hoạt động'},{ma:'hs03',ten:'Chi',lop:'9B',trang_thai:'Hoạt động'},{ma:'hs04',ten:'Dũng',lop:'9B',trang_thai:'Khóa'}];
-await pg.route('https://script.google.com/**',r=>{const p=JSON.parse(r.request().postData());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action.startsWith('gv_teacher')?{ok:true,teachers:[]}:p.action.startsWith('gv_student')?{ok:true,admin:true,students:STU,classes:{'9A':2,'9B':2}}:{ok:true,exams:[],bank:{},classes:{}})})});
+await pg.route('https://script.google.com/**',async r=>{const p=JSON.parse(r.request().postData());if(p.action==='gv_publish'){published++;FBK={hs01:true,hs02:true,hs03:true};}if(sheetDelay&&p.action==='gv_students')await new Promise(x=>setTimeout(x,sheetDelay));r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(p.action.startsWith('gv_teacher')?{ok:true,teachers:[]}:p.action.startsWith('gv_student')?{ok:true,admin:true,students:STU,classes:{'9A':2,'9B':2}}:{ok:true,exams:[],bank:{},classes:{}})})});
 await pg.route('**/api/**',r=>{const u=new URL(r.request().url()).pathname;let body={};if(u.endsWith('/teacher/auth'))body={token:'tt',must_change:false};else if(u.endsWith('/pwa/catalog'))body={courses:[]};else if(u.endsWith('/ai-settings'))body={settings:{default_limit:10}};else if(u.endsWith('/ai-stats'))body={stats:[]};else if(u.endsWith('/gemini-keys'))body={keys:[]};else if(u.includes('results')||u.endsWith('/teacher/students'))body=[];r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)})});
 const now=Date.now(),today=dayVN(now),d2=dayVN(now-2*864e5),d3=dayVN(now-3*864e5),d9=dayVN(now-9*864e5);
 const MIN={[today]:{hs01:40,HS02:3},[d2]:{hs01:30},[d3]:{hs01:25,hs03:10},[d9]:{hs04:500}};
@@ -21,6 +21,8 @@ await pg.route(/firebasedatabase\.app\/thoi_gian\//,r=>{const d=decodeURICompone
 let PRES={HS01:{name:'An',lop:'9A',state:'hoc',at:now},hs02:{name:'Bình',lop:'9A',state:'dang_thi',at:now},hs03:{name:'Chi',lop:'9B',state:'hoc',at:now-10*60e3},hs04:{name:'Dũng',lop:'9B',state:'offline',at:now-60e3}};
 await pg.route(/firebasedatabase\.app\/presence\.json/,r=>r.fulfill({status:200,headers:{'content-type':'text/event-stream','cache-control':'no-cache'},body:'event: put\ndata: '+JSON.stringify({path:'/',data:PRES})+'\n\n'}));
 await pg.route(/identitytoolkit|securetoken/,r=>r.fulfill({status:403,body:'{}'}));
+let FBK={hs01:true,hs02:true},published=0,sheetDelay=0;
+await pg.route(/firebasedatabase\.app\/thi_hs\.json/,r=>{const u=new URL(r.request().url());r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(u.searchParams.get('shallow')==='true'?FBK:null)})});
 await pg.goto(B+'/teacher.html');await pg.waitForTimeout(400);
 await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
 await goNav(pg,'#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr[data-ma]').length===4);
@@ -59,6 +61,22 @@ await pg.waitForFunction(()=>document.querySelector('#acc-hs-body tr[data-ma="hs
 ok((await pg.textContent('#acc-hs-stats [data-stat=on] strong'))==='3',T+'Chi vào app → trực tuyến 3 (không cần tải lại)');
 ok((await pg.textContent('#acc-hs-count')).includes('Thời gian học tính từ 29/10/2026'),T+'ghi rõ ngày bắt đầu đo');
 const ov=await pg.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);ok(ov<=1,T+'không tràn ngang '+ov);
+// Học sinh có trong Sheet nhưng chưa có trên Firebase (dán thẳng vào Sheet) → cảnh báo + nút đẩy lên
+await pg.waitForSelector('#acc-sync:not([hidden])',{timeout:8000});
+ok((await pg.textContent('#acc-sync-text')).startsWith('1 học sinh')&&(await pg.textContent('#acc-sync-text')).includes('lớp 9B'),T+'báo 1 học sinh lớp 9B chưa lên Firebase (bỏ qua tài khoản khóa), nói rõ hậu quả');
+await pg.click('#acc-sync-btn');await pg.waitForSelector('#acc-sync[hidden]',{state:'attached',timeout:8000});
+ok(published===1&&(await pg.textContent('#acc-status')).includes('Đã đẩy danh sách'),T+'bấm "Đẩy lên Firebase ngay" → gọi gv_publish, cảnh báo biến mất');
+// Lớp nhóm theo khối, có sĩ số
+ok(JSON.stringify(await pg.$$eval('#acc-hs-lop optgroup',a=>a.map(g=>g.label)))==='["Khối 9"]'&&(await pg.textContent('#acc-hs-lop')).includes('Lớp 9A (2 em)'),T+'ô Lớp nhóm theo khối, ghi sĩ số');
+// Không còn chữ gạch chân (abbr chấm, nút tên bài) trong vùng làm việc
+const under=await pg.evaluate(()=>[...document.querySelectorAll('#workspace *')].filter(e=>e.offsetParent&&e.childNodes.length&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())&&/underline/.test(getComputedStyle(e).textDecorationLine)).map(e=>e.tagName+':'+e.textContent.trim().slice(0,20)));
+ok(!under.length,T+'không có chữ gạch chân: '+under.join(', '));
+ok((await pg.textContent('.acc-legend')).includes('Chăm'),T+'giải thích Chuyên cần ở chú thích dưới bảng');
+// Mở lại trang: danh sách lưu trên máy hiện NGAY, Google Sheet trả sau vẫn cập nhật
+sheetDelay=4000;await pg.reload();await pg.waitForTimeout(400);if(await pg.locator('#teacher-login [name=pin]').isVisible()){await pg.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await pg.click('#teacher-login button[type=submit]');}await pg.waitForSelector('#workspace:not([hidden])');
+const t0=Date.now();await goNav(pg,'#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr[data-ma]').length===4,null,{timeout:2500});
+ok(Date.now()-t0<2500&&(await pg.textContent('#acc-hs-count')).includes('Đang cập nhật'),T+`mở lại: hiện ngay danh sách lưu trên máy (${Date.now()-t0} ms), Sheet chậm 4 giây vẫn không phải chờ`);
+await pg.waitForFunction(()=>!document.querySelector('#acc-hs-count').textContent.includes('Đang cập nhật'),null,{timeout:9000});ok(true,T+'Sheet trả về → bỏ chữ "Đang cập nhật"');sheetDelay=0;
 if(process.env.SHOTS)await pg.screenshot({path:path.join(process.env.SHOTS,'acc-'+vp.n+'.png'),fullPage:true});
 ok(!errs.length,T+'không lỗi JS: '+errs.join('|'));
 await ctx.close();}

@@ -5,8 +5,14 @@
 // Mỗi thay đổi Sheet tự đẩy lên Firebase, nên học sinh/giáo viên đăng nhập được ngay.
 import { SHEET_API } from './sheet-config.js';
 import { confirmBox, noticeBox } from './dom.js';
-import * as ui from './teacher-ui.js?v=20261029c';
-import * as presence from './presence.js?v=20261029c';
+import * as ui from './teacher-ui.js?v=20261029d';
+import * as presence from './presence.js?v=20261029d';
+import * as db from './db.js';
+import * as store from './thi-store.js';
+/** Danh sách tài khoản lưu trên máy giáo viên (IndexedDB) để mở menu ngay, cập nhật từ Google Sheet ở nền.
+ * Chỉ có mã, tên, lớp, trạng thái (không có mã PIN); xóa khi đăng xuất hoặc khi học sinh đăng nhập trên máy này. */
+export const ACC_CACHE = 'acc-cache-v1';
+const collator = new Intl.Collator('vi', { numeric: true, sensitivity: 'base' });
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -15,7 +21,7 @@ const cred = () => { try { return { gv: sessionStorage.getItem('thi-gv-mk') || '
 export const isClassTeacher = () => !!cred().gv_ma;
 
 /** @type {{students:any[],teachers:any[],classes:Record<string,number>,admin:boolean,loaded:boolean,limit:number}} */
-const st = { students: [], teachers: [], classes: {}, admin: true, loaded: false, limit: ui.PAGE };
+const st = { students: [], teachers: [], classes: {}, admin: true, loaded: false, limit: ui.PAGE, note: '', at: 0 };
 /** @type {{kind:'hs'|'gv', moi:boolean, ma:string}|null} */ let editing = null;
 
 /** @param {Record<string, unknown>} body */
@@ -46,16 +52,57 @@ function apply(r) {
   if (r.students) { st.students = r.students; st.classes = r.classes || {}; st.admin = r.admin !== false; }
   if (r.teachers) st.teachers = r.teachers;
   if (r.fb_error) status('Đã lưu vào Google Sheet nhưng chưa đẩy được lên Firebase: ' + r.fb_error, 'error');
+  if (st.loaded && (r.students || r.teachers)) saveCache();
 }
+const who = () => cred().gv_ma || 'admin';
+function saveCache() { st.at = Date.now(); db.put('meta', ACC_CACHE, { who: who(), at: st.at, students: st.students, classes: st.classes, admin: st.admin, teachers: st.teachers }).catch(() => {}); }
+const hhmm = (/** @type {number} */ t) => new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+let loading = false;
 async function load() {
-  $('acc-hs-count').textContent = 'Đang tải…';
+  if (loading) return;
+  // 1. Hiện ngay danh sách đã lưu trên máy (18.000 học sinh: không chờ Google Sheet 3–6 giây)
+  if (!st.loaded) {
+    /** @type {any} */ let c = null; try { c = await db.get('meta', ACC_CACHE); } catch { /* không có bộ nhớ */ }
+    if (c && c.who === who() && Array.isArray(c.students)) {
+      st.students = c.students; st.classes = c.classes || {}; st.admin = c.admin !== false; st.teachers = c.teachers || []; st.at = Number(c.at) || 0;
+      $('tab-acc-gv').hidden = !st.admin; if (!st.admin) tab('hs');
+      st.loaded = true; st.note = ' · Đang cập nhật…'; render(); startLive();
+    } else $('acc-hs-count').textContent = 'Đang tải danh sách học sinh…';
+  }
+  // 2. Cập nhật từ Google Sheet ở nền
+  loading = true;
   try {
     apply(await call({ action: 'gv_students' }));
     $('tab-acc-gv').hidden = !st.admin; if (!st.admin) tab('hs');
     if (st.admin) apply(await call({ action: 'gv_teachers' }));
-    st.loaded = true; status(''); render(); startLive();
-  } catch (e) { $('acc-hs-count').textContent = ''; status(e instanceof Error ? e.message : 'Chưa tải được danh sách.', 'error'); }
+    st.loaded = true; st.note = ''; status(''); saveCache(); render(); startLive(); void checkSync();
+  } catch (e) {
+    if (st.loaded) { st.note = ` · Danh sách lưu lúc ${hhmm(st.at)} (chưa cập nhật được)`; render(); }
+    else $('acc-hs-count').textContent = '';
+    status(e instanceof Error ? e.message : 'Chưa tải được danh sách.', 'error');
+  } finally { loading = false; }
 }
+/** Học sinh có trong Google Sheet nhưng CHƯA có trên Firebase (thường do dán thẳng vào Sheet): chưa đăng nhập được,
+ * chưa hiện ở Thảo luận, Luyện tập, Tổng quan. So mã bằng danh sách khóa (shallow), không tải cả cây. */
+export function missingOnFirebase(/** @type {any[]} */ students, /** @type {string[]} */ fbKeys) {
+  const have = new Set(fbKeys.map(k => String(k).toLowerCase()));
+  return students.filter(s => s.trang_thai !== 'Khóa' && !have.has(store.keyOf(s.ma)));
+}
+async function checkSync() {
+  const box = $('acc-sync'); if (!box || !store.enabled() || !st.students.length) return;
+  let ks; try { ks = await store.keys('thi_hs'); } catch { return; }
+  const miss = missingOnFirebase(st.students, ks);
+  box.hidden = !miss.length; if (!miss.length) return;
+  const lops = [...new Set(miss.map(s => s.lop))].sort(collator.compare);
+  $('acc-sync-text').textContent = `${miss.length} học sinh có trong Google Sheet nhưng chưa có trên Firebase (lớp ${lops.slice(0, 8).join(', ')}${lops.length > 8 ? '…' : ''}): các em chưa đăng nhập được và chưa hiện ở Thảo luận, Luyện tập, Tổng quan. Thường do dán thẳng vào Sheet.`;
+}
+$('acc-sync-btn')?.addEventListener('click', async () => {
+  const b = /** @type {HTMLButtonElement} */ ($('acc-sync-btn')), old = b.textContent;
+  b.disabled = true; b.setAttribute('aria-busy', 'true'); b.textContent = 'Đang đẩy lên Firebase…';
+  try { const r = await call({ action: 'gv_publish' }); if (r.fb_error) throw new Error(r.fb_error); await checkSync(); if ($('acc-sync').hidden) status('Đã đẩy danh sách học sinh lên Firebase. Các em đăng nhập được ngay.', 'success'); }
+  catch (e) { status('Chưa đẩy được: ' + (e instanceof Error ? e.message : 'lỗi mạng'), 'error'); }
+  finally { b.disabled = false; b.removeAttribute('aria-busy'); b.textContent = old; }
+});
 /* ---------- Trực tuyến + thời gian học (Firebase: presence, thoi_gian) ---------- */
 /** Ngày bắt đầu đo thời gian học (trước ngày này chưa có số liệu, không suy đoán). */
 export const TRACK_FROM = '2026-10-29';
@@ -122,9 +169,9 @@ export function filterStudents(/** @type {any[]} */ list, /** @type {{lop?:strin
     return true;
   });
   const by = f.sort || 'ten';
-  const cmpName = (/** @type {any} */ a, /** @type {any} */ b) => String(a.ten).localeCompare(String(b.ten), 'vi');
+  const cmpName = (/** @type {any} */ a, /** @type {any} */ b) => collator.compare(String(a.ten), String(b.ten));
   rows.sort((a, b) => {
-    if (by === 'lop') return String(a.lop).localeCompare(String(b.lop), 'vi') || cmpName(a, b);
+    if (by === 'lop') return collator.compare(String(a.lop), String(b.lop)) || cmpName(a, b);
     if (by === 'online') return Number(onlineOf(b.ma, now, map).on) - Number(onlineOf(a.ma, now, map).on) || cmpName(a, b);
     if (by === 'today') return minutesOf(b.ma, m).today - minutesOf(a.ma, m).today || cmpName(a, b);
     if (by === 'week') return minutesOf(b.ma, m).week - minutesOf(a.ma, m).week || cmpName(a, b);
@@ -202,12 +249,18 @@ function startLive() {
 
 function render() {
   // Học sinh
-  const sel = /** @type {HTMLSelectElement} */ ($('acc-hs-lop')), keep = sel.value, lops = Object.keys(st.classes).sort();
-  sel.replaceChildren(new Option('Tất cả các lớp', ''), ...lops.map(l => new Option('Lớp ' + l, l))); if (lops.includes(keep)) sel.value = keep;
+  const sel = /** @type {HTMLSelectElement} */ ($('acc-hs-lop')), keep = sel.value;
+  // Lớp nhóm theo khối, ghi sĩ số (trường 18.000 học sinh có hàng trăm lớp: danh sách phẳng rất khó tìm)
+  const cnt = /** @type {Record<string, number>} */ ({}); for (const x of st.students) cnt[x.lop] = (cnt[x.lop] || 0) + 1;
+  const lops = [...new Set([...Object.keys(st.classes), ...Object.keys(cnt)])].filter(Boolean).sort(collator.compare);
+  const gOf = (/** @type {string} */ l) => Number(String(l).match(/^\d+/)?.[0]) || 0;
+  sel.replaceChildren(new Option(`Tất cả các lớp (${st.students.length} em)`, ''));
+  for (const g of [...new Set(lops.map(gOf))].sort((a, b) => b - a)) { const og = document.createElement('optgroup'); og.label = g ? `Khối ${g}` : 'Khác'; for (const l of lops.filter(x => gOf(x) === g)) og.append(new Option(`Lớp ${l} (${cnt[l] || 0} em)`, l)); sel.append(og); }
+  if (lops.includes(keep)) sel.value = keep;
   const val = (/** @type {string} */ id) => /** @type {HTMLSelectElement} */ ($(id)).value;
   const rows = filterStudents(st.students, { lop: sel.value, q: inp('acc-hs-search').value, online: val('acc-hs-online'), act: val('acc-hs-act'), sort: val('acc-hs-sort') });
   const all = scope().length;
-  $('acc-hs-count').textContent = (rows.length === all ? `${rows.length} học sinh` : `Đang lọc: ${rows.length} / ${all} học sinh`) + (st.admin ? '' : ' của lớp thầy cô phụ trách') + ` · Thời gian học tính từ ${TRACK_FROM.split('-').reverse().join('/')}, chỉ đếm phút app mở trên màn hình.`;
+  $('acc-hs-count').textContent = (rows.length === all ? `${rows.length} học sinh` : `Đang lọc: ${rows.length} / ${all} học sinh`) + (st.admin ? '' : ' của lớp thầy cô phụ trách') + ` · Thời gian học tính từ ${TRACK_FROM.split('-').reverse().join('/')}, chỉ đếm phút app mở trên màn hình.` + st.note;
   renderStats();
   const body = $('acc-hs-body'); body.replaceChildren();
   if (!rows.length) { const tr = document.createElement('tr'); const c = td('', st.students.length ? 'Không có học sinh khớp bộ lọc.' : 'Chưa có học sinh. Bấm "Thêm học sinh".'); c.colSpan = 8; c.className = 't-muted'; tr.append(c); body.append(tr); }
@@ -318,7 +371,7 @@ $('acc-hs-search').addEventListener('input', ui.debounce(refilter));
 $('acc-hs-lop').addEventListener('change', refilter);
 for (const id of ['acc-hs-online', 'acc-hs-act', 'acc-hs-sort']) $(id).addEventListener('change', refilter);
 $('nav-accounts').addEventListener('click', () => void load());
-document.getElementById('teacher-logout')?.addEventListener('click', () => { st.students = []; st.teachers = []; st.loaded = false; status(''); offLive?.(); offLive = null; clearInterval(minTimer); live = {}; });
+document.getElementById('teacher-logout')?.addEventListener('click', () => { db.remove('meta', ACC_CACHE).catch(() => {}); st.students = []; st.teachers = []; st.loaded = false; st.at = 0; st.note = ''; status(''); offLive?.(); offLive = null; clearInterval(minTimer); live = {}; });
 
 /* ---------- Giáo viên lớp: Cài đặt → Đổi mã PIN (trang GiaoVien trong Google Sheet) ---------- */
 {

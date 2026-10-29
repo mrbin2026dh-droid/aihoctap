@@ -166,6 +166,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   await pg.selectOption('#overview-class','k:9');
   await pg.waitForFunction(()=>/1\/120/.test(document.querySelector('#read-sum-body')?.textContent||''),null,{timeout:8000});
   ok((await pg.textContent('#read-sum-body')).includes('Thế giới kĩ thuật số')&&!(await pg.textContent('#read-sum-body')).includes('Máy tính'),'bảng tổng hợp mọi bài của khối: bài lớp 9 với "1/120 đã đọc hết"; không lẫn bài lớp 8');
+  ok(await pg.evaluate(()=>[...document.querySelectorAll('#read-report *')].every(e=>!e.offsetParent||!/underline/.test(getComputedStyle(e).textDecorationLine))),'tên bài trong bảng đọc bài không gạch chân (nút có dấu › để bấm)');
   await pg.selectOption('#overview-class','9A');await pg.waitForFunction(()=>/1\/60/.test(document.querySelector('#read-sum-body')?.textContent||''));ok(true,'chọn lớp 9A: tổng hợp theo 60 em của lớp');
   await pg.selectOption('#overview-class','k:9');await pg.waitForTimeout(300);
   ok((await pg.textContent('#read-metrics')).includes('120')&&!(await pg.textContent('#read-body')).includes('Em lớp 8'),'bài lớp 9: chỉ tính học sinh khối 9');

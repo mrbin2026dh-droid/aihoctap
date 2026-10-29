@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Gia sư AI hiện nguyên tắc khi mở, xưng "Gia sư", không mở đầu bằng câu từ chối đáp án khi em không xin đáp án, giảm độ chậm (nhớ đệm bài, cắt lịch sử, việc phụ chạy nền, Server-Timing); chờ Antigravity deploy và thử có bằng chứng theo docs/handoff/claude-antigravity-gia-su-nguyen-tac-29-10.md.
+- Yêu cầu mới nhất: Lớp thiếu ở Thảo luận/Luyện tập (Sheet chưa đẩy lên Firebase → cảnh báo + nút đẩy, Apps Script tự đẩy khi sửa Sheet, chỉ mục thi_lop), trang Tài khoản lưu danh sách trên máy cho trường 18.000 em, bỏ chữ gạch chân; chờ Antigravity đăng luật, cập nhật Apps Script, thử có ảnh theo docs/handoff/claude-antigravity-tai-khoan-lop-29-10.md. Rủi ro: thi_hs đọc công khai có băm PIN 6 số (chờ thầy quyết).
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4322,4 +4322,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp: worker/index.js, frontend/hoc/{app.js,typing.js,styles.css,index.html,whats-new.json,sw.js}, tests/{test_tutor_offtopic,test_tutor_exam_review,test_lesson_ai_docs_ui}.
 - Kiểm thử PASS (đã chạy): các test Gia sư, khung Gia sư, chuẩn UI học sinh, cập nhật PWA, cách ly vai trò.
 - Ghi chú: báo cáo đợt trước của Antigravity không khớp thực tế; handoff mới bắt buộc ảnh + nguyên văn + số đo. Việc dở: deploy Worker, thử Gemini thật.
+
+### 29/10/2026 23:30 — Claude: lớp thiếu, Tài khoản 18.000 em, chữ gạch chân
+- Đã làm: cảnh báo học sinh có trong Sheet nhưng chưa có trên Firebase + nút đẩy; Apps Script tự đẩy khi sửa Sheet (trigger) và ghi chỉ mục thi_lop; Thảo luận/Luyện tập đọc thi_lop; Tài khoản lưu danh sách trong IndexedDB (không PIN), ô Lớp theo khối; bỏ gạch chân (read-sum-open, abbr) + kiểm tra gạch chân trong test chuẩn UI.
+- Tệp: frontend/hoc/{teacher-accounts.js,thi-store.js,teacher-quiz.js,teacher-tl.js,teacher.html,teacher.css,app.js,sw.js}, apps-script/sheet-exam/Code.gs, spike/step0/database.rules.ai-sgk-final.json, tests/{test_accounts_live,test_tl_live,test_teacher_thi_ui,test_teacher_ui_standard}.
+- Kiểm thử PASS (đã chạy): như handoff; đo 18.000 em: lần đầu 330 ms, mở lại 191 ms khi Sheet chậm 5 giây.
+- Việc dở: đăng luật thi_lop, dán Code.gs mới + bật tự đẩy; rủi ro thi_hs công khai có băm PIN (chờ thầy quyết). Báo cáo Gia sư của Antigravity chưa push.
 

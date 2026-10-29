@@ -983,6 +983,7 @@ form('login-form').addEventListener('submit', async event => {
         void presence.startStudent(response.fb_token || '', identity).then(okFb => { if (!okFb) presence.startStudentLite(identity); });
       }
       await db.put('meta', 'session', next); session = next;
+      db.remove('meta', 'acc-cache-v1').catch(() => {});   // một máy một vai trò: xóa danh sách học sinh giáo viên lưu trên máy
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }
       if (quick) { presence.startStudentLite(next.identity); void workerToken(code, pin); }
       clearTeacherSession(); startThiBadge(); void prefetchLessons();
