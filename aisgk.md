@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã triển khai Worker bản chẩn đoán 6c75cf0c, làm sạch secret AGENT_KEY 64 ký tự và AGENT_URL; test_agent_bridge 15/15 PASS; Thầy bấm Kiểm tra AI ngay trên trang giáo viên để xác nhận thẻ Bộ não đa agent (VPS); chi tiết tại docs/handoff/antigravity-claude-agent-ket-noi-xong.md.
+- Yêu cầu mới nhất: Đã kiểm thử thực tế live HTTPS https://aihoctap.online nghiệm thu "Luyện tập trên lớp" kiểu Kahoot/Quizizz, xác nhận sửa dứt điểm lỗi treo màn hình xanh nút Trình chiếu (.qz-open), test_quiz_core 15/15 PASS, test_quiz_live 44/44 PASS, test_live_quiz_https 14/14 PASS; hoàn thành báo cáo nghiên cứu Quizizz/Mentimeter tại docs/nghien-cuu/quizizz-menti-tinh-nang.md; chi tiết tại docs/handoff/antigravity-claude-luyen-tap-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2141,3 +2141,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-agent-ket-noi-xong.md, aisgk.md.
 - Kiểm thực tế: Worker deploy 6c75cf0c-2c46-4c8c-99bb-92d6087732a2; test_agent_bridge 15/15 PASS.
 - Việc tiếp: Thầy vào teacher.html bấm Kiểm tra AI ngay; nếu lỗi sửa theo dòng Lý do hiển thị chi tiết.
+
+### 29/10/2026 15:45 — Antigravity — Nghiệm thu "Luyện tập trên lớp" kiểu Kahoot/Quizizz, Sửa lỗi treo màn hình xanh & Báo cáo nghiên cứu tính năng
+- Đã thực hiện: Kéo commit 490e10c của Claude; chạy kiểm thử tự động toàn diện; đo đạc mạng thật trên production https://aihoctap.online (1 GV + 2 HS di động), xác nhận nút Mở luyện tập dùng class .qz-open (rộng 130.6px, static) triệt tiêu hoàn toàn lỗi phình to phủ kín màn hình xanh cũ; kiểm tra Zero-Overflow đạt chuẩn 100%; hướng dẫn Thầy dán nhánh quiz_bo vào Firebase RTDB Rules; hoàn tất báo cáo nghiên cứu tính năng mở rộng Quizizz/Mentimeter sạch bản quyền (MIT) tại docs/nghien-cuu/quizizz-menti-tinh-nang.md; lập báo cáo tại docs/handoff/antigravity-claude-luyen-tap-xong.md.
+- Tệp đổi: tests/test_live_quiz_https.cjs, docs/nghien-cuu/quizizz-menti-tinh-nang.md, docs/handoff/antigravity-claude-luyen-tap-xong.md, aisgk.md.
+- Kiểm thực tế: test_quiz_core 15/15 PASS; test_quiz_live 44/44 PASS; tools/package_student_pwa.py --check PASS; test_agent_bridge 15/15 PASS; test_live_quiz_https 14/14 PASS trên https://aihoctap.online (độ trễ TB 550ms, 0 lỗi Console F12, 0 tràn ngang).
+- Việc tiếp: Thầy dán tệp spike/step0/database.rules.ai-sgk-final.json lên Firebase Console Rules rồi bấm Publish để kích hoạt đồng bộ đám mây cho bộ câu hỏi; Thầy có thể mở phòng Luyện tập trên lớp cho học sinh tham gia trải nghiệm.
