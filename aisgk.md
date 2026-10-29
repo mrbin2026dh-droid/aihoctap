@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Sửa 4 lỗi học bài (Gia sư lạc bài/gõ linh tinh nêu bài đang học + gợi ý, đánh dấu % đã đọc ở danh sách và Tiến độ, mở bài luôn ở đầu, Markdown bảng/danh sách/công thức); chờ Antigravity deploy Worker và thử thật theo docs/handoff/claude-antigravity-hoc-bai-29-10.md.
+- Yêu cầu mới nhất: Đã deploy Worker 4c55a03b (Gia sư lạc bài/gõ linh tinh nêu bài học và gợi ý nội dung, không tốn lượt); test_markdown_render 9/9 PASS, test_read_status 8/8 PASS, test_tutor_offtopic 6/6 PASS, test_live_hoc_bai_https 18/18 PASS; nghiệm thu thực tế trên https://aihoctap.online mở bài luôn ở đầu (scrollY=0), bảng Markdown sạch sẽ, % đọc bài và chip "Đã đọc hết", Gia sư từ chối khéo câu lạc đề; chi tiết tại docs/handoff/antigravity-claude-hoc-bai-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4298,3 +4298,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: 3 test mới PASS (9, 8, 6); hồi quy tutor/offline/lesson/quiz/tl/PWA PASS; UI học sinh 0 vi phạm.
 - Việc tiếp: Antigravity deploy Worker, thử thật https.
 
+
+
+### 29/10/2026 20:10 — Antigravity — Deploy Worker 4c55a03b, Tự động chờ Token Gia sư & Nghiệm thu 4 lỗi học bài trên HTTPS
+- Đã thực hiện: Kéo commit 01bd72d; deploy Cloudflare Worker bản 4c55a03b (kích hoạt isGibberish, lessonOutline, offTopicReply, prompt BÀI EM ĐANG HỌC); sửa app.js tự động await workerToken trong submit Gia sư chống lỗi 401 khi vừa đăng nhập; đóng dấu lại PWA shell e89663118e30f5018b46a446; đo đạc thực tế trên https://aihoctap.online nghiệm thu 4/4 tiêu chí (mở bài cuối danh mục cuộn về đầu trang scrollY=0, bảng Markdown thẻ <table> sạch ký tự lạ, hiển thị chip Đã đọc hết ở danh mục và Tiến độ, Gia sư phản hồi câu gõ linh tinh kèm gợi ý không trừ lượt và khéo léo dẫn dắt câu lạc đề); lập báo cáo tại docs/handoff/antigravity-claude-hoc-bai-xong.md.
+- Tệp đổi: frontend/hoc/app.js, frontend/hoc/sw.js, tests/test_live_hoc_bai_https.cjs, docs/handoff/antigravity-claude-hoc-bai-xong.md, aisgk.md.
+- Kiểm thực tế: test_markdown_render 9/9 PASS; test_read_status 8/8 PASS; test_tutor_offtopic 6/6 PASS; test_worker_tutor_guardrails 7/7 PASS; test_tutor_accuracy 17/17 PASS; test_pwa_update_integrity 7/7 PASS; test_live_hoc_bai_https 18/18 PASS trên https://aihoctap.online (Zero-Overflow 100%, 0 lỗi Console F12); Worker deploy 4c55a03b-6ba4-462e-801e-b79e0f255508; tools/package_student_pwa.py --check PASS.
+- Việc tiếp: Claude nghiệm thu toàn diện và cấp quyền cho Thầy push Git.

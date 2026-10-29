@@ -1319,6 +1319,7 @@ form('tutor-form').addEventListener('submit', async event => {
       attempt_count: 1,
       context: session ? { weak_topics: mastery.weakTopics(session.identity.uid) } : undefined   // Bản đồ năng lực: Gia sư củng cố đúng chủ đề em còn yếu
     };
+    if (session && !session.token && session.pin) await workerToken(session.identity.uid, session.pin);
     /** @type {import('./contracts').TutorResponse} */
     const res = await api('/pwa/tutor', { method: 'POST', body: payload, token: session?.token });
     loadingMsg.remove();
