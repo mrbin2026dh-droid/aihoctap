@@ -16,10 +16,10 @@ function env() {
     console, MimeType: { PLAIN_TEXT: 'text/plain' },
     DriveApp: (() => { const files = {}; const mkF = (name, path) => { const f = { name, path, folders: {}, files: [], getId: () => path, getFoldersByName: n => { const x = f.folders[n]; let used = false; return { hasNext: () => !!x && !used, next: () => { used = true; return x; } }; }, createFolder: n => (f.folders[n] = mkF(n, path + '/' + n)),
       getFilesByName: n => { const xs = f.files.filter(z => z.name === n && !z.trashed); let i = 0; return { hasNext: () => i < xs.length, next: () => xs[i++] }; },
-      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getBlob = () => ({ getBytes: () => (Array.isArray(z.content) ? z.content : [...Buffer.from(String(z.content))]), getContentType: () => z.mime || 'application/octet-stream' }); z.getId = () => path + '/' + z.name; z.setSharing = (acc, perm) => { z.sharing = acc + ':' + perm; }; z.moveTo = d => { z.moved = d.path; }; files[z.getId()] = z; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
+      createFile: (a, b, c) => { const z = typeof a === 'string' ? { name: a, content: b, mime: c } : { name: a.name, content: a.bytes, mime: a.mime }; z.setTrashed = v => { z.trashed = v; }; z.getBlob = () => ({ getBytes: () => (Array.isArray(z.content) ? z.content : [...Buffer.from(String(z.content))]), getContentType: () => z.mime || 'application/octet-stream' }); z.getId = () => path + '/' + z.name; z.getName = () => z.name; z.setSharing = (acc, perm) => { z.sharing = acc + ':' + perm; }; z.moveTo = d => { z.moved = d.path; }; files[z.getId()] = z; f.files.push(z); drive.push({ path: path + '/' + z.name, ...z }); return z; } }; return f; };
       const root = mkF('root', ''); return { Access: { ANYONE_WITH_LINK: 'link' }, Permission: { VIEW: 'view' }, getRootFolder: () => root, getFolderById: () => { throw new Error('x'); }, getFileById: id => { if (!files[id]) throw new Error('no'); return files[id]; } }; })(),
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; }, deleteProperty: k => { delete props[k]; } }) },
-    Utilities: { base64Decode: b => [...Buffer.from(b, 'base64')], base64Encode: bytes => Buffer.from(bytes.map(x => x & 255)).toString('base64'), newBlob: (bytes, mime, name) => ({ bytes, mime, name }), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
+    Utilities: { base64Decode: b => [...Buffer.from(b, 'base64')], base64Encode: bytes => Buffer.from(bytes.map(x => x & 255)).toString('base64'), newBlob: (bytes, mime, name) => ({ bytes, mime, name }), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' }, formatDate: (d, tz, f) => { const x = new Date(d.getTime() + 7 * 3600e3), z = n => String(n).padStart(2, '0'); return f.replace('HH', z(x.getUTCHours())).replace('mm', z(x.getUTCMinutes())).replace('ss', z(x.getUTCSeconds())).replace('dd', z(x.getUTCDate())).replace('MM', z(x.getUTCMonth() + 1)).replace('yyyy', x.getUTCFullYear()); }, computeDigest: (a, str) => [...require('crypto').createHash('sha256').update(str, 'utf8').digest()].map(b => b > 127 ? b - 256 : b) },
     UrlFetchApp: { fetch: (url, opt) => {
       const u = new URL(url); fbCalls.push({ method: opt.method, path: u.pathname, auth: u.searchParams.get('auth') });
       const parts = u.pathname.replace(/\.json$/, '').split('/').filter(Boolean);
@@ -92,7 +92,7 @@ ok(gv({ action: 'gv_create', tieu_de: 'Ôn tập', che_do: 'thu', khoi: 8, lop: 
 const q8 = [{ text: 'Q1?', options: { A: 'a', B: 'b' }, answer: 'b', points: 4 }, { text: 'Q2?', options: { A: 'a', B: 'b' }, answer: 'A', points: 6 }];
 const c2 = gv({ action: 'gv_create', tieu_de: 'Ôn tập 8', che_do: 'thu', khoi: 8, lop: '', questions: q8 });
 const E2 = c2.exams.find(e => e.che_do === 'thu');
-ok(c2.exams.length === 2 && E2.questions === 2 && E2.total === 1 && sheets.DeThiThu.rows.length === 3 && sheets.DeThiThu.rows[1][9] === E2.ma_de, 'thi thử: ghi đề vào DeThiThu kèm Mã bài thi; hai bài cùng tồn tại');
+ok(c2.exams.length === 2 && E2.questions === 2 && E2.total === 1 && sheets.DeThiThu.rows.filter(r => r[9] === E2.ma_de).length === 2 && sheets.DeThiThu.rows.filter(r => r[9] === E1.ma_de).length === 3, 'thi thử: ghi đề vào DeThiThu kèm Mã bài thi; bài thi thật có đề riêng (chụp từ ngân hàng DeThi lúc tạo); các bài cùng tồn tại');
 ok(call({ action: 'exams', ...DUNG }).exams.length === 0, 'thi thử đang khóa → ẩn khỏi học sinh');
 ok(call({ action: 'exam', ...DUNG, ma_de: E2.ma_de }).error.includes('khóa'), 'thi thử khóa → không vào được');
 gv({ action: 'gv_set', ma_de: E2.ma_de, trang_thai: 'mo' });
@@ -104,7 +104,7 @@ const t2 = call({ action: 'submit', ...DUNG, ma_de: E2.ma_de, answers: {} });
 ok(t1.ok && t1.score === 4 && t2.ok, 'thi thử: làm nhiều lần');
 const up = gv({ action: 'gv_update', ma_de: E2.ma_de, tieu_de: 'Ôn tập 8 (mới)', khoi: 8, lop: '8A', questions: [q8[0]] });
 const U2 = up.exams.find(e => e.ma_de === E2.ma_de);
-ok(U2.tieu_de === 'Ôn tập 8 (mới)' && U2.lop === '8A' && U2.questions === 1 && sheets.DeThiThu.rows.length === 2, 'chỉnh sửa thi thử: đổi tiêu đề/lớp và thay đề');
+ok(U2.tieu_de === 'Ôn tập 8 (mới)' && U2.lop === '8A' && U2.questions === 1 && sheets.DeThiThu.rows.filter(r => r[9] === E2.ma_de).length === 1, 'chỉnh sửa thi thử: đổi tiêu đề/lớp và thay đề');
 ok(gv({ action: 'gv_update', ma_de: E1.ma_de, tieu_de: ' ' }).error.includes('tiêu đề'), 'sửa bỏ trống tiêu đề → báo');
 const nKq = sheets.KetQua.rows.length;
 const del = gv({ action: 'gv_delete', ma_de: E2.ma_de });
@@ -126,18 +126,18 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   const hs = E.fbdb.thi_hs.hs9a01, hash = require('crypto').createHash('sha256').update('hs9a01:123456').digest('hex');
   ok(hs.ten === 'Nguyễn Văn An' && hs.lop === '9A' && hs.khoi === 9 && hs.h === hash && !JSON.stringify(E.fbdb.thi_hs).includes('123456'), 'thi_hs: tên, lớp, khối, PIN đã băm (không lộ PIN gốc)');
   const id = r0.exams[0].ma_de, bai = E.fbdb.thi_bai[id];
-  ok(bai.tieu_de === 'TT' && bai.trang_thai === 'khoa' && bai.so_cau === 2 && E.fbdb.thi_de[id].length === 2 && E.fbdb.thi_de[id][0].answer === 'A', 'thi_bai + thi_de (kèm đáp án để máy học sinh tự chấm)');
+  ok(bai.tieu_de === 'TT' && bai.trang_thai === 'khoa' && bai.so_cau === 2 && E.fbdb.thi_de[id].length === 2 && !JSON.stringify(E.fbdb.thi_de[id]).includes('answer'), 'thi_bai + thi_de: đề THI THẬT không kèm đáp án (Sheet chấm)');
   c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' });
   ok(E.fbdb.thi_bai[id].trang_thai === 'mo', 'Mở thi → Firebase đổi ngay');
   ok(E.fbdb.thi_bai[id].xem_diem === false, 'thi thật: mặc định chưa cho xem điểm');
   const xd = c({ action: 'gv_set', ma_de: id, xem_diem: 'co' });
   ok(xd.exams[0].xem_diem === true && E.fbdb.thi_bai[id].xem_diem === true && E.fbdb.thi_bai[id].trang_thai === 'mo', 'bật Cho xem điểm → Firebase đổi ngay, vẫn giữ trạng thái mở');
-  E.fbdb.thi_nop = { [id]: { hs9a01: { ma: 'hs9a01', ten: 'Nguyễn Văn An', lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, tra_loi: { r2: 'A' }, at: 1761550000000 } } };
+  const q0 = E.fbdb.thi_de[id][0].id; E.fbdb.thi_nop = { [id]: { hs9a01: { ma: 'hs9a01', ten: 'Nguyễn Văn An', lop: '9A', diem: 10, tong: 10, tra_loi: { [q0]: 'A' }, at: 1761550000000 } } };
   c({ action: 'gv_list' }); c({ action: 'gv_list' });
   const rows = E.sheets.KetQua.rows.filter(r => r[9] === id);
-  ok(rows.length === 1 && rows[0][4] === 5 && rows[0][8] === 'Thi thật' && rows[0][11].startsWith(id + '|hs9a01|'), 'mở danh sách → điểm trên Firebase chép về KetQua, không chép trùng');
-  const txt = E.drive.find(f => f.path.endsWith('hs9a01 - Nguyễn Văn An.txt'));
-  ok(txt && txt.path.includes('/Bài thi - Góc học tập/') && txt.path.includes('/Lớp 9A/Khác - TT/') && txt.content.includes('Đáp án đúng: A · Em chọn: A · ĐÚNG') && txt.content.includes('Em chọn: (bỏ trống) · SAI') && txt.content.includes('ĐIỂM: 5/10'), 'thi thật: lưu file chữ bài làm lên Drive theo Năm học / Lớp / Hình thức - Tiêu đề');
+  ok(rows.length === 1 && rows[0][4] === 5 && rows[0][5] === 10 && rows[0][8] === 'Thi thật' && rows[0][11].startsWith(id + '|hs9a01|'), 'mở danh sách → bài trên Firebase chép về KetQua, Sheet tự chấm 5/10 (bỏ điểm máy học sinh gửi 10), không chép trùng');
+  const txt = E.drive.find(f => f.path.endsWith('/hs9a01 - Nguyễn Văn An/Bài làm - Lần 1.txt'));
+  ok(txt && txt.path.includes('/Bài thi - Góc học tập/') && txt.path.includes('/Lớp 9A/Khác - TT/') && txt.content.includes('Đáp án đúng: A · Em chọn: A · ĐÚNG') && txt.content.includes('Em chọn: (bỏ trống) · SAI') && txt.content.includes('ĐIỂM TRẮC NGHIỆM (máy chấm): 5/10') && txt.content.includes('Nộp bài lúc: 14:26:40 27/10/2025'), 'thi thật: file chữ bài làm trong thư mục từng em (Năm học / Lớp / Hình thức - Tiêu đề / Mã - Tên), giờ nộp Việt Nam');
   const rs = c({ action: 'gv_reset', ma_de: id, ma: 'HS9A01' });
   ok(rs.ok && !E.fbdb.thi_nop[id].hs9a01 && E.sheets.KetQua.rows.find(r => r[9] === id)[10] === 'Hủy', 'cho thi lại → xóa bài nộp trên Firebase + đánh dấu Hủy');
   c({ action: 'gv_delete', ma_de: id });
@@ -145,10 +145,11 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   const e2 = r2.exams.find(e => e.tieu_de === 'Cuối kỳ');
   ok(e2.nam_hoc === '2026-2027' && e2.hinh_thuc === 'Cuối kỳ I' && e2.noi_dung === 'tn_th' && E.fbdb.thi_bai[e2.ma_de].noi_dung === 'tn_th', 'thi thật: lưu năm học, hình thức, Trắc nghiệm + Thực hành');
   const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
-  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai.docx', data: 'aGVsbG8=' }).error.includes('khóa'), 'nộp thực hành khi bài khóa → chặn');
-  c({ action: 'gv_set', ma_de: e2.ma_de, trang_thai: 'mo' });
+  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai.docx', data: 'aGVsbG8=' }).error.includes('chưa mở'), 'nộp thực hành khi chưa mở thi cho em → chặn');
+  c({ action: 'gv_tt', ma_de: e2.ma_de, lenh: 'mo_lop', lop: '9A' });
   const th = call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'bai.docx', mime: 'application/msword', data: 'aGVsbG8=' });
-  ok(th.ok && E.drive.some(f => f.path.endsWith('/Lớp 9A/Cuối kỳ I - Cuối kỳ/hs9a01 - Nguyễn Văn An - Thực hành - bai.docx')) && E.fbdb.thi_th[e2.ma_de].hs9a01.ten_file === 'bai.docx', 'nộp thực hành → file vào thư mục lớp trên Drive + báo Firebase');
+  ok(th.ok && th.size === 5 && E.drive.some(f => f.path.includes('/Lớp 9A/Cuối kỳ I - Cuối kỳ/hs9a01 - Nguyễn Văn An/Thực hành - ') && f.path.endsWith(' - bai.docx')) && E.fbdb.thi_th[e2.ma_de].hs9a01.ten_file === 'bai.docx' && E.fbdb.thi_th[e2.ma_de].hs9a01.file_id && E.fbdb.thi_th[e2.ma_de].hs9a01.size === 5, 'nộp thực hành → file vào thư mục của em trên Drive + báo Firebase (mã file, dung lượng)');
+  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: e2.ma_de, ten_file: 'virus.exe', data: 'aGVsbG8=' }).error.includes('Word'), 'chỉ nhận .docx/.xlsx/.pptx/.pdf');
   { // Chấm thực hành: tiêu chí ở Sheet, chỉ đề bài lên Firebase; file bài làm → giáo viên chấm (máy + AI gợi ý) → lưu điểm
     const TH = { loai: 'excel', de: 'Tính tổng cột D vào ô D11', tieu_chi: [{ mo_ta: 'D11 dùng hàm SUM', diem: 2, kt: { type: 'excel_formula', a: 'D11', b: 'SUM' } }, { mo_ta: 'Kết quả đúng', diem: 1, kt: { type: 'excel_value', a: 'D11', b: '120' } }, { mo_ta: '', diem: 3 }, { mo_ta: 'Lạ', diem: 1, kt: { type: 'rm -rf', a: 'x' } }] };
     c({ action: 'gv_update', ma_de: e2.ma_de, thuc_hanh: TH });
@@ -167,18 +168,19 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   ok(qd.questions.length === 2 && qd.questions[0].answer === 'A', 'giáo viên lấy câu hỏi kèm đáp án để sửa');
   ok(c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Q?', options: { A: 'x' }, answer: 'A', points: 1 }] }).error.includes('ít nhất 2 phương án'), 'sửa câu hỏi: kiểm phương án');
   c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Câu mới?', options: { A: 'x', B: 'y' }, answer: 'B', points: 4 }] });
-  ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === 'B', 'lưu câu hỏi đã sửa → Sheet và Firebase');
+  ok(E.sheets.DeThi.rows.filter(r => String(r[1]) === '9').length === 2 && E.sheets.DeThiThu.rows.filter(r => r[9] === e2.ma_de).length === 1 && E.fbdb.thi_de[e2.ma_de][0].text === 'Câu mới?' && E.fbdb.thi_de[e2.ma_de][0].answer === undefined, 'sửa đề thi thật → đề riêng của bài (ngân hàng DeThi giữ nguyên), Firebase không có đáp án');
   ok(!E.fbdb.thi_bai[id] && !E.fbdb.thi_de[id], 'xóa bài → gỡ khỏi Firebase');
   c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'Bit là gì?', options: { A: 'x', B: 'y' }, answer: 'A', points: 2, topic: 'Mã nhị phân', level: 'Hiểu' }, { text: 'Byte?', options: { A: 'x', B: 'y' }, answer: 'B', points: 2, topic: 'Mã nhị phân', level: 'Sai' }] });
-  const dRow = E.sheets.DeThi.rows.find(r => r[2] === 'Bit là gì?');
-  ok(dRow[9] === 'Mã nhị phân' && dRow[10] === 'Hiểu' && E.sheets.DeThi.rows.find(r => r[2] === 'Byte?')[10] === '' && E.fbdb.thi_de[e2.ma_de][0].topic === 'Mã nhị phân' && c({ action: 'gv_questions', ma_de: e2.ma_de }).questions[0].level === 'Hiểu', 'câu hỏi có Chủ đề + Mức độ (Biết/Hiểu/Vận dụng): lưu Sheet, đẩy chủ đề lên Firebase');
+  const dRow = E.sheets.DeThiThu.rows.find(r => r[2] === 'Bit là gì?');
+  ok(dRow[10] === 'Mã nhị phân' && dRow[11] === 'Hiểu' && E.sheets.DeThiThu.rows.find(r => r[2] === 'Byte?')[11] === '' && c({ action: 'gv_questions', ma_de: e2.ma_de }).questions[0].level === 'Hiểu', 'câu hỏi có Chủ đề + Mức độ (Biết/Hiểu/Vận dụng): lưu Sheet');
   const tt = c({ action: 'gv_create', tieu_de: 'TT chủ đề', che_do: 'thu', khoi: 9, lop: '9A', questions: [{ text: 'Q1', options: { A: 'a', B: 'b' }, answer: 'A', points: 1, topic: 'Dữ liệu số', level: 'Biết' }] });
   const ttId = tt.exams.find(e => e.tieu_de === 'TT chủ đề').ma_de;
   ok(E.sheets.DeThiThu.rows.find(r => r[9] === ttId)[10] === 'Dữ liệu số' && E.fbdb.thi_de[ttId][0].topic === 'Dữ liệu số', 'thi thử: chủ đề lưu ở DeThiThu (giữ cột Mã bài thi)');
   // Thi thử Trắc nghiệm + Tự luận: câu TL lưu "TL" + gợi ý chấm (cột M), đẩy lên Firebase dạng kind:'tl' + goi_y
   const TLQ = [{ text: 'Q1', options: { A: 'a', B: 'b' }, answer: 'A', points: 1 }, { kind: 'tl', text: 'Nêu 2 ví dụ thiết bị số.', guide: '- Điện thoại (1đ)\n- Máy tính (1đ)', points: 2, topic: 'Thiết bị số' }];
   ok(c({ action: 'gv_create', tieu_de: 'TL thiếu gợi ý', che_do: 'thu', khoi: 9, lop: '9A', questions: [{ kind: 'tl', text: 'X', guide: '', points: 1 }] }).error.includes('gợi ý đáp án'), 'câu tự luận thiếu gợi ý đáp án → báo rõ');
-  ok(c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ kind: 'tl', text: 'X', guide: 'g', points: 1 }] }).error.includes('chỉ đề thi thử'), 'thi thật không nhận câu tự luận');
+  { const r = c({ action: 'gv_update', ma_de: e2.ma_de, questions: [{ text: 'TN?', options: { A: 'x', B: 'y' }, answer: 'A', points: 1 }, { kind: 'tl', text: 'Giải thích X', guide: 'gợi ý bí mật', points: 2 }] });
+    ok(r.ok && E.fbdb.thi_de[e2.ma_de][1].kind === 'tl' && !JSON.stringify(E.fbdb.thi_de[e2.ma_de]).includes('gợi ý bí mật') && Object.values(E.fbdb.thi_goi_y[e2.ma_de])[0] === 'gợi ý bí mật', 'thi thật có tự luận: đề lên Firebase không kèm gợi ý chấm; gợi ý nằm nhánh kín thi_goi_y (Worker đọc để AI gợi ý điểm)'); }
   const tl = c({ action: 'gv_create', tieu_de: 'TT tự luận', che_do: 'thu', khoi: 9, lop: '9A', noi_dung: 'tn_tl', questions: TLQ });
   const tlE = tl.exams.find(e => e.tieu_de === 'TT tự luận'), tlRow = E.sheets.DeThiThu.rows.find(r => r[9] === tlE.ma_de && r[7] === 'TL');
   ok(tlE.noi_dung === 'tn_tl' && tlRow && tlRow[12].includes('Điện thoại') && tlRow[3] === '' && E.sheets.DeThiThu.rows[0][12] === 'Gợi ý chấm', 'DeThiThu: câu tự luận ghi TL, gợi ý ở cột "Gợi ý chấm"; bài ghi nội dung tn_tl');
@@ -189,36 +191,100 @@ ok(mg.exams.length === 1 && mg.exams[0].ma_de === '111' && mg.exams[0].questions
   c({ action: 'gv_update', ma_de: tlE.ma_de, questions: [TLQ[0]] });
   ok(E.fbdb.thi_bai[tlE.ma_de].noi_dung === 'tn' && E.fbdb.thi_de[tlE.ma_de].length === 1, 'bỏ hết câu tự luận khi sửa → nội dung về Trắc nghiệm');
 }
-// ---------- Lấy điểm về Sheet khi nhiều học sinh: nhanh, không chép trùng, đúng thứ tự khi cho thi lại ----------
+// ---------- Lấy bài về Sheet khi nhiều học sinh: nhanh, không chép trùng, chỉ kéo khi còn lớp đang thi ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); E.props.FB_SECRET = 's';
-  const id = c({ action: 'gv_create', tieu_de: 'Lớn', che_do: 'that', khoi: 9, lop: '9A' }).exams[0].ma_de; c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' });
-  const sub = (k, at) => ({ ma: k, ten: 'Em ' + k, lop: '9A', diem: 5, tong: 10, dung: 1, so_cau: 2, tra_loi: { r2: 'A' }, at });
-  E.fbdb.thi_nop = { [id]: {} }; for (let i = 1; i <= 20; i++) E.fbdb.thi_nop[id]['k' + i] = sub('k' + i, 1761550000000 + i);
+  const id = c({ action: 'gv_create', tieu_de: 'Lớn', che_do: 'that', khoi: 9, lop: '9A' }).exams[0].ma_de;
+  E.fbdb.thi_tt = { [id]: { dangthi: { tt: 'chua_thi', lop: '9A' } } };   // còn một em đang được mở thi
+  const q0 = E.fbdb.thi_de[id][0].id, sub = (k, at) => ({ ma: k, ten: 'Em ' + k, lop: '9A', tra_loi: { [q0]: 'A' }, at, lan: 1 });
+  E.fbdb.thi_nop = { [id]: {} }; for (let i = 1; i <= 25; i++) E.fbdb.thi_nop[id]['k' + i] = sub('k' + i, 1761550000000 + i);
   c({ action: 'gv_list' });
   const kqOf = () => E.sheets.KetQua.rows.filter(r => r[9] === id);
-  ok(kqOf().length === 20, '20 bài nộp chép về KetQua');
+  ok(kqOf().length === 25 && kqOf().every(r => r[4] === 5 && r[5] === 10), '25 bài nộp chép về KetQua, Sheet chấm từng bài');
   const txts = () => E.drive.filter(f => f.path.includes('Khác - Lớn/') && f.path.endsWith('.txt') && !f.trashed).length;
-  ok(txts() === 15, 'lưu Drive tối đa 15 bài mỗi lần (không quá giờ chạy Apps Script)');
-  E.fbdb.thi_nop[id].k21 = sub('k21', 1761550000999);
+  ok(txts() === 20, 'lưu Drive tối đa 20 bài mỗi lần (không quá giờ chạy Apps Script)');
+  ok(E.props.CO_CA_MO === '1', 'còn lớp đang thi → bật cờ để trigger 1 phút kéo bài');
+  E.fbdb.thi_nop[id].k26 = sub('k26', 1761550000999);
   c({ action: 'gv_list' });
-  ok(kqOf().length === 20, 'mở menu Thi lần nữa trong 2 phút → không tải lại Firebase (nhanh)');
-  E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
-  ok(kqOf().length === 21 && txts() === 21, 'quá 2 phút → chép bài mới + lưu Drive phần còn lại');
-  // cho thi lại: bài chưa chép về phải được chép rồi mới đánh Hủy
-  E.fbdb.thi_nop[id].k22 = sub('k22', 1761550001111);
-  c({ action: 'gv_reset', ma_de: id, ma: 'k22' });
-  const k22 = kqOf().filter(r => r[1] === 'k22');
-  ok(k22.length === 1 && k22[0][10] === 'Hủy' && !E.fbdb.thi_nop[id].k22, 'cho thi lại: chép bài về trước rồi đánh Hủy (không còn bài cũ tính điểm)');
-  // bài đã khóa và đã chép xong → lần sau không tải lại
-  c({ action: 'gv_set', ma_de: id, trang_thai: 'khoa' }); E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
+  ok(kqOf().length === 25, 'mở menu Thi lần nữa trong 2 phút → không tải lại Firebase (nhanh)');
+  E.ctx.keoBaiTuDong_();
+  ok(kqOf().length === 26 && txts() === 26 && Object.keys(E.fbdb.thi_drive[id]).length === 26, 'trigger mỗi phút: chép bài mới + lưu Drive phần còn lại + báo thi_drive');
+  // hết lớp đang thi → bài này không tải lại; cờ tắt → trigger thoát ngay
+  E.fbdb.thi_tt[id].dangthi.tt = 'da_thi'; E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
   const before = E.fbCalls.filter(x => x.method === 'get' && x.path === `/thi_nop/${id}.json`).length;
-  E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
-  ok(E.fbCalls.filter(x => x.method === 'get' && x.path === `/thi_nop/${id}.json`).length === before, 'bài đã khóa và đã chép xong → không tải lại từ Firebase');
+  E.props.LAST_PULL = '0'; c({ action: 'gv_list' }); E.ctx.keoBaiTuDong_();
+  ok(E.fbCalls.filter(x => x.method === 'get' && x.path === `/thi_nop/${id}.json`).length === before && !E.props.CO_CA_MO, 'không còn em đang thi → không tải lại bài này, trigger không chạy');
   ok(!E.fbCalls.some(x => x.method === 'get' && x.path === '/thi_nop.json'), 'không bao giờ tải cả cây thi_nop');
-  c({ action: 'gv_set', ma_de: id, trang_thai: 'mo' }); E.fbdb.thi_nop[id].k23 = sub('k23', 1761550002222); E.props.LAST_PULL = '0'; c({ action: 'gv_list' });
-  ok(kqOf().some(r => r[1] === 'k23'), 'mở lại bài → lại chép bài mới');
-  E.fbdb.thi_nop[id].k24 = sub('k24', 1761550003333); c({ action: 'gv_delete', ma_de: id });
-  ok(kqOf().some(r => r[1] === 'k24'), 'xóa bài: chép điểm còn trên Firebase về trước khi ẩn');
+  E.fbdb.thi_nop[id].k27 = sub('k27', 1761550003333); c({ action: 'gv_delete', ma_de: id });
+  ok(kqOf().some(r => r[1] === 'k27'), 'xóa bài: chép bài còn trên Firebase về trước khi ẩn');
+}
+// ---------- THI THẬT THEO CA (30/10): 4 trạng thái, mở/đóng lớp, thi lại lấy điểm lần sau, ghi chú vắng, file minh chứng đúng thứ tự đảo ----------
+{ const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });
+  E.ctx.taoMau(); E.props.FB_SECRET = 's';
+  const QS = [{ text: 'CPU là gì?', options: { A: 'Bộ xử lí', B: 'Màn hình', C: 'Chuột', D: 'Loa' }, answer: 'A', points: 2 }, { text: 'Bit có mấy giá trị?', options: { A: '1', B: '2', C: '3', D: '4' }, answer: 'B', points: 3 }, { kind: 'tl', text: 'Nêu 2 thiết bị số.', guide: 'Điện thoại, máy tính', points: 5 }];
+  const ex0 = c({ action: 'gv_create', tieu_de: 'Giữa kỳ I', che_do: 'that', khoi: 9, lop: '', hinh_thuc: 'Giữa kỳ I', nam_hoc: '2026-2027', questions: QS }).exams.find(e => e.tieu_de === 'Giữa kỳ I');
+  const id = ex0.ma_de, de = E.fbdb.thi_de[id];
+  ok(ex0.noi_dung === 'tn_tl' && de.length === 3 && !JSON.stringify(de).includes('answer') && !JSON.stringify(de).includes('Điện thoại'), 'đề thi thật TN+TL khối 9: lên Firebase không đáp án, không gợi ý chấm');
+  ok(!E.fbdb.thi_tt || !E.fbdb.thi_tt[id], 'mặc định mọi em: Chưa mở thi (không có bản ghi)');
+  ok(c({ action: 'gv_tt', ma_de: id, lenh: 'mo_lop', lop: '8A' }).error.includes('khối 9'), 'mở lớp khác khối → báo');
+  const mo = c({ action: 'gv_tt', ma_de: id, lenh: 'mo_lop', lop: '9A' });
+  const tt = () => E.fbdb.thi_tt[id] || {};
+  ok(mo.ok && mo.n === 2 && tt().hs9a01.tt === 'chua_thi' && tt().hs9a02.tt === 'chua_thi' && !tt().hs9b01, 'Mở thi cho lớp 9A: 2 em sang Chưa thi; lớp 9B vẫn Chưa mở thi');
+  ok(E.sheets.NhatKyThi.rows.at(-1)[4].startsWith('Mở thi cho lớp') && E.props.CO_CA_MO === '1', 'ghi nhật ký thao tác + bật cờ kéo bài');
+  // em 1 nộp (máy học sinh ghi thi_nop + đổi tt → da_thi cùng lúc; luật Firebase kiểm)
+  const [q1, q2, q3] = de.map(q => q.id);
+  E.fbdb.thi_vao = { [id]: { hs9a01: 1793329800000 } };
+  E.fbdb.thi_nop = { [id]: { hs9a01: { ma: 'HS9A01', ten: 'Nguyễn Văn An', lop: '9A', lan: 1, roi_tab: 2, at: 1793331125000, tra_loi: { [q1]: 'A', [q2]: 'C' }, tu_luan: { [q3]: { tl: 'Điện thoại và laptop', d: 4, max: 5, nx: 'Đúng ý' } }, thu_tu: { q: [q2, q1], o: { [q1]: 'DCBA', [q2]: 'BADC' } } } } };
+  E.fbdb.thi_tt[id].hs9a01 = { tt: 'da_thi', lop: '9A', lan: 1 };
+  const sv = c({ action: 'gv_luu', ma_de: id });
+  const row = E.sheets.KetQua.rows.find(r => r[9] === id && r[1] === 'HS9A01');
+  ok(sv.ok && row[4] === 6 && row[5] === 10 && row[6] === '1/2', 'Sheet chấm: TN đúng 1/2 (2 điểm) + tự luận AI gợi ý 4 → 6/10');
+  const txt = E.drive.find(f => f.path.endsWith('/Lớp 9A/Giữa kỳ I - Giữa kỳ I/HS9A01 - Nguyễn Văn An/Bài làm - Lần 1.txt'));
+  const T = txt ? txt.content : '';
+  ok(!!txt && T.includes('Vào thi lúc: 10:10:00 30/10/2026') && T.includes('Nộp bài lúc: 10:32:05 30/10/2026') && T.includes('Số lần rời màn hình bài thi: 2') && T.includes('Lần thi: 1'), 'file minh chứng: ngày giờ phút giây vào thi và nộp bài (giờ Việt Nam), số lần rời màn hình, lần thi');
+  const i1 = T.indexOf('Câu 1 (3 điểm): Bit có mấy giá trị?'), i2 = T.indexOf('Câu 2 (2 điểm): CPU là gì?');
+  ok(i1 > 0 && i2 > i1, 'câu hỏi theo ĐÚNG thứ tự em thấy (đã đảo: câu Bit trước, câu CPU sau)');
+  ok(T.includes('   A. 2\n   B. 1\n   C. 4\n   D. 3') && T.includes('Đáp án đúng: A · Em chọn: D · SAI · Điểm: 0') && T.includes('(Đối chiếu đề gốc: câu 2, đáp án gốc B, em chọn gốc C)'), 'phương án theo đúng thứ tự em thấy; đáp án đúng/em chọn ghi theo chữ em thấy + đối chiếu đề gốc');
+  ok(T.includes('   A. Loa\n   B. Chuột\n   C. Màn hình\n   D. Bộ xử lí') && T.includes('Đáp án đúng: D · Em chọn: D · ĐÚNG · Điểm: 2'), 'câu CPU: em chọn đúng (gốc A, em thấy D)');
+  ok(T.includes('ĐIỂM TRẮC NGHIỆM (máy chấm): 2/5 · Đúng 1/2 câu') && T.includes('ĐIỂM TỰ LUẬN (AI gợi ý, chờ giáo viên duyệt): 4/5') && T.includes('Điện thoại và laptop'), 'điểm TN chính xác; tự luận ghi bài làm + gợi ý AI');
+  ok(E.fbdb.thi_drive[id].hs9a01.txt === true && E.fbdb.thi_drive[id].hs9a01.thu_muc.includes('HS9A01') && sv.drive.hs9a01, 'báo thi_drive (dấu kiểm + nút mở Drive) và gv_ca trả thư mục');
+  // cho thi lại: chỉ khi đã thi, bắt buộc lý do; lần 2 thay điểm lần 1, file lần 1 vẫn giữ
+  ok(c({ action: 'gv_tt', ma_de: id, lenh: 'thi_lai', ma: 'HS9A02', ly_do: 'Máy hỏng' }).error.includes('Chỉ cho thi lại em đã thi'), 'em chưa thi → không cho thi lại');
+  ok(c({ action: 'gv_tt', ma_de: id, lenh: 'thi_lai', ma: 'HS9A01' }).error.includes('lý do'), 'thi lại phải chọn lý do');
+  ok(c({ action: 'gv_tt', ma_de: id, lenh: 'thi_lai', ma: 'HS9A01', ly_do: 'Máy hỏng' }).ok && tt().hs9a01.tt === 'thi_lai' && tt().hs9a01.ly_do === 'Máy hỏng', 'Cho thi lại → Thi lại (ghi lý do)');
+  ok(['thi_th', 'thi_tien_do', 'thi_vao'].every(b => E.fbCalls.some(x => x.method === 'delete' && x.path === `/${b}/${id}/hs9a01.json`)), 'thi lại: xóa file thực hành, tiến độ, giờ vào của lần trước trên Firebase (Drive vẫn giữ) → em phải nộp lại thực hành');
+  E.fbdb.thi_nop[id].hs9a01 = { ...E.fbdb.thi_nop[id].hs9a01, lan: 2, at: 1793417525000, tra_loi: { [q1]: 'A', [q2]: 'B' } };
+  E.fbdb.thi_tt[id].hs9a01 = { tt: 'da_thi', lop: '9A', lan: 2 };
+  c({ action: 'gv_luu', ma_de: id });
+  const both = E.sheets.KetQua.rows.filter(r => r[9] === id && r[1] === 'HS9A01');
+  ok(both.length === 2 && both[0][10] === 'Hủy' && both[1][10] === '' && both[1][4] === 9, 'thi lại: lấy điểm lần thi lại (9/10), lần 1 đánh Hủy');
+  ok(E.drive.some(f => f.path.endsWith('/Bài làm - Lần 1.txt') && !f.trashed) && E.drive.some(f => f.path.endsWith('/Bài làm - Lần 2.txt') && !f.trashed), 'Drive giữ cả Lần 1 và Lần 2 làm minh chứng');
+  // ghi chú vắng
+  ok(c({ action: 'gv_vang', ma_de: id, ma: 'HS9A02', ly_do: 'Bận' }).error.includes('không hợp lệ'), 'lý do vắng phải trong danh sách');
+  ok(c({ action: 'gv_vang', ma_de: id, ma: 'HS9A02', ly_do: 'Khác' }).error.includes('Ghi rõ'), 'lý do Khác phải ghi rõ');
+  const vg = c({ action: 'gv_vang', ma_de: id, ma: 'HS9A02', ly_do: 'Ốm', ghi: 'Sốt' });
+  ok(vg.vang.hs9a02.ly_do === 'Ốm' && E.sheets.DiemDanhThi.rows.find(r => String(r[1]).toLowerCase() === 'hs9a02')[5] === 'Sốt' && !JSON.stringify(E.fbdb).includes('Sốt'), 'ghi chú vắng lưu trang DiemDanhThi (không đưa lý do sức khỏe lên Firebase công khai)');
+  ok(c({ action: 'gv_vang', ma_de: id, ma: 'HS9A02', ly_do: '' }).vang.hs9a02 === undefined && !E.sheets.DiemDanhThi.rows.some(r => String(r[1]).toLowerCase() === 'hs9a02'), 'bỏ ghi chú vắng');
+  // đóng lớp: em chưa nộp về Chưa mở thi; em đã thi giữ nguyên; mở cho từng em ở ca sau
+  const dong = c({ action: 'gv_tt', ma_de: id, lenh: 'dong_lop', lop: '9A' });
+  ok(dong.ok && dong.n === 1 && tt().hs9a02.tt === 'chua_mo' && tt().hs9a01.tt === 'da_thi', 'Đóng thi lớp: em chưa nộp về Chưa mở thi, em đã thi giữ Đã thi');
+  ok(c({ action: 'gv_tt', ma_de: id, lenh: 'mo_em', ma: 'HS9A01' }).error.includes('Đã thi'), 'em đã thi không mở lại bằng "Mở cho em" (phải Cho thi lại)');
+  ok(c({ action: 'gv_tt', ma_de: id, lenh: 'mo_em', ma: 'HS9A02' }).ok && tt().hs9a02.tt === 'chua_thi', 'Mở cho em này (thi bù ca sau) → Chưa thi');
+  ok(c({ action: 'gv_update', ma_de: id, questions: QS.slice(0, 2) }).error.includes('không sửa đề'), 'đã có em nộp → không sửa đề (bài làm đã lưu phải khớp đề)');
+  // nộp thực hành chỉ khi đang được mở thi
+  const exTh = c({ action: 'gv_create', tieu_de: 'TH', che_do: 'that', khoi: 9, lop: '9A', noi_dung: 'tn_th', questions: QS.slice(0, 2) }).exams.find(e => e.tieu_de === 'TH');
+  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: exTh.ma_de, ten_file: 'a.xlsx', data: 'aGk=' }).error.includes('chưa mở'), 'thực hành: chưa mở thi cho em → chặn');
+  c({ action: 'gv_tt', ma_de: exTh.ma_de, lenh: 'mo_lop', lop: '9A' });
+  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: exTh.ma_de, ten_file: 'a.xlsx', data: 'aGk=' }).ok && E.fbdb.thi_th[exTh.ma_de].hs9a01.file_id, 'thực hành: đang được mở thi → nhận file, báo thi_th có mã file');
+  E.fbdb.thi_tt[exTh.ma_de].hs9a01.tt = 'da_thi';
+  ok(call({ action: 'nop_th', ma: 'hs9a01', pin: '123456', ma_de: exTh.ma_de, ten_file: 'b.xlsx', data: 'aGk=' }).error.includes('đã nộp'), 'thực hành: đã thi → không nộp thêm');
+  E.fbdb.thi_nop[exTh.ma_de] = { hs9a01: { ma: 'HS9A01', ten: 'Nguyễn Văn An', lop: '9A', lan: 1, at: 1793331125000, tra_loi: {} } };
+  c({ action: 'gv_luu', ma_de: exTh.ma_de });
+  const t2 = E.drive.find(f => f.path.includes('/TH/') === false && f.path.endsWith('/Bài làm - Lần 1.txt') && f.path.includes('Khác - TH'));
+  ok(t2 && t2.content.includes('BÀI THỰC HÀNH: a.xlsx') && t2.content.includes('đã có trên Drive') && E.fbdb.thi_drive[exTh.ma_de].hs9a01.th === true, 'minh chứng ghi file thực hành đã có trên Drive; thi_drive.th = true');
+  // IP mạng trường
+  ok(c({ action: 'gv_ip_truong', ip: 'abc' }).error.includes('IP') && c({ action: 'gv_ip_truong', ip: '113.161.20.7' }).ip_truong === '113.161.20' && E.fbdb.thi_cfg.ip_truong === '113.161.20', 'lưu IP mạng trường (3 số đầu)');
+  // giáo viên lớp chỉ mở lớp mình
+  E.sheets.GiaoVien = E.sheets.GiaoVien || null;
 }
 // ---------- Bộ não AI: VPS gửi báo cáo bằng khóa riêng; giáo viên lớp chỉ xem lớp mình ----------
 { const E = env(); const c = p => E.ctx.doPost({ postData: { contents: JSON.stringify({ gv: GV, ...p }) } }); E.ctx.taoMau(); const call = p => E.ctx.doPost({ postData: { contents: JSON.stringify(p) } });

@@ -799,3 +799,35 @@ body.qz-hosting{overflow:hidden}
 .teacher-app .acc-legend{margin:8px 0 0}
 .teacher-app .acc-sync{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin:0 0 12px}
 .teacher-app .acc-sync p{margin:0;flex:1 1 320px}
+/* Thi thật – Theo dõi ca thi (30/10/2026) */
+.teacher-app .ca-thi{display:grid;gap:16px;margin:0 0 24px}
+.teacher-app .ca-thi[hidden]{display:none}
+.teacher-app .ca-bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.teacher-app .ca-lop-field{flex:1 1 220px;max-width:320px}
+.teacher-app .ca-bar-actions{display:flex;flex-wrap:wrap;gap:8px}
+.teacher-app .ca-help{margin:0;max-width:72ch}
+.teacher-app .ca-metrics{grid-template-columns:repeat(6,minmax(0,1fr));margin:0}
+.teacher-app .ca-filter{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.teacher-app .ca-filter .t-field{flex:0 1 240px}
+.teacher-app .ca-ip-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
+.teacher-app .ca-toasts{display:grid;gap:8px}
+.teacher-app .ca-toasts:empty{display:none}
+.teacher-app .ca-toast{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--ok);border-radius:var(--t-card-radius);background:var(--ok-bg);color:var(--ink)}
+.teacher-app .ca-toast p{flex:1 1 240px;margin:0;font-weight:600}
+.teacher-app .ca-toast .ca-drive[aria-disabled=true]{pointer-events:none;opacity:.7}
+.teacher-app .ca-table td>div{display:grid;gap:4px;justify-items:start;min-width:0}
+.teacher-app .ca-table small{font-size:var(--t-small);color:var(--muted);overflow-wrap:anywhere}
+.teacher-app .ca-table small.ca-ok,.teacher-app .ca-table small.ca-on{color:var(--ok)}
+.teacher-app .ca-table small.ca-bad{color:var(--danger)}
+:root .teacher-app .t-badge.ca-tt.ca-tt-chua_mo{background:transparent;border:1px solid var(--line);color:var(--ink)}
+:root .teacher-app .t-badge.ca-tt.ca-tt-chua_thi{background:var(--info-bg);color:var(--info)}
+:root .teacher-app .t-badge.ca-tt.ca-tt-da_thi{background:var(--ok-bg);color:var(--ok)}
+:root .teacher-app .t-badge.ca-tt.ca-tt-thi_lai{background:var(--warn-bg);color:var(--warn)}
+.teacher-app .ca-acts{display:flex!important;flex-wrap:wrap;gap:8px}
+.teacher-app a.t-button.ca-drive{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:1100px){.teacher-app .ca-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.teacher-app .ca-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-app .ca-lop-field{max-width:none}.teacher-app .ca-bar-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}}
+@media(forced-colors:active){.teacher-app .ca-tt{border:1px solid CanvasText}.teacher-app .ca-toast{border-color:CanvasText}}
+@media(min-width:1051px){.teacher-app .ca-table th:nth-child(1){width:15%}.teacher-app .ca-table th:nth-child(2){width:13%}.teacher-app .ca-table th:nth-child(3){width:15%}.teacher-app .ca-table th:nth-child(4){width:13%}.teacher-app .ca-table th:nth-child(5){width:18%}.teacher-app .ca-table th:nth-child(6){width:12%}.teacher-app .ca-table td:last-child,.teacher-app .ca-table th:last-child{width:14%;min-width:0}.teacher-app .ca-table .ca-acts .t-button{width:100%}}
+.teacher-app .ca-table a.ca-drive{padding-inline:12px;max-width:100%;text-align:center}
+@media(min-width:1051px){.teacher-app .ca-table a.ca-drive{white-space:nowrap}}

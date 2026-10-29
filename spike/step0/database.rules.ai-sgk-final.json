@@ -37,7 +37,10 @@
       ".read": true,
       ".write": false
     },
-    "thi_lop": { ".read": true, ".write": false },
+    "thi_lop": {
+      ".read": true,
+      ".write": false
+    },
     "thi_bai": {
       ".read": true,
       ".write": false
@@ -59,8 +62,8 @@
       ".read": true,
       "$ma_de": {
         "$ma": {
-          ".write": "newData.exists() && root.child('thi_bai').child($ma_de).child('trang_thai').val() === 'mo' && (!data.exists() || root.child('thi_bai').child($ma_de).child('che_do').val() === 'thu') && $ma.length <= 64",
-          ".validate": "newData.hasChildren(['ma','diem','tong','at']) && newData.child('diem').isNumber() && newData.child('tong').isNumber() && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000",
+          ".write": "newData.exists() && $ma.length <= 64 && ((root.child('thi_bai').child($ma_de).child('che_do').val() === 'that' && (root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'chua_thi' || root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'thi_lai') && newData.parent().parent().parent().child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'da_thi' && (root.child('thi_bai').child($ma_de).child('noi_dung').val() !== 'tn_th' || root.child('thi_th').child($ma_de).child($ma).exists())) || (!(root.child('thi_bai').child($ma_de).child('che_do').val() === 'that') && root.child('thi_bai').child($ma_de).child('trang_thai').val() === 'mo' && (!data.exists() || root.child('thi_bai').child($ma_de).child('che_do').val() === 'thu')))",
+          ".validate": "newData.hasChildren(['ma','at']) && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000 && (root.child('thi_bai').child($ma_de).child('che_do').val() === 'that' ? (!newData.hasChild('diem') && newData.hasChild('lan')) : (newData.hasChildren(['diem','tong']) && newData.child('diem').isNumber() && newData.child('tong').isNumber()))",
           "ma": {
             ".validate": "newData.isString() && newData.val().length <= 64"
           },
@@ -120,7 +123,7 @@
             ".validate": false
           },
           "lan": {
-            ".validate": "newData.isNumber()"
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50"
           },
           "cao_nhat": {
             ".validate": "newData.isNumber()"
@@ -134,6 +137,21 @@
           "chu_de": {
             "$t": {
               ".validate": "$t.length <= 64 && newData.hasChildren(['ten','d','n']) && newData.child('ten').isString() && newData.child('ten').val().length <= 60 && newData.child('d').isNumber() && newData.child('n').isNumber()"
+            }
+          },
+          "thu_tu": {
+            "q": {
+              "$i": {
+                ".validate": "newData.isString() && newData.val().length <= 64"
+              }
+            },
+            "o": {
+              "$q": {
+                ".validate": "$q.length <= 64 && newData.isString() && newData.val().length <= 8"
+              }
+            },
+            "$other": {
+              ".validate": false
             }
           }
         }
@@ -333,6 +351,64 @@
           ".validate": "$id.length <= 40 && (!newData.exists() || (newData.hasChildren(['name','at']) && newData.child('name').isString() && newData.child('name').val().length <= 120 && newData.child('at').isNumber()))"
         }
       }
+    },
+    "thi_tt": {
+      ".read": true,
+      "$ma_de": {
+        "$ma": {
+          "tt": {
+            ".write": "data.exists() && (data.val() === 'chua_thi' || data.val() === 'thi_lai') && newData.val() === 'da_thi' && newData.parent().parent().parent().parent().child('thi_nop').child($ma_de).child($ma).exists()"
+          },
+          "nop_luc": {
+            ".write": "(root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'chua_thi' || root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'thi_lai') && newData.parent().child('tt').val() === 'da_thi'",
+            ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+          },
+          "lan": {
+            ".write": "(root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'chua_thi' || root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'thi_lai') && newData.parent().child('tt').val() === 'da_thi'",
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50"
+          }
+        }
+      }
+    },
+    "thi_tien_do": {
+      ".read": true,
+      "$ma_de": {
+        "$ma": {
+          ".write": "(root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'chua_thi' || root.child('thi_tt').child($ma_de).child($ma).child('tt').val() === 'thi_lai') && $ma.length <= 64",
+          ".validate": "newData.hasChildren(['n','tong','at']) && newData.child('n').isNumber() && newData.child('tong').isNumber() && newData.child('n').val() >= 0 && newData.child('n').val() <= newData.child('tong').val() && newData.child('tong').val() <= 200 && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000",
+          "n": {
+            ".validate": true
+          },
+          "tong": {
+            ".validate": true
+          },
+          "at": {
+            ".validate": true
+          },
+          "th": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "thi_goi_y": {
+      ".read": false,
+      ".write": false
+    },
+    "thi_drive": {
+      ".read": true,
+      ".write": false
+    },
+    "thi_cfg": {
+      ".read": true,
+      ".write": false
+    },
+    "thi_ip": {
+      ".read": true,
+      ".write": false
     }
   }
 }

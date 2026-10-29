@@ -10,7 +10,7 @@
 // Chỉ máy có "khóa phòng" (quiz_key, không ai đọc được) mới ghi được trạng thái phòng (luật Firebase quiz_proof).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261029d';
+import * as ui from './teacher-ui.js?v=20261030a';
 import { confirmBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
 import { L, MAX_Q, QUIZ_COLUMNS, awards, blankScore, classSummary, parseQuizRows, ranked as rankScore, scoreQuestion, setClasses } from './quiz-core.js';

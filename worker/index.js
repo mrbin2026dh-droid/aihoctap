@@ -1519,6 +1519,21 @@ export function tutorScopeRules(title, outline, hasOther) {
     'ĐỊNH DẠNG: trả DUY NHẤT JSON {"pham_vi":"bai_nay|bai_khac|ngoai_bai","xin_dap_an":true|false,"tra_loi":"…"}. "tra_loi" viết tiếng Việt, Markdown đơn giản, tự gọi là "Gia sư". Với "ngoai_bai" để "tra_loi" rỗng (hệ thống tự gửi lời từ chối).'
   ].filter(Boolean).join('\n');
 }
+/** Tiền tố mạng: IPv4 3 số đầu, IPv6 4 nhóm đầu (/64). @param {string} ip */
+export function ipPrefix(ip) {
+  const x = String(ip || '').trim();
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(x)) return x.split('.').slice(0, 3).join('.');
+  if (x.includes(':')) return x.toLowerCase().split(':').slice(0, 4).join(':');
+  return '';
+}
+/** Chỉ lưu phần rất ngắn của IP (2 số đầu / 2 nhóm đầu) để giáo viên đối chiếu, không lưu đủ. @param {string} ip */
+export const ipPrefixShort = ip => { const x = String(ip || ''); return x.includes(':') ? x.toLowerCase().split(':').slice(0, 2).join(':') : x.split('.').slice(0, 2).join('.'); };
+/** true = ngoài mạng trường, false = trong trường, null = chưa cài IP trường hoặc không đọc được. cfg: danh sách tiền tố cách nhau dấu phẩy. @param {string} ip @param {string} cfg */
+export function ipNgoaiTruong(ip, cfg) {
+  const list = String(cfg || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean), pre = ipPrefix(ip);
+  if (!list.length || !pre) return null;
+  return !list.includes(pre);
+}
 export function isJunkAnswer(t) {
   const x = String(t || '').replace(/\s+/g, '').toLowerCase();
   if (x.length < 8) return false;
@@ -4932,6 +4947,23 @@ export default {
 
     // AI cho giáo viên: soạn câu hỏi theo ma trận (giáo viên duyệt trước khi lưu) và gợi ý chấm thực hành.
     // Học sinh nộp bài THI THỬ có tự luận: AI chấm theo gợi ý đáp án của giáo viên (giới hạn lượt mỗi ngày).
+    // Thi thật: máy vào thi từ ngoài mạng nhà trường (chỉ để giáo viên kiểm tra khi nghi ngờ, không chặn).
+    if (url.pathname === '/api/thi/my-ip' && request.method === 'GET') {
+      return new Response(JSON.stringify({ ip: request.headers.get('CF-Connecting-IP') || '' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname === '/api/thi/ip' && request.method === 'POST') {
+      const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const b = await request.json().catch(() => ({}));
+      const maDe = String(b?.ma_de || ''), key = String(b?.ma || '').trim().toLowerCase().replace(/[.#$[\]/]/g, '_');
+      if (!/^[A-Za-z0-9_-]{1,40}$/.test(maDe) || !/^[a-z0-9_-]{1,64}$/.test(key)) return j(400, { detail: 'Dữ liệu không hợp lệ.' });
+      const st = await dbGet(env, signingKeys, `thi_tt/${maDe}/${key}/tt`).catch(() => null);
+      if (st !== 'chua_thi' && st !== 'thi_lai' && st !== 'da_thi') return j(403, { detail: 'Chưa mở thi.' });
+      const ip = request.headers.get('CF-Connecting-IP') || '';
+      const cfg = String(await dbGet(env, signingKeys, 'thi_cfg/ip_truong').catch(() => '') || '');
+      const ngoai = ipNgoaiTruong(ip, cfg);
+      await dbPut(env, signingKeys, `thi_ip/${maDe}/${key}`, { ngoai, p: ipPrefixShort(ip), at: Date.now() }).catch(() => {});
+      return j(200, { ok: true });
+    }
     if (url.pathname === '/api/pwa/exam-essay' && request.method === 'POST') {
       const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const auth = request.headers.get('Authorization') || '';
@@ -4941,6 +4973,11 @@ export default {
       const body = await request.json().catch(() => ({}));
       const raw = Array.isArray(body?.items) ? body.items : [];
       if (!raw.length || raw.length > 10) return j(400, { detail: 'Bài tự luận không hợp lệ.' });
+      // Thi thật: máy học sinh không có gợi ý chấm → Worker đọc nhánh kín thi_goi_y/{bài} bằng quyền quản trị.
+      if (/^[A-Za-z0-9_-]{1,40}$/.test(String(body?.ma_de || '')) && raw.some(it => !it?.guide && it?.id)) {
+        const gy = await dbGet(env, signingKeys, `thi_goi_y/${body.ma_de}`).catch(() => null) || {};
+        raw.forEach(it => { if (it && !it.guide && /^[A-Za-z0-9_-]{1,64}$/.test(String(it.id || ''))) it.guide = String(gy[it.id] || ''); });
+      }
       const items = raw.map(it => ({ text: String(it?.text || '').trim().slice(0, 1000), guide: String(it?.guide || '').trim().slice(0, 2000), answer: String(it?.answer || '').trim().slice(0, 3000), max: Math.round(Math.max(0.25, Math.min(100, Number(it?.max) || 1)) * 4) / 4 }));
       if (items.some(it => !it.text || !it.guide)) return j(400, { detail: 'Câu tự luận thiếu đề hoặc gợi ý đáp án. Báo thầy cô.' });
       const result = items.map(it => ({ diem: 0, nhan_xet: !it.answer ? 'Em chưa làm câu này.' : isJunkAnswer(it.answer) ? 'Bài viết chỉ có ký tự lặp lại, chưa có nội dung trả lời câu hỏi. Em viết câu trả lời bằng lời của mình nhé.' : '' }));

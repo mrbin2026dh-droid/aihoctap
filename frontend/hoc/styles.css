@@ -1885,3 +1885,19 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .student-app .tutor-rules ul{margin:0 0 6px;padding-left:1.2em}
 .student-app .tutor-rules li{margin:0 0 2px;padding:0;line-height:1.45}
 .student-app .tutor-rules .tutor-rules-ask{margin:6px 0 0}
+/* Thi thật theo ca (30/10): trạng thái từng em, hai phần Thực hành / Trắc nghiệm, xác nhận nộp không có điểm */
+.student-app .thi-state.thi-tt-chua_thi,.student-app .thi-state.thi-tt-thi_lai{background:var(--green-bg,#dcfce7);color:var(--green-fg,#15803d)}
+.student-app .thi-state.thi-tt-chua_mo{background:var(--soft,#f1f5ef);color:var(--muted)}
+.student-app .thi-state.thi-tt-da_thi{background:var(--teal-bg,#d9f2ee);color:var(--teal-fg,#0f766e)}
+.student-app .thi-card-note{margin:2px 0 0}
+.student-app .thi-parts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.student-app .thi-part-tab{min-height:48px;border:0;border-radius:9px;background:transparent;color:var(--ink);font-size:16px;font-weight:700;cursor:pointer}
+.student-app .thi-part-tab[aria-selected=true]{background:var(--brand,#0f766e);color:#fff}
+.student-app .thi-part-tab:focus-visible{outline:3px solid var(--brand,#0f766e);outline-offset:2px}
+.student-app .thi-part-panel[hidden]{display:none}
+.student-app .thi-th-steps{margin:0 0 4px;padding-left:1.3em;display:grid;gap:4px}
+.student-app .thi-th-status.is-ok{color:var(--green-fg,#15803d);font-weight:700}
+.student-app .thi-practical input[type=file][aria-invalid=true]{outline:2px solid var(--danger,#b3261e);outline-offset:2px;border-radius:6px}
+.student-app .thi-done-card .thi-result-title{font-size:clamp(20px,3.4vw,24px)}
+@media (prefers-color-scheme:dark){:where(:root:not([data-theme=light])) .student-app .thi-part-tab[aria-selected=true]{background:#2f8f80}}
+:where(:root[data-theme=dark]) .student-app .thi-part-tab[aria-selected=true]{background:#2f8f80}

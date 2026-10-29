@@ -23,7 +23,12 @@ function thiBadge(n) {
     if (n > 0) { if (!b) { b = document.createElement('span'); b.className = 'nav-badge'; btn.append(b); } b.textContent = String(n); btn.setAttribute('aria-label', `Thi, ${n} bài đang mở`); }
     else { b?.remove(); btn.removeAttribute('aria-label'); }
   }
+  // Thi thật: thầy cô vừa mở thi (hoặc cho thi lại) cho em → tự mở tab Thi một lần, em không phải tìm.
+  const ids = thiApp.realOpenIds().join(',');
+  if (ids && ids !== autoExamIds && currentView !== 'exams' && !document.querySelector('dialog[open]')) { autoExamIds = ids; /** @type {HTMLElement|null} */ (document.querySelector('[data-tab="exams"]'))?.click(); }
+  else if (!ids) autoExamIds = '';
 }
+let autoExamIds = '';
 const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); tl.start(session.identity); } };
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 

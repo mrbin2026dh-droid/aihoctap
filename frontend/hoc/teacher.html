@@ -303,6 +303,35 @@
 <section class="t-card">
 <div class="t-heading"><div><h2 id="thi-gv-title">Thống kê bài thi</h2><p class="t-muted" id="thi-gv-sub"></p></div><div class="t-heading-actions"><button type="button" id="thi-gv-toggle" class="t-button t-primary">Mở thi</button><button type="button" id="thi-gv-refresh" class="t-button">Làm mới</button></div></div>
 <dl class="t-metrics" id="thi-gv-metrics" aria-busy="false"></dl>
+<section id="ca-thi" class="ca-thi" aria-labelledby="ca-title" hidden>
+<h3 id="ca-title" class="visually-hidden">Theo dõi ca thi</h3>
+<div class="ca-bar">
+<div class="t-field ca-lop-field"><label for="ca-lop">Lớp thi</label><select id="ca-lop"></select></div>
+<div class="ca-bar-actions"><button type="button" id="ca-mo" class="t-button t-primary">Mở thi cho lớp</button><button type="button" id="ca-dong" class="t-button">Đóng thi lớp này</button></div>
+</div>
+<p class="t-muted ca-help" id="ca-help">Học sinh mặc định ở trạng thái Chưa mở thi. Tới lượt lớp nào, chọn lớp rồi bấm Mở thi cho lớp. Không đếm giờ: chờ các em làm xong rồi mới đóng.</p>
+<dl class="t-metrics ca-metrics" id="ca-metrics" aria-live="polite"></dl>
+<div class="ca-toasts" id="ca-toasts" aria-live="polite" aria-label="Học sinh vừa nộp bài"></div>
+<div class="t-toolbar ca-filter"><div class="t-field"><label for="ca-loc">Hiện</label><select id="ca-loc"><option value="">Tất cả học sinh</option><option value="chua_vao">Chưa vào thi</option><option value="dang_lam">Đang làm</option><option value="da_nop">Đã nộp</option><option value="vang">Có ghi chú vắng</option><option value="ngoai">Ngoài mạng trường</option></select></div><p class="t-muted ca-ip-line" id="ca-ip-line"><span id="ca-ip-text">Chưa cài IP mạng trường.</span> <button type="button" id="ca-ip" class="t-button">Lấy IP mạng trường (bấm trên máy phòng máy)</button></p></div>
+<table class="t-table ca-table" id="ca-table"><caption>Học sinh của lớp trong ca thi</caption><thead><tr><th scope="col">Học sinh</th><th scope="col">Trạng thái</th><th scope="col">Tiến độ</th><th scope="col">Nộp bài</th><th scope="col">Bài trên Drive</th><th scope="col">Ghi chú</th><th scope="col">Thao tác</th></tr></thead><tbody id="ca-body"><tr><td colspan="7" class="t-muted">Chọn lớp thi.</td></tr></tbody></table>
+</section>
+<dialog id="vang-dialog" class="t-dialog" aria-labelledby="vang-title"><form id="vang-form" class="t-form" novalidate>
+<h2 id="vang-title">Ghi chú vắng</h2>
+<p class="t-muted" id="vang-who"></p>
+<div class="t-field"><label for="vang-ly-do">Lý do</label><select id="vang-ly-do" required aria-describedby="vang-err"><option value="">Chọn lý do</option><option>Ốm</option><option>Có phép</option><option>Không phép</option><option>Khác</option></select></div>
+<div class="t-field"><label for="vang-ghi">Ghi thêm (bắt buộc khi chọn Khác)</label><input id="vang-ghi" maxlength="200" autocomplete="off" aria-describedby="vang-err"></div>
+<p id="vang-err" class="t-field-error" role="alert"></p>
+<div class="t-dialog-actions"><button type="button" id="vang-xoa" class="t-button">Bỏ ghi chú</button><button type="button" id="vang-huy" class="t-button">Hủy</button><button type="submit" id="vang-luu" class="t-button t-primary">Lưu ghi chú</button></div>
+</form></dialog>
+<dialog id="thilai-dialog" class="t-dialog" aria-labelledby="thilai-title"><form id="thilai-form" class="t-form" novalidate>
+<h2 id="thilai-title">Cho thi lại</h2>
+<p class="t-muted" id="thilai-who"></p>
+<div class="t-field"><label for="thilai-ly-do">Lý do</label><select id="thilai-ly-do" required aria-describedby="thilai-err"><option value="">Chọn lý do</option><option>Máy hỏng</option><option>Ốm</option><option>Vắng</option><option>Nộp lỗi</option><option>Khác</option></select></div>
+<div class="t-field"><label for="thilai-ghi">Ghi thêm</label><input id="thilai-ghi" maxlength="120" autocomplete="off"></div>
+<p class="t-muted">Em sẽ làm lại từ đầu với thứ tự câu mới. Điểm lấy theo lần thi lại; bài lần trước vẫn lưu trên Drive.</p>
+<p id="thilai-err" class="t-field-error" role="alert"></p>
+<div class="t-dialog-actions"><button type="button" id="thilai-huy" class="t-button">Hủy</button><button type="submit" id="thilai-luu" class="t-button t-primary">Cho thi lại</button></div>
+</form></dialog>
 <div class="t-tabs" role="tablist" aria-label="Thống kê bài thi" id="thi-st-tabs" hidden><button type="button" id="tab-thi-kq" role="tab" aria-selected="true" aria-controls="tabpanel-thi-kq" tabindex="0">Kết quả</button><button type="button" id="tab-thi-td" role="tab" aria-selected="false" aria-controls="tabpanel-thi-td" tabindex="-1">Theo dõi nộp bài</button></div>
 <div role="tabpanel" id="tabpanel-thi-kq" aria-labelledby="tab-thi-kq">
 <div class="t-toolbar t-toolbar-actions-only"><label class="t-check" for="thi-gv-only"><input id="thi-gv-only" type="checkbox">Chỉ hiện em chưa vào</label></div>
@@ -621,7 +650,7 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261029d"></script>
+<script type="module" src="./teacher.js?v=20261030a"></script>
 <dialog id="ai-q-dialog" class="t-dialog" aria-labelledby="ai-q-title"><form id="ai-q-form" class="t-form" method="dialog" novalidate>
 <h2 id="ai-q-title">AI soạn đề theo ma trận</h2>
 <p class="t-muted" id="ai-q-sub">AI soạn câu trắc nghiệm bám nội dung bài học. Thầy cô đọc, sửa và đánh dấu <strong>Đã duyệt</strong> từng câu trước khi lưu.</p>

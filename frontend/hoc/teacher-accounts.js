@@ -5,8 +5,8 @@
 // Mỗi thay đổi Sheet tự đẩy lên Firebase, nên học sinh/giáo viên đăng nhập được ngay.
 import { SHEET_API } from './sheet-config.js';
 import { confirmBox, noticeBox } from './dom.js';
-import * as ui from './teacher-ui.js?v=20261029d';
-import * as presence from './presence.js?v=20261029d';
+import * as ui from './teacher-ui.js?v=20261030a';
+import * as presence from './presence.js?v=20261030a';
 import * as db from './db.js';
 import * as store from './thi-store.js';
 /** Danh sách tài khoản lưu trên máy giáo viên (IndexedDB) để mở menu ngay, cập nhật từ Google Sheet ở nền.

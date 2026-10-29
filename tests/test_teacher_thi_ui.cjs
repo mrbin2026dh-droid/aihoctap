@@ -53,33 +53,16 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
  // hai bài cho hai lớp cùng lúc
  await pg.click('#tab-thi-new');await pg.fill('#thi-new-title','Kiểm tra 8');await pg.selectOption('#thi-new-khoi','8');await pg.click('#thi-new-create');await pg.waitForFunction(()=>document.querySelectorAll('#thi-list article').length===2);
  const cards=await pg['$$eval']('#thi-list article',a=>a.map(x=>x.textContent));
- ok(cards.length===2&&cards[0].includes('Kiểm tra 8')&&cards[0].includes('khối 8')&&cards[1].includes('Giữa kỳ')&&cards[1].includes('lớp 9A')&&cards[1].includes('Đang KHÓA')&&cards[1].includes('Thi thật'),'danh sách: 2 bài cho 2 lớp, có loại, đối tượng, trạng thái');
+ ok(cards.length===2&&cards[0].includes('Kiểm tra 8')&&cards[0].includes('khối 8')&&cards[1].includes('Giữa kỳ')&&cards[1].includes('lớp 9A')&&cards[1].includes('Trắc nghiệm + Thực hành')&&!cards[1].includes('Đang KHÓA')&&!cards[1].includes('xem điểm')&&cards[1].includes('Thi thật'),'danh sách: 2 bài cho 2 lớp, có loại, đối tượng, trạng thái');
  ok(cards[1].includes('2 học sinh'),'thẻ bài: số học sinh thuộc bài');
  const labels=await pg['$$eval']('#thi-list article:nth-child(2) .t-icon-btn',a=>a.map(x=>x.getAttribute('aria-label')));
- ok(labels.length===5&&labels[0].startsWith('Thống kê')&&labels[1].startsWith('Chỉnh sửa')&&labels[2].startsWith('Mở thi')&&labels[3].startsWith('Cho học sinh xem điểm')&&labels[4].startsWith('Xóa'),'5 nút biểu tượng có tên: thống kê, chỉnh sửa, mở thi, cho xem điểm, xóa');
- await pg.click('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Cho học sinh xem điểm"]');await pg.waitForFunction(()=>document.querySelector('#thi-list article:nth-child(2)').textContent.includes('Cho xem điểm'));
- ok(st.calls.filter(c=>c.action==='gv_set').at(-1).xem_diem==='co'&&await pg.getAttribute('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Ẩn điểm"]','aria-pressed')==='true','bật Cho xem điểm: gửi đúng bài, nút đổi thành Ẩn điểm');
+ ok(labels.length===3&&labels[0].startsWith('Theo dõi ca thi')&&labels[1].startsWith('Chỉnh sửa')&&labels[2].startsWith('Xóa'),'thi thật: 3 nút (Theo dõi ca thi, chỉnh sửa, xóa) – mở/đóng theo lớp trong ca thi, học sinh không xem điểm');
  ok((await pg['$$eval']('#thi-list .t-icon-btn',a=>a.every(x=>x.getBoundingClientRect().height>=48&&x.getBoundingClientRect().width>=48))),'nút biểu tượng ≥ 48px');
- // ----- khóa / mở
- await pg.click('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Mở thi"]');await pg.waitForFunction(()=>document.querySelector('#thi-list article:nth-child(2)').textContent.includes('Đang MỞ'));
- ok(st.exams.find(e=>e.tieu_de==='Giữa kỳ').trang_thai==='mo'&&st.calls.filter(c=>c.action==='gv_set').at(-1).ma_de==='1','mở thi đúng bài (theo mã bài)');
- ok(!st.exams.find(e=>e.tieu_de==='Kiểm tra 8').trang_thai.includes('mo'),'bài kia vẫn khóa');
- // ----- thống kê
- await pg.click('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Thống kê"]');await pg.waitForSelector('#detail-sheetexam:not([hidden])');await pg.waitForTimeout(300);
- ok(await pg.isVisible('#tab-thi-td'),'thi thật: có tab Theo dõi nộp bài');
- ok(await pg.isHidden('#list-sheetexam')&&(await pg.textContent('#thi-gv-title'))==='Giữa kỳ'&&(await pg.textContent('#thi-gv-sub')).includes('lớp 9A'),'trang thống kê của bài Giữa kỳ');
- ok((await pg.$$('#thi-gv-body tr')).length===2&&!(await pg.textContent('#thi-gv-body')).includes('Lê Chi'),'chỉ liệt kê học sinh 9A');
- st.state['1HS01']='vao';await pg.click('#thi-gv-refresh');await pg.waitForTimeout(400);
- ok((await pg.textContent('#thi-gv-metrics')).includes('Đã vào phòng thi1'),'điểm danh: 1 em đã vào');
- await pg.check('#thi-gv-only');ok((await pg.$$('#thi-gv-body tr')).length===1&&(await pg.textContent('#thi-gv-body')).includes('Trần Thị Bình'),'lọc em chưa vào');await pg.uncheck('#thi-gv-only');
- ok((await pg.textContent('#thi-gv-toggle'))==='Khóa thi','đang mở: nút đổi thành Khóa thi');
- await pg.click('#thi-gv-toggle');await pg.waitForFunction(()=>document.getElementById('thi-gv-toggle').textContent==='Mở thi');ok(st.exams.find(e=>e.tieu_de==='Giữa kỳ').trang_thai==='khoa','khóa thi ngay trong trang thống kê');
- if(desktop){st.state['1HS01']='nop';await pg.waitForTimeout(20600);
- ok((await pg.textContent('#thi-gv-body')).includes('Đã nộp')&&(await pg.textContent('#thi-gv-body')).includes('7/10'),'tự cập nhật 20 giây từ Sheet: thấy em đã nộp + điểm');
- await pg.click('#tab-thi-td');ok((await pg.textContent('#thi-track')).includes('Đã nộp')&&(await pg.textContent('#thi-track section.is-done')).includes('Nguyễn Văn An')&&(await pg.textContent('#thi-track section.is-wait')).includes('Trần Thị Bình'),'tab Theo dõi nộp bài: chưa vào / đang làm / đã nộp');
- ok((await pg.textContent('#thi-track section.is-done')).includes('chưa nộp thực hành'),'theo dõi cả bài thực hành');await pg.click('#tab-thi-kq');
- await pg.click('#thi-gv-body tr:first-child button');await pg.waitForSelector('#msg-dialog[open]');ok((await pg.textContent('#msg-dialog')).includes('Cho thi lại?')&&!st.calls.some(c=>c.action==='gv_reset'),'cho thi lại: hỏi xác nhận trước');
- await pg.click('#msg-dialog button:has-text("Cho thi lại")');await pg.waitForTimeout(400);ok(st.calls.some(c=>c.action==='gv_reset'&&c.ma==='HS01'&&c.ma_de==='1'),'cho thi lại đúng bài, đúng em');}
+ // ----- thi thật → Theo dõi ca thi (chưa nối Firebase: báo cách nối, không hiện bảng thi thử cũ)
+ await pg.click('#thi-list article:nth-child(2) .t-icon-btn[aria-label^="Theo dõi ca thi"]');await pg.waitForSelector('#detail-sheetexam:not([hidden])');await pg.waitForTimeout(300);
+ ok(await pg.isVisible('#ca-thi')&&await pg.isHidden('#thi-st-tabs')&&await pg.isHidden('#tabpanel-thi-kq')&&await pg.isHidden('#thi-gv-toggle')&&await pg.isHidden('#thi-gv-metrics'),'thi thật: mở màn Theo dõi ca thi, ẩn bảng thi thử, không có nút Mở/Khóa chung');
+ ok((await pg.textContent('#thi-gv-title'))==='Giữa kỳ'&&(await pg.textContent('#thi-gv-sub')).includes('Trắc nghiệm + Thực hành')&&(await pg.textContent('#ca-help')).includes('Firebase')&&await pg.isDisabled('#ca-mo'),'chưa có học sinh trên Firebase → báo cách nối, chưa mở thi được');
+ ok(!st.calls.some(c=>c.action==='gv_stats'&&c.ma_de==='1'),'thi thật không gọi bảng thống kê thi thử');
  await pg.click('#act-sheetexam-back');await pg.waitForSelector('#list-sheetexam:not([hidden])');await pg.waitForTimeout(300);ok(await pg.isHidden('#detail-sheetexam')&&(await pg.$$('#thi-list article')).length===2,'quay lại danh sách');
  // ----- chỉnh sửa
  await pg.click('#thi-list article:nth-child(1) .t-icon-btn[aria-label^="Chỉnh sửa"]');await pg.waitForSelector('#tabpanel-thi-new:not([hidden])');
@@ -115,9 +98,8 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);await pg.fill('#teacher-login [name=pin]',PIN);await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
   await pg.click('#nav-sheetexam');await pg.waitForFunction(()=>(document.querySelector('#thi-list article:last-child')?.textContent||'').includes('2 học sinh'),null,{timeout:8000});
   ok((await pg.textContent('#thi-list article')).includes('đã vào 2')&&(await pg.textContent('#thi-list article')).includes('đã nộp 1'),'Firebase: thẻ bài đếm học sinh/đã vào/đã nộp tức thì');
-  await pg.click('#thi-list article:has-text("Giữa kỳ") .t-icon-btn[aria-label^="Thống kê"]');await pg.waitForFunction(()=>document.querySelectorAll('#thi-gv-body tr').length===2);
-  const body=await pg.textContent('#thi-gv-body');ok(body.includes('8/10')&&body.includes('Đã nộp')&&body.includes('Đã vào')&&!body.includes('Lê Chi')&&!calls.includes('gv_stats'),'Firebase: thống kê hiện ngay (điểm, đã vào), không chờ Google Sheet');
-  await pg.click('#tab-thi-td');ok((await pg.textContent('#thi-track')).includes('rời màn hình 2 lần'),'thi thật: theo dõi nộp bài hiện số lần rời màn hình');await pg.click('#tab-thi-kq');
+  await pg.click('#thi-list article:has-text("Giữa kỳ") .t-icon-btn[aria-label^="Theo dõi ca thi"]');await pg.waitForFunction(()=>document.querySelectorAll('#ca-body tr[data-k]').length===2);
+  const body=await pg.textContent('#ca-body');ok(body.includes('Nguyễn Văn An')&&body.includes('Trần Bình')&&!body.includes('Lê Chi')&&body.includes('Chưa mở thi')&&!calls.includes('gv_stats'),'Firebase: thi thật mở Theo dõi ca thi, đúng học sinh lớp 9A, mặc định Chưa mở thi');
   await pg.click('#act-sheetexam-back');await pg.click('#thi-list article:has-text("Ôn luyện") .t-icon-btn[aria-label^="Thống kê"]');await pg.waitForFunction(()=>document.querySelectorAll('#thi-gv-body tr').length===2);
   ok((await pg.textContent('#thi-gv-table thead')).includes('Số lần thi')&&(await pg.textContent('#thi-gv-body')).includes('3 lần')&&!(await pg.textContent('#thi-gv-body')).includes('Cho thi lại')&&await pg.isHidden('#thi-st-tabs'),'thi thử: cột Số lần thi thay cho Cho thi lại, không có tab theo dõi');
   await pg.click('#act-sheetexam-back');await pg.click('#thi-publish');await pg.waitForFunction(()=>document.getElementById('thi-gv-status').textContent.includes('Đã cập nhật lên Firebase'));ok(calls.includes('gv_publish'),'nút Cập nhật lên Firebase');

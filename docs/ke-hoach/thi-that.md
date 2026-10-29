@@ -1,6 +1,6 @@
 # Kế hoạch: THI THẬT tại phòng máy (bản 3 – đơn giản hóa theo thầy, 30/10/2026 00:39)
 
-Người lập: Claude. Trạng thái: **KẾ HOẠCH v3 – đủ quyết định, chờ thầy nói "đồng ý" là code.**
+Người lập: Claude. Trạng thái: **ĐÃ CODE XONG (30/10/2026)**, chờ Antigravity deploy và thử thật lớp 9TH theo `docs/handoff/claude-antigravity-thi-that-30-10.md`.
 Nguyên tắc thầy chốt: **đơn giản, giáo viên giám sát tại phòng máy** (biết mặt từng em, điểm danh), không làm bảo mật rườm rà; chỉ giữ những chặn rẻ mà cần thiết.
 
 ## 0. Quyết định đã chốt
@@ -58,7 +58,8 @@ Lưu: `thi_tt/{bài}/{mã} = {tt, lop, lan, at}`. Giáo viên đổi qua Google 
 6. Nộp xong: "Em đã nộp bài thành công." **Không hiện điểm** (cả ở Tổng quan, Bản đồ năng lực, Gia sư nhận xét).
 
 ## 5. Lưu trữ
-- **Google Drive** (minh chứng): `Bài thi - Góc học tập / <Năm học> / <Hình thức> - <Tiêu đề> / Lớp <lớp> / <Mã> - <Họ tên> /` gồm `Trắc nghiệm.txt` (đề, phương án, đáp án đúng, em chọn, đúng/sai, điểm, giờ vào, giờ nộp) và file thực hành. Thi lại: thêm `Lần 2 - …`.
+- **Google Drive** (minh chứng): `Bài thi - Góc học tập / <Năm học> / <Hình thức> - <Tiêu đề> / Lớp <lớp> / <Mã> - <Họ tên> /` gồm `Bài làm - Lần N.txt` (giờ vào, giờ nộp đến giây theo giờ Việt Nam, câu theo đúng thứ tự em thấy, phương án theo thứ tự em thấy, em chọn, đáp án đúng, đúng/sai, dòng đối chiếu đề gốc, điểm) và `Thực hành - <giờ> - <tên file>`. Thi lại: thêm `Bài làm - Lần 2.txt`.
+- **Đảo đề:** mỗi em một thứ tự câu và thứ tự phương án (hạt giống = mã em + mã bài + lần thi); bài nộp kèm `thu_tu` để file minh chứng tái hiện đúng.
 - **Google Sheet:** `KetQua` (điểm TN do Sheet chấm, gợi ý AI tự luận/thực hành, điểm giáo viên duyệt, đường dẫn Drive, lần thi), `DiemDanhThi` (vắng + lý do), `NhatKyThi`.
 - **Lưu Drive nhanh:** Google Sheet chạy mỗi 1 phút (trigger) kéo bài nộp mới, chấm, ghi Drive, rồi báo `thi_drive/{bài}/{mã} = {thu_muc, txt, th}` để màn giáo viên hiện dấu kiểm và nút mở Drive.
 

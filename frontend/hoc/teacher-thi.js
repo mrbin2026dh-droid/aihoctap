@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261029d';
-import * as ui from './teacher-ui.js?v=20261029d';
+import * as presence from './presence.js?v=20261030a';
+import * as ui from './teacher-ui.js?v=20261030a';
 import * as store from './thi-store.js';
 import { api } from './api.js';
 import { KT_LABELS, autoGrade } from './practical.js';
@@ -54,7 +54,7 @@ export function checkScore(rec, de, that = false) {
 /** @type {Array<() => void>} */ let fbStops = [];
 /** Dùng Firebase khi Google Sheet đã cài khóa Firebase và đã có danh sách học sinh trên Firebase. */
 const useFb = () => !!info?.fb && fbHs !== null && Object.keys(fbHs).length > 0;
-const fbRefresh = () => { if (!useFb() || busyCount) return; renderList(); if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
+const fbRefresh = () => { if (!useFb() || busyCount) return; renderList(); if (caEx) { renderCa(); return; } if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
 function startFb() {
   if (fbStops.length || !store.enabled()) return;
   fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; fbRefresh(); }, undefined, { prio: 0 })];
@@ -306,23 +306,25 @@ function renderList() {
     const left = document.createElement('div');
     const h = document.createElement('h3'); h.textContent = e.tieu_de;
     const tags = document.createElement('p');
-    for (const [t, bad] of [[KIND[/** @type {'that'|'thu'} */ (e.che_do)], false], [sel(e), false], [open ? 'Đang MỞ' : 'Đang KHÓA', !open], [e.xem_diem ? 'Cho xem điểm' : 'Ẩn điểm', false]]) { const b = document.createElement('span'); b.className = 't-badge' + (bad ? ' t-badge-error' : ''); b.textContent = String(t); tags.append(b, ' '); }
+    for (const [t, bad] of (e.che_do === 'that' ? [[KIND.that, false], [sel(e), false], [e.noi_dung === 'tn_th' ? 'Trắc nghiệm + Thực hành' : e.noi_dung === 'tn_tl' ? 'Trắc nghiệm + Tự luận' : 'Trắc nghiệm', false]] : [[KIND[/** @type {'that'|'thu'} */ (e.che_do)], false], [sel(e), false], [open ? 'Đang MỞ' : 'Đang KHÓA', !open], [e.xem_diem ? 'Cho xem điểm' : 'Ẩn điểm', false]])) { const b = document.createElement('span'); b.className = 't-badge' + (bad ? ' t-badge-error' : ''); b.textContent = String(t); tags.append(b, ' '); }
     const meta = document.createElement('p'); meta.className = 't-muted'; meta.textContent = `${e.questions} câu · ${e.total} học sinh · đã vào ${e.vao + e.nop} · đã nộp ${e.nop}`;
     left.append(h, tags, meta);
     const acts = document.createElement('div'); acts.className = 't-icon-actions';
-    const bStats = ui.iconButton({ icon: 'stats', label: `Thống kê: ${e.tieu_de}`, onClick: () => void openStats(e.ma_de) });
+    const bStats = ui.iconButton({ icon: 'stats', label: (e.che_do === 'that' ? 'Theo dõi ca thi: ' : 'Thống kê: ') + e.tieu_de, onClick: () => void openStats(e.ma_de) });
     const bEdit = ui.iconButton({ icon: 'edit', label: `Chỉnh sửa: ${e.tieu_de}`, onClick: () => startEdit(e) });
     const bLock = ui.iconButton({ icon: open ? 'lock' : 'unlock', label: (open ? 'Khóa thi: ' : 'Mở thi: ') + e.tieu_de, onClick: () => void run(bLock, () => call({ action: 'gv_set', ma_de: e.ma_de, trang_thai: open ? 'khoa' : 'mo' }), open ? 'Đã KHÓA thi.' : 'Đã MỞ thi.') });
     const xem = !!e.xem_diem;
     const bXem = ui.iconButton({ icon: xem ? 'view' : 'viewoff', label: (xem ? 'Ẩn điểm với học sinh: ' : 'Cho học sinh xem điểm, xếp hạng: ') + e.tieu_de, onClick: () => void run(bXem, () => call({ action: 'gv_set', ma_de: e.ma_de, xem_diem: xem ? 'khong' : 'co' }), xem ? 'Đã ẩn điểm: học sinh chỉ thấy "Đã nộp bài".' : 'Đã cho xem điểm: học sinh thấy điểm, số lần thi và xếp hạng trong lớp.') });
     bXem.setAttribute('aria-pressed', String(xem));
     const bDel = ui.iconButton({ icon: 'trash', label: `Xóa: ${e.tieu_de}`, danger: true, onClick: () => void deleteExam(e, bDel) });
-    acts.append(bStats, bEdit, bLock, bXem, bDel); card.append(left, acts); box.append(card);
+    if (e.che_do === 'that') acts.append(bStats, bEdit, bDel); else acts.append(bStats, bEdit, bLock, bXem, bDel);   // thi thật: mở/đóng theo từng lớp trong "Theo dõi ca thi"; học sinh không xem điểm
+    card.append(left, acts); box.append(card);
   }
 }
 /** Thống kê một bài: học sinh thuộc đối tượng, ai đã vào/nộp, điểm. */
 function renderStats() {
   const ex = stats?.exam; if (!ex) return;
+  if (ex.che_do === 'that' && caEx) { renderCa(); return; }
   const open = ex.trang_thai === 'mo';
   $('thi-gv-title').textContent = ex.tieu_de;
   $('thi-gv-sub').textContent = `${KIND[/** @type {'that'|'thu'} */ (ex.che_do)]} · ${sel(ex)} · ${ex.questions} câu · đang ${open ? 'MỞ' : 'KHÓA'}`;
@@ -393,7 +395,9 @@ async function openStats(/** @type {string} */ maDe) {
     button('thi-gv-toggle').textContent = e.trang_thai === 'mo' ? 'Khóa thi' : 'Mở thi'; button('thi-gv-toggle').dataset.to = e.trang_thai === 'mo' ? 'khoa' : 'mo';
   }
   const body = $('thi-gv-body'); body.replaceChildren(); const tr = document.createElement('tr'); const c = td('', 'Đang tải danh sách học sinh từ Google Sheet…', 't-muted'); c.colSpan = 6; tr.append(c); body.append(tr);
+  showCa(e?.che_do === 'that');
   await ui.showSub('detail-sheetexam');
+  if (e?.che_do === 'that') { openCa(e); return; }
   if (useFb()) { stats = fbStats(maDe); if (stats) renderStats(); return; }   // tức thì, không chờ Google Sheet
   await run(button('thi-gv-refresh'), () => call({ action: 'gv_stats', ma_de: maDe }), '');
 }
@@ -446,7 +450,7 @@ const reload = () => (onDetail() && current) ? run(null, () => call({ action: 'g
 
 /* ---------- Trực tuyến (Firebase, tức thì) ---------- */
 /** Bảng trực tuyến riêng đã bỏ: trạng thái trực tuyến hiện ở cột "Trực tuyến" của trang Thống kê. */
-function renderLive() { if (stats) renderStats(); }
+function renderLive() { if (caEx) renderCa(); else if (stats) renderStats(); }
 /** Dòng báo trạng thái Firebase: chỉ hiện khi có vấn đề. @param {string} msg @param {boolean} show @param {boolean} [relog] */
 function liveMsg(msg, show, relog = false) { $('thi-live-status').textContent = msg; $('thi-live-line').hidden = !show; button('thi-live-relogin').hidden = !relog; }
 async function startLive() {
@@ -479,7 +483,7 @@ async function ensureTeacherTicket() {
 let noKey = false;
 window.addEventListener('thi-gv-login', ev => { const t = /** @type {CustomEvent} */ (ev).detail?.token; noKey = !t; if (t) { watching = false; pendingTicket = presence.startTeacher(t).finally(() => { pendingTicket = null; }); } });
 $('thi-relogin').addEventListener('click', relogin);
-document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); stopFb(); watching = false; info = null; live = {}; status(''); });
+document.getElementById('teacher-logout')?.addEventListener('click', () => { presence.stopWatch(); stopFb(); closeCa(); watching = false; info = null; live = {}; status(''); });
 $('thi-live-relogin').addEventListener('click', relogin);
 setInterval(() => { if (watching) renderLive(); }, 30000);   // cập nhật "x phút trước" và "Mất kết nối"
 
@@ -716,7 +720,7 @@ $('thi-new-form').addEventListener('submit', async ev => {
   if (mode === 'thu' && qeLoaded) { const r = qeCollect(withTl); if (r.error) { status(r.error, 'error'); return; } questions = r.questions; }
   if (mode === 'thu') questions = /** @type {any[]} */ (questions || []).concat(essays);
   if (mode === 'thu' && !(questions || []).length) { status('Tải file Excel đề thi thử hoặc bấm "AI soạn đề theo ma trận".', 'error'); input('thi-new-file').focus(); return; }
-  await run(button('thi-new-create'), () => call({ action: 'gv_create', ...base, che_do: mode, questions }), 'Đã tạo bài thi. Học sinh vào phòng chờ; khi đủ mặt bấm Mở thi.');
+  await run(button('thi-new-create'), () => call({ action: 'gv_create', ...base, che_do: mode, questions }), mode === 'that' ? 'Đã tạo bài thi thật (đề đã chụp lại từ ngân hàng câu hỏi, đảo câu và đảo đáp án cho từng em). Tới giờ thi: bấm Theo dõi ca thi → chọn lớp → Mở thi cho lớp.' : 'Đã tạo bài thi. Học sinh vào phòng chờ; khi đủ mặt bấm Mở thi.');
   if (!$('thi-gv-alert').classList.contains('error')) { endEdit(); tab('list'); }
 });
 $('thi-new-cancel').addEventListener('click', () => { endEdit(); tab('list'); });
@@ -727,7 +731,7 @@ $('thi-gv-refresh').addEventListener('click', () => void run(button('thi-gv-refr
 $('thi-publish').addEventListener('click', () => void run(button('thi-publish'), () => call({ action: 'gv_publish' }), 'Đã cập nhật lên Firebase: học sinh thấy ngay danh sách bài, đề và tài khoản mới.'));
 $('thi-list-refresh').addEventListener('click', () => void load());
 for (const k of /** @type {const} */ (['kq', 'td'])) $('tab-thi-' + k).addEventListener('click', () => stTab(k));
-$('act-sheetexam-back').addEventListener('click', () => { stats = null; void ui.showSub('list-sheetexam'); void load(); });
+$('act-sheetexam-back').addEventListener('click', () => { stats = null; closeCa(); void ui.showSub('list-sheetexam'); void load(); });
 input('thi-gv-only').addEventListener('change', renderStats);
 $('nav-sheetexam').addEventListener('click', () => { stats = null; startFb(); void load(); void startLive(); });
 // Giáo viên đổi PIN: báo Google Sheet PIN mới (xác thực bằng PIN cũ) để menu Thi tiếp tục dùng được.
@@ -742,3 +746,196 @@ setInterval(() => {
   if (v && !v.hidden && document.visibilityState === 'visible' && !busyCount && info && getPass() && !editing) void reload();
 }, 20000);
 fillClasses(); fillYears();
+
+/* ---------- THI THẬT: Theo dõi ca thi (30/10/2026, docs/ke-hoach/thi-that.md bản 3) ----------
+ * Trạng thái từng em (thi_tt/{bài}/{mã}): Chưa mở thi → Chưa thi (giáo viên mở lớp/em) → Đã thi (em nộp) → Thi lại (giáo viên cho).
+ * Màn này nghe tức thì: thi_tt, thi_vao (đã vào), thi_tien_do (TN x/y, thực hành), thi_drive (Sheet đã lưu Drive), thi_ip (ngoài mạng trường), presence.
+ * Ghi chú vắng, điểm (chỉ giáo viên) và đường dẫn Drive lấy từ Google Sheet (gv_ca / gv_luu); lý do sức khỏe không đưa lên Firebase công khai. */
+const TT_TEN = /** @type {Record<string,string>} */ ({ chua_mo: 'Chưa mở thi', chua_thi: 'Chưa thi', da_thi: 'Đã thi', thi_lai: 'Thi lại' });
+/** @type {any} */ let caEx = null;
+/** @type {Record<string, any>} */ let caTt = {}, caTd = {}, caDr = {}, caIp = {};
+/** @type {{vang:Record<string,any>,drive:Record<string,string>,diem:Record<string,any>}} */ let caInfo = { vang: {}, drive: {}, diem: {} };
+let caIpCfg = '', caTtLoaded = false, caLuuTimer = 0;
+/** @type {Array<() => void>} */ let caStops = [];
+const caKey = (/** @type {string} */ ma) => store.keyOf(ma);
+const hms = (/** @type {number} */ t) => t ? new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
+/** Hiện/ẩn khối Theo dõi ca thi và các phần của thi thử. @param {boolean} on */
+function showCa(on) {
+  $('ca-thi').hidden = !on;
+  for (const id of ['thi-gv-metrics', 'thi-st-tabs', 'tabpanel-thi-kq', 'tabpanel-thi-td']) { const n = document.getElementById(id); if (n) n.hidden = on || (id === 'tabpanel-thi-td' ? true : n.hidden); }
+  if (!on) { $('thi-gv-metrics').hidden = false; $('tabpanel-thi-kq').hidden = false; }
+  button('thi-gv-toggle').hidden = on;
+}
+/** Lớp của bài: bài cho một lớp → lớp đó; bài cho cả khối → các lớp khối đó có trong danh sách học sinh. @param {any} e */
+function caClasses(e) {
+  if (e.lop) return [String(e.lop)];
+  const set = new Set(Object.values(fbHs || {}).filter((/** @type {any} */ x) => x && Number(x.khoi) === Number(e.khoi)).map((/** @type {any} */ x) => String(x.lop)));
+  return [...set].filter(Boolean).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+}
+function openCa(/** @type {any} */ e) {
+  closeCa(); caEx = e; caTtLoaded = false; current = e.ma_de;
+  $('thi-gv-sub').textContent = `${KIND.that} · ${sel(e)} · ${e.questions} câu · ${e.noi_dung === 'tn_th' ? 'Trắc nghiệm + Thực hành' : e.noi_dung === 'tn_tl' ? 'Trắc nghiệm + Tự luận' : 'Trắc nghiệm'}`;
+  fillCaLop();
+  const id = e.ma_de;
+  caStops = [
+    store.listen(`thi_tt/${id}`, d => { const next = d || {}; if (caTtLoaded) caToasts(caTt, next); caTt = next; caTtLoaded = true; renderCa(); }, undefined, { prio: 3 }),
+    store.listen(`thi_tien_do/${id}`, d => { caTd = d || {}; renderCa(); }, undefined, { prio: 2 }),
+    store.listen(`thi_drive/${id}`, d => { caDr = d || {}; renderCa(); }, undefined, { prio: 2 }),
+    store.listen(`thi_ip/${id}`, d => { caIp = d || {}; renderCa(); }, undefined, { prio: 1 })
+  ];
+  void store.get('thi_cfg/ip_truong').then(v => { caIpCfg = String(v || ''); renderCaIp(); }).catch(() => {});
+  syncExamFb();   // thi_vao, thi_th, thi_nop của bài này nghe tức thì
+  void caLoadInfo('gv_ca');
+  renderCa();
+}
+function closeCa() { caStops.forEach(f => f()); caStops = []; caEx = null; caTt = {}; caTd = {}; caDr = {}; caIp = {}; caInfo = { vang: {}, drive: {}, diem: {} }; clearTimeout(caLuuTimer); const t = document.getElementById('ca-toasts'); if (t) t.replaceChildren(); }
+function fillCaLop() {
+  if (!caEx) return;
+  const selEl = select('ca-lop'), keep = selEl.value, list = caClasses(caEx);
+  selEl.replaceChildren(...(list.length ? list.map(l => new Option('Lớp ' + l, l)) : [new Option('Chưa có lớp nào của khối này', '')]));
+  if (list.includes(keep)) selEl.value = keep;
+}
+/** Ghi chú vắng, Drive, điểm từ Google Sheet. gv_luu = kéo bài vừa nộp về, chấm, lưu Drive ngay. @param {'gv_ca'|'gv_luu'} action */
+async function caLoadInfo(action) {
+  if (!caEx || !getPass()) return;
+  const id = caEx.ma_de;
+  try { const r = await call({ action, ma_de: id }); if (caEx && caEx.ma_de === id) { caInfo = { vang: r.vang || {}, drive: r.drive || {}, diem: r.diem || {} }; renderCa(); } if (r.fb_error) status('Google Sheet chưa lưu được bài lên Drive: ' + r.fb_error, 'error'); }
+  catch (e) { status(e instanceof Error ? e.message : 'Chưa kết nối được Google Sheet.', 'error'); }
+}
+/** Có em vừa nộp → thông báo + nhờ Sheet lưu Drive ngay (gộp nhiều em trong 3 giây). @param {Record<string,any>} prev @param {Record<string,any>} next */
+function caToasts(prev, next) {
+  const box = $('ca-toasts'); let any = false;
+  for (const [k, v] of Object.entries(next)) {
+    if (!v || v.tt !== 'da_thi' || prev[k]?.tt === 'da_thi') continue;
+    any = true;
+    const hs = (fbHs || {})[k] || {}, t = document.createElement('div'); t.className = 'ca-toast'; t.setAttribute('role', 'status'); t.dataset.k = k;
+    const msg = document.createElement('p'); msg.textContent = `${hs.ten || k} (${hs.lop || v.lop || ''}) đã nộp bài lúc ${hms(Number(v.nop_luc) || Date.now())}${Number(v.lan) > 1 ? ` · lần ${v.lan}` : ''}.`;
+    const open = document.createElement('a'); open.className = 't-button ca-drive'; open.target = '_blank'; open.rel = 'noopener'; open.textContent = 'Đang lưu lên Drive…'; open.setAttribute('aria-disabled', 'true');
+    const x = ui.iconButton({ icon: 'close', label: 'Đóng thông báo', onClick: () => t.remove() });
+    t.append(msg, open, x); box.prepend(t);
+    while (box.children.length > 5) box.lastElementChild?.remove();
+  }
+  if (any) { clearTimeout(caLuuTimer); caLuuTimer = window.setTimeout(() => void caLoadInfo('gv_luu'), 3000); }
+}
+/** Liên kết Drive của một em (Sheet ghi thi_drive sau khi lưu xong và kiểm đủ file). @param {string} k */
+const caDriveUrl = k => String(caDr[k]?.thu_muc || caInfo.drive[k] || '');
+function renderCaIp() { const t = document.getElementById('ca-ip-text'); if (t) t.textContent = caIpCfg ? `IP mạng trường: ${caIpCfg.split(',').join(', ')}.` : 'Chưa cài IP mạng trường (không bắt buộc).'; }
+function renderCa() {
+  if (!caEx || $('ca-thi').hidden) return;
+  const e = caEx, lop = select('ca-lop').value, th = e.noi_dung === 'tn_th';
+  if (select('ca-lop').options.length <= 1 && !lop) fillCaLop();
+  const vao = fbVao[e.ma_de] || {}, ths = fbTh[e.ma_de] || {}, loc = select('ca-loc').value;
+  const sts = Object.entries(fbHs || {}).filter(([, x]) => x && String(x.lop).toLowerCase() === String(lop).toLowerCase())
+    .map(([k, x]) => { const t = String(caTt[k]?.tt || 'chua_mo'), p = live[liveKey(x.ma || k)];
+      const online = !!p && p.state !== 'offline' && Date.now() - Number(p.at || 0) <= presence.STALE_MS;
+      return { k, ma: x.ma || k, ten: x.ten || k, lop: x.lop, tt: t, st: caTt[k] || {}, vao: Number(vao[k]) || 0, td: caTd[k], th: !!ths[k] || !!caTd[k]?.th, dr: caDr[k], ngoai: caIp[k]?.ngoai === true, vang: caInfo.vang[k], diem: caInfo.diem[k], online, live: liveLabel(p) }; })
+    .sort((a, b) => a.ten.localeCompare(b.ten, 'vi'));
+  const doing = (/** @type {any} */ s) => (s.tt === 'chua_thi' || s.tt === 'thi_lai') && (s.vao || s.td);
+  const m = { si: sts.length, vao: sts.filter(s => s.vao || s.tt === 'da_thi').length, lam: sts.filter(doing).length, nop: sts.filter(s => s.tt === 'da_thi').length, mo: sts.filter(s => s.tt === 'chua_thi' || s.tt === 'thi_lai').length, vang: sts.filter(s => s.vang).length };
+  const chuaVao = sts.filter(s => (s.tt === 'chua_thi' || s.tt === 'thi_lai') && !s.vao && !s.td).length;
+  metric($('ca-metrics'), [['Sĩ số', m.si], ['Đã vào thi', m.vao], ['Đang làm', m.lam], ['Đã nộp', m.nop], ['Chưa vào', chuaVao], ['Vắng (ghi chú)', m.vang]]);
+  button('ca-mo').disabled = !lop || !sts.some(s => s.tt === 'chua_mo'); button('ca-dong').disabled = !lop || !m.mo;
+  $('ca-help').textContent = !useFb() ? 'Theo dõi ca thi cần danh sách học sinh trên Firebase. Vào Tài khoản → Đẩy lên Firebase (hoặc nút Cập nhật lên Firebase ở danh sách bài thi), rồi mở lại.' : !lop ? 'Chọn lớp thi.' : m.mo ? `Lớp ${lop} đang thi: ${m.nop}/${m.si} em đã nộp. Không đếm giờ – chờ các em làm xong rồi bấm Đóng thi lớp này.` : m.nop ? `Lớp ${lop} đã thi: ${m.nop}/${m.si} em đã nộp.` : `Lớp ${lop} chưa mở thi. Khi các em đã ngồi vào máy, bấm Mở thi cho lớp.`;
+  const rows = sts.filter(s => !loc || (loc === 'chua_vao' && (s.tt === 'chua_thi' || s.tt === 'thi_lai') && !s.vao && !s.td) || (loc === 'dang_lam' && doing(s)) || (loc === 'da_nop' && s.tt === 'da_thi') || (loc === 'vang' && s.vang) || (loc === 'ngoai' && s.ngoai));
+  const body = $('ca-body'); body.replaceChildren();
+  if (!rows.length) { const tr = document.createElement('tr'); const c = td('', !useFb() ? 'Chưa có danh sách học sinh trên Firebase.' : !lop ? 'Chọn lớp thi.' : !sts.length ? 'Lớp này chưa có học sinh trên Firebase (Tài khoản → Đẩy lên Firebase).' : 'Không có học sinh khớp bộ lọc.', 't-muted'); c.colSpan = 7; tr.append(c); body.append(tr); }
+  const sm = (/** @type {string} */ t, cls = '') => { const x = document.createElement('small'); x.textContent = t; if (cls) x.className = cls; return x; };
+  for (const s of rows) {
+    const tr = document.createElement('tr'); tr.dataset.k = s.k; tr.dataset.tt = s.tt;
+    const who = document.createElement('div'); const nm = document.createElement('strong'); nm.textContent = s.ten; who.append(nm, sm(s.ma));
+    const st = document.createElement('div'); const bd = document.createElement('span'); bd.className = 't-badge ca-tt ca-tt-' + s.tt; bd.textContent = TT_TEN[s.tt] || s.tt; st.append(bd, sm(s.live, s.online ? 'ca-on' : ''));
+    if (s.tt === 'thi_lai' && s.st.ly_do) st.append(sm('Lý do: ' + s.st.ly_do));
+    const pg = document.createElement('div');
+    if (s.vao) pg.append(sm('Vào lúc ' + hms(s.vao)));
+    if (s.td && (s.tt === 'chua_thi' || s.tt === 'thi_lai')) pg.append(sm(`Trắc nghiệm ${s.td.n}/${s.td.tong}`));
+    if (th) pg.append(sm(s.th ? 'Thực hành: đã nộp ✓' : 'Thực hành: chưa nộp', s.th ? 'ca-ok' : ''));
+    if (s.ngoai) { const b2 = document.createElement('span'); b2.className = 't-badge t-badge-error'; b2.textContent = 'Ngoài mạng trường'; pg.append(b2); }
+    if (!pg.childNodes.length) pg.append(sm('—'));
+    const nop = document.createElement('div');
+    if (s.tt === 'da_thi') { nop.append(sm('Đã nộp ' + hms(Number(s.st.nop_luc)), 'ca-ok')); if (Number(s.st.lan) > 1) nop.append(sm('Lần ' + s.st.lan)); if (s.diem) nop.append(sm(`Điểm (Sheet chấm): ${s.diem.diem}/${s.diem.tong}`)); }
+    else nop.append(sm('—'));
+    const dv = document.createElement('div'), url = caDriveUrl(s.k);
+    if (url) { const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.className = 't-button ca-drive'; a.textContent = 'Mở bài trên Drive'; a.setAttribute('aria-label', `Mở bài của ${s.ten} trên Google Drive`); dv.append(a, sm(`Bài làm ${s.dr?.txt === false ? '✗' : '✓'}${th ? ` · Thực hành ${s.dr?.th ? '✓' : '✗ chưa thấy file'}` : ''}`, s.dr && th && !s.dr.th ? 'ca-bad' : 'ca-ok')); }
+    else if (s.tt === 'da_thi') dv.append(sm('Đang lưu lên Drive…'));
+    else dv.append(sm('—'));
+    const note = document.createElement('div'); note.append(sm(s.vang ? `${s.vang.ly_do}${s.vang.ghi ? ': ' + s.vang.ghi : ''}` : '—'));
+    const acts = document.createElement('div'); acts.className = 'ca-acts';
+    const tb = (/** @type {string} */ text, /** @type {() => void} */ fn, aria = '') => { const b = document.createElement('button'); b.type = 'button'; b.className = 't-button'; b.textContent = text; if (aria) b.setAttribute('aria-label', aria); b.addEventListener('click', fn); return b; };
+    if (s.tt === 'chua_mo') acts.append(tb('Mở cho em', () => void caLenh('mo_em', s), `Mở thi cho ${s.ten}`));
+    if (s.tt === 'da_thi') acts.append(tb('Cho thi lại', () => openThiLai(s), `Cho ${s.ten} thi lại`));
+    if (s.tt !== 'da_thi') acts.append(tb(s.vang ? 'Sửa ghi chú' : 'Ghi chú vắng', () => openVang(s), `Ghi chú vắng: ${s.ten}`));
+    tr.append(td('Học sinh', who), td('Trạng thái', st), td('Tiến độ', pg), td('Nộp bài', nop), td('Bài trên Drive', dv), td('Ghi chú', note), td('Thao tác', acts));
+    body.append(tr);
+  }
+  // Thông báo nộp: bật nút Drive khi Sheet đã lưu
+  for (const t of /** @type {HTMLElement[]} */ ([...$('ca-toasts').querySelectorAll('.ca-toast')])) { const a = /** @type {HTMLAnchorElement} */ (t.querySelector('.ca-drive')), u = caDriveUrl(t.dataset.k || ''); if (a && u && !a.href) { a.href = u; a.textContent = 'Mở bài trên Drive'; a.removeAttribute('aria-disabled'); } }
+}
+/** Gửi lệnh ca thi lên Google Sheet (Sheet ghi Firebase). @param {'mo_lop'|'dong_lop'|'mo_em'|'thi_lai'} lenh @param {any} [s] @param {Record<string,string>} [extra] */
+async function caLenh(lenh, s, extra = {}) {
+  if (!caEx) return false;
+  const lop = select('ca-lop').value, btnEl = lenh === 'mo_lop' ? button('ca-mo') : lenh === 'dong_lop' ? button('ca-dong') : null;
+  if (btnEl) { btnEl.disabled = true; btnEl.setAttribute('aria-busy', 'true'); }
+  try {
+    const r = await call({ action: 'gv_tt', ma_de: caEx.ma_de, lenh, lop, ma: s ? s.ma : undefined, ...extra });
+    status(lenh === 'mo_lop' ? `Đã mở thi cho lớp ${lop} (${r.n} em). Các em thấy nút Vào thi ngay.` : lenh === 'dong_lop' ? `Đã đóng thi lớp ${lop}.` : lenh === 'mo_em' ? `Đã mở thi cho ${s.ten}.` : `Đã cho ${s.ten} thi lại.`, 'success');
+    return true;
+  } catch (e) { status(e instanceof Error ? e.message : 'Chưa kết nối được Google Sheet.', 'error'); return false; }
+  finally { if (btnEl) { btnEl.removeAttribute('aria-busy'); renderCa(); } }
+}
+$('ca-lop').addEventListener('change', renderCa);
+$('ca-loc').addEventListener('change', renderCa);
+$('ca-mo').addEventListener('click', async () => {
+  const lop = select('ca-lop').value; if (!caEx || !lop) return;
+  const n = Object.entries(fbHs || {}).filter(([k, x]) => x && String(x.lop).toLowerCase() === lop.toLowerCase() && String(caTt[k]?.tt || 'chua_mo') === 'chua_mo').length;
+  if (await confirmBox({ title: `Mở thi cho lớp ${lop}?`, body: `${n} em sẽ thấy nút Vào thi "${caEx.tieu_de}" ngay. Em đã thi giữ nguyên. Không đếm giờ.`, okText: 'Mở thi cho lớp' })) void caLenh('mo_lop');
+});
+$('ca-dong').addEventListener('click', async () => {
+  const lop = select('ca-lop').value; if (!caEx || !lop) return;
+  const vao = fbVao[caEx.ma_de] || {}, list = Object.entries(fbHs || {}).filter(([k, x]) => x && String(x.lop).toLowerCase() === lop.toLowerCase() && ['chua_thi', 'thi_lai'].includes(String(caTt[k]?.tt)));
+  const lam = list.filter(([k]) => vao[k] || caTd[k]).length, chua = list.length - lam;
+  if (await confirmBox({ title: `Đóng thi lớp ${lop}?`, body: (lam ? `Còn ${lam} em đang làm bài. ` : '') + (chua ? `${chua} em chưa vào thi. ` : '') + 'Các em này về Chưa mở thi (bài làm dở vẫn giữ trên máy); thi bù bằng "Mở cho em" ở ca sau.', okText: 'Đóng thi lớp' })) void caLenh('dong_lop');
+});
+$('ca-ip').addEventListener('click', async () => {
+  const b = button('ca-ip'); b.disabled = true; b.setAttribute('aria-busy', 'true');
+  try { const r = await api('/thi/my-ip', { timeout: 10000 }); const x = await call({ action: 'gv_ip_truong', ip: r.ip }); caIpCfg = String(x.ip_truong || ''); renderCaIp(); status('Đã lưu IP mạng trường. Máy vào thi từ mạng khác sẽ có nhãn "Ngoài mạng trường".', 'success'); }
+  catch (e) { status(e instanceof Error ? e.message : 'Chưa đọc được IP.', 'error'); }
+  finally { b.disabled = false; b.removeAttribute('aria-busy'); }
+});
+/* Ghi chú vắng */
+const vangDlg = /** @type {HTMLDialogElement} */ ($('vang-dialog')); /** @type {any} */ let vangFor = null;
+function openVang(/** @type {any} */ s) {
+  vangFor = s; $('vang-who').textContent = `${s.ten} (${s.ma}) · Lớp ${s.lop}`;
+  select('vang-ly-do').value = s.vang?.ly_do || ''; input('vang-ghi').value = s.vang?.ghi || ''; $('vang-err').textContent = '';
+  for (const id of ['vang-ly-do', 'vang-ghi']) $(id).removeAttribute('aria-invalid');
+  button('vang-xoa').hidden = !s.vang; vangDlg.showModal(); select('vang-ly-do').focus();
+}
+async function saveVang(/** @type {string} */ ly, /** @type {string} */ ghi) {
+  if (!caEx || !vangFor) return;
+  const b = button('vang-luu'); b.disabled = true; b.setAttribute('aria-busy', 'true');
+  try { const r = await call({ action: 'gv_vang', ma_de: caEx.ma_de, ma: vangFor.ma, ly_do: ly, ghi }); caInfo = { vang: r.vang || {}, drive: r.drive || {}, diem: r.diem || {} }; vangDlg.close(); renderCa(); status(ly ? `Đã ghi ${vangFor.ten} vắng: ${ly}.` : `Đã bỏ ghi chú vắng của ${vangFor.ten}.`, 'success'); }
+  catch (e) { $('vang-err').textContent = e instanceof Error ? e.message : 'Chưa lưu được.'; }
+  finally { b.disabled = false; b.removeAttribute('aria-busy'); }
+}
+$('vang-form').addEventListener('submit', ev => {
+  ev.preventDefault(); const ly = select('vang-ly-do').value, ghi = input('vang-ghi').value.trim();
+  for (const id of ['vang-ly-do', 'vang-ghi']) $(id).removeAttribute('aria-invalid');
+  if (!ly) { $('vang-ly-do').setAttribute('aria-invalid', 'true'); $('vang-err').textContent = 'Chọn lý do vắng.'; select('vang-ly-do').focus(); return; }
+  if (ly === 'Khác' && !ghi) { $('vang-ghi').setAttribute('aria-invalid', 'true'); $('vang-err').textContent = 'Ghi rõ lý do khác.'; input('vang-ghi').focus(); return; }
+  void saveVang(ly, ghi);
+});
+$('vang-xoa').addEventListener('click', () => void saveVang('', ''));
+$('vang-huy').addEventListener('click', () => vangDlg.close());
+select('vang-ly-do').addEventListener('change', () => { $('vang-err').textContent = ''; $('vang-ly-do').removeAttribute('aria-invalid'); });
+/* Cho thi lại */
+const tlDlg2 = /** @type {HTMLDialogElement} */ ($('thilai-dialog')); /** @type {any} */ let tlFor = null;
+function openThiLai(/** @type {any} */ s) { tlFor = s; $('thilai-who').textContent = `${s.ten} (${s.ma}) · Lớp ${s.lop} · đã nộp lúc ${hms(Number(s.st.nop_luc))}`; select('thilai-ly-do').value = ''; input('thilai-ghi').value = ''; $('thilai-err').textContent = ''; $('thilai-ly-do').removeAttribute('aria-invalid'); tlDlg2.showModal(); select('thilai-ly-do').focus(); }
+$('thilai-form').addEventListener('submit', async ev => {
+  ev.preventDefault(); const ly = select('thilai-ly-do').value;
+  if (!ly) { $('thilai-ly-do').setAttribute('aria-invalid', 'true'); $('thilai-err').textContent = 'Chọn lý do cho thi lại.'; select('thilai-ly-do').focus(); return; }
+  const b = button('thilai-luu'); b.disabled = true; b.setAttribute('aria-busy', 'true');
+  const ok = await caLenh('thi_lai', tlFor, { ly_do: ly, ghi: input('thilai-ghi').value.trim() });
+  b.disabled = false; b.removeAttribute('aria-busy'); if (ok) tlDlg2.close(); else $('thilai-err').textContent = $('thi-gv-status')?.textContent || 'Chưa lưu được.';
+});
+$('thilai-huy').addEventListener('click', () => tlDlg2.close());
+select('thilai-ly-do').addEventListener('change', () => { $('thilai-err').textContent = ''; $('thilai-ly-do').removeAttribute('aria-invalid'); });
+

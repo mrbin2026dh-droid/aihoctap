@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Kiểm thử mô phỏng toàn hệ thống bằng 30 tài khoản THỬ lớp 9TH (không dùng tài khoản học sinh thật), báo cáo có nhãn mô phỏng, tìm bug và đối chiếu số; theo docs/handoff/claude-antigravity-kiem-thu-mo-phong-29-10.md.
+- Yêu cầu mới nhất: THI THẬT theo ca đã code xong (4 trạng thái từng em, đảo câu + đảo đáp án từng em, Sheet chấm, file minh chứng có giờ nộp đến giây, màn giáo viên Theo dõi ca thi, ghi chú vắng, thi lại, nhãn ngoài mạng trường); chờ Antigravity chạy emulator luật, đăng luật, deploy Worker + Pages, dán Apps Script New version, thử lớp 9TH có ảnh theo docs/handoff/claude-antigravity-thi-that-30-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4344,4 +4344,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ### 30/10/2026 01:00 — Claude: kế hoạch Thi thật bản 3 (đơn giản hóa)
 - Thầy chốt: lấy điểm thi lại, không mã ca, không đếm giờ (cho làm xong), không bảo mật rườm rà; thêm nhãn máy ngoài mạng trường khi nghi ngờ. Giữ hệ thống thi hiện tại, chỉ thêm: đề thật không kèm đáp án, Sheet chấm thay máy học sinh, Firebase chỉ nhận bài theo trạng thái 4 mức + có file thực hành.
 - Tệp: docs/ke-hoach/thi-that.md. Chờ thầy đồng ý để code (6 bước, ~2–3 ngày).
+
+### 30/10/2026 — Claude: code THI THẬT theo ca
+- Đã làm: thi_tt 4 trạng thái + luật Firebase (nộp chỉ khi Chưa thi/Thi lại, đổi Đã thi cùng lúc, TN+TH phải có thi_th); thi_de không đáp án, thi_goi_y khóa; Sheet chấm (chamThat_), file "Bài làm - Lần N.txt" theo thứ tự em thấy, giờ Việt Nam đến giây; nộp thực hành docx/xlsx/pptx/pdf; học sinh 2 phần, không hiện điểm; màn giáo viên Theo dõi ca thi (tức thì, thông báo nộp + Mở bài trên Drive, ghi chú vắng, thi lại có lý do, đóng/mở lớp, IP mạng trường); thi lại xóa thi_th/thi_tien_do/thi_vao lần trước; trigger mỗi phút.
+- Tệp: apps-script/sheet-exam/Code.gs, spike/step0/database.rules.ai-sgk-final.json, worker/index.js, frontend/hoc/{thi-app.js,app.js,styles.css,teacher-thi.js,teacher-ui.js,teacher.html,teacher.css,whats-new.json,sw.js}; test mới tests/test_ca_thi_ui.cjs, tests/test_worker_thi_ip.mjs, spike/step0/emulator/rules-thi-that.test.mjs.
+- Kiểm thử PASS (đã chạy): sheet_exam_gs, thi_firebase_ui 124, ca_thi_ui 68, teacher_thi_ui 120, exam_teacher_monitor, thi_sheet_ui, thi_tuluan, worker_thi_ip, worker gate/tutor/scope/contract, chuẩn UI 0 vi phạm, PWA P1–P7. Chưa chạy: emulator luật (mạng chặn) → Antigravity chạy.
 
