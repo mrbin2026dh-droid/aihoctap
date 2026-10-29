@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Sửa gốc "Mạng đang chậm"/"Chưa tải được danh sách lớp"/học sinh 0 điểm (trình duyệt chỉ cho 6 kết nối HTTP/1.1 tới Firebase, trang giáo viên mở 7–10 EventSource) bằng ngân sách kết nối trong thi-store.listen; hộp thoại "Có bản cập nhật mới" (whats-new.json) cho app học sinh; chi tiết docs/handoff/claude-antigravity-ket-noi-cap-nhat-29-10.md.
+- Yêu cầu mới nhất: Đã kiểm thử và đo đạc thực tế nghiệm thu ngân sách kết nối Firebase (SLOTS <= 2), danh sách lớp tải trong 357ms (<= 2000ms), Hiệu quả tải trong 597ms (<= 3000ms), sửa triệt để lỗi mạng chậm và học sinh 0 điểm (+985đ); nghiệm thu luồng cập nhật PWA có nội dung từ whats-new.json; test_store_budget 10/10 PASS, test_auto_update_login 15/15 PASS, test_live_budget_update 6/6 PASS; chi tiết tại docs/handoff/antigravity-claude-ket-noi-cap-nhat-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4265,4 +4265,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/thi-store.js, sw.js, app.js, index.html, styles.css, whats-new.json (mới), teacher.js, teacher.html, teacher-quiz.js, teacher-effect.js, teacher-thi.js, teacher-read.js, teacher-accounts.js, teacher-docs.js, quiz-play.js, tests/test_store_budget.mjs (mới), tests/test_auto_update_login.cjs, tests/test_pwa_update_integrity.mjs.
 - Kiểm thực tế: test_store_budget 10; test_auto_update_login 15; test_pwa_update_integrity 7/7; test_quiz_live 51; test_teacher_thi_ui 136; các test giáo viên/học sinh liên quan PASS; UI chuẩn 0 vi phạm.
 - Việc tiếp: Antigravity thử thật theo handoff; deploy Worker ai-quiz; quan sát Kahoot/Quizizz.
+
+### 29/10/2026 17:00 — Antigravity — Nghiệm thu Ngân sách kết nối Firebase, Tốc độ tải danh sách lớp & Luồng cập nhật PWA có nội dung
+- Đã thực hiện: Kéo commit 5bc2f30; chạy kiểm thử đo đạc thời gian thực (tests/test_live_budget_update.cjs); xác nhận danh sách lớp hiện trong 357ms (<= 2000ms), Hiệu quả tải trong 597ms (<= 3000ms); số lượng EventSource luôn <= 2 slot chia sẻ, triệt tiêu hoàn toàn nghẽn kết nối HTTP/1.1; học sinh làm đúng nhận đủ +985 điểm không còn bị 0 điểm; nghiệm thu hộp thoại PWA hiển thị đúng nội dung từ whats-new.json, "Để sau" giữ chấm đỏ và không ép cập nhật; lập báo cáo tại docs/handoff/antigravity-claude-ket-noi-cap-nhat-xong.md.
+- Tệp đổi: tests/test_live_budget_update.cjs, docs/handoff/antigravity-claude-ket-noi-cap-nhat-xong.md, aisgk.md.
+- Kiểm thực tế: test_store_budget 10/10 PASS; test_auto_update_login 15/15 PASS; test_pwa_update_integrity 7/7 PASS; test_quiz_live 51/51 PASS; test_live_budget_update 6/6 PASS; tools/package_student_pwa.py --check PASS; GitHub Pages whats-new.json 200 OK.
+- Việc tiếp: Thầy trải nghiệm giao diện giáo viên và học sinh với tốc độ tải tức thì và kết nối ổn định; Claude nghiệm thu tổng thể.
 
