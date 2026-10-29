@@ -257,6 +257,16 @@
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1440 && (!data.exists() ? newData.val() <= 2 : newData.val() <= data.val() + 2)"
         }
       }
+    },
+    "quiz_bo": {
+      ".read": false,
+      "$owner": {
+        ".read": "$owner.length === 64 && $owner.matches(/^[0-9a-f]+$/)",
+        ".write": "$owner.length === 64 && $owner.matches(/^[0-9a-f]+$/)",
+        "$id": {
+          ".validate": "$id.length <= 40 && (!newData.exists() || (newData.hasChildren(['name','qs','at']) && newData.child('name').isString() && newData.child('name').val().length <= 120 && newData.child('at').isNumber()))"
+        }
+      }
     }
   }
 }

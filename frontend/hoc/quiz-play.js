@@ -1,19 +1,25 @@
 // @ts-check
-// Học sinh chơi "Trò chơi câu hỏi" do giáo viên điều khiển trên lớp (Firebase, không qua Worker):
-// thầy cô mở phòng cho lớp → app hiện thẻ "Vào chơi" → em chọn đáp án trên điện thoại → xem đúng/sai, điểm, hạng.
+// Học sinh: mục Luyện tập = các buổi luyện tập thầy cô đang mở cho lớp em (kiểu Kahoot / Quizizz, chạy trên Firebase).
+// Thầy cô mở phòng → mục Luyện tập hiện thẻ "Vào phòng" (và thông báo nhỏ ở các mục khác) → phòng chờ → thầy cô bắt đầu →
+// mỗi câu em chọn đáp án trên điện thoại → xem đúng/sai, điểm, hạng → kết thúc: hạng, danh hiệu, bục vinh danh.
 // Em không thấy đáp án trước (chỉ máy giáo viên giữ đáp án đến lúc công bố).
 import * as store from './thi-store.js';
 
 const L = ['A', 'B', 'C', 'D'];
+const SHAPE = /** @type {Record<string,string>} */ ({ A: '▲', B: '◆', C: '●', D: '■' });
 /** @type {{ma:string,ten:string,lop:string}|null} */ let me = null;
-/** @type {null|(() => void)} */ let stopLop = null;
+/** @type {null|(() => void)} */ let stopLop = null, stopInfo = null;
 /** @type {(() => void)[]} */ let stops = [];
-let room = '', dismissed = '', playing = '';   // room = phòng đang mời lớp; playing = phòng em đã vào (giữ đến khi em đóng, kể cả khi thầy cô kết thúc)
-/** @type {any} */ let pub = null; /** @type {any} */ let mine = null;
+let room = '', playing = '', dismissed = '';
+/** @type {any} */ let info = null, pub = null, mine = null;
+let players = 0;
 /** @type {Record<string,string>} */ let chosen = {};
-let timer = 0, lastPhaseKey = '';
+let timer = 0, lastKey = '', qSeen = '', qEnd = 0;
+/** @type {() => void} */ let onChange = () => {};
 
-/** Sau khi đăng nhập: nghe phòng chơi của lớp em. @param {{uid:string,student_name:string,class_code:string}} identity */
+/** App gọi để vẽ lại mục Luyện tập khi có / hết buổi luyện tập. @param {() => void} fn */
+export function setOnChange(fn) { onChange = fn; }
+/** Sau khi đăng nhập: nghe buổi luyện tập của lớp em. @param {{uid:string,student_name:string,class_code:string}} identity */
 export function start(identity) {
   if (!store.enabled()) return;
   const next = { ma: identity.uid, ten: identity.student_name, lop: identity.class_code };
@@ -21,113 +27,172 @@ export function start(identity) {
   stop(); me = next;
   void probe();
 }
-/** Thử đọc một lần trước khi nghe liên tục: luật Firebase chưa có nhánh trò chơi (chưa đăng luật mới) thì không nghe → không báo lỗi liên tục; thử lại sau 10 phút. */
+/** Thử đọc một lần trước khi nghe liên tục (luật Firebase chưa có nhánh này thì thử lại sau 10 phút, không báo lỗi liên tục). */
 let probeTimer = 0;
 async function probe() {
   if (!me || stopLop) return;
   const path = `quiz_lop/${store.keyOf(me.lop)}`;
-  try { await store.get(path); }
-  catch { clearTimeout(probeTimer); probeTimer = window.setTimeout(() => void probe(), 600000); return; }
+  try { await store.get(path); } catch { clearTimeout(probeTimer); probeTimer = window.setTimeout(() => void probe(), 600000); return; }
   if (!me || stopLop) return;
-  stopLop = store.listen(path, d => { room = typeof d === 'string' && /^\d{6}$/.test(d) ? d : ''; banner(); });
+  stopLop = store.listen(path, d => {
+    const code = typeof d === 'string' && /^\d{6}$/.test(d) ? d : '';
+    if (code === room) return;
+    room = code; info = null; stopInfo?.(); stopInfo = null;
+    if (room) stopInfo = store.listen(`quiz/${room}/pub`, p => { info = p; banner(); onChange(); if (playing === room) { pub = p; draw(); } });
+    banner(); onChange();
+  });
 }
 /** Đăng xuất. */
-export function stop() { clearTimeout(probeTimer); stopLop?.(); stopLop = null; leaveRoom(); room = ''; me = null; banner(); }
+export function stop() { clearTimeout(probeTimer); stopLop?.(); stopLop = null; stopInfo?.(); stopInfo = null; leaveRoom(); room = ''; info = null; me = null; banner(); onChange(); }
+/** Đang có buổi luyện tập cho lớp em không. */
+export const active = () => Boolean(room && info && info.phase !== 'end');
 
-function banner() {
-  let b = document.getElementById('qz-banner');
-  const show = !!room && !!me && dismissed !== room && document.getElementById('qz-play')?.hidden !== false;
-  if (!show) { if (b) b.hidden = true; return; }
-  if (!b) {
-    b = document.createElement('div'); b.id = 'qz-banner'; b.className = 'qz-banner'; b.setAttribute('role', 'status');
-    const dot = document.createElement('span'); dot.className = 'qz-banner-dot'; dot.setAttribute('aria-hidden', 'true');
-    const mid = document.createElement('div');
-    const stg = document.createElement('strong'); stg.textContent = 'Thầy cô đang mở trò chơi câu hỏi';
-    const sub = document.createElement('span'); sub.textContent = 'Bấm Vào chơi để tham gia cùng lớp.';
-    mid.append(stg, sub);
-    const btnJoin = document.createElement('button'); btnJoin.type = 'button'; btnJoin.className = 'primary qz-join'; btnJoin.textContent = 'Vào chơi';
-    const btnX = document.createElement('button'); btnX.type = 'button'; btnX.className = 'qz-banner-x'; btnX.setAttribute('aria-label', 'Ẩn thông báo trò chơi'); btnX.textContent = '×';
-    b.append(dot, mid, btnJoin, btnX);
-    document.body.append(b);
-    b.querySelector('.qz-join')?.addEventListener('click', () => void join());
-    b.querySelector('.qz-banner-x')?.addEventListener('click', () => { dismissed = room; banner(); });
+function t(/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ text = '') { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; }
+function b(/** @type {string} */ text, /** @type {string} */ cls, /** @type {() => void} */ fn) { const x = /** @type {HTMLButtonElement} */ (t('button', cls, text)); x.type = 'button'; x.addEventListener('click', fn); return x; }
+
+/** Vẽ mục Luyện tập. @param {HTMLElement} target */
+export function renderPanel(target) {
+  target.replaceChildren();
+  if (!me) return;
+  if (!active()) {
+    const card = t('div', 'lt-empty');
+    card.append(t('span', 'lt-empty-ic', '◆'), t('h2', '', 'Chưa có buổi luyện tập'), t('p', '', 'Khi thầy cô mở luyện tập trên lớp, buổi luyện tập hiện ở đây. Em bấm Vào phòng để tham gia.'));
+    target.append(card); return;
   }
-  b.hidden = false;
+  const card = t('article', 'lt-card');
+  const head = t('div', 'lt-card-head'); head.append(t('span', 'lt-live', info.phase === 'lobby' ? 'Đang mở phòng' : 'Đang diễn ra'), t('span', 'lt-code', 'Mã phòng ' + room.replace(/(\d{3})(\d{3})/, '$1 $2')));
+  const meta = t('p', 'lt-meta', `${Number(info.n) || 0} câu · ${Number(info.lim) || 20} giây/câu`);
+  card.append(head, t('h2', 'lt-title', String(info.title || 'Luyện tập')), meta, b(playing === room ? 'Quay lại phòng' : 'Vào phòng', 'primary lt-join', () => void join()));
+  target.append(card);
 }
 
+function banner() {
+  let bn = document.getElementById('lt-banner');
+  const inPractice = !document.getElementById('practice-view')?.hidden;
+  const show = active() && !!me && dismissed !== room && playing !== room && !inPractice;
+  if (!show) { if (bn) bn.hidden = true; return; }
+  if (!bn) {
+    bn = t('div', 'lt-banner'); bn.id = 'lt-banner'; bn.setAttribute('role', 'status');
+    const mid = t('div', 'lt-banner-mid'); mid.append(t('strong', 'lt-banner-title', ''), t('span', '', 'Thầy cô đang mở luyện tập trên lớp.'));
+    bn.append(t('span', 'lt-banner-dot', ''), mid, b('Vào phòng', 'primary lt-banner-join', () => void join()), b('×', 'lt-banner-x', () => { dismissed = room; banner(); }));
+    /** @type {HTMLElement} */ (bn.querySelector('.lt-banner-x')).setAttribute('aria-label', 'Ẩn thông báo luyện tập');
+    document.body.append(bn);
+  }
+  /** @type {HTMLElement} */ (bn.querySelector('.lt-banner-title')).textContent = String(info?.title || 'Luyện tập');
+  bn.hidden = false;
+}
+/** Gọi khi đổi mục trong app (ẩn thông báo khi đang ở mục Luyện tập). */
+export function refreshBanner() { banner(); }
+
 function overlay() {
-  let o = document.getElementById('qz-play');
+  let o = document.getElementById('lt-play');
   if (!o) {
-    o = document.createElement('div'); o.id = 'qz-play'; o.className = 'qz-play'; o.hidden = true; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Trò chơi câu hỏi');
-    const header = document.createElement('header'); header.className = 'qz-p-top';
-    const title = document.createElement('strong'); title.className = 'qz-p-title';
-    const score = document.createElement('span'); score.className = 'qz-p-score'; score.setAttribute('aria-live', 'polite');
-    const close = document.createElement('button'); close.type = 'button'; close.className = 'qz-p-close'; close.setAttribute('aria-label', 'Thoát trò chơi'); close.textContent = '×';
-    header.append(title, score, close);
-    const main = document.createElement('main'); main.className = 'qz-p-main'; main.setAttribute('aria-live', 'polite');
+    o = t('div', 'lt-play'); o.id = 'lt-play'; o.hidden = true; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Luyện tập');
+    const header = t('header', 'lt-top');
+    const score = t('span', 'lt-score'); score.setAttribute('aria-live', 'polite');
+    header.append(t('strong', 'lt-top-title'), score, b('×', 'lt-close', () => closeOverlay()));
+    /** @type {HTMLElement} */ (header.querySelector('.lt-close')).setAttribute('aria-label', 'Thoát màn hình luyện tập');
+    const main = t('main', 'lt-main'); main.setAttribute('aria-live', 'polite');
     o.append(header, main);
     document.body.append(o);
-    o.querySelector('.qz-p-close')?.addEventListener('click', () => { if (pub?.phase === 'end' || playing !== room) leaveRoom(); else if (o) o.hidden = true; document.body.classList.remove('qz-playing'); banner(); });
   }
   return o;
+}
+function closeOverlay() {
+  if (!pub || pub.phase === 'end' || playing !== room) leaveRoom();
+  else { const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
+  banner(); onChange();
 }
 async function join() {
   if (!me || !room) return;
   if (playing && playing !== room) leaveRoom();
+  const o = overlay(); o.hidden = false; document.body.classList.add('lt-playing'); banner();
+  if (playing === room) { lastKey = ''; draw(); return; }
   playing = room;
-  const o = overlay(); o.hidden = false; document.body.classList.add('qz-playing'); banner();
-  /** @type {HTMLElement} */ (o.querySelector('.qz-p-main')).replaceChildren(text('p', 'qz-p-wait', 'Đang vào phòng…'));
+  /** @type {HTMLElement} */ (o.querySelector('.lt-main')).replaceChildren(t('p', 'lt-wait', 'Đang vào phòng…'));
   await store.put(`quiz/${playing}/ds/${store.keyOf(me.ma)}`, { ten: me.ten, at: store.SERVER_TIME }).catch(() => { /* đã vào trước đó */ });
   stops.forEach(f => f()); stops = [];
+  pub = info;
   stops.push(store.listen(`quiz/${playing}/pub`, d => { pub = d; draw(); }));
-  stops.push(store.listen(`quiz/${playing}/kq/${store.keyOf(me.ma)}`, d => { mine = d; drawScore(); if (pub?.phase === 'reveal' || pub?.phase === 'end') draw(); }));
-  /** @type {HTMLElement} */ (o.querySelector('.qz-p-close')).focus();
+  stops.push(store.listen(`quiz/${playing}/ds`, d => { players = Object.keys(d || {}).length; if (pub?.phase === 'lobby') { lastKey = ''; draw(); } }));
+  stops.push(store.listen(`quiz/${playing}/kq/${store.keyOf(me.ma)}`, d => { mine = d; drawScore(); if (pub?.phase === 'reveal' || pub?.phase === 'end') { lastKey = ''; draw(); } }));
+  onChange();
+  /** @type {HTMLElement} */ (o.querySelector('.lt-close')).focus();
 }
-function leaveRoom() { playing = ''; stops.forEach(f => f()); stops = []; clearInterval(timer); pub = null; mine = null; chosen = {}; lastPhaseKey = ''; const o = document.getElementById('qz-play'); if (o) o.hidden = true; document.body.classList.remove('qz-playing'); }
-function text(/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ t) { const n = document.createElement(tag); n.className = cls; n.textContent = t; return n; }
-function drawScore() { const s = document.querySelector('#qz-play .qz-p-score'); if (s) s.textContent = mine ? `${mine.p} điểm · hạng ${mine.r}/${mine.n}` : ''; }
+function leaveRoom() { playing = ''; stops.forEach(f => f()); stops = []; clearInterval(timer); pub = null; mine = null; chosen = {}; lastKey = ''; qSeen = ''; const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
+function drawScore() { const s = document.querySelector('#lt-play .lt-score'); if (s) s.textContent = mine ? `${mine.p} điểm · hạng ${mine.r}/${mine.n}` : ''; }
+const initials = (/** @type {string} */ s) => String(s || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase();
+
 function draw() {
-  const o = document.getElementById('qz-play'); if (!o || o.hidden || !pub) return;
-  /** @type {HTMLElement} */ (o.querySelector('.qz-p-title')).textContent = pub.title || 'Trò chơi câu hỏi';
+  const o = document.getElementById('lt-play'); if (!o || o.hidden || !pub) return;
+  /** @type {HTMLElement} */ (o.querySelector('.lt-top-title')).textContent = pub.title || 'Luyện tập';
   drawScore();
-  const main = /** @type {HTMLElement} */ (o.querySelector('.qz-p-main')), key = `${pub.phase}|${pub.q?.k || pub.reveal?.k || ''}|${chosen[pub.q?.k] || ''}|${mine?.p ?? ''}`;
-  if (key === lastPhaseKey) return; lastPhaseKey = key;
+  const main = /** @type {HTMLElement} */ (o.querySelector('.lt-main'));
+  const k = pub.q?.k || pub.reveal?.k || '';
+  const key = `${pub.phase}|${k}|${chosen[k] || ''}|${mine?.p ?? ''}|${pub.phase === 'lobby' ? players : ''}|${pub.q?.at || ''}`;
+  if (key === lastKey) return; lastKey = key;
   clearInterval(timer);
-  if (pub.phase === 'lobby') { main.replaceChildren(text('span', 'qz-p-pulse', ''), text('p', 'qz-p-wait', 'Em đã vào phòng. Chờ thầy cô bắt đầu…')); return; }
+  if (pub.phase === 'lobby') {
+    const av = t('span', 'lt-avatar', initials(me?.ten || ''));
+    main.replaceChildren(av, t('p', 'lt-name', me?.ten || ''), t('h2', 'lt-big', 'Em đã vào phòng'), t('p', 'lt-wait', 'Nhìn lên màn chiếu, chờ thầy cô bắt đầu.'), t('p', 'lt-count', players ? `${players} bạn đã vào phòng` : ''), t('span', 'lt-pulse', ''));
+    return;
+  }
+  if (pub.phase === 'pause') {
+    main.replaceChildren(t('span', 'lt-pause-ic', 'II'), t('h2', 'lt-big', 'Tạm dừng'), t('p', 'lt-wait', 'Thầy cô đang tạm dừng. Chờ tiếp tục nhé.'));
+    return;
+  }
   if (pub.phase === 'q' && pub.q) {
-    const q = pub.q, k = q.k, my = chosen[k];
-    const head = document.createElement('div'); head.className = 'qz-p-head';
-    const tm = text('span', 'qz-p-timer', String(q.lim)); head.append(text('span', 'qz-p-idx', `Câu ${Number(q.i) + 1}/${pub.n}`), tm);
-    const qt = text('p', 'qz-p-q', q.text || '');
-    const grid = document.createElement('div'); grid.className = 'qz-p-opts';
+    const q = pub.q, my = chosen[q.k];
+    const stamp = `${q.k}|${q.at}`;
+    if (qSeen !== stamp) { qSeen = stamp; qEnd = Date.now() + (Number(q.left) || Number(q.lim || 20) * 1000); }   // câu mới hoặc vừa tiếp tục sau tạm dừng
+    const head = t('div', 'lt-head');
+    const tm = t('span', 'lt-timer', String(Math.ceil(Math.max(0, qEnd - Date.now()) / 1000))); tm.setAttribute('role', 'timer'); tm.setAttribute('aria-label', 'Thời gian còn lại');
+    head.append(t('span', 'lt-idx', `Câu ${Number(q.i) + 1}/${pub.n}`), tm);
+    const grid = t('div', 'lt-opts');
     for (const x of L) if (q.opts?.[x]) {
-      const b = /** @type {HTMLButtonElement} */ (document.createElement('button')); b.type = 'button'; b.className = `qz-p-opt qz-${x}${my === x ? ' is-chosen' : ''}`; b.disabled = !!my;
-      b.append(text('b', '', x), text('span', '', q.opts[x])); b.setAttribute('aria-label', `Phương án ${x}: ${q.opts[x]}`);
-      b.addEventListener('click', () => void answer(k, x)); grid.append(b);
+      const bt = /** @type {HTMLButtonElement} */ (t('button', `lt-opt lt-${x}${my === x ? ' is-chosen' : ''}`)); bt.type = 'button'; bt.disabled = !!my;
+      bt.append(t('b', '', SHAPE[x]), t('span', '', q.opts[x])); bt.setAttribute('aria-label', `Phương án ${x}: ${q.opts[x]}`);
+      bt.addEventListener('click', () => void answer(q.k, x)); grid.append(bt);
     }
-    main.replaceChildren(head, qt, grid, text('p', 'qz-p-wait', my ? `Em đã chọn ${my}. Chờ hết giờ…` : 'Chọn một đáp án — trả lời nhanh được thêm điểm.'));
-    const end = Date.now() + Number(q.lim || 20) * 1000;
-    timer = window.setInterval(() => { const left = Math.max(0, Math.ceil((end - Date.now()) / 1000)); tm.textContent = String(left); if (left <= 0) { clearInterval(timer); grid.querySelectorAll('button').forEach(b => { /** @type {HTMLButtonElement} */ (b).disabled = true; }); } }, 250);
+    const hint = my ? `Em đã chọn ${SHAPE[my]} ${my}. Chờ thầy cô công bố đáp án…` : 'Chọn một đáp án. Trả lời đúng và nhanh được nhiều điểm hơn.';
+    main.replaceChildren(head, t('p', 'lt-q', q.text || ''), grid, t('p', 'lt-wait', hint));
+    timer = window.setInterval(() => {
+      const left = Math.max(0, qEnd - Date.now()); tm.textContent = String(Math.ceil(left / 1000)); tm.style.setProperty('--p', String(left / (Number(q.lim || 20) * 1000)));
+      if (left <= 0) { clearInterval(timer); grid.querySelectorAll('button').forEach(x => { /** @type {HTMLButtonElement} */ (x).disabled = true; }); if (!chosen[q.k]) { const w = main.querySelector('.lt-wait'); if (w) w.textContent = 'Hết giờ.'; } }
+    }, 200);
     return;
   }
   if (pub.phase === 'reveal' && pub.reveal) {
-    const my = chosen[pub.reveal.k], ok = my && my === pub.reveal.ans;
-    const box = text('div', 'qz-p-result ' + (ok ? 'is-ok' : 'is-bad'), '');
-    box.append(text('strong', '', ok ? 'Chính xác!' : my ? 'Chưa đúng' : 'Em chưa trả lời'), text('span', '', `Đáp án đúng: ${pub.reveal.ans}`));
-    const top = document.createElement('ol'); top.className = 'qz-p-top5'; for (const t of Object.values(pub.top || {})) { const li = document.createElement('li'); li.append(text('span', '', t.ten), text('strong', '', String(t.p))); top.append(li); }
-    main.replaceChildren(box, text('p', 'qz-p-wait', mine ? `Em có ${mine.p} điểm · hạng ${mine.r}/${mine.n}` : ''), text('h3', 'qz-p-sub', 'Bảng xếp hạng'), top);
+    const r = pub.reveal, my = chosen[r.k], ok = !!my && my === r.ans;
+    const box = t('div', 'lt-result ' + (ok ? 'is-ok' : my ? 'is-bad' : 'is-none'));
+    box.append(t('strong', '', ok ? 'Chính xác!' : my ? 'Chưa đúng' : 'Em chưa trả lời'));
+    if (ok && mine?.last) box.append(t('span', 'lt-gain', `+${mine.last} điểm`));
+    if (!ok) box.append(t('span', '', `Đáp án đúng: ${SHAPE[r.ans] || ''} ${r.ans}`));
+    if (ok && mine?.streak >= 2) box.append(t('span', 'lt-streak', `Chuỗi đúng: ${mine.streak} câu`));
+    const top = t('ol', 'lt-top5'); for (const x of Object.values(pub.top || {})) { const li = t('li'); li.append(t('span', '', x.ten), t('strong', '', String(x.p))); top.append(li); }
+    main.replaceChildren(box, t('p', 'lt-rank', mine ? `Hạng ${mine.r}/${mine.n} · ${mine.p} điểm` : ''), t('h3', 'lt-sub', 'Bảng xếp hạng'), top, t('p', 'lt-wait', 'Chờ câu tiếp theo…'));
     return;
   }
   if (pub.phase === 'end') {
-    const box = text('div', 'qz-p-result is-end', '');
-    box.append(text('strong', '', mine ? `Hạng ${mine.r}/${mine.n}` : 'Trò chơi kết thúc'), text('span', '', mine ? `${mine.p} điểm · đúng ${mine.c} câu` : 'Cảm ơn em đã tham gia.'));
-    main.replaceChildren(box, text('p', 'qz-p-wait', 'Thầy cô sẽ cùng lớp xem lại các câu nhiều bạn sai.'));
+    const r = Number(mine?.r) || 0, n = Number(mine?.n) || 0, total = Number(pub.so_cau) || Number(pub.n) || 0;
+    const box = t('div', 'lt-result is-end' + (r && r <= 3 ? ' is-top' : ''));
+    box.append(t('span', 'lt-medal', r ? String(r) : '★'), t('strong', '', r ? (r === 1 ? 'Quán quân!' : r <= 3 ? `Hạng ${r} — Xuất sắc!` : `Hạng ${r}/${n}`) : 'Buổi luyện tập kết thúc'));
+    if (mine) box.append(t('span', '', `${mine.p} điểm · đúng ${mine.c}/${total} câu`));
+    const kids = [box];
+    const giai = Array.isArray(mine?.giai) ? mine.giai : Object.values(mine?.giai || {});
+    if (giai.length) { const ul = t('ul', 'lt-awards'); for (const g of giai) ul.append(t('li', '', String(g))); kids.push(t('h3', 'lt-sub', 'Danh hiệu của em'), ul); }
+    const pod = Object.values(pub.podium || {});
+    if (pod.length) { const ol = t('ol', 'lt-podium'); pod.forEach((p, i) => { const li = t('li', 'lt-pod-' + (i + 1)); li.append(t('b', '', String(i + 1)), t('span', '', p.ten), t('small', '', `${p.p} điểm`)); ol.append(li); }); kids.push(t('h3', 'lt-sub', 'Bục vinh danh'), ol); }
+    const pct = total && mine ? mine.c / total : 0;
+    kids.push(t('p', 'lt-wait', !mine ? 'Cảm ơn em đã tham gia.' : pct >= 0.8 ? 'Em nắm bài rất chắc. Tiếp tục phát huy!' : pct >= 0.5 ? 'Em làm khá tốt. Xem lại các câu sai để chắc hơn nhé.' : 'Em cần ôn lại bài. Hỏi Gia sư AI hoặc thầy cô ở các câu còn sai nhé.'));
+    kids.push(b('Đóng', 'primary lt-done', () => closeOverlay()));
+    main.replaceChildren(...kids);
   }
 }
 /** @param {string} k @param {string} x */
 async function answer(k, x) {
-  if (!me || !playing || chosen[k]) return;
-  chosen[k] = x; lastPhaseKey = ''; draw();
+  if (!me || !playing || chosen[k] || pub?.phase !== 'q') return;
+  chosen[k] = x; lastKey = ''; draw();
   try { await store.put(`quiz/${playing}/ans/${k}/${store.keyOf(me.ma)}`, { a: x, t: store.SERVER_TIME }); }
-  catch { const w = document.querySelector('#qz-play .qz-p-wait'); if (w) w.textContent = 'Hết giờ hoặc mạng chậm — câu trả lời chưa được ghi.'; }
+  catch { const w = document.querySelector('#lt-play .lt-wait'); if (w) w.textContent = 'Hết giờ hoặc mạng chậm, câu trả lời chưa được ghi.'; }
 }

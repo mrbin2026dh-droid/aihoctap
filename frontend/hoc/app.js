@@ -13,6 +13,7 @@ import * as install from './install.js';
 import './netbar.js';
 import * as mastery from './mastery.js';
 import * as quiz from './quiz-play.js';
+quiz.setOnChange(() => { if (currentView === 'practice') renderPractice(); });
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -274,7 +275,8 @@ function show(name) {
   }
   for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'exams', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
   if (session && name !== 'exams' && presence.currentState() !== 'hoc') void presence.setState('hoc');   // rời tab Thi → về Đang học
-  const destination = name === 'lesson' ? (practice ? 'practice' : 'catalog') : name === 'result' ? 'practice' : name;
+  const destination = name === 'lesson' || name === 'result' ? 'catalog' : name;
+  quiz.refreshBanner();
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
     else tab.removeAttribute('aria-current');
@@ -348,11 +350,8 @@ function renderCatalog() {
   updateResume();
   document.body.classList.remove('is-loading');
 }
-function renderPractice() {
-  const target = node('practice-list'); target.replaceChildren();
-  for (const course of gradeCourses()) for (const summary of course.lessons) if (summary.question_count) target.append(lessonRow(course, summary, true));
-  if (!target.childElementCount) {const card = empty(target, 'Chưa có bài tập cho khối này', 'Bài tập xuất hiện khi giáo viên xuất bản.'); card.append(button('Về môn học', () => show('catalog')));}
-}
+/** Mục Luyện tập: các buổi luyện tập thầy cô đang mở trên lớp (quiz-play.js). Luyện tập theo bài vẫn ở trong từng bài học. */
+function renderPractice() { quiz.renderPanel(node('practice-list')); }
 /** @param {string} detail */
 function catalogUnavailable(detail) {
   document.body.classList.remove('is-loading'); node('catalog-view').removeAttribute('aria-busy');
@@ -498,7 +497,7 @@ function setPractice(value) {
   node('practice-help').textContent = session ? (locked ? 'Bài đã khóa để giữ nguyên nội dung nộp.' : 'Câu trả lời được lưu nháp trên máy.') : 'Em có thể luyện tập. Đăng nhập để lưu nháp và nộp bài.';
   if (!active?.questions.length) node('practice-help').textContent = 'Bài này chưa có câu luyện tập. Em có thể đọc bài học.';
   if (currentView === 'lesson') for (const tab of document.querySelectorAll('button[data-tab]')) {
-    if (/** @type {HTMLButtonElement} */ (tab).dataset.tab === (value ? 'practice' : 'catalog')) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
+    if (/** @type {HTMLButtonElement} */ (tab).dataset.tab === 'catalog') tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
   }
   updateAnswerCount();
 }

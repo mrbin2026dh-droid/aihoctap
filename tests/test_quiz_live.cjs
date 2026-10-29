@@ -1,5 +1,5 @@
-// Trò chơi câu hỏi trên lớp (giáo viên điều khiển): giáo viên tạo bộ câu hỏi (tự nhập + AI soạn, phải duyệt) → trình chiếu →
-// học sinh (máy khác) thấy thẻ "Vào chơi" → trả lời → giáo viên công bố đáp án, xếp hạng → kết thúc, AI phân tích lớp hiểu bài.
+// Luyện tập trên lớp (kiểu Kahoot/Quizizz): giáo viên tạo bộ câu hỏi (tự nhập, AI soạn phải duyệt, tải Excel), chọn nhiều lớp, lưu (đồng bộ) →
+// Mở luyện tập → học sinh 2 lớp vào phòng ở mục Luyện tập → câu hỏi, tạm dừng/tiếp tục, hiện đáp án, kết thúc sớm → vinh danh, danh hiệu.
 // Firebase giả lập dùng chung cho 2 trình duyệt, có kiểm "khóa phòng" (chỉ chủ phòng ghi được trạng thái) như luật thật.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
 const root=path.resolve(__dirname,'../frontend/hoc');const API='https://script.google.com/macros/s/TEST/exec';const PIN='Mat-khau-thu-1';const DB='https://test-quiz-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -7,7 +7,7 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
  let body=fs.readFileSync(f);if(p==='/sheet-config.js')body=Buffer.from(`export const SHEET_API = '${API}';`);if(p==='/presence-config.js')body=Buffer.from(`export const PRESENCE_CONFIG = {apiKey:'K', dbUrl:'${DB}'};`);
  r.setHeader('content-type',{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml'}[path.extname(f)]||'x');r.end(body)}).listen(8207);
 const hh=(ma,pin)=>crypto.createHash('sha256').update(ma.toLowerCase()+':'+pin).digest('hex');
-const db={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:hh('hs01','123456')}},thi_bai:{}};
+const db={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:hh('hs01','123456')},hs02:{ma:'HS02',ten:'Trần Thị Bình',lop:'9B',khoi:9,h:hh('hs02','123456')}},thi_bai:{}};
 const at=p=>p.split('/').filter(Boolean).reduce((o,k)=>(o === null || o === undefined)?undefined:o[k],db);
 const setAt=(p,v)=>{const parts=p.split('/').filter(Boolean);let o=db;parts.slice(0,-1).forEach(k=>{o=o[k]??={}});if(v===null||v===undefined)delete o[parts.at(-1)];else o[parts.at(-1)]=v;};
 const stamp=x=>Array.isArray(x)?x.map(stamp):x&&typeof x==='object'?(x['.sv']?Date.now():Object.fromEntries(Object.entries(x).map(([k,y])=>[k,stamp(y)]))):x;
@@ -39,56 +39,90 @@ try{
    if(u.endsWith('/teacher/ai-quiz')){aiCalls.push(JSON.parse(r.request().postData()));body={muc_hieu:'Khá',nhan_xet:'**Mức hiểu chung** Khá. **Hiểu lầm cần sửa** câu 2.'};}
    if(r.request().method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
    r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(body)})});}
+
+ const sc2=await b.newContext({viewport:{width:390,height:800},serviceWorkers:'block'});const sp2=await sc2.newPage();sp2.on('pageerror',e=>errs.push('S2:'+e.message));
+ for(const c of [sc2]){await c.route(DB+'/**',fbRoute);await c.route(API,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,exams:[],bank:{},classes:{}})}));
+  await c.route('**/api/**',r=>{if(r.request().method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});const u=new URL(r.request().url()).pathname;let body={schema_version:1,revision:'r',courses:[]};if(u.endsWith('/login'))body={token:'w',must_change_pin:false};r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(body)})});}
+ const SH=process.env.SHOTS||'';const shot=async(pg,nm)=>{if(SH)await pg.screenshot({path:path.join(SH,'lt-'+nm+'.png')})};
+ const ack=async(sel='#msg-ok')=>{await tp.waitForSelector('#msg-dialog[open]');await tp.click(sel);await tp.waitForTimeout(150)};
  // Giáo viên tạo bộ câu hỏi
  await tp.goto('http://localhost:8207/teacher.html');await tp.waitForTimeout(400);await tp.fill('#teacher-login [name=pin]',PIN);await tp.click('#teacher-login button[type=submit]');await tp.waitForSelector('#workspace:not([hidden])');
- ok(await tp.isVisible('#nav-tools'),'menu Tiện ích');await tp.click('#nav-tools');ok((await tp.textContent('#qz-sets')).includes('Chưa có bộ câu hỏi'),'chưa có bộ câu hỏi');
- await tp.click('#qz-new');await tp.waitForSelector('#detail-tools:not([hidden])');await tp.waitForFunction(()=>document.querySelector('#qz-lop').value==='9A');
+ ok(await tp.isVisible('#nav-tools'),'menu Tiện ích');await tp.click('#nav-tools');await tp.waitForSelector('#qz-sets .qz-empty');ok((await tp.textContent('#qz-title')).includes('Luyện tập'),'Tiện ích → Luyện tập trên lớp, chưa có bộ câu hỏi');
+ await tp.click('#qz-new');await tp.waitForSelector('#qz-lops .qz-lop-pick');
+ ok(JSON.stringify(await tp.$$eval('#qz-lops input',a=>a.map(x=>x.value)))==='["9A","9B"]','chọn lớp: danh sách các lớp có học sinh (chọn được nhiều lớp)');
  await tp.click('#qz-save');ok((await tp.getAttribute('#qz-name','aria-invalid'))==='true','thiếu tên → báo dưới trường');
- await tp.fill('#qz-name','Ôn nhanh bài 1');
+ await tp.fill('#qz-name','Ôn nhanh bài 1');await tp.click('#qz-save');ok((await tp.textContent('#qz-lops-err')).includes('Chọn ít nhất một lớp'),'chưa chọn lớp → báo lỗi');
+ await tp.click('#qz-lops-all');ok(await tp.$$eval('#qz-lops input',a=>a.every(x=>x.checked)),'Chọn tất cả lớp');
  const fillQ=async(i,text,opts,ans)=>{const f=`#qz-list .qz-q >> nth=${i}`;await tp.fill(`${f} >> .qz-text`,text);for(const [k,v] of Object.entries(opts))await tp.fill(`${f} >> .qz-opt[data-k="${k}"]`,v);await tp.selectOption(`${f} >> .qz-ans`,ans);};
- await fillQ(0,'1 byte bằng bao nhiêu bit?',{A:'4',B:'8',C:'16',D:'2'},'B');await tp.click('#qz-add');await fillQ(1,'Thiết bị nào nhập dữ liệu?',{A:'Loa',B:'Máy in',C:'Bàn phím',D:'Màn hình'},'C');
- await tp.click('#qz-ai');await tp.waitForFunction(()=>document.querySelectorAll('#qz-ai-lesson option').length>0);await tp.click('#qz-ai-go');await tp.waitForSelector('#qz-list .qz-q.is-ai');
- ok(await tp.locator('#qz-list .qz-q').count()===3,'AI soạn thêm câu theo bài (nối vào bộ câu hỏi)');
- await tp.click('#qz-save');ok((await tp.textContent('#qz-form-err')).includes('Đã duyệt'),'câu AI chưa duyệt → không lưu');
- await tp.check('#qz-list .qz-ok');await tp.click('#qz-save');await tp.waitForSelector('#list-tools:not([hidden]) .qz-set');ok((await tp.textContent('.qz-set')).includes('3 câu'),'lưu bộ câu hỏi 3 câu');
- // Học sinh đăng nhập (máy khác)
- await sp.goto('http://thi.test:8207/');await sp.waitForSelector('#gate:not([hidden])');await sp.click('#gate-student');await sp.fill('#student-code','HS01');await sp.fill('#student-pin','123456');await sp.click('#login-form button[type=submit]');await sp.waitForSelector('#main:not([hidden])');
- ok(await sp.locator('#qz-banner:not([hidden])').count()===0,'chưa mở phòng: không có thẻ trò chơi');
- // Trình chiếu
- await tp.click('.qz-play');await tp.waitForSelector('#qz-host:not([hidden]) .qz-code');const code=(await tp.textContent('.qz-code strong')).replace(/\s/g,'');
- ok(/^\d{6}$/.test(code)&&db.quiz_lop['9a']===code&&typeof db.quiz_key[code]==='string'&&db.quiz_key[code].length>=40,'mở phòng: mã 6 số, khóa phòng bí mật, gắn cho lớp 9A');
- ok(!JSON.stringify(db.quiz[code]).includes(db.quiz_key[code])&&!JSON.stringify(db.quiz_lop).includes(db.quiz_key[code]),'khóa phòng không nằm ở chỗ học sinh đọc được');
- await sp.waitForSelector('#qz-banner:not([hidden])',{timeout:8000});ok((await sp.textContent('#qz-banner')).includes('trò chơi câu hỏi'),'học sinh lớp 9A thấy thẻ "Vào chơi" ngay, không phải gõ mã');
+ await fillQ(0,'1 byte bằng bao nhiêu bit?',{A:'4',B:'8',C:'16',D:'2'},'B');
+ // Tải câu hỏi từ Excel (file tạo bằng chính bộ ghi Excel của ứng dụng)
+ await tp.click('#qz-xl');await tp.waitForSelector('#qz-xl-box:not([hidden])');
+ const xb64=await tp.evaluate(async()=>{await new Promise((res,rej)=>{const s=document.createElement('script');s.src='./vendor/write-excel-file.min.js';s.onload=res;s.onerror=rej;document.head.append(s)});
+  const rows=[['STT','Câu hỏi','A','B','C','D','Đáp án đúng','Chủ đề'],[1,'Thiết bị nào nhập dữ liệu?','Loa','Máy in','Bàn phím','Màn hình','C','Thiết bị'],[2,'Dòng lỗi','x','','','','A','']].map(r=>r.map(v=>typeof v==='number'?{value:v,type:Number}:{value:String(v)}));
+  const blob=await globalThis.writeXlsxFile(rows).toBlob();const u8=new Uint8Array(await blob.arrayBuffer());let s='';for(const x of u8)s+=String.fromCharCode(x);return btoa(s);});
+ await tp.setInputFiles('#qz-xl-file',{name:'cau-hoi.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(xb64,'base64')});
+ await tp.waitForFunction(()=>document.querySelectorAll('#qz-list .qz-q').length===2);
+ ok((await tp.textContent('#qz-xl-err')).includes('Dòng 3'),'tải Excel: thêm câu hợp lệ, báo dòng lỗi');
+ ok((await tp.inputValue('#qz-list .qz-q >> nth=1 >> .qz-text')).includes('nhập dữ liệu')&&(await tp.inputValue('#qz-list .qz-q >> nth=1 >> .qz-ans'))==='C','câu từ Excel đúng nội dung + đáp án');
+ await tp.click('#qz-ai');await tp.waitForFunction(()=>document.querySelectorAll('#qz-ai-lesson option[value*="|"]').length>0);await tp.click('#qz-ai-go');await tp.waitForSelector('#qz-list .qz-q.is-ai');
+ ok(await tp.locator('#qz-list .qz-q').count()===3,'AI soạn thêm câu theo bài');
+ await shot(tp,'t0-editor');await tp.click('#qz-save');ok((await tp.textContent('#qz-form-err')).includes('Đã duyệt'),'câu AI chưa duyệt → không lưu');
+ await tp.check('#qz-list .qz-ok');await tp.click('#qz-save');await tp.waitForSelector('#list-tools:not([hidden]) .qz-set');
+ await shot(tp,'t1-list');ok((await tp.textContent('.qz-set')).includes('3 câu')&&(await tp.textContent('.qz-set .qz-lop-chips')).includes('Lớp 9B'),'lưu: thẻ bộ câu hỏi có số câu, các lớp');
+ const owner=Object.keys(db.quiz_bo||{})[0];ok(owner&&owner.length===64&&Object.values(db.quiz_bo[owner])[0].qs.length===3,'đồng bộ bộ câu hỏi lên mạng (đường dẫn bí mật 64 ký tự)');
+ const ob=await tp.locator('.qz-open').boundingBox();ok(ob&&ob.height<80&&ob.width<400,'nút Mở luyện tập không phủ kín màn hình (lỗi trùng lớp CSS cũ)');
+ await tp.click('.qz-set .t-icon-btn >> nth=0');await tp.waitForSelector('#detail-tools:not([hidden])');await tp.waitForSelector('#qz-lops input');ok(await tp.$$eval('#qz-lops input',a=>a.every(x=>x.checked))&&(await tp.inputValue('#qz-name'))==='Ôn nhanh bài 1','sửa: mở lại đúng tên, lớp');await tp.click('#qz-back');await tp.waitForSelector('#list-tools:not([hidden])');
+ // Hai học sinh khác lớp đăng nhập
+ const login=async(pg,ma)=>{await pg.goto('http://thi.test:8207/');await pg.waitForSelector('#gate:not([hidden])');await pg.click('#gate-student');await pg.fill('#student-code',ma);await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');await pg.waitForSelector('#main:not([hidden])');};
+ await login(sp,'HS01');await login(sp2,'HS02');
+ await sp.click('button[data-tab="practice"]');await sp.waitForSelector('#practice-list .lt-empty');ok((await sp.textContent('#practice-list')).includes('Chưa có buổi luyện tập'),'mục Luyện tập học sinh: chưa có buổi luyện tập (đã bỏ danh sách luyện tập cũ)');
+ // Mở luyện tập
+ await tp.click('.qz-open');await tp.waitForSelector('#qz-host:not([hidden]) .qz-code');const code=(await tp.textContent('.qz-code strong')).replace(/\s/g,'');
+ ok(/^\d{6}$/.test(code)&&db.quiz_lop['9a']===code&&db.quiz_lop['9b']===code,'mở phòng: mã 6 số, mở cho cả 2 lớp 9A, 9B');
+ ok(!JSON.stringify(db.quiz[code]).includes(db.quiz_key[code]),'khóa phòng không nằm ở chỗ học sinh đọc được');
  ok(await tp.isDisabled('#qz-start'),'chưa có học sinh → chưa bắt đầu được');
- await sp.click('.qz-join');await sp.waitForSelector('#qz-play:not([hidden]) .qz-p-wait');
- await tp.waitForFunction(()=>document.querySelectorAll('.qz-chips li').length===1);ok((await tp.textContent('.qz-chips')).includes('Nguyễn Văn An')&&!(await tp.isDisabled('#qz-start')),'máy chiếu: tên học sinh vào phòng hiện ngay');
- // Thử phá: ghi trạng thái phòng không có khóa
- const hack2=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/.json`,{method:'PATCH',body:JSON.stringify({[`quiz/${c}/pub/phase`]:'end',[`quiz_proof/${c}`]:'doan-bua|1'})});return r.status},[DB,code]);ok(hack2===401,'đoán bừa bằng chứng → bị chặn');
- const hack=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/.json`,{method:'PATCH',body:JSON.stringify({[`quiz/${c}/pub/phase`]:'end'})});return r.status},[DB,code]);ok(hack===401&&db.quiz[code].pub.phase==='lobby','học sinh không có khóa phòng → không điều khiển được trò chơi');
- // Câu 1: đúng
- await tp.click('#qz-start');await sp.waitForSelector('.qz-p-opt',{timeout:8000});
- ok(!JSON.stringify(db.quiz[code].pub).includes('"ans"')&&!JSON.stringify(db.quiz[code].pub.q).includes('answer'),'đang hỏi: đáp án chưa gửi xuống (chỉ máy giáo viên biết)');
- ok((await sp.textContent('.qz-p-q')).includes('1 byte')&&await sp.locator('.qz-p-opt').count()===4,'học sinh thấy câu hỏi + 4 ô màu');
- await sp.click('.qz-p-opt.qz-B');await sp.waitForSelector('.qz-p-result.is-ok',{timeout:8000});
- ok((await sp.textContent('.qz-p-result')).includes('Chính xác'),'trả lời đúng → "Chính xác!" (cả lớp đã trả lời → tự công bố)');
- await tp.waitForSelector('.qz-opts.is-reveal');ok((await tp.textContent('.qz-opt.is-ans')).includes('8')&&(await tp.textContent('.qz-top')).includes('Nguyễn Văn An'),'máy chiếu: đáp án, số em chọn, bảng xếp hạng');
- await sp.waitForFunction(()=>/\d+ điểm/.test(document.querySelector('.qz-p-score').textContent));const p1=Number((await sp.textContent('.qz-p-score')).match(/(\d+) điểm/)[1]);ok(p1>=500&&p1<=1000,`đúng + nhanh: ${p1} điểm (500–1000)`);
- const twice=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/quiz/${c}/ans/q0/hs01.json`,{method:'PUT',body:JSON.stringify({a:'A',t:{'.sv':'timestamp'}})});return r.status},[DB,code]);ok(twice===401,'không đổi được câu trả lời sau khi đã chọn / hết giờ');
- // Câu 2: sai
- await tp.click('.qz-h-foot .t-primary');await sp.waitForFunction(()=>document.querySelector('.qz-p-idx')?.textContent.includes('Câu 2'),null,{timeout:8000});
- await sp.click('.qz-p-opt.qz-A');await sp.waitForSelector('.qz-p-result.is-bad',{timeout:8000});ok((await sp.textContent('.qz-p-result')).includes('Đáp án đúng: C'),'trả lời sai → báo đáp án đúng');
- // Câu 3: không trả lời, giáo viên bấm Hiện đáp án
- await tp.click('.qz-h-foot .t-primary');await sp.waitForFunction(()=>document.querySelector('.qz-p-idx')?.textContent.includes('Câu 3'),null,{timeout:8000});
- await tp.click('.qz-h-foot button');await sp.waitForFunction(()=>document.querySelector('.qz-p-result')?.textContent.includes('chưa trả lời'),null,{timeout:8000});ok(true,'không trả lời → "Em chưa trả lời"');
- // Kết thúc
- await tp.click('.qz-h-foot .t-primary');await tp.waitForSelector('.qz-podium');
- ok((await tp.textContent('.qz-podium')).includes('Nguyễn Văn An')&&await tp.locator('.qz-stat tbody tr').count()===3&&(await tp.textContent('.qz-stat')).includes('A. Loa (1 em)'),'kết thúc: bục vinh danh, thống kê từng câu, phương án sai chọn nhiều nhất');
- await sp.waitForSelector('.qz-p-result.is-end',{timeout:8000});ok((await sp.textContent('.qz-p-result')).includes('Hạng 1/1')&&(await sp.textContent('.qz-p-result')).includes('đúng 1 câu'),'học sinh thấy hạng và số câu đúng');
- ok(!db.quiz_lop['9a'],'kết thúc: gỡ thẻ trò chơi khỏi lớp');
+ await sp.waitForSelector('#practice-list .lt-card',{timeout:8000});await shot(sp,'s0-panel');ok((await sp.textContent('.lt-card')).includes('Ôn nhanh bài 1')&&(await sp.textContent('.lt-card')).includes('3 câu'),'học sinh lớp 9A: mục Luyện tập hiện buổi luyện tập ngay');
+ await sp2.waitForSelector('#lt-banner:not([hidden])',{timeout:8000});ok(true,'học sinh lớp 9B ở mục khác: có thông báo Vào phòng');
+ await sp.click('.lt-join');await sp.waitForSelector('#lt-play:not([hidden]) .lt-big');await sp2.click('.lt-banner-join');await sp2.waitForSelector('#lt-play:not([hidden]) .lt-big');
+ await shot(sp,'s1-lobby');ok((await sp.textContent('.lt-big')).includes('Em đã vào phòng'),'học sinh: phòng chờ');
+ await tp.waitForFunction(()=>document.querySelectorAll('.qz-chips li').length===2);ok((await tp.textContent('.qz-chips')).includes('Trần Thị Bình')&&!(await tp.isDisabled('#qz-start')),'máy chiếu: thấy 2 học sinh đã vào, bật nút Bắt đầu');
+ await shot(tp,'t2-lobby');const hack=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/.json`,{method:'PATCH',body:JSON.stringify({[`quiz/${c}/pub/phase`]:'end'})});return r.status},[DB,code]);ok(hack===401,'học sinh không điều khiển được phòng');
+ // Câu 1: An đúng, Bình sai → cả lớp trả lời → tự công bố
+ await tp.click('#qz-start');await sp.waitForSelector('.lt-opt',{timeout:8000});await sp2.waitForSelector('.lt-opt',{timeout:8000});
+ ok(!JSON.stringify(db.quiz[code].pub).includes('"ans"'),'đang hỏi: đáp án chưa gửi xuống');
+ ok((await sp.textContent('.lt-q')).includes('1 byte')&&await sp.locator('.lt-opt').count()===4&&(await sp.textContent('.lt-opt.lt-A b'))==='▲','học sinh thấy câu hỏi + 4 ô màu có hình');
+ await shot(sp,'s2-q');await shot(tp,'t3-q');await sp.click('.lt-opt.lt-B');await sp2.click('.lt-opt.lt-A');
+ await sp.waitForSelector('.lt-result.is-ok',{timeout:8000});await sp2.waitForSelector('.lt-result.is-bad',{timeout:8000});
+ await sp.waitForFunction(()=>/\+\d+ điểm/.test(document.querySelector('.lt-result')?.textContent||''));const g1=Number((await sp.textContent('.lt-gain')).match(/\d+/)[0]);
+ await shot(sp,'s3-ok');await shot(sp2,'s3-bad');ok(g1>=500&&g1<=1000,`đúng: "Chính xác! +${g1} điểm" (công thức Kahoot 500–1000)`);
+ ok((await sp2.textContent('.lt-result')).includes('Đáp án đúng: ◆ B'),'sai: báo đáp án đúng');
+ await tp.waitForSelector('.qz-opts.is-reveal');await shot(tp,'t4-reveal');ok((await tp.textContent('.qz-opt.is-ans')).includes('8')&&(await tp.textContent('.qz-top')).includes('Nguyễn Văn An'),'máy chiếu: đáp án, số em chọn, bảng xếp hạng');
+ // Câu 2: tạm dừng / tiếp tục
+ await tp.click('.qz-next');await sp.waitForFunction(()=>document.querySelector('.lt-idx')?.textContent.includes('Câu 2'),null,{timeout:8000});
+ const at1=db.quiz[code].pub.q.at;
+ await tp.click('.qz-pause');await sp.waitForFunction(()=>document.querySelector('.lt-big')?.textContent.includes('Tạm dừng'),null,{timeout:8000});await sp2.waitForFunction(()=>document.querySelector('.lt-big')?.textContent.includes('Tạm dừng'),null,{timeout:8000});
+ await shot(sp,'s4-pause');await shot(tp,'t5-pause');ok(db.quiz[code].pub.phase==='pause'&&await tp.isVisible('.qz-resume'),'Tạm dừng: học sinh thấy màn hình tạm dừng');
+ const blocked=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/quiz/${c}/ans/q1/hs01.json`,{method:'PUT',body:JSON.stringify({a:'C',t:{'.sv':'timestamp'}})});return r.status},[DB,code]);ok(blocked===401,'đang tạm dừng: không ghi được câu trả lời');
+ await tp.waitForTimeout(1200);await tp.click('.qz-resume');await sp.waitForSelector('.lt-opt:not([disabled])',{timeout:8000});
+ ok(db.quiz[code].pub.q.at>at1+900,'tiếp tục: dời mốc bắt đầu, thời gian tạm dừng không tính vào giờ làm bài');
+ await sp.click('.lt-opt.lt-C');await tp.waitForFunction(()=>/1\/2 em đã trả lời/.test(document.querySelector('.qz-answered')?.textContent||''));
+ await tp.click('.qz-reveal');await sp2.waitForFunction(()=>document.querySelector('.lt-result')?.textContent.includes('chưa trả lời'),null,{timeout:8000});
+ ok(true,'giáo viên Hiện đáp án sớm; em không trả lời thấy "Em chưa trả lời"');
+ await sp.waitForFunction(()=>document.querySelector('.lt-streak')?.textContent.includes('2 câu'),null,{timeout:8000});ok(true,'đúng 2 câu liên tiếp: hiện chuỗi đúng');
+ // Câu 3: giáo viên kết thúc sớm
+ await tp.click('.qz-next');await sp.waitForFunction(()=>document.querySelector('.lt-idx')?.textContent.includes('Câu 3'),null,{timeout:8000});
+ await tp.click('.qz-stop');await ack();await tp.waitForSelector('.qz-podium');
+ ok((await tp.textContent('.qz-podium')).includes('Nguyễn Văn An')&&(await tp.textContent('.qz-awards')).includes('Quán quân')&&await tp.locator('.qz-stat tbody tr').count()===2,'kết thúc sớm: bục vinh danh, danh hiệu, thống kê 2 câu đã công bố');
+ await tp.waitForTimeout(900);await shot(tp,'t6-end');ok(await tp.locator('.qz-rank tbody tr').count()===2&&(await tp.textContent('.qz-rank')).includes('Trần Thị Bình'),'bảng xếp hạng đầy đủ');
+ await sp.waitForSelector('.lt-result.is-end',{timeout:8000});ok((await sp.textContent('.lt-result')).includes('Quán quân')&&(await sp.textContent('.lt-awards')).includes('Chính xác nhất'),'học sinh hạng 1: "Quán quân!", danh hiệu của em');
+ await sp2.waitForSelector('.lt-result.is-end',{timeout:8000});await shot(sp,'s5-end');await shot(sp2,'s5-end2');ok((await sp2.textContent('.lt-podium')).includes('Nguyễn Văn An'),'học sinh khác: bục vinh danh');
+ ok(!db.quiz_lop['9a']&&!db.quiz_lop['9b'],'kết thúc: gỡ buổi luyện tập khỏi cả 2 lớp');
  await tp.click('#qz-ai-analyze');await tp.waitForFunction(()=>document.getElementById('qz-ai-out').textContent.includes('Mức hiểu'));
- const a=aiCalls[0];ok(a.questions.length===3&&a.questions[1].counts.A===1&&a.questions[1].ans==='C'&&!JSON.stringify(a).includes('Nguyễn Văn An'),'AI phân tích: gửi phân bố đáp án, không gửi tên học sinh');
- ok((await tp.textContent('#qz-ai-out')).includes('Mức hiểu: Khá'),'hiện nhận xét AI: lớp hiểu bài ở mức nào');
- const [dl]=await Promise.all([tp.waitForEvent('download'),tp.click('.qz-h-foot button:has-text("CSV")')]);const csv=fs.readFileSync(await dl.path(),'utf8');ok(csv.includes('1,Nguyễn Văn An,'),'tải kết quả CSV');
- await tp.click('#qz-h-close');await tp.waitForSelector('#qz-host[hidden]',{state:'attached'});ok((await tp.textContent('#qz-history')).includes('Ôn nhanh bài 1')&&(await tp.textContent('#qz-history')).includes('Khá'),'lưu lịch sử lần chơi (kèm mức hiểu)');
+ const a=aiCalls[0];ok(a.questions.length===2&&!JSON.stringify(a).includes('Nguyễn Văn An'),'AI phân tích: không gửi tên học sinh');
+ const [dl]=await Promise.all([tp.waitForEvent('download'),tp.click('.qz-csv')]);const csv=fs.readFileSync(await dl.path(),'utf8');ok(csv.includes('1,Nguyễn Văn An,'),'tải kết quả CSV');
+ await tp.click('#qz-h-close');await tp.waitForSelector('#qz-host[hidden]',{state:'attached'});ok((await tp.textContent('#qz-history')).includes('Ôn nhanh bài 1'),'lưu lịch sử buổi luyện tập');
+ await sp.click('.lt-done');await sp.waitForSelector('#lt-play[hidden]',{state:'attached'});await sp.waitForSelector('#practice-list .lt-empty');ok(true,'học sinh đóng màn hình kết quả → mục Luyện tập trở lại trống');
+ // Xóa bộ câu hỏi
+ await tp.click('.qz-set .t-icon-btn >> nth=1');await ack();await tp.waitForSelector('#qz-sets .qz-empty');ok(!Object.keys(db.quiz_bo[owner]||{}).length,'xóa bộ câu hỏi (có xác nhận), xóa cả trên mạng');
  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));
  console.log('QUIZ LIVE OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});
