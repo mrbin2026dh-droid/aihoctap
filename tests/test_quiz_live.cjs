@@ -90,6 +90,9 @@ try{
  // Câu 1: An đúng, Bình sai → cả lớp trả lời → tự công bố
  await tp.click('#qz-start');await tp.waitForSelector('#qz-host .qfx-count');await sp.waitForSelector('#lt-play .qfx-count',{timeout:8000});await tp.waitForTimeout(700);await shot(tp,'t2b-countdown');await shot(sp,'s1b-countdown');
  ok(/[123]/.test(await tp.textContent('#qz-host .qfx-num'))&&/[123]|Bắt đầu/.test(await sp.textContent('#lt-play .qfx-num')),'bấm Bắt đầu: máy chiếu và điện thoại cùng đếm ngược 3 · 2 · 1');
+ await sp.waitForSelector('#lt-play .lt-intro-q',{timeout:12000});await tp.waitForSelector('#qz-host .qz-intro');await shot(tp,'t2c-intro');await shot(sp,'s1c-intro');
+ ok(db.quiz[code].pub.phase==='intro'&&!db.quiz[code].pub.q.opts&&(await sp.textContent('.lt-intro-q')).includes('1 byte')&&!(await sp.locator('.lt-opt').count()),'đọc câu hỏi trước: hiện câu hỏi, chưa có phương án (cả máy chủ cũng chưa gửi)');
+ const early=await sp.evaluate(async([u,c])=>{const r=await fetch(`${u}/quiz/${c}/ans/q0/hs01.json`,{method:'PUT',body:JSON.stringify({a:'B',t:{'.sv':'timestamp'}})});return r.status},[DB,code]);ok(early===401,'đang đọc câu hỏi: máy chủ chưa nhận câu trả lời');
  await sp.waitForSelector('.lt-opt',{timeout:12000});await sp2.waitForSelector('.lt-opt',{timeout:12000});await sp.waitForSelector('#lt-play .qfx-count',{state:'detached',timeout:8000});ok(await tp.locator('#qz-host .qfx-count').count()===0,'đếm ngược xong tự biến mất, vào câu 1');
  ok(!JSON.stringify(db.quiz[code].pub).includes('"ans"'),'đang hỏi: đáp án chưa gửi xuống');
  ok((await sp.textContent('.lt-q')).includes('1 byte')&&await sp.locator('.lt-opt').count()===4&&(await sp.textContent('.lt-opt.lt-A b'))==='▲','học sinh thấy câu hỏi + 4 ô màu có hình');
@@ -101,7 +104,7 @@ try{
  await tp.waitForSelector('.qz-opts.is-reveal');await tp.waitForTimeout(800);await shot(tp,'t4-reveal');ok((await tp.textContent('.qz-opt.is-ans')).includes('8')&&(await tp.textContent('.qz-col.is-ans .qz-col-n'))==='1'&&await tp.locator('.qz-chart .qz-col').count()===4,'máy chiếu: biểu đồ cột số em chọn, đánh dấu đáp án đúng');
  await tp.click('.qz-board-btn');await tp.waitForSelector('.qz-board');await tp.waitForTimeout(700);await shot(tp,'t4b-board');ok((await tp.textContent('.qz-board .qz-row.is-first')).includes('Nguyễn Văn An')&&(await tp.textContent('.qz-board')).includes('+'),'bảng xếp hạng: người dẫn đầu, điểm vừa nhận');
  // Câu 2: tạm dừng / tiếp tục
- await tp.click('.qz-next');await sp.waitForFunction(()=>document.querySelector('.lt-idx')?.textContent.includes('Câu 2'),null,{timeout:8000});
+ await tp.click('.qz-next');await sp.waitForFunction(()=>document.querySelector('.lt-idx')?.textContent.includes('Câu 2'),null,{timeout:8000});await tp.waitForSelector('.qz-pause',{timeout:10000});await sp.waitForSelector('.lt-opt',{timeout:10000});
  const at1=db.quiz[code].pub.q.at;
  await tp.click('.qz-pause');await sp.waitForFunction(()=>document.querySelector('.lt-big')?.textContent.includes('Tạm dừng'),null,{timeout:8000});await sp2.waitForFunction(()=>document.querySelector('.lt-big')?.textContent.includes('Tạm dừng'),null,{timeout:8000});
  await shot(sp,'s4-pause');await shot(tp,'t5-pause');ok(db.quiz[code].pub.phase==='pause'&&await tp.isVisible('.qz-resume'),'Tạm dừng: học sinh thấy màn hình tạm dừng');

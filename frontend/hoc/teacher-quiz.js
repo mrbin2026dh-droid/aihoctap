@@ -21,7 +21,7 @@ const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id)
 const sel = (/** @type {string} */ id) => /** @type {HTMLSelectElement} */ ($(id));
 const SHAPE = /** @type {Record<string,string>} */ ({ A: '▲', B: '◆', C: '●', D: '■' });
 /** @typedef {{text:string,opts:Record<string,string>,ans:string,topic?:string,ai?:boolean,explain?:string}} Q */
-/** @typedef {{id:string,name:string,lops:string[],lop?:string,lim:number,qs:Q[],at:number}} QSet */
+/** @typedef {{id:string,name:string,lops:string[],lop?:string,lim:number,read?:number,qs:Q[],at:number}} QSet */
 const cred = () => { try { return { gv: sessionStorage.getItem('thi-gv-mk') || '', gv_ma: sessionStorage.getItem('thi-gv-ma') || '', tok: sessionStorage.getItem('aisgk-pwa-teacher') || '' }; } catch { return { gv: '', gv_ma: '', tok: '' }; } };
 const who = () => cred().gv_ma || 'admin';
 const setsKey = () => `qz-sets-${who().toLowerCase()}`, histKey = () => `qz-hist-${who().toLowerCase()}`, liveKey = () => `qz-live-${who().toLowerCase()}`;
@@ -36,7 +36,7 @@ function btn(/** @type {string} */ text, /** @type {string} */ cls, /** @type {(
 /** Mã riêng của giáo viên (băm từ mã + mật khẩu): đường dẫn bí mật, không ai đoán được, không liệt kê được. */
 const ownerKey = () => { const c = cred(); const secret = c.gv || c.tok; return secret ? store.sha256(`luyen-tap|${who().toLowerCase()}|${secret}`) : ''; };
 /** @param {any} s @returns {QSet} */
-const normSet = s => ({ id: String(s.id), name: String(s.name || ''), lops: setClasses(s), lim: Number(s.lim) || 20, qs: Array.isArray(s.qs) ? s.qs : Object.values(s.qs || {}), at: Number(s.at) || 0 });
+const normSet = s => ({ id: String(s.id), name: String(s.name || ''), lops: setClasses(s), lim: Number(s.lim) || 20, read: s.read === undefined ? 3 : Math.max(0, Math.min(8, Number(s.read) || 0)), qs: Array.isArray(s.qs) ? s.qs : Object.values(s.qs || {}), at: Number(s.at) || 0 });
 /** @returns {QSet[]} */ const sets = () => /** @type {any[]} */ (readLS(setsKey(), [])).map(normSet);
 let synced = false;
 async function syncSets() {
@@ -51,7 +51,7 @@ async function syncSets() {
     synced = true;
   } catch { synced = false; }
 }
-/** @param {QSet} s */ const pack = s => ({ name: s.name, lops: s.lops, lim: s.lim, qs: s.qs.map(q => ({ text: q.text, opts: q.opts, ans: q.ans, topic: q.topic || '' })), at: s.at });
+/** @param {QSet} s */ const pack = s => ({ name: s.name, lops: s.lops, lim: s.lim, read: s.read ?? 3, qs: s.qs.map(q => ({ text: q.text, opts: q.opts, ans: q.ans, topic: q.topic || '' })), at: s.at });
 /** @param {QSet} s */
 async function saveSet(s) {
   writeLS(setsKey(), [s, ...sets().filter(x => x.id !== s.id)]);
@@ -128,7 +128,7 @@ function appendQs(qs) { const list = $('qz-list'); for (const f of [...list.quer
 /** @param {QSet|null} s */
 async function openEditor(s) {
   editing = s; $('qz-ed-title').textContent = s ? 'Sửa bộ câu hỏi' : 'Tạo bộ câu hỏi';
-  inp('qz-name').value = s?.name || ''; sel('qz-lim').value = String(s?.lim || 20);
+  inp('qz-name').value = s?.name || ''; sel('qz-lim').value = String(s?.lim || 20); sel('qz-read').value = String(s?.read ?? 3);
   for (const id of ['qz-name', 'qz-lops']) { $(id).removeAttribute('aria-invalid'); $(id + '-err').textContent = ''; }
   $('qz-form-err').textContent = ''; for (const id of ['qz-ai-box', 'qz-exam-box', 'qz-xl-box']) $(id).hidden = true;
   $('qz-list').replaceChildren(...(s?.qs?.length ? s.qs : [{}]).map(q => qRow(q))); qNumber();
@@ -180,7 +180,7 @@ $('qz-form').addEventListener('submit', async ev => {
   if (!lops.length) { lopBox.setAttribute('aria-invalid', 'true'); $('qz-lops-err').textContent = 'Chọn ít nhất một lớp.'; /** @type {HTMLElement|null} */ (lopBox.querySelector('input'))?.focus(); return; }
   const r = collect(); if (r.error) { $('qz-form-err').textContent = r.error; return; }
   const save = /** @type {HTMLButtonElement} */ ($('qz-save')); save.disabled = true; save.setAttribute('aria-busy', 'true'); const label = save.textContent; save.textContent = 'Đang lưu…';
-  /** @type {QSet} */ const s = { id: editing?.id || 'qz' + Date.now().toString(36), name: name.value.trim(), lops, lim: Number(sel('qz-lim').value) || 20, qs: /** @type {Q[]} */ (r.qs), at: Date.now() };
+  /** @type {QSet} */ const s = { id: editing?.id || 'qz' + Date.now().toString(36), name: name.value.trim(), lops, lim: Number(sel('qz-lim').value) || 20, read: Number(sel('qz-read').value) || 0, qs: /** @type {Q[]} */ (r.qs), at: Date.now() };
   const online = await saveSet(s);
   save.disabled = false; save.removeAttribute('aria-busy'); save.textContent = label;
   synced = online || synced; renderSets(); void ui.goBack();
@@ -263,7 +263,7 @@ $('qz-exam-go').addEventListener('click', async () => {
 });
 
 /* ---------- Phòng luyện tập (máy chiếu) ---------- */
-/** @type {null|{room:string,key:string,set:QSet,i:number,phase:'lobby'|'ready'|'q'|'pause'|'reveal'|'board'|'end',players:Record<string,{ten:string}>,score:Record<string,import('./quiz-core.js').Score>,stats:any[],lopKeys:string[],stops:(()=>void)[],ansStop?:()=>void,answers:Record<string,any>,timer:number,qAt:number,off:number,end:number,left:number,prevRank:Record<string,number>,muc?:string}} */ let room = null;
+/** @type {null|{room:string,key:string,set:QSet,i:number,phase:'lobby'|'ready'|'intro'|'q'|'pause'|'reveal'|'board'|'end',players:Record<string,{ten:string}>,score:Record<string,import('./quiz-core.js').Score>,stats:any[],lopKeys:string[],stops:(()=>void)[],ansStop?:()=>void,answers:Record<string,any>,timer:number,qAt:number,off:number,end:number,left:number,prevRank:Record<string,number>,muc?:string}} */ let room = null;
 const host = $('qz-host'), main = $('qz-h-main'), foot = $('qz-h-foot');
 const initials = (/** @type {string} */ v) => String(v || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase();
 const rnd = (/** @type {number} */ n) => { const a = new Uint8Array(n); crypto.getRandomValues(a); return a; };
@@ -348,14 +348,33 @@ async function nextQ() {
   if (!room) return;
   room.i++; if (room.i >= room.set.qs.length) { await endGame(); return; }
   const q = room.set.qs[room.i], k = 'q' + room.i;
-  room.phase = 'q'; room.answers = {}; room.prevRank = Object.fromEntries(ranked().map((r, i) => [r.k, i + 1]));
+  room.answers = {}; room.prevRank = Object.fromEntries(ranked().map((r, i) => [r.k, i + 1]));
   /** @type {Record<string,string>} */ const opts = {}; for (const x of L) if (q.opts[x]) opts[x] = q.opts[x];
-  const lim = room.set.lim * 1000;
+  const lim = room.set.lim * 1000, read = Math.max(0, Number(room.set.read ?? 3)) * 1000;
+  if (read) {   // Đọc câu hỏi trước (chưa có phương án, máy chủ chưa nhận trả lời), rồi mới mở phương án
+    room.phase = 'intro'; const i = room.i;
+    await write({ [P('phase')]: 'intro', [P('q')]: { k, i: room.i, text: q.text, read: read }, [P('reveal')]: null, [P('pause')]: null, [P('ready')]: null }).catch(() => {});
+    drawIntro(read);
+    await new Promise(r => setTimeout(r, read));
+    if (!room || room.phase !== 'intro' || room.i !== i) return;
+  }
+  room.phase = 'q';
   await write({ [P('phase')]: 'q', [P('q')]: { k, i: room.i, text: q.text, opts, lim: room.set.lim, left: lim, at: store.SERVER_TIME }, [P('reveal')]: null, [P('pause')]: null, [P('ready')]: null });
   const at = Number(await store.get(`quiz/${room.room}/pub/q/at`).catch(() => 0)) || Date.now();
   room.qAt = at; room.off = at - Date.now(); room.end = Date.now() + lim;
   room.ansStop?.(); room.ansStop = store.listen(`quiz/${room.room}/ans/${k}`, d => { if (!room || room.phase !== 'q' || room.i !== Number(k.slice(1))) return; room.answers = d || {}; drawQ(); const np = Object.keys(room.players).length; if (np && Object.keys(room.answers).length >= np) void reveal(); }, undefined, { prio: 3 });
   drawQ(true); tick();
+}
+/** Màn đọc câu hỏi: thẻ câu hỏi lớn + thanh thời gian đọc. @param {number} ms */
+function drawIntro(ms) {
+  if (!room) return;
+  const q = room.set.qs[room.i];
+  $('qz-h-kicker').textContent = `Câu ${room.i + 1}/${room.set.qs.length}${q.topic ? ' · ' + q.topic : ''} · Đọc câu hỏi`;
+  const card = el('div', 'qz-intro'); const bar = el('span', 'qz-intro-bar'); bar.style.setProperty('--ms', ms + 'ms'); bar.setAttribute('aria-hidden', 'true');
+  card.append(el('span', 'qz-intro-n', `Câu ${room.i + 1}`), el('p', 'qz-intro-text', q.text), bar);
+  main.replaceChildren(card); main.dataset.i = '';
+  foot.replaceChildren(btn('Kết thúc', 'qz-stop', () => void stopEarly()));
+  fx.sfx.join();
 }
 function drawQ(fresh = false) {
   if (!room || room.phase !== 'q') return;
@@ -452,7 +471,7 @@ function drawBoard() {
 async function stopEarly() {
   if (!room || room.phase === 'end') return;
   if (!(await confirmBox({ title: 'Kết thúc luyện tập?', body: `Đang ở câu ${room.i + 1}/${room.set.qs.length}. Kết quả tính đến câu đã công bố đáp án sẽ được giữ và vinh danh.`, okText: 'Kết thúc luyện tập', danger: true }))) return;
-  if (room.phase === 'q' || room.phase === 'pause') { room.ansStop?.(); room.i--; }   // câu đang dở không tính
+  if (room.phase === 'q' || room.phase === 'pause' || room.phase === 'intro') { room.ansStop?.(); room.i--; }   // câu đang dở không tính
   await endGame();
 }
 async function endGame() {
@@ -489,9 +508,9 @@ async function drawPodium() {
   foot.replaceChildren(details, btn('Tải kết quả CSV', 'qz-csv', exportCsv));
   const wait = (/** @type {number} */ ms) => new Promise(r => setTimeout(r, ms));
   const alive = () => main.dataset.pod === token && room?.phase === 'end';
-  for (const place of [3, 2]) { if (!steps[place]) continue; await wait(900); if (!alive()) return; steps[place].classList.add('is-on'); fx.sfx.reveal(); }
+  for (const place of [3, 2]) { if (!steps[place]) continue; await wait(place === 3 ? 900 : 2000); if (!alive()) return; steps[place].classList.add('is-on'); fx.sfx.reveal(); }
   if (!steps[1]) return;
-  fx.sfx.drum(); await wait(1200); if (!alive()) return;
+  await wait(800); if (!alive()) return; fx.sfx.drum(); await wait(1500); if (!alive()) return;
   steps[1].classList.add('is-on'); fx.sfx.fanfare(); fx.confetti(host);
 }
 /** Kết quả chi tiết: tóm tắt, danh hiệu, bảng xếp hạng đầy đủ, từng câu (phân bố lựa chọn), AI phân tích. */

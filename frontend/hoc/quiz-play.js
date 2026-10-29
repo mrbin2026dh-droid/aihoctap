@@ -144,6 +144,11 @@ function draw() {
     if (readySeen !== String(pub.ready)) { readySeen = String(pub.ready); void fx.countdown(o, { title: String(pub.title || 'Chuẩn bị!') }); }
     return;
   }
+  if (pub.phase === 'intro' && pub.q) {
+    const q = pub.q, bar = t('span', 'lt-intro-bar'); bar.style.setProperty('--ms', (Number(q.read) || 3000) + 'ms'); bar.setAttribute('aria-hidden', 'true');
+    main.replaceChildren(t('span', 'lt-idx lt-intro-n', `Câu ${Number(q.i) + 1}/${pub.n}`), t('p', 'lt-q lt-intro-q', q.text || ''), bar, t('p', 'lt-wait', 'Đọc kỹ câu hỏi. Các phương án sắp hiện.'));
+    return;
+  }
   if (pub.phase === 'pause') {
     main.replaceChildren(t('span', 'lt-pause-ic', 'II'), t('h2', 'lt-big', 'Tạm dừng'), t('p', 'lt-wait', 'Thầy cô đang tạm dừng. Chờ tiếp tục nhé.'));
     return;

@@ -1777,3 +1777,8 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 @keyframes qfx-pop{0%{transform:scale(.4);opacity:.25}55%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
 .lt-sound{white-space:nowrap}
 #msg-body{white-space:pre-line}
+.lt-intro-n{align-self:center;margin-top:12px}
+.lt-intro-q{font-size:22px;text-align:center;background:#fff;color:#0f2a2b;border-radius:16px;padding:20px}
+.lt-intro-bar{display:block;height:8px;border-radius:999px;background:#ffffff26;overflow:hidden;position:relative}
+.lt-intro-bar::after{content:"";position:absolute;inset:0;background:#22c3a6;transform-origin:left;animation:lt-drain var(--ms,3000ms) linear forwards}
+@keyframes lt-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}

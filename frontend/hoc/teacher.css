@@ -683,3 +683,11 @@ body.qz-hosting{overflow:hidden}
 .qz-host .qz-h-main>.qz-qtext-sm{width:min(1100px,100%);margin-inline:auto}
 .qz-host .qz-chips{width:min(1100px,100%);margin:0 auto;gap:10px}
 .qz-host .qz-chips li{font-size:clamp(17px,1.9vw,24px);font-weight:800;padding:10px 20px;background:#ffffff1f;border:1px solid #ffffff2e}
+/* Đọc câu hỏi trước khi mở phương án */
+.qz-host .qz-intro{margin:auto;width:min(1100px,100%);display:grid;gap:18px;justify-items:center;text-align:center;background:#fff;color:#0f2a2b;border-radius:22px;padding:clamp(28px,5vh,56px) clamp(20px,4vw,56px);box-shadow:0 16px 40px #0005;animation:qz-pop .35s ease-out}
+.qz-host .qz-intro-n{font-weight:900;color:#1f6f66;letter-spacing:.5px;font-size:clamp(16px,1.8vw,22px)}
+.qz-host .qz-intro-text{margin:0;font-size:clamp(26px,3.8vw,52px);font-weight:900;line-height:1.3}
+.qz-host .qz-intro-bar{display:block;width:100%;height:10px;border-radius:999px;background:#dfe7e6;overflow:hidden;position:relative}
+.qz-host .qz-intro-bar::after{content:"";position:absolute;inset:0;background:#22c3a6;transform-origin:left;animation:qz-drain var(--ms,3000ms) linear forwards}
+@keyframes qz-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media(prefers-reduced-motion:reduce){.qz-host .qz-intro{animation:none}}

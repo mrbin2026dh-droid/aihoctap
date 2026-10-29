@@ -43,8 +43,8 @@ export const sfx = {
   reveal: () => seq([392, 523, 659], 0.08, 0.25),
   correct: () => seq([659, 988], 0.1, 0.25),
   wrong: () => seq([330, 247], 0.12, 0.28, 'sawtooth', 0.06),
-  drum: () => { for (let i = 0; i < 10; i++) tone(110 + (i % 2) * 8, 0.06, 'square', 0.04 + i * 0.004, i * 0.07); },
-  fanfare: () => seq([523, 659, 784, 1047, 784, 1047, 1319], 0.11, 0.32),
+  drum: () => { for (let i = 0; i < 20; i++) tone(110 + (i % 2) * 8, 0.06, 'square', 0.04 + i * 0.004, i * 0.07); },
+  fanfare: () => seq([523, 659, 784, 1047, 784, 1047, 1319], 0.11, 0.32, 'triangle', 0.16),
 };
 
 const sleep = (/** @type {number} */ ms) => new Promise(r => setTimeout(r, ms));

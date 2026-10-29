@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã kiểm thử và đo đạc thực tế nghiệm thu ngân sách kết nối Firebase (SLOTS <= 2), danh sách lớp tải trong 357ms (<= 2000ms), Hiệu quả tải trong 597ms (<= 3000ms), sửa triệt để lỗi mạng chậm và học sinh 0 điểm (+985đ); nghiệm thu luồng cập nhật PWA có nội dung từ whats-new.json; test_store_budget 10/10 PASS, test_auto_update_login 15/15 PASS, test_live_budget_update 6/6 PASS; chi tiết tại docs/handoff/antigravity-claude-ket-noi-cap-nhat-xong.md.
+- Yêu cầu mới nhất: Claude phán quyết báo cáo Antigravity (luật quiz_bo ACCEPT, Worker 51aa1384 ACCEPT MOCK, nghiệm thu giả lập CHƯA ĐẠT, quan sát Kahoot chỉ dùng phần có nguồn); thêm màn đọc câu hỏi trước khi mở phương án; chờ Antigravity thử thật https theo docs/handoff/claude-antigravity-nghiem-thu-quan-sat-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4271,4 +4271,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: tests/test_live_budget_update.cjs, docs/handoff/antigravity-claude-ket-noi-cap-nhat-xong.md, aisgk.md.
 - Kiểm thực tế: test_store_budget 10/10 PASS; test_auto_update_login 15/15 PASS; test_pwa_update_integrity 7/7 PASS; test_quiz_live 51/51 PASS; test_live_budget_update 6/6 PASS; tools/package_student_pwa.py --check PASS; GitHub Pages whats-new.json 200 OK.
 - Việc tiếp: Thầy trải nghiệm giao diện giáo viên và học sinh với tốc độ tải tức thì và kết nối ổn định; Claude nghiệm thu tổng thể.
+
+### 29/10/2026 18:40 — Claude — Phán quyết báo cáo hiệu ứng; thêm đọc câu hỏi trước
+- Phán quyết: luật quiz_bo ACCEPT (tự kiểm 200/401); Worker 51aa1384 ACCEPT (MOCK); nghiệm thu "1 máy chiếu + 2 điện thoại" CHƯA ĐẠT vì chỉ chạy giả lập; báo cáo quan sát Kahoot/Quizizz thiếu phương pháp đo, chỉ dùng phần có nguồn công khai.
+- Đã làm: phase 'intro' (đọc câu hỏi, chưa gửi phương án, máy chủ chặn trả lời), giáo viên chọn 0/3/5/8 giây; bục vinh danh giãn nhịp; kèn to hơn.
+- Tệp đổi: frontend/hoc/teacher-quiz.js, quiz-play.js, quiz-fx.js, teacher.html, teacher.css, styles.css, sw.js (dấu), tests/test_quiz_live.cjs, docs/handoff/claude-antigravity-nghiem-thu-quan-sat-29-10.md.
+- Kiểm thực tế: test_quiz_live 53 PASS; test_teacher_ui_standard 0; test_student_ui_standard 0; test_pwa_update_integrity 7/7; test_teacher_shell PASS.
+- Việc tiếp: Antigravity thử thật https (2 điện thoại thật).
 
