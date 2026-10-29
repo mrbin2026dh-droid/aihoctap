@@ -40,7 +40,7 @@ async function probe() {
     const code = typeof d === 'string' && /^\d{6}$/.test(d) ? d : '';
     if (code === room) return;
     room = code; info = null; stopInfo?.(); stopInfo = null;
-    if (room) stopInfo = store.listen(`quiz/${room}/pub`, p => { info = p; banner(); onChange(); if (playing === room) { pub = p; draw(); } });
+    if (room) stopInfo = store.listen(`quiz/${room}/pub`, p => { info = p; banner(); onChange(); if (playing === room) { pub = p; draw(); } }, undefined, { prio: 3 });
     banner(); onChange();
   });
 }
@@ -115,9 +115,9 @@ async function join() {
   await store.put(`quiz/${playing}/ds/${store.keyOf(me.ma)}`, { ten: me.ten, at: store.SERVER_TIME }).catch(() => { /* đã vào trước đó */ });
   stops.forEach(f => f()); stops = [];
   pub = info;
-  stops.push(store.listen(`quiz/${playing}/pub`, d => { pub = d; draw(); }));
-  stops.push(store.listen(`quiz/${playing}/ds`, d => { players = Object.keys(d || {}).length; if (pub?.phase === 'lobby') { lastKey = ''; draw(); } }));
-  stops.push(store.listen(`quiz/${playing}/kq/${store.keyOf(me.ma)}`, d => { mine = d; drawScore(); if (pub?.phase === 'reveal' || pub?.phase === 'end') { lastKey = ''; draw(); } }));
+  stops.push(store.listen(`quiz/${playing}/pub`, d => { pub = d; draw(); }, undefined, { prio: 3 }));
+  stops.push(store.listen(`quiz/${playing}/ds`, d => { players = Object.keys(d || {}).length; if (pub?.phase === 'lobby') { lastKey = ''; draw(); } }, undefined, { prio: 1 }));
+  stops.push(store.listen(`quiz/${playing}/kq/${store.keyOf(me.ma)}`, d => { mine = d; drawScore(); if (pub?.phase === 'reveal' || pub?.phase === 'end') { lastKey = ''; draw(); } }, undefined, { prio: 2 }));
   onChange();
   /** @type {HTMLElement} */ (o.querySelector('.lt-close')).focus();
 }

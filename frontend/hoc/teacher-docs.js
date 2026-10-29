@@ -4,7 +4,7 @@
 // Quản trị: mọi khối; giáo viên lớp: khối của các lớp phụ trách.
 import { SHEET_API } from './sheet-config.js';
 import { confirmBox } from './dom.js';
-import * as ui from './teacher-ui.js?v=20261029a';
+import * as ui from './teacher-ui.js?v=20261029b';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));

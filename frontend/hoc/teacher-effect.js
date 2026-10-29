@@ -78,7 +78,11 @@ async function load() {
     const lops = [...new Set(Object.values(data.hs).map((/** @type {any} */ s) => String(s?.lop || '')).filter(l => l && (!mine || mine.includes(l))))].sort();
     sel.replaceChildren(...(mine && lops.length === 1 ? [] : [new Option(mine ? 'Các lớp của tôi' : 'Tất cả lớp', '')]), ...lops.map(l => new Option('Lớp ' + l, l))); if (lops.includes(keep)) sel.value = keep;
     render();
-  } catch (e) { $('eff-status').textContent = e instanceof Error ? e.message : 'Chưa tải được số liệu.'; }
+  } catch (e) {
+    const st = $('eff-status'), again = document.createElement('button');
+    again.type = 'button'; again.className = 't-button eff-retry'; again.textContent = 'Thử lại'; again.addEventListener('click', () => void load());
+    st.replaceChildren(document.createTextNode((e instanceof Error ? e.message : 'Chưa tải được số liệu.') + ' '), again);
+  }
 }
 function render() {
   if (!data) return;

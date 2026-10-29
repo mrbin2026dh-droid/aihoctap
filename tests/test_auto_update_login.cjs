@@ -1,4 +1,5 @@
-// Có bản cập nhật mới: icon đồng bộ có chấm đỏ; học sinh đăng nhập thì màn hình "Đang cập nhật" chạy rồi tự khởi động lại bằng bản mới.
+// Có bản cập nhật mới: icon đồng bộ có chấm đỏ + hộp thoại "Có bản cập nhật mới" nêu nội dung (whats-new.json);
+// em bấm "Để sau" thì giữ chấm đỏ, không hỏi lại ngay; bấm icon → hộp thoại → "Cập nhật ngay" → màn hình tiến trình → khởi động lại bản mới.
 const {chromium}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
 const root=path.resolve(__dirname,'../frontend/hoc');const DB='https://test-upd-default-rtdb.asia-southeast1.firebasedatabase.app';
 let swSuffix='';
@@ -25,14 +26,22 @@ const at=p=>p.split('/').filter(Boolean).reduce((o,k)=>(o===null||o===undefined)
   swSuffix='v2-';await p.evaluate(()=>navigator.serviceWorker.getRegistration().then(r=>r.update()));
   await p.waitForSelector('#update-notice:not([hidden])',{timeout:15000});
   ok(await p.locator('#update-notice .badge-dot').isVisible(),'có bản mới: hiện icon cập nhật kèm chấm đỏ');
-  ok(await p.locator('#update-overlay').isHidden(),'chưa đăng nhập: chưa chạy màn hình cập nhật');
+  await p.waitForSelector('#msg-dialog[open]',{timeout:10000});
+  ok((await p.textContent('#msg-title')).includes('Có bản cập nhật mới')&&(await p.textContent('#msg-body')).includes('Nội dung cập nhật')&&(await p.textContent('#msg-body')).includes('Luyện tập'),'có bản mới: hộp thoại nêu nội dung cập nhật (lấy từ whats-new.json)');
+  ok((await p.textContent('#msg-ok'))==='Cập nhật ngay'&&(await p.textContent('#msg-cancel'))==='Để sau'&&await p.locator('#update-overlay').isHidden(),'chưa tự cập nhật khi em chưa đồng ý');
   const anim=await p.$eval('#update-notice .badge-dot',e=>getComputedStyle(e).animationName);ok(anim.includes('uo-ping'),'chấm đỏ nhấp nháy để dễ thấy');
+  await p.click('#msg-cancel');await p.waitForSelector('#msg-dialog[open]',{state:'detached'}).catch(()=>{});await p.waitForTimeout(300);
+  ok(!(await p.locator('#msg-dialog[open]').count())&&await p.locator('#update-notice').isVisible()&&await p.locator('#update-overlay').isHidden(),'bấm Để sau: đóng hộp thoại, giữ chấm đỏ');
   await p.waitForSelector('#gate-student');await p.click('#gate-student');await p.waitForSelector('#login-dialog[open]');
-  ok(await p.locator('#login-update-hint').isVisible(),'ô đăng nhập báo "có bản cập nhật, sẽ tự cập nhật sau đăng nhập"');
-  const nav=new Promise(res=>p.once('framenavigated',()=>res(true)));
+  ok(await p.locator('#login-update-hint').isVisible(),'ô đăng nhập nhắc có bản cập nhật');
   await p.fill('#student-code','HS01');await p.fill('#student-pin','123456');await p.click('#login-form button[type=submit]');
+  await p.waitForSelector('#login-dialog[open]',{state:'detached'}).catch(()=>{});await p.waitForTimeout(1500);
+  ok(await p.locator('#update-overlay').isHidden()&&!(await p.locator('#msg-dialog[open]').count()),'đăng nhập sau khi chọn Để sau: không tự cập nhật, không hỏi dồn');
+  const nav=new Promise(res=>p.once('framenavigated',()=>res(true)));
+  await p.click('#update-app');await p.waitForSelector('#msg-dialog[open]',{timeout:10000});ok((await p.textContent('#msg-title')).includes('Có bản cập nhật mới'),'bấm icon cập nhật: hiện hộp thoại nội dung');
+  await p.click('#msg-ok');
   await p.waitForSelector('#update-overlay:not([hidden])',{timeout:15000});
-  ok((await p.textContent('#uo-title')).includes('Đang cập nhật'),'đăng nhập xong: hiện màn hình "Đang cập nhật ứng dụng"');
+  ok((await p.textContent('#uo-title')).includes('Đang cập nhật'),'bấm Cập nhật ngay: hiện màn hình "Đang cập nhật ứng dụng"');
   await p.waitForFunction(()=>document.querySelectorAll('#update-overlay .uo-steps li.done').length>=1);
   ok(parseInt(await p.$eval('#uo-fill',e=>e.style.width))>10,'thanh tiến trình chạy theo từng bước');
   await nav;await p.waitForLoadState('load');await p.waitForFunction(()=>(document.documentElement.dataset.build||'').length>0,null,{timeout:15000}).catch(()=>{});

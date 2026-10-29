@@ -2,15 +2,15 @@
 import {api, ApiError, API_BASE} from './api.js';
 import './netbar.js';
 import * as db from './db.js';
-import * as ui from './teacher-ui.js?v=20261029a';
+import * as ui from './teacher-ui.js?v=20261029b';
 import {renderEditor, validateQuestions, toPayload, totalPoints} from './exam-editor.js';
 import {parseExamRows, templateRows} from './exam-import.js';
-import './teacher-thi.js?v=20261029a';
-import './teacher-accounts.js?v=20261029a';
-import './teacher-read.js?v=20261029a';
-import './teacher-docs.js?v=20261029a';
-import './teacher-effect.js?v=20261029a';
-import './teacher-quiz.js?v=20261029a';
+import './teacher-thi.js?v=20261029b';
+import './teacher-accounts.js?v=20261029b';
+import './teacher-read.js?v=20261029b';
+import './teacher-docs.js?v=20261029b';
+import './teacher-effect.js?v=20261029b';
+import './teacher-quiz.js?v=20261029b';
 import * as thiStore from './thi-store.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';
 import {el, button, renderMarkdown, dialogBox, confirmBox, noticeBox, withBusy, setFieldError, mapErrorMessage} from './dom.js';
@@ -1595,3 +1595,23 @@ async function leaveGuard() {
 node('ai-settings-form').addEventListener('input', () => { quotaDirty = true; });
 window.addEventListener('beforeunload', event => { if (lessonDirty || quotaDirty) { event.preventDefault(); } });
 ui.init({guard: leaveGuard});
+
+// Trang giáo viên dùng chung vài tệp với app học sinh (styles.css, thi-store.js, dom.js…) do service worker giữ.
+// Có bản service worker mới đang chờ → bật ngay rồi tải lại trang MỘT lần, để giáo viên không chạy lẫn tệp cũ và mới.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if (!reg) return;
+    let done = false; const t0 = Date.now();
+    const swap = () => {
+      const w = reg.waiting; if (!w || !navigator.serviceWorker.controller) return;
+      if (Date.now() - t0 > 15000) return;   // chỉ ngay lúc mở trang: không bao giờ tải lại giữa buổi luyện tập / chấm bài
+      try { if (Date.now() - Number(sessionStorage.getItem('gv-sw-swap') || 0) < 60000) return; sessionStorage.setItem('gv-sw-swap', String(Date.now())); } catch { /* bỏ qua */ }   // chống tải lại lặp
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (!done) { done = true; location.reload(); } });
+      w.postMessage({ type: 'ACTIVATE' });
+    };
+    swap();
+    const watch = (/** @type {ServiceWorker|null} */ w) => w?.addEventListener('statechange', () => { if (w.state === 'installed') swap(); });
+    watch(reg.installing); reg.addEventListener('updatefound', () => watch(reg.installing));
+    void reg.update().catch(() => {});
+  }).catch(() => {});
+}

@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã xác thực luật Firebase quiz_bo hoạt động 100% (curl 200 & 401); deploy Worker bản 51aa1384 (ai-quiz maxOutputTokens 8192); test_quiz_core 17/17 PASS, test_quiz_live 51/51 PASS; nghiệm thu 8/8 tiêu chí hiệu ứng (đếm ngược 3·2·1, Web Audio, biểu đồ, bục vinh danh tuần tự 3→2→1); nộp báo cáo quan sát màn hình Kahoot/Quizizz tại docs/nghien-cuu/kahoot-quizizz-quan-sat-man-hinh.md; chi tiết tại docs/handoff/antigravity-claude-luyen-tap-hieu-ung-xong.md.
+- Yêu cầu mới nhất: Sửa gốc "Mạng đang chậm"/"Chưa tải được danh sách lớp"/học sinh 0 điểm (trình duyệt chỉ cho 6 kết nối HTTP/1.1 tới Firebase, trang giáo viên mở 7–10 EventSource) bằng ngân sách kết nối trong thi-store.listen; hộp thoại "Có bản cập nhật mới" (whats-new.json) cho app học sinh; chi tiết docs/handoff/claude-antigravity-ket-noi-cap-nhat-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4258,4 +4258,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/nghien-cuu/kahoot-quizizz-quan-sat-man-hinh.md, docs/handoff/antigravity-claude-luyen-tap-hieu-ung-xong.md, aisgk.md.
 - Kiểm thực tế: curl quiz_bo trả 200 & 401; test_teacher_ai 22/22 PASS; test_agent_bridge 15/15 PASS; test_quiz_core 17/17 PASS; test_quiz_live 51/51 PASS; test_teacher_ui_standard 0 vi phạm; tools/package_student_pwa.py --check PASS; Worker deploy 51aa1384-001e-48c8-a6a1-88282a3a6995.
 - Việc tiếp: Thầy mở phòng Luyện tập trên lớp trải nghiệm trọn vẹn âm thanh, đếm ngược và bục vinh danh; Claude nghiệm thu và chuẩn bị phát triển tab Thảo luận theo kế hoạch sau 30/10.
+
+### 29/10/2026 18:10 — Claude — Ngân sách kết nối Firebase, hộp thoại cập nhật
+- Đã đo trên trình duyệt thật (aihoctap.online): 6 EventSource mở sẵn → lệnh đọc Firebase treo > 8 giây; đó là gốc của "Mạng đang chậm", "Chưa tải được danh sách lớp" và học sinh 0 điểm khi luyện tập.
+- Đã làm: thi-store.listen dùng chung kết nối + chỉ 2 EventSource ưu tiên cao, còn lại đọc định kỳ, tab ẩn đóng hết; sw.js không trả tệp cũ cho trang giáo viên; teacher.js bật SW mới lúc mở trang; nút Thử lại ở Tiện ích/Hiệu quả; hộp thoại cập nhật có nội dung (whats-new.json), không tự cập nhật khi chưa đồng ý.
+- Tệp đổi: frontend/hoc/thi-store.js, sw.js, app.js, index.html, styles.css, whats-new.json (mới), teacher.js, teacher.html, teacher-quiz.js, teacher-effect.js, teacher-thi.js, teacher-read.js, teacher-accounts.js, teacher-docs.js, quiz-play.js, tests/test_store_budget.mjs (mới), tests/test_auto_update_login.cjs, tests/test_pwa_update_integrity.mjs.
+- Kiểm thực tế: test_store_budget 10; test_auto_update_login 15; test_pwa_update_integrity 7/7; test_quiz_live 51; test_teacher_thi_ui 136; các test giáo viên/học sinh liên quan PASS; UI chuẩn 0 vi phạm.
+- Việc tiếp: Antigravity thử thật theo handoff; deploy Worker ai-quiz; quan sát Kahoot/Quizizz.
 

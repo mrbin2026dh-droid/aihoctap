@@ -1146,62 +1146,80 @@ function waitInstalled(ms) {
     w.addEventListener('statechange', onState);
   });
 }
+/* Cập nhật ứng dụng: có bản mới → hộp thoại "Có bản cập nhật mới" nêu nội dung → em bấm "Cập nhật ngay" → màn hình tiến trình → khởi động lại.
+   Không bao giờ tự tải lại khi em chưa đồng ý (AGENTS.md mục L). Nội dung lấy từ whats-new.json của BẢN MỚI (đọc thẳng từ mạng). */
+async function whatsNew() {
+  try {
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 3000);
+    const r = await fetch(`./whats-new.json?t=${Date.now()}`, { cache: 'no-store', signal: ctl.signal }); clearTimeout(t);
+    const d = r.ok ? await r.json() : null;
+    return { title: String(d?.title || ''), items: Array.isArray(d?.items) ? d.items.slice(0, 8).map(String) : [] };
+  } catch { return { title: '', items: [] }; }
+}
+const busyForUpdate = () => Boolean((draft && !locked && Object.keys(draft.answers).length) || thiApp.inExam());
+let offering = false;
+/** @param {boolean} [manual] em tự bấm icon cập nhật */
+async function offerUpdate(manual = false) {
+  if (offering || !updatePending()) return false;
+  if (busyForUpdate()) {
+    if (manual) await confirmBox({ title: 'Chưa thể cập nhật', body: 'Em hãy nộp bài đang làm trước khi cập nhật ứng dụng. Bài nháp vẫn được giữ.', okText: 'Đã hiểu', kind: 'notice' });
+    return false;
+  }
+  if (!manual) {
+    if (document.hidden || document.querySelector('dialog[open]') || document.body.classList.contains('lt-playing') || document.body.classList.contains('tutor-open')) return false;
+    if (Date.now() - Number(sessionStorage.getItem('update-later') || 0) < 30 * 60000) return false;   // em đã chọn "Để sau": 30 phút sau mới hỏi lại
+  }
+  offering = true;
+  try {
+    const wn = await whatsNew();
+    const items = wn.items.length ? wn.items : ['Sửa lỗi và chạy nhanh, ổn định hơn.'];
+    const body = `${wn.title ? wn.title + '\n\n' : ''}Nội dung cập nhật:\n${items.map(x => '• ' + x).join('\n')}\n\nBài làm nháp của em vẫn được giữ nguyên. Cập nhật mất khoảng 3 giây.`;
+    const ok = await confirmBox({ title: 'Có bản cập nhật mới', body, okText: 'Cập nhật ngay', cancelText: 'Để sau' });
+    if (!ok) { sessionStorage.setItem('update-later', String(Date.now())); return false; }
+    await runUpdate(); return true;
+  } finally { offering = false; }
+}
+/** Màn hình tiến trình rồi bật bản mới. */
+async function runUpdate() {
+  const ov = node('update-overlay'), fill = node('uo-fill'), bar = ov.querySelector('.uo-bar');
+  const setStep = (n, pct) => {
+    ov.querySelectorAll('.uo-steps li').forEach(li => {const k = Number(/** @type {HTMLElement} */ (li).dataset.s); li.classList.toggle('done', k < n); li.classList.toggle('now', k === n);});
+    fill.style.width = pct + '%'; bar?.setAttribute('aria-valuenow', String(pct));
+  };
+  try {
+    await saveDraft().catch(() => {});
+    ov.hidden = false; setStep(1, 12); await sleep(600);
+    setStep(2, 48); await sleep(800);
+    setStep(3, 86); await sleep(600);
+    sessionStorage.setItem('auto-update-at', String(Date.now()));
+    fill.style.width = '100%';
+    if (node('update-notice').dataset.reload || !registration?.waiting) { location.reload(); return; }
+    updateRequested = true;
+    registration.waiting.postMessage({type: 'ACTIVATE'});
+    await sleep(8000); location.reload();                                    // dự phòng nếu controllerchange không tới
+  } catch { ov.hidden = true; }
+}
 let autoUpdating = false;
+/** Đăng nhập / mở lại app / vừa có bản mới: kiểm tra rồi HỎI em (không tự cập nhật). */
 async function autoUpdate() {
-  if (autoUpdating || !registration || !navigator.onLine || !session) return;
-  if (draft && !locked && Object.keys(draft.answers).length) return;          // đang làm bài: giữ chấm đỏ, không ngắt
-  const last = Number(sessionStorage.getItem('auto-update-at') || 0);
-  if (Date.now() - last < 90000) return;                                     // chống tải lại lặp
+  if (autoUpdating || !registration || !navigator.onLine) return;
   autoUpdating = true;
   try {
     if (!updatePending()) {
       await Promise.race([registration.update().catch(() => {}), sleep(3000)]);
       if (!updatePending() && registration.installing) await waitInstalled(15000);
     }
-    if (!updatePending()) return;
-    const ov = node('update-overlay'), fill = node('uo-fill'), bar = ov.querySelector('.uo-bar');
-    const setStep = (n, pct) => {
-      ov.querySelectorAll('.uo-steps li').forEach(li => {const k = Number(/** @type {HTMLElement} */ (li).dataset.s); li.classList.toggle('done', k < n); li.classList.toggle('now', k === n);});
-      fill.style.width = pct + '%'; bar?.setAttribute('aria-valuenow', String(pct));
-    };
-    ov.hidden = false; setStep(1, 12); await sleep(700);
-    setStep(2, 48); await sleep(900);
-    setStep(3, 86); await sleep(700);
-    sessionStorage.setItem('auto-update-at', String(Date.now()));
-    fill.style.width = '100%';
-    if (node('update-notice').dataset.reload || !registration.waiting) { location.reload(); return; }
-    updateRequested = true;
-    registration.waiting.postMessage({type: 'ACTIVATE'});
-    await sleep(8000); location.reload();                                    // dự phòng nếu controllerchange không tới
-  } catch { node('update-overlay').hidden = true; }
-  finally {autoUpdating = false;}
+    if (updatePending()) await offerUpdate(false);
+  } finally {autoUpdating = false;}
 }
 
 on('update-app', async () => {
   const btn = /** @type {HTMLButtonElement} */ (node('update-app'));
-  await withBusy(btn, 'Đang cập nhật…', async () => {
-    await saveDraft();
-    if (draft && !locked && Object.keys(draft.answers).length) {
-      notify('Hoàn thành bài đang làm trước khi cập nhật ứng dụng.', true);
-      await confirmBox({
-        title: 'Chưa thể cập nhật',
-        body: 'Em hãy hoàn thành bài đang làm trước khi cập nhật ứng dụng.',
-        okText: 'Đã hiểu',
-        kind: 'notice'
-      });
-      return;
-    }
-    if (node('update-notice').dataset.reload) {
-      location.reload();
-      return;
-    }
-    if (!registration?.waiting) {
-      notify('Đang kiểm tra bản cập nhật…');
-      await checkForUpdate();
-      return;
-    }
-    updateRequested = true;
-    registration.waiting.postMessage({ type: 'ACTIVATE' });
+  await withBusy(btn, 'Đang kiểm tra…', async () => {
+    await saveDraft().catch(() => {});
+    if (busyForUpdate()) { await confirmBox({ title: 'Chưa thể cập nhật', body: 'Em hãy nộp bài đang làm trước khi cập nhật ứng dụng. Bài nháp vẫn được giữ.', okText: 'Đã hiểu', kind: 'notice' }); return; }
+    if (!updatePending()) { await checkForUpdate(true); if (registration?.installing) await waitInstalled(15000); }
+    if (updatePending()) await offerUpdate(true);
   });
 });
 
@@ -1214,7 +1232,7 @@ if ('serviceWorker' in navigator) {
     node('update-text').textContent = 'Ứng dụng vừa cập nhật ở cửa sổ khác. Tải lại để dùng bản mới.'; node('update-app').title = node('update-text').textContent; node('update-app').setAttribute('aria-label', 'Tải lại để dùng bản mới');
     node('update-notice').hidden = false;
     node('update-notice').dataset.reload = '1';   // P5
-    updateHint(); if (session) void autoUpdate();
+    updateHint(); void offerUpdate(false);
   });
   navigator.serviceWorker.addEventListener('message', ev => {
     if (ev.data?.type === 'VERSION') {
@@ -1225,7 +1243,7 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.register('./sw.js', { scope: './' }).then(result => {
     registration = result;
-    const check = () => { if (result.waiting && navigator.serviceWorker.controller) {node('update-notice').hidden = false; updateHint(); if (session) void autoUpdate();} };
+    const check = () => { if (result.waiting && navigator.serviceWorker.controller) {node('update-notice').hidden = false; updateHint(); void offerUpdate(false);} };
     check();
     result.addEventListener('updatefound', () => result.installing?.addEventListener('statechange', check));
     navigator.serviceWorker.controller?.postMessage({ type: 'VERSION' });
@@ -1236,7 +1254,7 @@ if ('serviceWorker' in navigator) {
 }
 
 if (document.getElementById('check-update')) {
-  on('check-update', () => withBusy(/** @type {HTMLButtonElement} */ (node('check-update')), 'Đang kiểm tra…', () => checkForUpdate(true)));
+  on('check-update', () => withBusy(/** @type {HTMLButtonElement} */ (node('check-update')), 'Đang kiểm tra…', async () => { await checkForUpdate(true); if (registration?.installing) await waitInstalled(15000); if (updatePending()) await offerUpdate(true); }));
 }
 // Cài ứng dụng + mở đúng trình duyệt (Zalo/Facebook): xem install.js
 install.init({ notify, busy: () => document.body.classList.contains('tutor-open') || Boolean(document.querySelector('dialog[open]')) || thiApp.inExam() });

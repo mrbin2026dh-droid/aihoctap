@@ -1,5 +1,5 @@
 // Student shell only: never intercept API requests, identity or teacher pages.
-const CACHE = 'aisgk-student-shell-ca642af5689c17b310f48dad';
+const CACHE = 'aisgk-student-shell-9e92e5af17d972cb1c6a6e46';
 const FILES = ['./', './index.html', './styles.css', './app.js', './api.js', './db.js', './dom.js', './exam.js', './fb.js', './exam-fb.js', './thi-app.js', './thi-store.js', './presence.js', './presence-config.js', './sheet-config.js', './typing.js', './read-progress.js', './support.js', './support-config.js', './help-faq.js', './install.js', './netbar.js', './mastery.js', './quiz-play.js', './quiz-core.js', './quiz-fx.js', './manifest.webmanifest', './fonts/source-serif-4-latin-wght-normal.woff2', './fonts/source-serif-4-vietnamese-wght-normal.woff2', './fonts/nunito-latin-wght-normal.woff2', './fonts/nunito-vietnamese-wght-normal.woff2', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'];
 const ALLOWED = new Set(FILES.map(path => new URL(path, self.registration.scope).href));
 self.addEventListener('install', event => {
@@ -29,8 +29,15 @@ self.addEventListener('fetch', event => {
     }
   }
   if (event.request.method !== 'GET' || !ALLOWED.has(event.request.url)) return;
-  event.respondWith(caches.open(CACHE).then(async cache => {
+  event.respondWith((async () => {
+    // Trang giáo viên dùng chung vài tệp với app học sinh (styles.css, thi-store.js…): luôn lấy bản mới từ mạng,
+    // tránh trộn tệp cũ trong bộ nhớ đệm với teacher.js mới (gây lỗi khó đoán sau mỗi lần phát hành).
+    const client = event.clientId ? await self.clients.get(event.clientId).catch(() => null) : null;
+    if (client && !/\/(index\.html)?$/.test(new URL(client.url).pathname)) {
+      try { return await fetch(event.request); } catch { /* mất mạng: dùng bản đã lưu */ }
+    }
+    const cache = await caches.open(CACHE);
     const cached = await cache.match(event.request);
     return cached || fetch(event.request);
-  }));
+  })());
 });

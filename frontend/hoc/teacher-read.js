@@ -4,7 +4,7 @@
 // Giáo viên lớp chỉ thấy lớp mình phụ trách.
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261029a';
+import * as ui from './teacher-ui.js?v=20261029b';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 /** @type {Record<string, any>} */ let reads = {};
@@ -46,7 +46,7 @@ function watch() {
   const key = /** @type {HTMLSelectElement} */ ($('read-lesson')).value;
   if (key === watching && stop) { render(); return; }
   stop?.(); stop = null; reads = {}; watching = key; limit = ui.PAGE; render();
-  if (key) stop = store.listen('doc_read/' + key, d => { reads = d || {}; render(); });
+  if (key) stop = store.listen('doc_read/' + key, d => { reads = d || {}; render(); }, undefined, { prio: 0 });
 }
 function render() {
   const lopSel = /** @type {HTMLSelectElement} */ ($('read-lop')), lop = lopSel.value, mine = myClasses();

@@ -167,11 +167,13 @@ try {
     const noticeVisible = await page.isVisible('#update-notice');
     assert(noticeVisible, 'Update notice must become visible when new SW is waiting');
 
-    // Click update app and measure reload duration
+    // Có bản mới: hộp thoại nội dung cập nhật tự hiện (AGENTS.md L: chỉ tải lại khi người dùng đồng ý) → bấm "Cập nhật ngay"
+    await page.waitForSelector('#msg-dialog[open]', { timeout: 5000 });
+    assert((await page.textContent('#msg-title')).includes('Có bản cập nhật mới'), 'Update dialog must describe the update first');
     const tStart = Date.now();
     await Promise.all([
       page.waitForNavigation({ timeout: 5000 }),
-      page.click('#update-app')
+      page.click('#msg-ok')
     ]);
     const duration = Date.now() - tStart;
     assert(duration <= 5000, `Reload must complete within <= 5000ms (took ${duration}ms)`);

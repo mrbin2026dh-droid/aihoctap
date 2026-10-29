@@ -10,7 +10,7 @@
 // Chỉ máy có "khóa phòng" (quiz_key, không ai đọc được) mới ghi được trạng thái phòng (luật Firebase quiz_proof).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261029a';
+import * as ui from './teacher-ui.js?v=20261029b';
 import { confirmBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
 import { L, MAX_Q, QUIZ_COLUMNS, awards, blankScore, classSummary, parseQuizRows, ranked as rankScore, scoreQuestion, setClasses } from './quiz-core.js';
@@ -133,14 +133,20 @@ async function openEditor(s) {
   $('qz-form-err').textContent = ''; for (const id of ['qz-ai-box', 'qz-exam-box', 'qz-xl-box']) $(id).hidden = true;
   $('qz-list').replaceChildren(...(s?.qs?.length ? s.qs : [{}]).map(q => qRow(q))); qNumber();
   await ui.showSub('detail-tools');
-  const box = $('qz-lops'); box.replaceChildren(el('p', 't-muted ld-inline', 'Đang tải danh sách lớp…'));
-  const lops = await classes(), chosen = new Set(s ? s.lops : []);
+  await loadLops(s);
+  inp('qz-name').focus();
+}
+/** Danh sách lớp để chọn; lỗi mạng → báo rõ + nút Thử lại (giữ nguyên các câu đã soạn). @param {QSet|null} s */
+async function loadLops(s) {
+  const box = $('qz-lops');
+  const keep = new Set(s ? s.lops : []);
+  box.replaceChildren(el('p', 't-muted ld-inline', 'Đang tải danh sách lớp…'));
+  const lops = await classes(), chosen = keep;
   box.replaceChildren();
-  if (lops === null) { box.append(el('p', 'notice error', 'Chưa tải được danh sách lớp. Kiểm tra mạng, bấm Quay lại rồi mở lại.')); return; }
+  if (lops === null) { const n = el('div', 'notice error qz-lops-retry'); n.append(el('span', '', 'Chưa tải được danh sách lớp (mạng chậm).'), btn('Thử lại', 'qz-lops-again', () => void loadLops(s))); box.append(n); return; }
   if (!lops.length) { box.append(el('p', 't-muted', 'Chưa có lớp nào có học sinh. Thêm học sinh ở mục Tài khoản trước.')); return; }
   if (lops.length === 1 && !s) chosen.add(lops[0]);
   for (const l of lops) { const lab = el('label', 'qz-lop-pick'); const c = /** @type {HTMLInputElement} */ (el('input')); c.type = 'checkbox'; c.value = l; c.checked = chosen.has(l); lab.append(c, el('span', '', 'Lớp ' + l)); box.append(lab); }
-  inp('qz-name').focus();
 }
 const pickedLops = () => [...$('qz-lops').querySelectorAll('input[type=checkbox]:checked')].map(c => /** @type {HTMLInputElement} */ (c).value);
 /** @returns {{error?:string, qs?:Q[]}} */
@@ -297,7 +303,7 @@ async function startRoom(s) {
   for (const lk of room.lopKeys) paths[`quiz_lop/${lk}`] = code;
   try { await write(paths); } catch (e) { status('Chưa mở được phòng: ' + (e instanceof Error ? e.message : ''), 'error'); room = null; return; }
   writeLS(liveKey(), { room: code, key, setId: s.id, lopKeys: room.lopKeys });
-  room.stops.push(store.listen(`quiz/${code}/ds`, d => { if (!room) return; room.players = d || {}; for (const [k, v] of Object.entries(room.players)) if (!room.score[k]) room.score[k] = blankScore(String(/** @type {any} */ (v)?.ten || k)); if (room.phase === 'lobby') drawLobby(); else if (room.phase === 'q') drawQ(); }));
+  room.stops.push(store.listen(`quiz/${code}/ds`, d => { if (!room) return; room.players = d || {}; for (const [k, v] of Object.entries(room.players)) if (!room.score[k]) room.score[k] = blankScore(String(/** @type {any} */ (v)?.ten || k)); if (room.phase === 'lobby') drawLobby(); else if (room.phase === 'q') drawQ(); }, undefined, { prio: 2 }));
   main.dataset.n = '0'; openHost(); drawLobby();
 }
 function openHost() { host.hidden = false; document.body.classList.add('qz-hosting'); $('qz-h-close').focus(); }
@@ -348,7 +354,7 @@ async function nextQ() {
   await write({ [P('phase')]: 'q', [P('q')]: { k, i: room.i, text: q.text, opts, lim: room.set.lim, left: lim, at: store.SERVER_TIME }, [P('reveal')]: null, [P('pause')]: null, [P('ready')]: null });
   const at = Number(await store.get(`quiz/${room.room}/pub/q/at`).catch(() => 0)) || Date.now();
   room.qAt = at; room.off = at - Date.now(); room.end = Date.now() + lim;
-  room.ansStop?.(); room.ansStop = store.listen(`quiz/${room.room}/ans/${k}`, d => { if (!room || room.phase !== 'q' || room.i !== Number(k.slice(1))) return; room.answers = d || {}; drawQ(); const np = Object.keys(room.players).length; if (np && Object.keys(room.answers).length >= np) void reveal(); });
+  room.ansStop?.(); room.ansStop = store.listen(`quiz/${room.room}/ans/${k}`, d => { if (!room || room.phase !== 'q' || room.i !== Number(k.slice(1))) return; room.answers = d || {}; drawQ(); const np = Object.keys(room.players).length; if (np && Object.keys(room.answers).length >= np) void reveal(); }, undefined, { prio: 3 });
   drawQ(true); tick();
 }
 function drawQ(fresh = false) {

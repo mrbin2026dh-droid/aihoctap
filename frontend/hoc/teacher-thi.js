@@ -6,8 +6,8 @@
 import { SHEET_API } from './sheet-config.js';
 import { parseExamRows, templateRows } from './exam-import.js';
 import { confirmBox } from './dom.js';
-import * as presence from './presence.js?v=20261029a';
-import * as ui from './teacher-ui.js?v=20261029a';
+import * as presence from './presence.js?v=20261029b';
+import * as ui from './teacher-ui.js?v=20261029b';
 import * as store from './thi-store.js';
 import { api } from './api.js';
 import { KT_LABELS, autoGrade } from './practical.js';
@@ -57,7 +57,7 @@ const useFb = () => !!info?.fb && fbHs !== null && Object.keys(fbHs).length > 0;
 const fbRefresh = () => { if (!useFb() || busyCount) return; renderList(); if (onDetail() && current) { stats = fbStats(current); if (stats) renderStats(); } };
 function startFb() {
   if (fbStops.length || !store.enabled()) return;
-  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; fbRefresh(); })];
+  fbStops = [store.listen('thi_hs', d => { fbHs = d || {}; fbRefresh(); }, undefined, { prio: 0 })];
   syncExamFb();
 }
 /** Theo từng bài (không tải cả cây thi_nop của mọi bài — có cả câu trả lời của từng em, rất nặng khi 1000 học sinh):
@@ -71,7 +71,7 @@ function syncExamFb() {
     if (!(id in fbDe)) { fbDe[id] = null; void store.get(`thi_de/${id}`).then(d => { fbDe[id] = d || null; fbRefresh(); }).catch(() => { delete fbDe[id]; }); }
     if (examFb[id]) continue;
     /** @type {Array<[string, Record<string, any>]>} */ const parts = [['thi_nop', fbNop], ['thi_vao', fbVao], ['thi_th', fbTh]];
-    if (live) { const stops = parts.map(([branch, into]) => store.listen(`${branch}/${id}`, d => { into[id] = d || {}; fbRefresh(); })); examFb[id] = { live, stop: () => stops.forEach(f => f()) }; }
+    if (live) { const stops = parts.map(([branch, into]) => store.listen(`${branch}/${id}`, d => { into[id] = d || {}; fbRefresh(); }, undefined, { prio: branch === 'thi_th' ? 1 : 2 })); examFb[id] = { live, stop: () => stops.forEach(f => f()) }; }
     else { let dead = false; examFb[id] = { live, stop: () => { dead = true; } }; for (const [branch, into] of parts) void store.get(`${branch}/${id}`).then(d => { if (!dead) { into[id] = d || {}; fbRefresh(); } }).catch(() => {}); }
   }
 }

@@ -32,35 +32,104 @@ export const get = path => req(path).catch(e => (e && (e.status === 0 || e.statu
 /** Ghi nhiều chỗ một lần (PATCH ở gốc khi path = ''). @param {string} path @param {Record<string, unknown>} val */ export const patch = (path, val) => req(path, { method: 'PATCH', body: JSON.stringify(val) });
 export const SERVER_TIME = { '.sv': 'timestamp' };
 
-/**
- * Nghe một nhánh: gọi onData(toàn bộ dữ liệu) mỗi khi có thay đổi. Tự nối lại khi mất mạng. Trả hàm dừng.
- * @param {string} path @param {(data:any)=>void} onData @param {(ok:boolean)=>void} [onState]
+/*
+ * NGHE TỨC THÌ CÓ "NGÂN SÁCH KẾT NỐI".
+ * Firebase REST chỉ chạy HTTP/1.1: trình duyệt cho tối đa 6 kết nối đồng thời tới một máy chủ, TÍNH CHUNG mọi tab.
+ * Mỗi EventSource giữ chặt 1 kết nối. Trước đây trang giáo viên mở 7–10 EventSource (thi_hs, 3 nhánh × mỗi bài thi đang mở,
+ * đọc bài, phòng luyện tập...) → các lệnh đọc thường (danh sách lớp, Hiệu quả, câu trả lời luyện tập) xếp hàng mãi rồi báo
+ * "Mạng đang chậm" (đo thật 29/10: 6 EventSource mở sẵn → lệnh đọc treo quá 8 giây; 4 → 0,2 giây).
+ * Cách xử lý:
+ *  - nhiều chỗ nghe cùng một nhánh dùng chung một kết nối;
+ *  - chỉ SLOTS nhánh ưu tiên cao nhất được giữ EventSource; các nhánh còn lại tự đọc lại định kỳ (2–10 giây theo mức ưu tiên);
+ *  - tab bị ẩn: đóng hết EventSource, đọc lại thưa (20 giây) để nhường kết nối cho tab đang dùng.
+ * Mức ưu tiên (prio): 3 = phải tức thì (câu trả lời luyện tập, trạng thái phòng), 2 = theo dõi đang diễn ra (bài thi đang mở),
+ * 1 = mặc định, 0 = danh sách ít đổi (thi_hs, đọc bài).
  */
-export function listen(path, onData, onState = () => {}) {
-  /** @type {any} */ let data = null; /** @type {EventSource|null} */ let es = null; let stopped = false; let retry = 0; let timer = 0;
+export const SLOTS = 2;   // 2 EventSource + 1 trạng thái trực tuyến (presence.js) = 3 mỗi tab: hai cửa sổ cùng mở vẫn còn chỗ cho lệnh đọc/ghi
+const POLL_MS = [10000, 5000, 3000, 1500];
+const HIDDEN_POLL_MS = 20000;
+/** @typedef {{path:string, subs:Set<{onData:(d:any)=>void,onState:(ok:boolean)=>void,prio:number}>, data:any, has:boolean, mode:''|'sse'|'poll', es:EventSource|null, timer:number, retry:number, busy:boolean, at:number, sig:string}} Feed */
+/** @type {Map<string, Feed>} */ const feeds = new Map();
+let seq = 0, visHooked = false;
+const hidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden';
+const prioOf = (/** @type {Feed} */ f) => Math.max(0, ...[...f.subs].map(x => x.prio));
+/** @param {Feed} f */
+function emit(f) { const sig = JSON.stringify(f.data ?? null); if (f.has && sig === f.sig) return; f.sig = sig; f.has = true; for (const x of [...f.subs]) { try { x.onData(f.data); } catch { /* bỏ qua lỗi của chỗ nghe */ } } }
+/** @param {Feed} f @param {boolean} ok */
+const state = (f, ok) => { for (const x of [...f.subs]) { try { x.onState(ok); } catch { /* bỏ qua */ } } };
+/** @param {Feed} f */
+function halt(f) { clearTimeout(f.timer); f.timer = 0; f.es?.close(); f.es = null; f.mode = ''; }
+/** @param {Feed} f */
+function openSse(f) {
+  halt(f); f.mode = 'sse';
+  const es = new EventSource(`${base()}/${f.path}.json`); f.es = es;
   const apply = (/** @type {string} */ p, /** @type {any} */ v, /** @type {boolean} */ merge) => {
     const parts = p.split('/').filter(Boolean);
-    if (!parts.length) { data = merge ? { ...(data || {}), ...(v || {}) } : v; return; }
-    data = data && typeof data === 'object' ? { ...data } : {};
-    let o = data;
+    if (!parts.length) { f.data = merge ? { ...(f.data || {}), ...(v || {}) } : v; return; }
+    f.data = f.data && typeof f.data === 'object' ? { ...f.data } : {};
+    let o = f.data;
     for (let i = 0; i < parts.length - 1; i++) { o[parts[i]] = o[parts[i]] && typeof o[parts[i]] === 'object' ? { ...o[parts[i]] } : {}; o = o[parts[i]]; }
     const last = parts[parts.length - 1];
     if (v === null) delete o[last]; else o[last] = merge && o[last] && typeof o[last] === 'object' ? { ...o[last], ...v } : v;
   };
-  const open = () => {
-    if (stopped) return;
-    es = new EventSource(`${base()}/${path}.json`);
-    const on = (/** @type {string} */ type, /** @type {boolean} */ merge) => es?.addEventListener(type, ev => {
-      retry = 0; onState(true);
-      try { const d = JSON.parse(/** @type {MessageEvent} */ (ev).data); apply(d.path, d.data, merge); onData(data); } catch { /* bỏ qua */ }
-    });
-    on('put', false); on('patch', true);
-    const again = () => { if (stopped) return; es?.close(); es = null; onState(false); timer = window.setTimeout(open, Math.min(15000, 1000 * 2 ** retry++)); };
-    es.addEventListener('cancel', again);
-    es.onerror = () => { if (es && es.readyState === EventSource.CLOSED) again(); };
+  const on = (/** @type {string} */ type, /** @type {boolean} */ merge) => es.addEventListener(type, ev => {
+    if (f.es !== es) return;
+    f.retry = 0; state(f, true);
+    try { const d = JSON.parse(/** @type {MessageEvent} */ (ev).data); apply(d.path, d.data, merge); emit(f); } catch { /* bỏ qua */ }
+  });
+  on('put', false); on('patch', true);
+  const again = () => { if (f.es !== es) return; es.close(); f.es = null; state(f, false); f.timer = window.setTimeout(() => { if (feeds.get(f.path) === f && f.mode === 'sse') openSse(f); }, Math.min(15000, 1000 * 2 ** f.retry++)); };
+  es.addEventListener('cancel', again);
+  es.onerror = () => { if (es.readyState === EventSource.CLOSED) again(); };
+}
+/** @param {Feed} f */
+function startPoll(f) {
+  if (f.mode === 'poll' && f.timer) return;
+  halt(f); f.mode = 'poll';
+  const tick = async () => {
+    if (feeds.get(f.path) !== f || f.mode !== 'poll') return;
+    if (!f.busy) {
+      f.busy = true;
+      try { f.data = await req(f.path, {}, 8000); f.retry = 0; state(f, true); emit(f); }
+      catch { f.retry++; state(f, false); }
+      finally { f.busy = false; }
+    }
+    if (feeds.get(f.path) !== f || f.mode !== 'poll') return;
+    const wait = hidden() ? HIDDEN_POLL_MS : POLL_MS[Math.min(3, prioOf(f))] * Math.min(4, 1 + f.retry);
+    f.timer = window.setTimeout(tick, wait);
   };
-  open();
-  return () => { stopped = true; clearTimeout(timer); es?.close(); es = null; };
+  f.timer = window.setTimeout(tick, 0);
+}
+/** Chia lại kết nối: SLOTS nhánh ưu tiên cao nhất dùng EventSource, còn lại đọc định kỳ. */
+function rebalance() {
+  const list = [...feeds.values()].sort((a, b) => prioOf(b) - prioOf(a) || a.at - b.at);
+  list.forEach((f, i) => {
+    const want = !hidden() && i < SLOTS && typeof EventSource !== 'undefined' ? 'sse' : 'poll';
+    if (want === 'sse' && f.mode !== 'sse') openSse(f);
+    else if (want === 'poll' && f.mode !== 'poll') startPoll(f);
+  });
+}
+/** Số EventSource đang mở (cho kiểm thử / chẩn đoán). */
+export const openStreams = () => [...feeds.values()].filter(f => f.mode === 'sse').length;
+
+/**
+ * Nghe một nhánh: gọi onData(toàn bộ dữ liệu) mỗi khi có thay đổi. Tự nối lại khi mất mạng. Trả hàm dừng.
+ * @param {string} path @param {(data:any)=>void} onData @param {(ok:boolean)=>void} [onState] @param {{prio?:number}} [opt]
+ */
+export function listen(path, onData, onState = () => {}, opt = {}) {
+  if (!visHooked && typeof document !== 'undefined') { visHooked = true; document.addEventListener('visibilitychange', rebalance); }
+  const sub = { onData, onState, prio: Math.max(0, Math.min(3, Number(opt.prio ?? 1))) };
+  let f = feeds.get(path);
+  if (!f) { f = { path, subs: new Set(), data: null, has: false, mode: '', es: null, timer: 0, retry: 0, busy: false, at: seq++, sig: '' }; feeds.set(path, f); }
+  f.subs.add(sub);
+  const feed = f;
+  if (feed.has) setTimeout(() => { if (feed.subs.has(sub)) { try { onData(feed.data); } catch { /* bỏ qua */ } } }, 0);   // đã có dữ liệu: báo ngay cho chỗ nghe mới
+  rebalance();
+  return () => {
+    if (!feed.subs.delete(sub)) return;
+    if (!feed.subs.size) { halt(feed); feeds.delete(path); }
+    rebalance();
+  };
 }
 
 /** SHA-256 dạng hex, viết tay (chạy cả khi trang mở qua http trong mạng LAN, nơi crypto.subtle bị tắt). @param {string} str */
