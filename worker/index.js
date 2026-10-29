@@ -1512,7 +1512,7 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
     }
     return null;
   };
-  let pool = await acquire(), useJson = json, last = 0, useFallback = false, why429 = '';
+  let pool = await acquire(), useJson = json, last = 0, useFallback = false, why429 = '', triedEnv = !pool;
   const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite', fallback = String(env.GEMINI_FALLBACK_MODEL || '').trim();
   // Gemini hay trả 503 (quá tải) / 500 nhất thời: thử lại có giãn cách; 429 hoặc khóa hỏng → đổi khóa khác trong kho; 400 do chế độ JSON → bỏ chế độ JSON.
   for (let i = 0; i < attempts; i++) {
@@ -1539,6 +1539,8 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
       if (pool) await report(pool.id, last === 429 ? { status: 'rate_limited', retry_after_sec: 60 } : { status: 'error' });
       const next = pool ? await acquire() : null;
       if (next && next.id !== pool?.id) { pool = next; continue; }
+      // Khóa trong kho hỏng / bị chặn (403) → thử khóa mặc định của máy chủ (GEMINI_API_KEY) một lần.
+      if ((last === 401 || last === 403) && !triedEnv && env.GEMINI_API_KEY) { triedEnv = true; pool = null; i--; continue; }
       // Hết khóa để đổi: mô hình dự phòng có hạn mức riêng → thử một lần trước khi báo bận.
       if (last === 429 && fallback && fallback !== m && !useFallback) { useFallback = true; why429 = why; i--; continue; }
       if (last === 429) throw Object.assign(new Error(geminiBusyMessage(why429 || why)), { status: 429 });
@@ -1549,6 +1551,39 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
     if (i < attempts - 1) await new Promise(r => setTimeout(r, 700 * (i + 1)));
   }
   throw Object.assign(new Error(`AI chưa trả lời được (mã ${last || 'mạng'}). Thử lại sau ít phút.`), { status: 502, upstream: last });
+}
+/**
+ * Gemini trả lỗi KHÔNG phải 429 (503 quá tải, 500, 504, 404 sai tên mô hình, 401/403 khóa hỏng, mất mạng):
+ * thử lại có giãn cách → đổi khóa (kho / khóa mặc định) → đổi mô hình dự phòng. Trả {res,key,model} khi được, null khi hết cách.
+ * @param {any} env @param {any} gateStub @param {{body:any,key:string,model:string,status:number,poolId?:string}} o
+ */
+export async function geminiAlt(env, gateStub, o) {
+  const fallback = String(env.GEMINI_FALLBACK_MODEL || '').trim();
+  /** @type {{key:string,model:string,wait?:number}[]} */ const tries = [];
+  if (o.status === 0 || o.status >= 500) tries.push({ key: o.key, model: o.model, wait: 800 }, { key: o.key, model: o.model, wait: 1600 });
+  if (o.status === 401 || o.status === 403) {
+    if (o.poolId) await gateStub.fetch('http://do/report-gemini-key-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key_id: o.poolId, status: 'error' }) }).catch(() => {});
+    try {
+      const r = await gateStub.fetch('http://do/acquire-gemini-key', { method: 'POST' });
+      const d = r && r.ok ? await r.json().catch(() => ({})) : {};
+      if (d.found && isKeyEncSecretValid(env.KEY_ENC_SECRET)) { const k = await decryptKeyText(d.ciphertext, d.iv, env.KEY_ENC_SECRET); if (k && k !== o.key) tries.push({ key: k, model: o.model }); }
+    } catch { /* bỏ qua */ }
+    if (env.GEMINI_API_KEY && env.GEMINI_API_KEY !== o.key) tries.push({ key: env.GEMINI_API_KEY, model: o.model });
+  }
+  if (fallback && fallback !== o.model) {
+    tries.push({ key: o.key, model: fallback, wait: o.status >= 500 ? 500 : 0 });
+    if ((o.status === 401 || o.status === 403) && env.GEMINI_API_KEY && env.GEMINI_API_KEY !== o.key) tries.push({ key: env.GEMINI_API_KEY, model: fallback });
+  }
+  for (const t of tries) {
+    if (t.wait) await new Promise(r => setTimeout(r, t.wait));
+    let res = null;
+    try { res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${t.model}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': t.key }, body: JSON.stringify(o.body) }); } catch { res = null; }
+    if (res && res.ok) return { res, key: t.key, model: t.model };
+    const why = res ? (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 200) : 'network';
+    console.error('[GEMINI_ALT_FAIL]', t.model, res ? res.status : 0, why);
+    if (res && res.status === 429) break;   // hết lượt: để nơi gọi báo "AI bận"
+  }
+  return null;
 }
 /** Giáo viên: token Worker (quản trị) hoặc giáo viên lớp (Mã + PIN, Google Sheet xác minh qua gv_login). */
 export async function authTeacherAny(request, env, signingKeys, body, corsHeaders) {
@@ -4750,6 +4785,37 @@ export default {
       } catch (e) { return j(Number(e?.status) || 502, { detail: e?.message || 'AI chưa chấm được. Thử lại.' }); }
     }
 
+    // Giáo viên bấm "Kiểm tra AI": gọi thử Gemini bằng từng khóa × mô hình chính/dự phòng, trả mã lỗi + lý do ngắn (không lộ khóa).
+    if (url.pathname === '/api/teacher/ai-check' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const who = await authTeacherAny(request, env, signingKeys, body, corsHeaders);
+      if (!who.ok) return j(403, { detail: 'Đăng nhập tài khoản giáo viên để kiểm tra AI.' });
+      const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite', fallback = String(env.GEMINI_FALLBACK_MODEL || '').trim();
+      /** @type {{nguon:string,key:string}[]} */ const keys = [];
+      try {
+        const r = await gateStub.fetch('http://do/acquire-gemini-key', { method: 'POST' });
+        const d = r && r.ok ? await r.json().catch(() => ({})) : {};
+        if (d.found && isKeyEncSecretValid(env.KEY_ENC_SECRET)) keys.push({ nguon: `Kho khóa (…${String(d.key_suffix || '').slice(-4)})`, key: await decryptKeyText(d.ciphertext, d.iv, env.KEY_ENC_SECRET) });
+        else keys.push({ nguon: d.empty_pool ? 'Kho khóa: trống' : 'Kho khóa: không còn khóa dùng được (hết lượt / chờ hồi phục)', key: '' });
+      } catch { keys.push({ nguon: 'Kho khóa: lỗi đọc', key: '' }); }
+      keys.push({ nguon: 'Khóa mặc định của máy chủ', key: env.GEMINI_API_KEY || '' });
+      const models = [...new Set([model, fallback].filter(Boolean))];
+      const results = [];
+      for (const k of keys) {
+        if (!k.key) { results.push({ nguon: k.nguon, mo_hinh: '—', ma: 0, ok: false, ly_do: 'Không có khóa' }); continue; }
+        for (const m of models) {
+          const t0 = Date.now(); let res = null;
+          try { res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Trả lời đúng một từ: OK' }] }], generationConfig: { temperature: 0, maxOutputTokens: 16 } }) }); } catch { res = null; }
+          let ly_do = '';
+          if (!res) ly_do = 'Không kết nối được máy chủ AI';
+          else if (!res.ok) { const d = await res.json().catch(() => ({})); ly_do = String(d?.error?.message || d?.error?.status || res.statusText || '').replace(/AIza[0-9A-Za-z_-]{20,}/g, '***').slice(0, 200); }
+          results.push({ nguon: k.nguon, mo_hinh: m, ma: res ? res.status : 0, ok: !!(res && res.ok), ly_do, ms: Date.now() - t0 });
+        }
+      }
+      return j(200, { model, fallback, results });
+    }
+
     if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz') && request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
       const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -5317,7 +5383,7 @@ export default {
       if (currentKey) {
         try {
           const modelName = env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+          let geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
 
           // E2: Socratic System Prompt with curriculum grounding (Zero answer keys)
           let systemText = WORKER_SOCRATIC_PROMPT;
@@ -5368,7 +5434,7 @@ export default {
             parts: [{ text: `Em là học sinh lớp ${safeGrade}. Câu hỏi: ${message}` }]
           });
 
-          let geminiRes = null;
+          /** @type {Response|null} */ let geminiRes = null;
           while (true) {
             geminiRes = await fetch(geminiUrl, {
               method: 'POST',
@@ -5448,9 +5514,15 @@ export default {
             break; // not 429
           }
 
+          if (!geminiRes.ok) {   // 503 quá tải / 500 / 404 / 403 / mạng → thử lại, đổi khóa, đổi mô hình dự phòng trước khi báo lỗi
+            const errBody0 = await geminiRes.clone().text().catch(() => '');
+            console.error('[GEMINI_SERVER_ERROR]', geminiRes.status, errBody0.replace(/\s+/g, ' ').slice(0, 300));
+            const alt = await geminiAlt(env, gateStub, { body: { contents, systemInstruction: { parts: [{ text: systemText }] }, generationConfig: { temperature: 0.3, maxOutputTokens: 2048 } }, key: currentKey, model: modelName, status: geminiRes.status, poolId: usedPoolKey?.id });
+            if (alt) { geminiRes = alt.res; currentKey = alt.key; geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${alt.model}:generateContent`; if (alt.key !== usedPoolKey?.key) usedPoolKey = null; }
+          }
           if (!geminiRes.ok) {
             const errBody = await geminiRes.text().catch(() => '');
-            console.error('[GEMINI_SERVER_ERROR]', geminiRes.status, errBody);
+            console.error('[GEMINI_SERVER_ERROR_FINAL]', geminiRes.status, errBody.replace(/\s+/g, ' ').slice(0, 300));
             // J1: Atomic quota refund on Gemini server failure
             await gateStub.fetch('http://do/refund-gemini-limit', {
               method: 'POST',
@@ -5458,7 +5530,7 @@ export default {
               body: JSON.stringify({ student_id: studentUid })
             });
             return new Response(JSON.stringify({
-              detail: `Dịch vụ Gia sư AI phản hồi lỗi (HTTP ${geminiRes.status}).`
+              detail: `Gia sư AI đang lỗi (mã ${geminiRes.status}${geminiRes.status === 503 ? ': máy chủ AI quá tải' : geminiRes.status === 403 ? ': khóa Gemini bị từ chối' : geminiRes.status === 404 ? ': sai tên mô hình AI' : ''}). Em thử lại sau ít phút.`
             }), {
               status: 502,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },

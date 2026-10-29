@@ -110,13 +110,15 @@ export function setReviewer(fn) { reviewer = fn; }
 /** @type {null|((payload:any)=>Promise<{items:{diem:number,nhan_xet:string}[],tong_ket?:string}>)} */ let grader = null;
 /** app.js cung cấp hàm nhờ AI chấm tự luận (cần token Worker). @param {(payload:any)=>Promise<any>} fn */
 export function setGrader(fn) { grader = fn; }
+/** Lý do lần chấm AI gần nhất bị lỗi (Worker gửi về), để em và thầy cô biết vì sao. */ let gradeErr = '';
 /** AI chấm các câu tự luận theo gợi ý đáp án của thầy cô. Lỗi → null (bài vẫn nộp, chấm lại sau). @param {string} title @param {Cau[]} qs @param {Record<string,string>} a */
 async function gradeEssays(title, qs, a) {
   if (!grader || !qs.length) return null;
   try {
     const r = await grader({ title, items: qs.map(q => ({ text: q.text, guide: q.goi_y || '', answer: String(a[q.id] || '').slice(0, MAX_TL), max: Number(q.points) || 1 })) });
+    gradeErr = '';
     return r && Array.isArray(r.items) && r.items.length === qs.length ? r : null;
-  } catch { return null; }
+  } catch (e) { gradeErr = e instanceof Error && e.message && !/^(offline|no token)$/.test(e.message) ? e.message : (e instanceof Error && e.message === 'offline' ? 'Máy đang mất mạng.' : ''); return null; }
 }
 /** Bài làm tự luận + điểm AI → bản ghi tu_luan. @param {Cau[]} qs @param {Record<string,string>} a @param {any} g */
 function tlRecord(qs, a, g) {
@@ -426,7 +428,7 @@ async function regrade(btn, msg) {
   btn.disabled = true; const old = btn.textContent; btn.textContent = 'AI đang chấm…'; msg.textContent = '';
   /** @type {Record<string,string>} */ const a = {}; for (const q of list) a[q.id] = r.tu_luan[q.id].tl;
   const g = await gradeEssays(b.tieu_de, list, a);
-  if (!g) { msg.textContent = 'AI vẫn chưa chấm được. Thử lại sau ít phút.'; btn.disabled = false; btn.textContent = old; return; }
+  if (!g) { msg.textContent = 'AI vẫn chưa chấm được. ' + (gradeErr ? `Lý do: ${gradeErr}` : 'Thử lại sau ít phút.'); btn.disabled = false; btn.textContent = old; return; }
   const tl = tlRecord(list, a, g), diem = r2((Number(r.diem_tn) || 0) + Object.values(tl).reduce((x, v) => x + v.d, 0));
   /** @type {Record<string, any>} */ const rec = { ma: r.ma, ten: r.ten, lop: r.lop, diem, tong: r.tong, dung: r.dung, so_cau: r.so_cau, lan: r.lan, cao_nhat: Math.max(Number(r.cao_nhat) || 0, diem), dau: r.lan > 1 ? r.dau : diem, tra_loi: r.tra_loi || {}, tu_luan: tl, diem_tn: Number(r.diem_tn) || 0, cho_cham: false, at: store.SERVER_TIME };
   if (r.chu_de) rec.chu_de = r.chu_de;

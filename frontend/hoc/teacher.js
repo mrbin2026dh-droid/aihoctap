@@ -796,6 +796,22 @@ node('material-form').addEventListener('submit', async event => {
 });
 
 on('refresh-keys', loadGeminiKeys);
+/** Kiểm tra AI: gọi thử Gemini bằng từng khóa × mô hình, hiện mã lỗi + lý do để biết vì sao Gia sư / AI chấm báo lỗi. */
+node('ai-check').addEventListener('click', async () => {
+  const btn = /** @type {HTMLButtonElement} */ (node('ai-check')), out = node('ai-check-out');
+  btn.disabled = true; btn.setAttribute('aria-busy', 'true'); out.textContent = 'Đang gọi thử AI…';
+  try {
+    const d = await api('/teacher/ai-check', { method: 'POST', token, body: {}, timeout: 60000 });
+    const hint = (/** @type {any} */ r) => r.ok ? 'Chạy tốt' : r.ma === 429 ? 'Hết lượt (đợi hoặc thêm khóa khác)' : r.ma === 403 || r.ma === 401 ? 'Khóa bị từ chối (khóa sai, hết hạn, bị giới hạn trang web/IP, hoặc chưa bật Gemini API)' : r.ma === 404 ? 'Sai tên mô hình AI' : r.ma >= 500 ? 'Máy chủ AI quá tải / lỗi tạm thời' : r.ma === 0 ? (r.ly_do || 'Không có khóa') : 'Lỗi khác';
+    const ok = (d.results || []).some((/** @type {any} */ r) => r.ok);
+    const cell = (/** @type {string} */ label, /** @type {string} */ text, cls = '') => { const c = el('td', text, cls); c.dataset.label = label; return c; };
+    const head = el('tr', '', '', ['Khóa', 'Mô hình', 'Mã', 'Kết luận', 'Chi tiết'].map(t => { const h = el('th', t); h.scope = 'col'; return h; }));
+    const rows = (d.results || []).map((/** @type {any} */ r) => el('tr', '', '', [cell('Khóa', r.nguon), cell('Mô hình', r.mo_hinh), cell('Mã', String(r.ma || '—')), cell('Kết luận', hint(r), r.ok ? 'ai-ok' : 'ai-bad'), cell('Chi tiết', r.ly_do || (r.ok ? `${r.ms} ms` : ''))]));
+    const tb = el('table', '', 't-table', [el('caption', ok ? 'AI đang chạy được (ít nhất một khóa + mô hình trả lời).' : 'AI ĐANG KHÔNG CHẠY: không khóa / mô hình nào trả lời được.'), el('thead', '', '', [head]), el('tbody', '', '', rows)]);
+    out.replaceChildren(tb);
+  } catch (err) { out.textContent = err instanceof Error ? err.message : 'Chưa kiểm tra được.'; }
+  finally { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+});
 
 async function loadAiUsage() {
   if (!token) return;
