@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Lớp thiếu ở Thảo luận/Luyện tập (Sheet chưa đẩy lên Firebase → cảnh báo + nút đẩy, Apps Script tự đẩy khi sửa Sheet, chỉ mục thi_lop), trang Tài khoản lưu danh sách trên máy cho trường 18.000 em, bỏ chữ gạch chân; chờ Antigravity đăng luật, cập nhật Apps Script, thử có ảnh theo docs/handoff/claude-antigravity-tai-khoan-lop-29-10.md. Rủi ro: thi_hs đọc công khai có băm PIN 6 số (chờ thầy quyết).
+- Yêu cầu mới nhất: Kiểm thử mô phỏng toàn hệ thống bằng 30 tài khoản THỬ lớp 9TH (không dùng tài khoản học sinh thật), báo cáo có nhãn mô phỏng, tìm bug và đối chiếu số; theo docs/handoff/claude-antigravity-kiem-thu-mo-phong-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4328,4 +4328,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp: frontend/hoc/{teacher-accounts.js,thi-store.js,teacher-quiz.js,teacher-tl.js,teacher.html,teacher.css,app.js,sw.js}, apps-script/sheet-exam/Code.gs, spike/step0/database.rules.ai-sgk-final.json, tests/{test_accounts_live,test_tl_live,test_teacher_thi_ui,test_teacher_ui_standard}.
 - Kiểm thử PASS (đã chạy): như handoff; đo 18.000 em: lần đầu 330 ms, mở lại 191 ms khi Sheet chậm 5 giây.
 - Việc dở: đăng luật thi_lop, dán Code.gs mới + bật tự đẩy; rủi ro thi_hs công khai có băm PIN (chờ thầy quyết). Báo cáo Gia sư của Antigravity chưa push.
+
+### 29/10/2026 23:45 — Claude: kế hoạch kiểm thử mô phỏng
+- Thầy đề nghị Antigravity đăng nhập tài khoản học sinh thật để tạo số liệu minh chứng. Claude không giao việc đó (dữ liệu giả lẫn vào hồ sơ thật, dùng thông tin đăng nhập của người khác, số liệu mô phỏng không được trình bày như hoạt động thật). Thay bằng kiểm thử mô phỏng với lớp thử 9TH, ghi nhãn rõ, kèm số liệu thí điểm thật tách riêng.
+- Tệp: docs/handoff/claude-antigravity-kiem-thu-mo-phong-29-10.md, .gitignore.
 
