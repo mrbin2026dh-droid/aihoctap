@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity và Thầy đã hoàn thành xuất sắc toàn bộ quy trình gắn tên miền `aihoctap.online` (Worker đa miền de3a4d7f, 4 bản ghi A và 1 CNAME trên Hostinger đã thông mạng toàn cầu, Pages CNAME đã trỏ, Playwright live test HTTP 200 console sạch 0 lỗi; chứng chỉ SSL đang trong hàng đợi cấp tự động của GitHub); Thầy đã quyết định bỏ Zalo Bot và giữ kênh hỗ trợ Zalo cá nhân trực tiếp; lập báo cáo tại `docs/handoff/antigravity-claude-ten-mien-xong.md`.
+- Yêu cầu mới nhất: Đã triển khai Worker bản 2892936a xử lý triệt để lỗi 502 (Gia sư tự thử lại, đổi khóa kho/mặc định, đổi fallback model; nút Kiểm tra AI cho giáo viên; học sinh hiện lý do lỗi chấm tự luận; tests 11/11, 8/8, 70/70 PASS); Thầy thực hiện bấm nút "Kiểm tra AI ngay" tại trang giáo viên và xử lý theo mã lỗi; chi tiết tại docs/handoff/antigravity-claude-ai-502-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2102,3 +2102,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/index.html, frontend/hoc/teacher.html, frontend/hoc/sw.js, wrangler.toml, aisgk.md, docs/handoff/antigravity-claude-truc-tuyen-xong.md.
 - Kiểm thực tế: curl thoi_gian.json trả null; Worker deploy v34e051e 200 OK; VPS 20 tests pass + brain quick pass; SSH key auth OK; 89 test cases pass 100%.
 - Việc tiếp: Thầy thêm https://aihoctap.online/* vào Google Cloud Credentials và Authorized domains Firebase; Thầy nhấn Ctrl+Shift+R trên Chrome để xóa cache HTTP cũ; ngày mai 29/10 mở bài thi cho học sinh làm bài thật.
+
+
+### 29/10/2026 11:55 — Antigravity — Triển khai Worker bản 2892936a (Sửa lỗi 502, Tự thử lại/Đổi khóa/Fallback, Nút Kiểm tra AI) & Sẵn sàng cho Thầy test
+- Đã thực hiện: Đồng bộ mã nguồn mới nhất từ GitHub (commit 2e5bea7); triển khai thành công Cloudflare Worker `aihoctap-gate` bản `2892936a-72eb-4c5e-ab40-b6857b4891e7` (thêm `geminiAlt` tự động thử lại 2 lần khi 5xx/mất mạng, tự đổi sang khóa mặc định khi 401/403, tự đổi sang `GEMINI_FALLBACK_MODEL`; endpoint `POST /api/teacher/ai-check`; nút "Kiểm tra AI ngay" ở trang giáo viên Hồ sơ → Khóa API); chạy kiểm thử `test_gemini_recovery.mjs` (11/11 PASS), `test_check_score.mjs` (8/8 PASS), `test_thi_tuluan.cjs` (70/70 PASS); lập báo cáo chi tiết tại `docs/handoff/antigravity-claude-ai-502-xong.md`.
+- Tệp đổi: docs/handoff/antigravity-claude-ai-502-xong.md, aisgk.md.
+- Kiểm thực tế: Worker deploy thành công Version ID `2892936a-72eb-4c5e-ab40-b6857b4891e7`; CORS OPTIONS 200 OK cho `https://aihoctap.online`; `test_gemini_recovery` 11/11 PASS; `test_thi_tuluan` 70/70 PASS; GitHub Pages deployment 40817254057 success.
+- Việc tiếp: Thầy vào https://aihoctap.online/teacher.html → Hồ sơ → Khóa API → Bấm "Kiểm tra AI ngay" và đọc bảng mã kết quả để xử lý theo hướng dẫn.
