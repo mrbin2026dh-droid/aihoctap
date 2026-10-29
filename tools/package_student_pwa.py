@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent / 'frontend' / 'hoc'
 SHELL_FILES = (
     'index.html', 'styles.css', 'app.js', 'api.js', 'db.js', 'dom.js', 'exam.js', 'fb.js', 'exam-fb.js',
-    'thi-app.js', 'thi-store.js', 'presence.js', 'presence-config.js', 'sheet-config.js', 'typing.js', 'read-progress.js', 'support.js', 'support-config.js', 'help-faq.js', 'install.js', 'netbar.js', 'mastery.js', 'quiz-play.js', 'quiz-core.js', 'quiz-fx.js',
+    'thi-app.js', 'thi-store.js', 'presence.js', 'presence-config.js', 'sheet-config.js', 'typing.js', 'read-progress.js', 'support.js', 'support-config.js', 'help-faq.js', 'install.js', 'netbar.js', 'mastery.js', 'quiz-play.js', 'quiz-core.js', 'quiz-fx.js', 'tl-core.js', 'tl-play.js',
     'manifest.webmanifest', 'fonts/source-serif-4-latin-wght-normal.woff2', 'fonts/source-serif-4-vietnamese-wght-normal.woff2', 'fonts/nunito-latin-wght-normal.woff2', 'fonts/nunito-vietnamese-wght-normal.woff2', 'icons/icon-192.png', 'icons/icon-512.png',
     'icons/maskable-512.png',
 )

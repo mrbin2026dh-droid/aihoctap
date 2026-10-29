@@ -1481,6 +1481,33 @@ export function buildPracticalPrompt({ kind, task, rubric, evidence, auto }) {
   ].join('\n');
 }
 /** Prompt phân tích trò chơi câu hỏi trên lớp: chỉ số liệu tổng hợp (không tên học sinh). */
+/** Thảo luận (kiểu Mentimeter): tổng hợp ý kiến cả lớp, gom thành nhóm ý chính. Chỉ nhận chữ, KHÔNG có tên/mã học sinh. */
+export function buildTlSummaryPrompt(q) {
+  const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').slice(0, n);
+  const parts = (Array.isArray(q?.slides) ? q.slides : []).slice(0, 20).map((s, i) => {
+    const head = `Trang ${i + 1} [${clip(s?.type, 10)}] "${clip(s?.text, 200)}" — ${Number(s?.people) || 0} em`;
+    if (s?.type === 'poll') return `${head}\n  Bình chọn: ${(Array.isArray(s.opts) ? s.opts : []).map((o, j) => `${clip(o, 60)}: ${Number(s.counts?.[j]) || 0}`).join('; ')}`;
+    if (s?.type === 'scale') return `${head}\n  Điểm trung bình (1–5): ${(Array.isArray(s.items) ? s.items : []).map((o, j) => `${clip(o, 60)}: ${Number(s.avg?.[j]) || 0}`).join('; ')}`;
+    if (s?.type === 'cloud') return `${head}\n  Từ khóa (số lần): ${(Array.isArray(s.words) ? s.words : []).slice(0, 60).map(w => `${clip(w?.w, 25)} (${Number(w?.n) || 0})`).join(', ')}`;
+    return `${head}\n${(Array.isArray(s?.texts) ? s.texts : []).slice(0, 80).map(t => `  - ${clip(t, 200)}`).join('\n')}`;
+  });
+  return [
+    'Em là giáo viên THCS giàu kinh nghiệm. Đây là kết quả THẢO LUẬN trên lớp (học sinh gửi ẩn danh). Tổng hợp giúp giáo viên trong 1 phút đọc.',
+    'Với mỗi trang: gom ý kiến thành 2–4 NHÓM Ý CHÍNH (tên nhóm ngắn, số ý thuộc nhóm, 1 ý tiêu biểu trích nguyên văn), chỉ ra hiểu lầm hoặc ý cần giáo viên làm rõ (nếu có).',
+    'Bỏ qua ý vô nghĩa, trêu đùa. Không bịa thêm ý không có trong dữ liệu.',
+    'Trả về DUY NHẤT JSON: {"tong_ket":"2–4 câu tiếng Việt","trang":[{"so":1,"nhom":[{"ten":"…","so_y":0,"vi_du":"…"}],"luu_y":"…"}]}',
+    '', `BUỔI THẢO LUẬN: ${clip(q?.title, 120)}`, ...parts
+  ].join('\n');
+}
+/** Gợi ý câu hỏi thảo luận theo bài học. */
+export function buildTlSuggestPrompt({ title, content, n, topic }) {
+  return [
+    `Em là giáo viên THCS. Soạn ${n} câu hỏi THẢO LUẬN (không phải trắc nghiệm có đáp án đúng) cho bài "${String(title || '').slice(0, 120)}"${topic ? `, tập trung: ${String(topic).slice(0, 80)}` : ''}.`,
+    'Trộn các loại: "cloud" (trả lời 1–3 từ khóa, khởi động), "open" (nêu ý kiến ngắn), "poll" (bình chọn quan điểm, 3–4 lựa chọn, không có đúng sai), "scale" (tự đánh giá 1–5, 2–3 tiêu chí), "qa" (học sinh đặt câu hỏi còn thắc mắc).',
+    'Câu hỏi ngắn, gần gũi học sinh, bám nội dung bài. Trả về DUY NHẤT JSON: {"slides":[{"type":"cloud|open|poll|scale|qa","text":"…","opts":["…"],"items":["…"]}]}',
+    '', 'NỘI DUNG BÀI:', String(content || '').slice(0, 9000)
+  ].join('\n');
+}
 export function buildQuizAnalysisPrompt(q) {
   const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').slice(0, n);
   const lines = (Array.isArray(q?.questions) ? q.questions : []).slice(0, 40).map((x, i) => {
@@ -4887,7 +4914,7 @@ export default {
       return j(200, { model, fallback, results, noi_chay, vao_tu: String(request.cf?.colo || ''), agent });
     }
 
-    if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz') && request.method === 'POST') {
+    if ((url.pathname === '/api/teacher/ai-questions' || url.pathname === '/api/teacher/ai-practical' || url.pathname === '/api/teacher/ai-quiz' || url.pathname === '/api/teacher/ai-tl') && request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
       const j = (status, obj) => new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const who = await authTeacherAny(request, env, signingKeys, body, corsHeaders);
@@ -4922,6 +4949,28 @@ export default {
             }
           }
           return j(200, { questions: kept, essays: essayList, lesson_title: lesson.title, remaining: Math.max(0, LIMIT - cnt.count), ...(kiem_tra ? { kiem_tra } : {}) });
+        }
+        if (url.pathname === '/api/teacher/ai-tl') {
+          const TT = ['cloud', 'open', 'poll', 'scale', 'qa'];
+          if (body.mode === 'goi_y') {
+            const n = Math.max(1, Math.min(10, Math.floor(Number(body.n) || 5)));
+            const lesson = await loadPublicLesson(env, String(body.course_id || ''), String(body.lesson_id || ''));
+            if (!lesson?.content_markdown) return j(404, { detail: 'Không tìm thấy nội dung bài học.' });
+            await spend();
+            const text = await geminiOnce(env, gateStub, buildTlSuggestPrompt({ title: lesson.title, content: pickLessonContext(lesson.content_markdown, String(body.topic || '') + ' ' + (lesson.title || ''), 9000), n, topic: body.topic }), { maxOutputTokens: 8192, temperature: 0.6 });
+            const parsed = parseJsonLoose(text) || {};
+            const slides = (Array.isArray(parsed.slides) ? parsed.slides : []).filter(x => x && TT.includes(x.type) && String(x.text || '').trim()).slice(0, n).map(x => ({ type: x.type, text: String(x.text).slice(0, 300), opts: Array.isArray(x.opts) ? x.opts.map(o => String(o).slice(0, 80)).slice(0, 6) : [], items: Array.isArray(x.items) ? x.items.map(o => String(o).slice(0, 80)).slice(0, 6) : [] }));
+            if (!slides.length) return j(502, { detail: 'AI chưa gợi ý được câu hỏi. Thử lại.' });
+            return j(200, { slides, lesson_title: lesson.title, remaining: Math.max(0, LIMIT - cnt.count) });
+          }
+          if (!Array.isArray(body.slides) || !body.slides.length) return j(400, { detail: 'Chưa có kết quả thảo luận để tổng hợp.' });
+          await spend();
+          const text = await geminiOnce(env, gateStub, buildTlSummaryPrompt(body), { maxOutputTokens: 8192, temperature: 0.3 });
+          const parsed = parseJsonLoose(text) || {};
+          const tk = String(parsed.tong_ket || '').trim();
+          if (!tk) return j(502, { detail: 'AI chưa tổng hợp được. Thử lại.' });
+          const trang = (Array.isArray(parsed.trang) ? parsed.trang : []).slice(0, 20).map(t => ({ so: Number(t?.so) || 0, luu_y: String(t?.luu_y || '').slice(0, 400), nhom: (Array.isArray(t?.nhom) ? t.nhom : []).slice(0, 4).map(g => ({ ten: String(g?.ten || '').slice(0, 80), so_y: Number(g?.so_y) || 0, vi_du: String(g?.vi_du || '').slice(0, 200) })) }));
+          return j(200, { tong_ket: tk.slice(0, 1200), trang, remaining: Math.max(0, LIMIT - cnt.count) });
         }
         if (url.pathname === '/api/teacher/ai-quiz') {
           if (!Array.isArray(body.questions) || !body.questions.length) return j(400, { detail: 'Chưa có kết quả trò chơi để phân tích.' });

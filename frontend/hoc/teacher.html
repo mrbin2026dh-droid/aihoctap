@@ -355,11 +355,37 @@
 </section>
 <section id="view-tools" hidden>
 <section id="list-tools" class="t-list" aria-labelledby="qz-title">
+<div class="t-tabs tools-tabs" role="tablist" aria-label="Tiện ích trên lớp"><button type="button" role="tab" id="tab-tools-quiz" class="t-button" aria-selected="true" aria-controls="tools-p-quiz" tabindex="0">Luyện tập</button><button type="button" role="tab" id="tab-tools-tl" class="t-button" aria-selected="false" aria-controls="tools-p-tl" tabindex="-1">Thảo luận</button></div>
+<div id="tools-p-quiz" role="tabpanel" aria-labelledby="tab-tools-quiz">
 <div class="t-heading"><div><h2 id="qz-title">Luyện tập trên lớp</h2><p class="t-muted">Tạo bộ câu hỏi, đến tiết bấm Mở luyện tập. Học sinh vào phòng ở mục Luyện tập, trả lời trên điện thoại, xếp hạng và vinh danh.</p></div><button type="button" id="qz-new" class="t-button t-primary">Tạo bộ câu hỏi</button></div>
 <div class="notice status thi-alert" id="qz-alert" role="status" hidden><span id="qz-status"></span></div>
 <ul class="t-list-items qz-sets" id="qz-sets"></ul>
 <p class="t-muted qz-sync" id="qz-sync" role="status"></p>
 <section class="t-card qz-history-card" aria-labelledby="qz-hist-title"><h3 id="qz-hist-title">Các buổi luyện tập gần đây</h3><ul class="qz-history" id="qz-history"></ul></section>
+</div>
+<div id="tools-p-tl" role="tabpanel" aria-labelledby="tab-tools-tl" hidden>
+<div class="t-heading"><div><h2 id="tl-title">Thảo luận trên lớp</h2><p class="t-muted">Đám mây từ khóa, ý kiến, bình chọn, thang điểm 1–5, hỏi đáp. Học sinh gửi ẩn danh lên màn chiếu, thầy cô duyệt trước khi hiện.</p></div><button type="button" id="tl-new" class="t-button t-primary">Tạo bộ thảo luận</button></div>
+<div class="notice status thi-alert" id="tl-alert" role="status" hidden><span id="tl-status"></span></div>
+<ul class="t-list-items qz-sets" id="tl-sets"></ul>
+<p class="t-muted qz-sync" id="tl-sync" role="status"></p>
+<section class="t-card qz-history-card" aria-labelledby="tl-hist-title"><h3 id="tl-hist-title">Các buổi thảo luận gần đây</h3><ul class="qz-history" id="tl-history"></ul></section>
+</div>
+</section>
+<section id="detail-tl" class="t-detail" aria-labelledby="tl-ed-title" hidden>
+<div class="t-heading"><div><h2 id="tl-ed-title">Bộ thảo luận</h2><p class="t-muted">Mỗi trang một câu hỏi. Ý kiến của học sinh hiện ẩn danh trên màn chiếu.</p></div><button type="button" class="t-button" data-action="back-tools" data-target="list-tools" id="tl-back">Quay lại</button></div>
+<form id="tl-form" class="t-form" novalidate>
+<div class="t-form-grid">
+<div class="t-field"><label for="tl-name">Tên bộ thảo luận</label><input id="tl-name" required maxlength="120" autocomplete="off" aria-describedby="tl-name-err"><p id="tl-name-err" class="t-field-error"></p></div>
+<div class="t-field"><label for="tl-cam">Từ cấm thêm</label><input id="tl-cam" maxlength="300" autocomplete="off" aria-describedby="tl-cam-hint"><p class="t-hint" id="tl-cam-hint">Cách nhau bằng dấu phẩy. Đã có sẵn bộ lọc từ ngữ thô tục.</p></div>
+</div>
+<fieldset class="qz-lops-field"><legend>Lớp thảo luận</legend><div class="qz-lops" id="tl-lops" aria-describedby="tl-lops-err"></div><button type="button" id="tl-lops-all" class="t-button qz-lops-all">Chọn / bỏ chọn tất cả</button><p id="tl-lops-err" class="t-field-error"></p></fieldset>
+<div class="qz-src"><button type="button" id="tl-ai" class="t-button thi-ai-btn">AI gợi ý câu hỏi theo bài</button><button type="button" id="tl-xl" class="t-button">Tải từ Excel</button><span class="tl-add-wrap"><label for="tl-add-type" class="vh">Loại trang thêm</label><select id="tl-add-type"><option value="cloud">Đám mây từ khóa</option><option value="open">Câu trả lời mở</option><option value="poll">Bình chọn</option><option value="scale">Thang điểm 1–5</option><option value="qa">Hỏi đáp</option></select><button type="button" id="tl-add" class="t-button">Thêm trang</button></span><span class="t-muted qz-count" id="tl-count"></span></div>
+<div id="tl-ai-box" class="qz-ai-box" hidden><div class="t-form-grid"><div class="t-field"><label for="tl-ai-lesson">Bài học</label><select id="tl-ai-lesson"></select></div><div class="t-field"><label for="tl-ai-n">Số câu</label><select id="tl-ai-n"><option>3</option><option selected>5</option><option>8</option></select></div><div class="t-field"><label for="tl-ai-topic">Chủ đề (không bắt buộc)</label><input id="tl-ai-topic" maxlength="80" autocomplete="off"></div></div><div class="t-actions"><button type="button" id="tl-ai-go" class="t-button t-primary">Gợi ý câu hỏi</button></div><p id="tl-ai-err" class="t-field-error" role="alert"></p></div>
+<div id="tl-xl-box" class="qz-ai-box" hidden><p class="t-muted">Mỗi dòng một câu hỏi. Cột Loại ghi: Đám mây, Trả lời mở, Bình chọn, Thang điểm hoặc Hỏi đáp.</p><div class="t-actions"><button type="button" id="tl-xl-template" class="t-button">Tải file mẫu</button><label class="t-file" for="tl-xl-file">Chọn file Excel (.xlsx)<input id="tl-xl-file" type="file" accept=".xlsx"></label></div><p id="tl-xl-err" class="t-field-error" role="alert"></p></div>
+<div id="tl-list"></div>
+<p id="tl-form-err" class="notice error status" role="alert"></p>
+<div class="t-actions"><button type="submit" id="tl-save" class="t-button t-primary">Lưu bộ thảo luận</button></div>
+</form>
 </section>
 <section id="detail-tools" class="t-detail" aria-labelledby="qz-ed-title" hidden>
 <div class="t-heading"><div><h2 id="qz-ed-title">Bộ câu hỏi</h2><p class="t-muted">Mỗi câu 2–4 phương án, chọn đáp án đúng. Câu do AI soạn cần đánh dấu Đã duyệt.</p></div><button type="button" class="t-button" data-action="back-tools" data-target="list-tools" id="qz-back">Quay lại</button></div>
@@ -627,6 +653,11 @@
 <p id="th-err" class="notice error status" role="alert"></p>
 <div class="t-actions"><button type="button" id="th-cancel" class="t-button">Đóng</button><button type="button" id="th-ai" class="t-button thi-ai-btn">AI gợi ý điểm</button><button type="submit" id="th-save" class="t-button t-primary">Lưu điểm thực hành</button></div>
 </form></dialog>
+<div id="tl-host" class="qz-host tl-host" hidden role="dialog" aria-modal="true" aria-labelledby="tl-h-title">
+<header class="qz-h-top"><div><p class="qz-h-kicker" id="tl-h-kicker"></p><h2 id="tl-h-title"></h2></div><button type="button" id="tl-h-close" class="t-button">Đóng phòng</button></header>
+<main class="qz-h-main" id="tl-h-main"></main>
+<footer class="qz-h-foot" id="tl-h-foot"></footer>
+</div>
 <div id="qz-host" class="qz-host" hidden role="dialog" aria-modal="true" aria-labelledby="qz-h-title">
 <header class="qz-h-top"><div><p class="qz-h-kicker" id="qz-h-kicker"></p><h2 id="qz-h-title"></h2></div><button type="button" id="qz-h-close" class="t-button">Đóng phòng</button></header>
 <main class="qz-h-main" id="qz-h-main"></main>

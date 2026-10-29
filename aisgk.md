@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude phán quyết báo cáo Antigravity (luật quiz_bo ACCEPT, Worker 51aa1384 ACCEPT MOCK, nghiệm thu giả lập CHƯA ĐẠT, quan sát Kahoot chỉ dùng phần có nguồn); thêm màn đọc câu hỏi trước khi mở phương án; chờ Antigravity thử thật https theo docs/handoff/claude-antigravity-nghiem-thu-quan-sat-29-10.md.
+- Yêu cầu mới nhất: Đã code tab Thảo luận kiểu Mentimeter (5 loại câu, duyệt trước, lọc từ ngữ, AI gợi ý/tổng hợp không gửi tên) theo quy trình Luyện tập; chờ Antigravity đăng luật tl*, deploy Worker ai-tl, thử thật theo docs/handoff/claude-antigravity-thao-luan-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4278,4 +4278,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/teacher-quiz.js, quiz-play.js, quiz-fx.js, teacher.html, teacher.css, styles.css, sw.js (dấu), tests/test_quiz_live.cjs, docs/handoff/claude-antigravity-nghiem-thu-quan-sat-29-10.md.
 - Kiểm thực tế: test_quiz_live 53 PASS; test_teacher_ui_standard 0; test_student_ui_standard 0; test_pwa_update_integrity 7/7; test_teacher_shell PASS.
 - Việc tiếp: Antigravity thử thật https (2 điện thoại thật).
+
+### 29/10/2026 20:30 — Claude — Tab Thảo luận kiểu Mentimeter
+- Đã làm: tl-core.js (đám mây, lọc từ ngữ tiếng Việt, bình chọn, thang điểm, hỏi đáp, gỡ ý, Excel, tổng hợp), teacher-tl.js (soạn, đồng bộ tl_bo, phòng, duyệt/ẩn, dừng nhận, ẩn kết quả, tổng kết, AI, CSV), tl-play.js (học sinh); thẻ Luyện tập | Thảo luận trong Tiện ích; Worker /api/teacher/ai-tl (goi_y, tong_hop); luật tl_key/tl_proof/tl/tl_lop/tl_bo.
+- Tệp đổi: frontend/hoc/tl-core.js, teacher-tl.js, tl-play.js (mới), teacher.html, teacher.css, styles.css, app.js, quiz-play.js, teacher.js, sw.js, whats-new.json, tools/package_student_pwa.py, worker/index.js, spike/step0/database.rules.ai-sgk-final.json, tests/test_tl_core.mjs, tests/test_tl_ai.mjs, tests/test_tl_live.cjs (mới), docs/ke-hoach/thao-luan-menti.md, docs/handoff/claude-antigravity-thao-luan-29-10.md.
+- Kiểm thực tế: test_tl_core 22; test_tl_ai 8; test_tl_live 51; test_quiz_live 53; test_teacher_ai 22; test_firebase_rules_step0 12; UI chuẩn giáo viên/học sinh 0 vi phạm; test_auto_update_login 15; test_pwa_update_integrity 7/7.
+- Việc tiếp: Antigravity đăng luật, deploy Worker, thử thật https bằng điện thoại thật.
 

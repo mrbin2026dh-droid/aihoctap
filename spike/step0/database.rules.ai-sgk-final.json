@@ -267,6 +267,71 @@
           ".validate": "$id.length <= 40 && (!newData.exists() || (newData.hasChildren(['name','qs','at']) && newData.child('name').isString() && newData.child('name').val().length <= 120 && newData.child('at').isNumber()))"
         }
       }
+    },
+    "tl_key": {
+      ".read": false,
+      "$room": {
+        ".write": "!data.exists() && $room.length === 6 && $room.matches(/^[0-9]+$/) && newData.isString() && newData.val().length >= 20 && newData.val().length <= 64"
+      }
+    },
+    "tl_proof": {
+      ".read": false,
+      "$room": {
+        ".write": "newData.isString() && newData.val().length <= 140 && newData.val() !== data.val() && newData.val().beginsWith(root.child('tl_key').child($room).val() + '|')"
+      }
+    },
+    "tl": {
+      ".read": true,
+      "$room": {
+        "pub": {
+          ".write": "root.child('tl_key').child($room).exists() && newData.parent().parent().parent().child('tl_proof').child($room).val() !== root.child('tl_proof').child($room).val() && newData.parent().parent().parent().child('tl_proof').child($room).val().beginsWith(root.child('tl_key').child($room).val() + '|')"
+        },
+        "ds": {
+          "$ma": {
+            ".write": "!data.exists() && $ma.length <= 64 && root.child('tl').child($room).child('pub').exists()",
+            ".validate": "newData.hasChildren(['ten','at']) && newData.child('ten').isString() && newData.child('ten').val().length <= 100 && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000"
+          }
+        },
+        "y": {
+          "$k": {
+            "$ma": {
+              "$n": {
+                ".write": "!data.exists() && $ma.length <= 64 && root.child('tl').child($room).child('pub').child('phase').val() === 'open' && root.child('tl').child($room).child('pub').child('slide').child('k').val() === $k && root.child('tl').child($room).child('ds').child($ma).exists() && ($n === '0' || ($n === '1' && root.child('tl').child($room).child('pub').child('slide').child('max').val() >= 2) || ($n === '2' && root.child('tl').child($room).child('pub').child('slide').child('max').val() >= 3))",
+                ".validate": "newData.hasChildren(['v','t']) && newData.child('v').isString() && newData.child('v').val().length >= 1 && newData.child('v').val().length <= 200 && (root.child('tl').child($room).child('pub').child('slide').child('type').val() !== 'cloud' || newData.child('v').val().length <= 25) && newData.child('t').isNumber() && newData.child('t').val() <= now + 60000"
+              }
+            }
+          }
+        },
+        "vote": {
+          "$k": {
+            "$q": {
+              "$ma": {
+                ".write": "$ma.length <= 64 && $q.length <= 80 && root.child('tl').child($room).child('pub').child('phase').val() === 'open' && root.child('tl').child($room).child('pub').child('slide').child('k').val() === $k && root.child('tl').child($room).child('ds').child($ma).exists()",
+                ".validate": "newData.val() === true"
+              }
+            }
+          }
+        },
+        "$other": {
+          ".write": false
+        }
+      }
+    },
+    "tl_lop": {
+      ".read": true,
+      "$lop": {
+        ".write": "$lop.length <= 40 && (newData.exists() ? newData.isString() : true) && root.child('tl_key').child((newData.exists() ? newData.val() : data.val())).exists() && newData.parent().parent().child('tl_proof').child((newData.exists() ? newData.val() : data.val())).val() !== root.child('tl_proof').child((newData.exists() ? newData.val() : data.val())).val() && newData.parent().parent().child('tl_proof').child((newData.exists() ? newData.val() : data.val())).val().beginsWith(root.child('tl_key').child((newData.exists() ? newData.val() : data.val())).val() + '|')"
+      }
+    },
+    "tl_bo": {
+      ".read": false,
+      "$owner": {
+        ".read": "$owner.length === 64 && $owner.matches(/^[0-9a-f]+$/)",
+        ".write": "$owner.length === 64 && $owner.matches(/^[0-9a-f]+$/)",
+        "$id": {
+          ".validate": "$id.length <= 40 && (!newData.exists() || (newData.hasChildren(['name','at']) && newData.child('name').isString() && newData.child('name').val().length <= 120 && newData.child('at').isNumber()))"
+        }
+      }
     }
   }
 }

@@ -53,12 +53,14 @@ function t(/** @type {string} */ tag, /** @type {string} */ cls, /** @type {stri
 function b(/** @type {string} */ text, /** @type {string} */ cls, /** @type {() => void} */ fn) { const x = /** @type {HTMLButtonElement} */ (t('button', cls, text)); x.type = 'button'; x.addEventListener('click', fn); return x; }
 
 /** Vẽ mục Luyện tập. @param {HTMLElement} target */
-export function renderPanel(target) {
+export function renderPanel(target, otherActive = false) {
   target.replaceChildren();
   if (!me) return;
   if (!active()) {
+    if (otherActive) return;   // đang có buổi thảo luận: không hiện thẻ "chưa có"
+
     const card = t('div', 'lt-empty');
-    card.append(t('span', 'lt-empty-ic', '◆'), t('h2', '', 'Chưa có buổi luyện tập'), t('p', '', 'Khi thầy cô mở luyện tập trên lớp, buổi luyện tập hiện ở đây. Em bấm Vào phòng để tham gia.'));
+    card.append(t('span', 'lt-empty-ic', '◆'), t('h2', '', 'Chưa có buổi luyện tập hay thảo luận'), t('p', '', 'Khi thầy cô mở luyện tập hoặc thảo luận trên lớp, buổi đó hiện ở đây. Em bấm Vào phòng để tham gia.'));
     target.append(card); return;
   }
   const card = t('article', 'lt-card');

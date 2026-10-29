@@ -13,7 +13,9 @@ import * as install from './install.js';
 import './netbar.js';
 import * as mastery from './mastery.js';
 import * as quiz from './quiz-play.js';
+import * as tl from './tl-play.js';
 quiz.setOnChange(() => { if (currentView === 'practice') renderPractice(); });
+tl.setOnChange(() => { if (currentView === 'practice') renderPractice(); });
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
   for (const btn of document.querySelectorAll('[data-tab="exams"]')) {
@@ -22,7 +24,7 @@ function thiBadge(n) {
     else { b?.remove(); btn.removeAttribute('aria-label'); }
   }
 }
-const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); } };
+const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); tl.start(session.identity); } };
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -276,7 +278,7 @@ function show(name) {
   for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'exams', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
   if (session && name !== 'exams' && presence.currentState() !== 'hoc') void presence.setState('hoc');   // rời tab Thi → về Đang học
   const destination = name === 'lesson' || name === 'result' ? 'catalog' : name;
-  quiz.refreshBanner();
+  quiz.refreshBanner(); tl.refreshBanner();
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
     else tab.removeAttribute('aria-current');
@@ -351,7 +353,11 @@ function renderCatalog() {
   document.body.classList.remove('is-loading');
 }
 /** Mục Luyện tập: các buổi luyện tập thầy cô đang mở trên lớp (quiz-play.js). Luyện tập theo bài vẫn ở trong từng bài học. */
-function renderPractice() { quiz.renderPanel(node('practice-list')); }
+function renderPractice() {
+  const a = document.createElement('div'), b = document.createElement('div'); a.className = 'tl-slot'; b.className = 'lt-slot';
+  tl.renderPanel(a); quiz.renderPanel(b, tl.active());
+  node('practice-list').replaceChildren(...[a, b].filter(x => x.childElementCount));
+}
 /** @param {string} detail */
 function catalogUnavailable(detail) {
   document.body.classList.remove('is-loading'); node('catalog-view').removeAttribute('aria-busy');
@@ -892,7 +898,7 @@ on('logout', async () => {
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
-  await presence.stopStudent(); thiApp.stopAll(); quiz.stop();
+  await presence.stopStudent(); thiApp.stopAll(); quiz.stop(); tl.stop();
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.

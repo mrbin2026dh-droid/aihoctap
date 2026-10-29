@@ -1,6 +1,7 @@
 # Kế hoạch H5: Tiện ích → tab "Thảo luận" (kiểu Mentimeter), quy trình giống Luyện tập
 
-Người lập: Claude, 29/10/2026. Trạng thái: **KẾ HOẠCH, chưa code.** Làm sau ngày 30/10, khi thầy duyệt.
+Người lập: Claude, 29/10/2026. Trạng thái: **ĐÃ CODE (29/10 tối, theo yêu cầu thầy)** — chờ đăng luật, deploy Worker, thử thật. Bàn giao: `docs/handoff/claude-antigravity-thao-luan-29-10.md`.
+Khác kế hoạch: dữ liệu ý kiến ở `tl/{phòng}/y/{câu}/{mã}/{số}`, trạng thái duyệt/ẩn nằm trong `pub` (ok/an/anw/done), từ cấm thêm lưu trong bộ thảo luận (`cam`) thay vì nhánh riêng.
 
 Nguồn đã đọc (tài liệu công khai, không dịch ngược, không chép mã/giao diện):
 - Mentimeter, Word Cloud: help.mentimeter.com/en/articles/410469-word-cloud
