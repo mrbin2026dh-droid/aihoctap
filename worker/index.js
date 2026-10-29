@@ -1565,15 +1565,32 @@ export async function geminiOnce(env, gateStub, prompt, { maxOutputTokens = 4096
  * Bộ não đa agent trên VPS (agent/ trong kho): gọi khi có AGENT_URL + AGENT_KEY. Lỗi / chậm / chưa cài → trả null để nơi gọi dùng đường cũ (Gemini trực tiếp).
  * @param {any} env @param {string} path @param {any} body @param {number} [ms]
  */
+export const agentConf = (/** @type {any} */ env) => {
+  // Dán secret hay bị thừa: khoảng trắng / xuống dòng (Windows), tiền tố "AGENT_KEY=", thiếu https://, dấu / cuối.
+  const key = String(env.AGENT_KEY || '').trim().replace(/^AGENT_KEY\s*=\s*/i, '').replace(/^["']|["']$/g, '').trim();
+  let base = String(env.AGENT_URL || '').trim().replace(/^AGENT_URL\s*=\s*/i, '').replace(/^["']|["']$/g, '').replace(/\/+$/, '');
+  if (base && !/^https?:\/\//i.test(base)) base = 'https://' + base;
+  return { base, key };
+};
+/** Lý do lần gọi agent gần nhất bị lỗi (cho nút Kiểm tra AI). */
+export let agentLastError = '';
 export async function agentCall(env, path, body, ms = 28000) {
-  const base = String(env.AGENT_URL || '').replace(/\/+$/, '');
-  if (!base || !env.AGENT_KEY) return null;
+  const { base, key } = agentConf(env);
+  if (!base || !key) return null;
   const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
   try {
-    const r = await fetch(base + path, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Agent-Key': String(env.AGENT_KEY) }, body: body === undefined ? undefined : JSON.stringify(body), signal: ctl.signal });
-    if (!r.ok) { console.error('[AGENT_FAIL]', path, r.status, (await r.text().catch(() => '')).slice(0, 200)); return null; }
+    const r = await fetch(base + path, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json', 'X-Agent-Key': key }, body: body === undefined ? undefined : JSON.stringify(body), signal: ctl.signal });
+    if (!r.ok) {
+      const txt = (await r.text().catch(() => '')).slice(0, 200);
+      agentLastError = r.status === 401 ? 'HTTP 401: khóa AGENT_KEY ở Worker khác khóa trên VPS' : r.status === 404 ? 'HTTP 404: sai địa chỉ AGENT_URL' : r.status === 502 || r.status === 503 ? `HTTP ${r.status}: Caddy chạy nhưng dịch vụ agent trên VPS không trả lời` : `HTTP ${r.status}: ${txt.slice(0, 120)}`;
+      console.error('[AGENT_FAIL]', path, r.status, txt); return null;
+    }
+    agentLastError = '';
     return await r.json();
-  } catch (e) { console.error('[AGENT_FAIL]', path, e?.name || 'error'); return null; }
+  } catch (e) {
+    agentLastError = e?.name === 'AbortError' ? `quá ${Math.round(ms / 1000)} giây không trả lời` : `không kết nối được ${base.replace(/^https?:\/\//, '')} (${String(e?.message || e?.name || 'lỗi').slice(0, 120)})`;
+    console.error('[AGENT_FAIL]', path, agentLastError); return null;
+  }
   finally { clearTimeout(t); }
 }
 /** Phân loại lỗi Gemini. Lưu ý: khóa sai Google trả 400 (API_KEY_INVALID); máy chủ đặt ở vùng bị chặn (vd Hong Kong) trả 400 "User location is not supported".
@@ -4862,7 +4879,11 @@ export default {
       let noi_chay = '';
       try { const tr = await fetch('https://www.cloudflare.com/cdn-cgi/trace').then(r => r.text()); noi_chay = ((tr.match(/colo=(\w+)/) || [])[1] || '') + ' / ' + ((tr.match(/loc=(\w+)/) || [])[1] || ''); } catch { /* bỏ qua */ }
       let agent = null;
-      if (env.AGENT_URL) { const st = await agentCall(env, '/status', undefined, 8000); agent = st ? { ok: true, version: st.version, models: st.models, khoa: st.khoa, thong_ke: st.thong_ke } : { ok: false }; }
+      if (env.AGENT_URL) {
+        const { base, key } = agentConf(env);
+        const st = await agentCall(env, '/status', undefined, 10000);
+        agent = st ? { ok: true, version: st.version, models: st.models, khoa: st.khoa, thong_ke: st.thong_ke } : { ok: false, ly_do: key ? agentLastError || 'không rõ' : 'thiếu AGENT_KEY ở Worker', dia_chi: base.replace(/^https?:\/\//, ''), do_dai_khoa: key.length };
+      }
       return j(200, { model, fallback, results, noi_chay, vao_tu: String(request.cf?.colo || ''), agent });
     }
 

@@ -20,6 +20,7 @@ globalThis.fetch = async (u, o = {}) => {
   if (s.startsWith('https://agent.test')) {
     agentReqs.push({ path: new URL(s).pathname, key: o.headers?.['X-Agent-Key'], body: o.body ? JSON.parse(o.body) : null });
     if (agentMode === 'down') return new Response('{"detail":"lỗi"}', { status: 502 });
+    if (o.headers?.['X-Agent-Key'] !== 'agent-secret') return new Response('{"detail":"Sai khóa agent."}', { status: 401 });
     const p = new URL(s).pathname;
     if (p === '/grade') return new Response(JSON.stringify({ items: JSON.parse(o.body).items.map(() => ({ diem: 0.75, nhan_xet: 'Agent: em nêu được ý kiểm tra nguồn.', can_xem_lai: false })), tong_ket: 'Phần tự luận: 0.75/1 điểm.' }), { status: 200 });
     if (p === '/verify-questions') return new Response(JSON.stringify({ ket_qua: [{ giu: true }, { giu: false, ly_do: 'agent tự giải ra A, khác đáp án đã ghi C' }], giu: 1, loai: 1 }), { status: 200 });
@@ -62,6 +63,15 @@ try {
   agentMode = 'down';
   r = await call('/teacher/ai-check', {}, T);
   ok(r.body.agent && r.body.agent.ok === false, 'agent không kết nối được → Kiểm tra AI báo rõ');
+  ok(/không trả lời|502/.test(r.body.agent.ly_do || ''), 'Kiểm tra AI nêu lý do agent lỗi: ' + r.body.agent.ly_do);
+  // Dán secret thừa tiền tố / xuống dòng Windows / thiếu https:// → vẫn chạy
+  agentMode = 'ok'; env.AGENT_KEY = 'AGENT_KEY=agent-secret\r\n'; env.AGENT_URL = ' agent.test/ ';
+  r = await call('/teacher/ai-check', {}, T);
+  ok(r.body.agent?.ok, 'secret dán thừa "AGENT_KEY=", xuống dòng, thiếu https:// → vẫn kết nối được');
+  env.AGENT_KEY = 'khoa-sai';
+  r = await call('/teacher/ai-check', {}, T);
+  ok(r.body.agent.ok === false && /401/.test(r.body.agent.ly_do) && r.body.agent.do_dai_khoa === 8, 'khóa sai → báo "HTTP 401: khóa AGENT_KEY ở Worker khác khóa trên VPS" + độ dài khóa');
+  env.AGENT_KEY = 'agent-secret';
   delete env.AGENT_URL;
   r = await call('/teacher/ai-check', {}, T);
   ok(r.body.agent === null, 'chưa cài agent → agent = null');
