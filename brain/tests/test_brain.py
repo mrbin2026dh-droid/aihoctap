@@ -211,10 +211,18 @@ class Study(unittest.TestCase):
         r = {x["ten"]: x["ly_do"] for x in f["can_chu_y"]}
         self.assertIn("chỉ học 10 phút trên app 7 ngày qua", r.get("Bình", []), "ngày 20/10 ngoài 7 ngày")
         self.assertIn("không học trên app 7 ngày qua", r.get("Chi", []))
+
         self.assertNotIn("An", r)
         tg = f["thoi_gian_hoc"]
         self.assertEqual((tg["phut_tb_7_ngay"], tg["so_em_cham"], tg["so_em_chua_hoc"]), (28, 1, 2))
         self.assertIn("**Thời gian học trên app**", report.fallback_md(f))
+
+    def test_first_days_of_tracking_wording(self):
+        store.save_study(self.db, {"2026-10-29": {"a": 40, "b": 10}}, analyze.keyof)
+        f = analyze.class_facts(self.db, "9A", "2026-10-29")
+        r = {x["ten"]: x["ly_do"] for x in f["can_chu_y"]}
+        self.assertIn("chỉ học 10 phút trên app từ 29/10 (ngày bắt đầu đo)", r.get("Bình", []), "mới đo 1 ngày: không nói '7 ngày qua'")
+        self.assertIn("không học trên app từ 29/10 (ngày bắt đầu đo)", r.get("Chi", []))
 
 
 class Pipeline(unittest.TestCase):

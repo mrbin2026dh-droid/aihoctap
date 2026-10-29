@@ -37,7 +37,7 @@ try{
  await pg.click('#gate-student');await pg.fill('#student-code','HS01');await pg.fill('#student-pin','123456');await pg.click('#login-form button[type=submit]');
  await pg.waitForSelector('#main:not([hidden])');
  const T=fbDown?'[Firebase lỗi] ':'';
- if(fbDown){await pg.waitForTimeout(800);ok(st.exchanged.length===1&&st.writes.length===0,T+'đổi vé thất bại → không ghi Firebase');ok(errs.length===0&&await pg.isVisible('#main'),T+'việc học vẫn chạy bình thường, không lỗi');await ctx.close();continue}
+ if(fbDown){await pg.waitForTimeout(800);ok(st.exchanged.length===1&&st.writes.length>0&&st.writes.every(w=>w.path.endsWith('/presence/HS01.json')&&!w.auth),T+'đổi vé thất bại (khóa Google chặn tên miền) → vẫn báo trực tuyến bằng chế độ nhanh, không kèm vé');ok(errs.length===0&&await pg.isVisible('#main'),T+'việc học vẫn chạy bình thường, không lỗi');await ctx.close();continue}
  ok(st.exchanged[0]==='fb-custom-1h','đổi đúng vé Firebase do Worker cấp (không dùng token Worker 12 giờ)');
  ok(await waitState('hoc'),'đăng nhập → ghi "Đang học"');
  const w=last();ok(w.path.endsWith('/presence/HS01.json')&&w.auth==='id-tok','ghi thẳng Firebase presence/HS01 bằng idToken (không qua Worker)');

@@ -537,3 +537,4 @@ body.qz-hosting{overflow:hidden}
 @media (max-width:640px){.teacher-app .acc-stats{grid-template-columns:repeat(3,1fr);gap:8px}.teacher-app .acc-stat{padding:10px 12px}.teacher-app .acc-stat strong{font-size:1.4rem}.teacher-app .acc-stat span{font-size:var(--t-tiny)}.teacher-app .acc-stat small{display:none}}
 @media (prefers-reduced-motion:reduce){.teacher-app .acc-stat{transition:none}}
 @media (min-width:761px){.teacher-app #acc-hs-table{table-layout:auto}.teacher-app #acc-hs-table td,.teacher-app #acc-hs-table th{padding-left:10px;padding-right:10px}.teacher-app #acc-hs-table th{white-space:nowrap}}
+.teacher-app .thi-score-bad{color:var(--danger);font-weight:700}

@@ -148,7 +148,7 @@ function renderStats() {
     ['on', 'Đang trực tuyến', x.on, 'online:on', 'is-on'],
     ['off', 'Ngoại tuyến', x.off, 'online:off', 'is-off'],
     ['today', 'Có học hôm nay', x.today, 'act:today', ''],
-    ['none7', 'Chưa học 7 ngày', x.none7, 'act:none7', 'is-warn']]);
+    ['none7', mins.days.length && mins.days[mins.days.length - 1] < TRACK_FROM ? `Chưa học (từ ${TRACK_FROM.slice(8)}/${TRACK_FROM.slice(5, 7)})` : 'Chưa học 7 ngày', x.none7, 'act:none7', 'is-warn']]);
   box.replaceChildren(...cards.map(([id, label, n, flt, cls]) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'acc-stat ' + cls; b.dataset.stat = id;
     const [fk, fv] = flt ? flt.split(':') : ['', ''];
@@ -176,7 +176,24 @@ function updateLive() {
   }
   renderStats();
 }
-async function loadMinutes() { try { mins = await presence.minutes(7); } catch { /* giữ số cũ */ } if (st.loaded) render(); }
+/** Cập nhật số phút tại chỗ (không vẽ lại bảng → nút đang bấm không bị thay). Lọc/sắp xếp theo phút thì vẽ lại. */
+function updateMinutes() {
+  if (!st.loaded) return;
+  const act = /** @type {HTMLSelectElement} */ ($('acc-hs-act')).value, sort = /** @type {HTMLSelectElement} */ ($('acc-hs-sort')).value;
+  if (act || ['today', 'week', 'week_asc'].includes(sort)) { render(); return; }
+  for (const tr of $('acc-hs-body').querySelectorAll('tr[data-ma]')) {
+    const ma = /** @type {HTMLElement} */ (tr).dataset.ma || '', x = minutesOf(ma);
+    const set = (/** @type {string} */ label, /** @type {string|Node} */ v) => { const c = tr.querySelector(`td[data-label="${label}"]`); if (c) { if (typeof v === 'string') c.textContent = v; else c.replaceChildren(v); } };
+    set('Hôm nay', fmtMin(x.today)); set('7 ngày', fmtMin(x.week)); set('Chuyên cần', dilBadge(ma));
+  }
+  renderStats();
+}
+async function loadMinutes() {
+  let next = mins;
+  try { next = await presence.minutes(7); } catch { /* giữ số cũ */ }
+  if (JSON.stringify(next) === JSON.stringify(mins)) return;
+  mins = next; updateMinutes();
+}
 function startLive() {
   if (!offLive) offLive = presence.listen(map => { live = map; updateLive(); });
   void loadMinutes();

@@ -88,7 +88,7 @@ export async function minutes(days = 7) {
 /** Nghe presence cho màn hình phụ (Tài khoản) mà không giành kênh của màn hình Thi. @param {(map: Record<string, any>) => void} fn */
 export function listen(fn) {
   const off = subscribe(fn);
-  if (!es) void watch(() => {}, () => {});
+  if (!es && !connecting()) void watch(() => {}, () => {});
   return off;
 }
 /** Gọi sau khi học sinh đăng nhập: đổi vé, ghi "Đang học", bắt đầu nhịp 1 phút. @param {string} fbToken @param {{name?:string,class_code?:string}} identity */
@@ -111,7 +111,9 @@ export function startStudentLite(identity) {
 /** Mở lại app (phiên cũ còn) → tiếp tục nhịp. @param {keyof typeof STATES} [state] */
 export function resumeStudent(state) {
   if (!ENABLED() || !load(KEY_HS)) return;
-  void setState(/** @type {any} */ (state || getLast()));
+  // Mở lại app sau khi đã nộp bài → đang học (không kẹt "Đã nộp", vẫn đếm phút học).
+  const last = getLast();
+  void setState(/** @type {any} */ (state || (last === 'da_nop' ? 'hoc' : last)));
   clearInterval(beat);
   beat = window.setInterval(() => { if (document.visibilityState === 'visible') { const st = /** @type {any} */ (getLast()); void setState(st); if (st === 'hoc' || st === 'dang_thi' || st === 'phong_cho') void addMinute(); } }, HEARTBEAT_MS);
 }
@@ -142,16 +144,21 @@ const subs = new Set();
 /** Đăng ký nhận bản đồ trực tuyến (nhận ngay bản mới nhất nếu có). @param {(map: Record<string, any>) => void} fn @returns {() => void} */
 export function subscribe(fn) { subs.add(fn); if (lastMap) fn({ ...lastMap }); return () => { subs.delete(fn); }; }
 export const isWatching = () => Boolean(es);
+let connectingFlag = false;
+const connecting = () => connectingFlag;
 let retry = 0;
 /**
  * Nghe toàn bộ presence. onChange nhận bản đồ {mã: {name, lop, state, at}} mỗi khi có thay đổi.
  * onStatus báo 'live' | 'off' (chưa có vé / Firebase từ chối) để giao diện hiển thị.
  * @param {(map: Record<string, any>) => void} onChange @param {(s: 'live'|'off', why?: string) => void} onStatus
  */
+let pending = 0;
 export async function watch(onChange, onStatus) {
-  stopWatch();
-  if (!ENABLED()) { onStatus('off', 'Chưa cài dự án Firebase cho trạng thái trực tuyến (presence-config.js).'); return; }
-  const s = await fresh(KEY_GV);   // có vé thì dùng; không có vé vẫn nghe được (luật cho đọc presence công khai)
+  stopWatch(); const my = ++pending; connectingFlag = true;
+  if (!ENABLED()) { connectingFlag = false; onStatus('off', 'Chưa cài dự án Firebase cho trạng thái trực tuyến (presence-config.js).'); return; }
+  const s = await fresh(KEY_GV).catch(() => null);   // có vé thì dùng; không có vé vẫn nghe được (luật cho đọc presence công khai)
+  if (my !== pending) return;   // đã có lệnh nghe mới hơn (màn hình khác) hoặc đã đăng xuất → nhường
+  connectingFlag = false; closeEs();
   /** @type {Record<string, any>} */ let map = {};
   const src = new EventSource(url('presence', s ? s.idToken : ''));
   es = src;
@@ -175,4 +182,5 @@ export async function watch(onChange, onStatus) {
   src.addEventListener('cancel', () => reconnect('Firebase từ chối quyền đọc. Kiểm tra luật Firebase (nhánh presence).'));
   src.onerror = () => { if (src.readyState === EventSource.CLOSED) reconnect('Mất kết nối Firebase, đang thử lại…'); };
 }
-export function stopWatch() { if (es) { es.close(); es = null; } }
+function closeEs() { if (es) { es.close(); es = null; } }
+export function stopWatch() { pending++; connectingFlag = false; closeEs(); }

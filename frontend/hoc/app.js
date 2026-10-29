@@ -939,7 +939,8 @@ form('login-form').addEventListener('submit', async event => {
         const identity = await api('/pwa/me', {token:response.token});
         identity.must_change_pin = Boolean(response.must_change_pin);
         next = {token:response.token, identity};
-        void presence.startStudent(response.fb_token || '', identity);
+        // Khóa Google chặn tên miền / Worker chưa cấp vé → vẫn báo trực tuyến + đếm phút bằng chế độ nhanh.
+        void presence.startStudent(response.fb_token || '', identity).then(okFb => { if (!okFb) presence.startStudentLite(identity); });
       }
       await db.put('meta', 'session', next); session = next;
       try { sessionStorage.setItem('thi-cred', JSON.stringify({ma: code, pin})); } catch { /* bỏ qua */ }

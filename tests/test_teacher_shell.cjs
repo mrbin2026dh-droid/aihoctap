@@ -95,6 +95,7 @@ assert((await pg.textContent('#acc-hs-table + .t-more')).includes('Đang hiện 
 await pg.click('#acc-hs-table + .t-more button');assert.strictEqual(await pg.locator('#acc-hs-body tr').count(),100,T+'Hiện thêm → 100 dòng');
 await pg.fill('#acc-hs-search','số 999');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===1);assert(await pg.locator('#acc-hs-table + .t-more').isHidden(),T+'lọc còn 1 dòng → ẩn Hiện thêm');await pg.fill('#acc-hs-search','');
 STU.splice(3);await pg.click('#nav-overview');await goNav(pg,'#nav-accounts');await pg.waitForFunction(()=>document.querySelectorAll('#acc-hs-body tr').length===3);
+await pg.waitForTimeout(600);   // chờ ô tìm kiếm (trễ 300ms) vẽ lại xong rồi mới đo nút
 const R='#acc-hs-body tr:nth-child(1) .t-icon-btn';assert.strictEqual(await pg.locator(R).count(),4,T+'mỗi dòng 4 nút biểu tượng');
 for(const b of await pg.locator(R).all()){assert(await b.getAttribute('aria-label'),T+'nút có tên truy cập');const bb=await b.boundingBox();assert(bb.width>=47&&bb.height>=47,T+'vùng chạm 48px')}
 let n1=sheetCalls.length;await pg.locator(R).nth(2).click();await pg.waitForSelector('#msg-dialog[open]');assert((await pg.textContent('#msg-dialog')).includes('Khóa tài khoản học sinh?'),T+'Khóa → hộp thoại xác nhận');await pg.click('#msg-cancel');await pg.waitForTimeout(200);

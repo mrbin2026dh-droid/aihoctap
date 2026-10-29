@@ -31,6 +31,25 @@ let busyCount = 0;
 /** @type {Record<string, any>|null} */ let fbHs = null;
 /** @type {Record<string, any>} */ let fbVao = {};
 /** @type {Record<string, any>} */ let fbNop = {};
+/** Đề (kèm đáp án) để thầy cô kiểm lại điểm học sinh tự gửi lên. @type {Record<string, any>} */ let fbDe = {};
+/** Tính lại điểm một bài nộp từ câu trả lời + đáp án trong đề. Điểm do máy học sinh tính rồi gửi lên,
+ *  nên có thể bị sửa; khác nhau → trả {tinh, tong} để thầy cô xem lại. Khớp hoặc thiếu dữ liệu → null.
+ * @param {any} rec @param {any} de @param {boolean} [that] thi thật chỉ có trắc nghiệm (app học sinh bỏ câu tự luận) */
+export function checkScore(rec, de, that = false) {
+  const qs = Array.isArray(de) ? de : Object.values(de || {});
+  if (!rec || !qs.length) return null;
+  const r2 = (/** @type {number} */ x) => Math.round(x * 100) / 100;
+  const ans = rec.tra_loi || {}, tl = rec.tu_luan || {};
+  let tinh = 0, tong = 0, tlBad = false;
+  for (const q of qs) {
+    if (!q || !q.id || (that && q.kind === 'tl')) continue;
+    const pts = Number(q.points) || 1; tong += pts;
+    if (q.kind === 'tl') { const v = tl[q.id]; if (v) { const d = Number(v.d) || 0; if (d < 0 || d > pts + 1e-9) tlBad = true; tinh += Math.max(0, Math.min(pts, d)); } }
+    else if (ans[q.id] && String(ans[q.id]).toUpperCase() === String(q.answer || '').toUpperCase()) tinh += pts;
+  }
+  tinh = r2(tinh); tong = r2(tong);
+  return (tlBad || Math.abs(tinh - Number(rec.diem)) > 0.01 || Math.abs(tong - Number(rec.tong)) > 0.01) ? { tinh, tong } : null;
+}
 /** @type {Record<string, any>} bài thực hành đã nộp */ let fbTh = {};
 /** @type {Array<() => void>} */ let fbStops = [];
 /** Dùng Firebase khi Google Sheet đã cài khóa Firebase và đã có danh sách học sinh trên Firebase. */
@@ -49,13 +68,14 @@ function syncExamFb() {
   const want = new Map((info?.exams || []).map((/** @type {any} */ e) => [e.ma_de, e.trang_thai === 'mo' || e.ma_de === current]));
   for (const [id, w] of Object.entries(examFb)) if (!want.has(id) || w.live !== want.get(id)) { w.stop(); delete examFb[id]; }
   for (const [id, live] of want) {
+    if (!(id in fbDe)) { fbDe[id] = null; void store.get(`thi_de/${id}`).then(d => { fbDe[id] = d || null; fbRefresh(); }).catch(() => { delete fbDe[id]; }); }
     if (examFb[id]) continue;
     /** @type {Array<[string, Record<string, any>]>} */ const parts = [['thi_nop', fbNop], ['thi_vao', fbVao], ['thi_th', fbTh]];
     if (live) { const stops = parts.map(([branch, into]) => store.listen(`${branch}/${id}`, d => { into[id] = d || {}; fbRefresh(); })); examFb[id] = { live, stop: () => stops.forEach(f => f()) }; }
     else { let dead = false; examFb[id] = { live, stop: () => { dead = true; } }; for (const [branch, into] of parts) void store.get(`${branch}/${id}`).then(d => { if (!dead) { into[id] = d || {}; fbRefresh(); } }).catch(() => {}); }
   }
 }
-function stopFb() { fbStops.forEach(f => f()); fbStops = []; Object.values(examFb).forEach(w => w.stop()); examFb = {}; fbHs = null; fbVao = {}; fbNop = {}; fbTh = {}; }
+function stopFb() { fbStops.forEach(f => f()); fbStops = []; Object.values(examFb).forEach(w => w.stop()); examFb = {}; fbHs = null; fbVao = {}; fbNop = {}; fbTh = {}; fbDe = {}; }
 /** @param {any} e @param {any} s */
 const inScope = (e, s) => e.lop ? String(s.lop || '').trim().toLowerCase() === String(e.lop).trim().toLowerCase() : Number(s.khoi) === Number(e.khoi);
 /** Thống kê một bài từ Firebase: ai chưa vào / đã vào / đã nộp + điểm. @param {string} id */
@@ -63,7 +83,7 @@ function fbStats(id) {
   const e = (info?.exams || []).find((/** @type {any} */ x) => x.ma_de === id); if (!e) return null;
   const vao = fbVao[id] || {}, nop = fbNop[id] || {};
   const students = Object.entries(fbHs || {}).filter(([, s]) => s && inScope(e, s)).map(([k, s]) => {
-    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null, lan: n ? (Number(n.lan) || 1) : 0, roi: n ? Number(n.roi_tab) || 0 : 0, th: (fbTh[id] || {})[k] || null };
+    const n = nop[k]; return { name: s.ten, lop: s.lop, ma: s.ma || k, state: n ? 'nop' : (vao[k] ? 'vao' : 'chua'), last: vao[k] ? new Date(Number(vao[k])).toISOString() : '', score: n ? n.diem : null, total: n ? n.tong : null, lan: n ? (Number(n.lan) || 1) : 0, roi: n ? Number(n.roi_tab) || 0 : 0, chk: n && fbDe[id] ? checkScore(n, fbDe[id], e.che_do === 'that') : null, th: (fbTh[id] || {})[k] || null };
   }).sort((a, b) => (a.lop + a.name).localeCompare(b.lop + b.name, 'vi'));
   return { ok: true, exam: e, students };
 }
@@ -330,7 +350,7 @@ function renderStats() {
       });
       last = s.state === 'nop' ? act : '—';
     }
-    tr.append(td('Học sinh', `${s.name} (${s.ma})`), td('Lớp', s.lop), td('Bài thi', badge), td('Trực tuyến', liveLabel(live[liveKey(s.ma)])), td('Điểm', s.score === null || s.score === undefined ? '—' : `${s.score}/${s.total}`, 't-number'), td(ex.che_do === 'thu' ? 'Số lần thi' : 'Thao tác', last, ex.che_do === 'thu' ? 't-number' : ''));
+    tr.append(td('Học sinh', `${s.name} (${s.ma})`), td('Lớp', s.lop), td('Bài thi', badge), td('Trực tuyến', liveLabel(live[liveKey(s.ma)])), td('Điểm', s.score === null || s.score === undefined ? '—' : `${s.score}/${s.total}` + (s.chk ? ` ⚠ tính lại ${s.chk.tinh}/${s.chk.tong}` : ''), 't-number' + (s.chk ? ' thi-score-bad' : '')), td(ex.che_do === 'thu' ? 'Số lần thi' : 'Thao tác', last, ex.che_do === 'thu' ? 't-number' : ''));
     body.append(tr);
   }
 }
@@ -355,7 +375,7 @@ function renderTrack() {
   box.replaceChildren(
     col('Chưa vào', sts.filter((/** @type {any} */ s) => s.state === 'chua'), 'is-wait', () => ''),
     col('Đang làm', sts.filter((/** @type {any} */ s) => s.state === 'vao'), 'is-doing', s => s.last ? 'vào ' + time(s.last) : ''),
-    col('Đã nộp', sts.filter((/** @type {any} */ s) => s.state === 'nop'), 'is-done', s => (s.score !== null ? `${s.score}/${s.total}` : '') + (s.roi ? ` · rời màn hình ${s.roi} lần` : '') + (th ? (s.th ? ' · đã nộp thực hành' : ' · chưa nộp thực hành') : '')));
+    col('Đã nộp', sts.filter((/** @type {any} */ s) => s.state === 'nop'), 'is-done', s => (s.score !== null ? `${s.score}/${s.total}` + (s.chk ? ` ⚠ tính lại ${s.chk.tinh}/${s.chk.tong}` : '') : '') + (s.roi ? ` · rời màn hình ${s.roi} lần` : '') + (th ? (s.th ? ' · đã nộp thực hành' : ' · chưa nộp thực hành') : '')));
 }
 /** @param {'kq'|'td'} t */
 function stTab(t) { for (const k of ['kq', 'td']) { const b = button('tab-thi-' + k), on = k === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; $('tabpanel-thi-' + k).hidden = !on; } }

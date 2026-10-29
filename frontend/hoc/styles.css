@@ -1591,7 +1591,7 @@ body.student-app:has(#gate:not([hidden])) .about{display:block;padding:8px 20px 
 .student-app .about-list li{padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:grid;gap:4px}
 .student-app .about-list strong{color:var(--brand-text,#0f766e);font-size:16px}
 .student-app .about-list span{color:var(--muted);font-size:15px;line-height:1.5}
-.student-app .about-foot{margin:24px 0 0;text-align:center;color:var(--muted);font-size:14px}
+.student-app .about-foot{margin:24px 0 0;text-align:center;color:var(--muted);font-size:var(--fs-label,15px)}
 .uo-logo img{width:64px;height:64px;border-radius:16px;display:block}
 /* Đã đăng nhập trên điện thoại hẹp: thanh trên nhiều nút → chỉ giữ biểu tượng logo (tên vẫn có trong aria-label) */
 @media(max-width:480px){body.student-app:not(:has(#gate:not([hidden]))) .wordmark .brand-name{display:none}}
@@ -1693,3 +1693,5 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .net-bar[hidden]{display:none}
 .net-bar i{position:absolute;top:0;height:100%;border-radius:0 3px 3px 0;background:linear-gradient(90deg,#0f766e,#34b79f,#f59e0b);animation:ld-bar 1.1s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){button[aria-busy=true]::before,.ld-box::before,.ld-box::after,.ld-inline::before,.thi-loading::before,.student-app.is-loading #courses:empty::before,.t-icon-btn[aria-busy=true] svg{animation:none}.net-bar i{animation:none;left:0;width:100%;opacity:.7}}
+/* Chuẩn giao diện: logo đủ vùng chạm 44px, chú thích cuối trang đủ cỡ chữ */
+.student-app .wordmark.brand{min-width:44px}
