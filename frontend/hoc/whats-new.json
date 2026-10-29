@@ -1,9 +1,10 @@
 {
   "title": "Phiên bản 29/10/2026 (tối)",
   "items": [
-    "Mới: Thảo luận trên lớp. Khi thầy cô mở, mục Luyện tập hiện thẻ Thảo luận, em bấm Vào phòng.",
-    "Gửi từ khóa, ý kiến, bình chọn, chấm điểm 1–5 hoặc đặt câu hỏi. Ý kiến hiện ẩn danh trên màn chiếu.",
-    "Luyện tập: có thời gian đọc câu hỏi trước khi hiện phương án.",
-    "Kết nối ổn định hơn khi mở nhiều mục cùng lúc."
+    "Bài học mở từ đầu bài, không còn nhảy xuống cuối.",
+    "Bảng và công thức trong bài hiển thị đúng, không còn ký tự lạ.",
+    "Danh sách bài và Tiến độ cho biết em đã đọc bài bao nhiêu phần trăm.",
+    "Gia sư AI nhắc em đang học bài nào và gợi ý nội dung để hỏi khi câu hỏi chưa liên quan.",
+    "Mới: Thảo luận trên lớp ở mục Luyện tập."
   ]
 }

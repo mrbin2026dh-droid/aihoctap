@@ -62,5 +62,19 @@ export function track(lesson, identity) {
   cur = { key, uid: identity.uid, ten: identity.student_name, lop: identity.class_code, max, sent: store.enabled() ? (max >= 100 ? 100 : Math.floor(max / 10) * 10) : 999 };
   schedule();
 }
+/** % đã đọc cao nhất của em ở một bài (lưu trên máy). @param {string} course @param {string} lesson @param {string} uid */
+export function readPct(course, lesson, uid) { if (!uid) return 0; try { return Math.max(0, Math.min(100, Number(localStorage.getItem(lsKey(uid, lessonKey(course, lesson)))) || 0)); } catch { return 0; } }
+/** Đọc lại % từ Firebase (đổi máy vẫn thấy đúng): lấy số lớn hơn giữa máy và mạng. @param {{course_id:string,id:string}[]} lessons @param {string} uid @param {() => void} onDone */
+export async function syncFromServer(lessons, uid, onDone) {
+  if (!uid || !store.enabled()) return;
+  let changed = false;
+  await Promise.all(lessons.map(async l => {
+    const key = lessonKey(l.course_id, l.id), mine = readPct(l.course_id, l.id, uid);
+    if (mine >= 100) return;
+    const d = await store.get(`doc_read/${key}/${store.keyOf(uid)}`).catch(() => null);
+    const p = Number(d?.pct) || 0; if (p > mine) { try { localStorage.setItem(lsKey(uid, key), String(p)); changed = true; } catch { /* bỏ qua */ } }
+  }));
+  if (changed) onDone();
+}
 /** Gọi khi đổi chế độ (Học bài / Làm bài tập) hoặc rời bài. */
 export const refresh = () => schedule();

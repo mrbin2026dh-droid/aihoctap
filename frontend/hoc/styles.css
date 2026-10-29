@@ -1824,3 +1824,24 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .student-app .tl-play .tl-label,.tl-play .tl-label{color:#fff}
 .lt-play button.tl-send{background:#ffd166;color:#2a1d00;border:0}
 .lt-play button.tl-send:hover{background:#ffdd85;color:#2a1d00}
+/* Nội dung bài học: bảng, danh sách, công thức (renderMarkdown mới) */
+.md-table{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px;max-width:100%}
+.md-table table{width:100%;border-collapse:collapse;font-size:.95em;line-height:1.55}
+.md-table th,.md-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;overflow-wrap:anywhere}
+.md-table th{background:color-mix(in srgb,var(--line) 45%,transparent);font-weight:800}
+.md-table tr:last-child td{border-bottom:0}
+#lesson-content ul,#lesson-content ol,.ex-prompt ul,.ex-prompt ol{margin:8px 0 14px;padding-left:1.5em}
+#lesson-content li{margin:6px 0}
+#lesson-content li>ul,#lesson-content li>ol{margin:6px 0}
+#lesson-content code,.ex-prompt code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--line) 55%,transparent)}
+.math{font-family:'SGK Serif','Times New Roman',serif;font-style:italic;white-space:nowrap}
+.md-img-alt{color:var(--muted);font-style:italic}
+#lesson-content blockquote p{margin:4px 0}
+.lesson-chips{display:flex;flex-wrap:wrap;gap:8px}
+.student-app .read-chip.is-done{background:color-mix(in srgb,#16a34a 18%,transparent);color:#15803d}
+.path-read{display:flex;align-items:center;gap:6px}
+.path-read.is-done{color:#15803d;font-weight:700}
+:where(:root[data-theme=dark]) .student-app .read-chip.is-done,:where(:root[data-theme=dark]) .path-read.is-done{color:#86efac}
+@media(prefers-color-scheme:dark){:where(:root:not([data-theme=light])) .student-app .read-chip.is-done,:where(:root:not([data-theme=light])) .path-read.is-done{color:#86efac}}
+.tutor-suggest{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+.student-app .tutor-chip{min-height:44px;padding:6px 14px;border-radius:999px;font-size:14px;font-weight:700;text-align:left}

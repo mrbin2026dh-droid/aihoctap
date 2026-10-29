@@ -60,28 +60,101 @@ export function withIcon(node, name, end = false) {
 }
 /** @param {string} text @param {boolean} [error] */
 export function notify(text, error = false) { const node = document.getElementById('status'); if (node) {node.textContent = text; node.classList.toggle('error', error);} }
-/** Safe restricted markdown: never parses raw HTML, links, embeds or event handlers.
- * @param {HTMLElement} container @param {string} markdown */
+/* Công thức kiểu LaTeX hay gặp trong bài (SGK Tin, Vật lí…) → ký tự Unicode đọc được, không cần thư viện. */
+const TEX = /** @type {Record<string,string>} */ ({ rightarrow: '→', to: '→', leftarrow: '←', Rightarrow: '⇒', Leftarrow: '⇐', leftrightarrow: '↔', Leftrightarrow: '⇔', times: '×', div: '÷', cdot: '·', pm: '±', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠', neq: '≠', approx: '≈', infty: '∞', degree: '°', circ: '°', alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', Delta: 'Δ', pi: 'π', lambda: 'λ', mu: 'μ', Omega: 'Ω', omega: 'ω', sum: '∑', in: '∈', ldots: '…', dots: '…', quad: ' ', qquad: '  ', '%': '%', ',': ' ', ';': ' ' });
+const SUP = /** @type {Record<string,string>} */ ({ 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '+': '⁺', '-': '⁻', n: 'ⁿ' });
+const SUB = /** @type {Record<string,string>} */ ({ 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉', '+': '₊', '-': '₋' });
+/** @param {string} tex */
+export function texToText(tex) {
+  let t = String(tex);
+  for (let i = 0; i < 4; i++) t = t.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '($1)/($2)').replace(/\\sqrt\s*\{([^{}]*)\}/g, '√($1)').replace(/\\(?:text|mathrm|mathbf|textbf|operatorname)\s*\{([^{}]*)\}/g, '$1');
+  t = t.replace(/\(([A-Za-z0-9]+)\)\/\(([A-Za-z0-9]+)\)/g, '$1/$2');
+  t = t.replace(/\^\{([^{}]*)\}|\^(\S)/g, (_, a, b) => { const v = a ?? b; return [...v].every(c => SUP[c]) ? [...v].map(c => SUP[c]).join('') : '^' + v; });
+  t = t.replace(/_\{([^{}]*)\}|_(\w)/g, (_, a, b) => { const v = a ?? b; return [...v].every(c => SUB[c]) ? [...v].map(c => SUB[c]).join('') : v; });
+  t = t.replace(/\\([A-Za-z]+|[%,;])/g, (m, w) => TEX[w] ?? w).replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+  return t;
+}
+/** Chữ trong một dòng: **đậm**, *nghiêng* / _nghiêng_, `mã`, $công thức$, [liên kết](https://…), ![hình](…). Chỉ tạo nút DOM, không dùng innerHTML. @param {HTMLElement} parent @param {string} text */
+export function inlineMarkdown(parent, text) {
+  const re = /(\*\*[^*]+?\*\*|__[^_]+?__|`[^`]+`|\$[^$\n]+\$|!\[[^\]]*\]\([^)\s]+\)|\[[^\]]+\]\([^)\s]+\)|(?<![\w*])\*[^*\s](?:[^*]*?[^*\s])?\*(?![\w*])|(?<![\w_])_[^_\s](?:[^_]*?[^_\s])?_(?![\w_]))/g;
+  let last = 0;
+  const plain = (/** @type {string} */ s) => { if (s) parent.append(document.createTextNode(s.replace(/\\([*_`$[\]\\|#>-])/g, '$1'))); };
+  for (const m of String(text).matchAll(re)) {
+    plain(text.slice(last, m.index)); last = (m.index || 0) + m[0].length;
+    const tok = m[0];
+    if (tok.startsWith('**') || tok.startsWith('__')) { const b = el('strong'); inlineMarkdown(b, tok.slice(2, -2)); parent.append(b); }
+    else if (tok.startsWith('`')) parent.append(el('code', tok.slice(1, -1)));
+    else if (tok.startsWith('$')) { const mth = el('span', texToText(tok.slice(1, -1)), 'math'); parent.append(mth); }
+    else if (tok.startsWith('![')) { const alt = /^!\[([^\]]*)\]/.exec(tok)?.[1] || 'Hình minh họa'; parent.append(el('span', `(Hình: ${alt})`, 'md-img-alt')); }
+    else if (tok.startsWith('[')) {
+      const mm = /^\[([^\]]+)\]\(([^)\s]+)\)$/.exec(tok); const href = mm?.[2] || '';
+      if (/^https:\/\//i.test(href)) { const a = /** @type {HTMLAnchorElement} */ (el('a', mm?.[1] || href)); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; parent.append(a); }
+      else plain(mm?.[1] || tok);
+    } else { const i = el('em'); inlineMarkdown(i, tok.slice(1, -1)); parent.append(i); }
+  }
+  plain(text.slice(last));
+}
+const cells = (/** @type {string} */ line) => line.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
+/**
+ * Markdown của bài học → DOM an toàn: tiêu đề, đoạn, danh sách (lồng nhau, có số), bảng, trích dẫn, khối mã, đường kẻ,
+ * chữ đậm/nghiêng, mã, công thức $…$, liên kết https. Không dùng innerHTML (nội dung do giáo viên/AI soạn).
+ * @param {HTMLElement} container @param {string} markdown
+ */
 export function renderMarkdown(container, markdown) {
   container.replaceChildren();
-  let code = false;
-  /** @type {string[]} */
-  let codeLines = [];
-  const flushCode = () => {container.append(el('pre', codeLines.join('\n'))); codeLines = [];};
-  for (const line of markdown.split('\n')) {
-    if (line.startsWith('```')) {if (code) flushCode(); code = !code; continue;}
-    if (code) {codeLines.push(line); continue;}
-    if (!line.trim()) continue;
-    const heading = /^(#{1,6})\s+(.+)$/.exec(line);
-    if (heading) {container.append(el(heading[1].length <= 2 ? 'h2' : 'h3', heading[2].replace(/\*\*/g,''))); continue;}
-    if (/^---+$/.test(line.trim())) {container.append(el('hr')); continue;}
-    if (line.startsWith('>')) {container.append(el('blockquote', line.slice(1).replace(/\*\*/g,'').trim())); continue;}
-    const paragraph = el('p');
-    const chunks = line.split(/(\*\*[^*]+\*\*)/g);
-    for (const chunk of chunks) paragraph.append(chunk.startsWith('**') && chunk.endsWith('**') ? el('strong', chunk.slice(2,-2)) : document.createTextNode(chunk));
-    container.append(paragraph);
+  const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+  /** @type {{el:HTMLElement, indent:number, type:string}[]} */ let stack = [];
+  const closeLists = () => { stack = []; };
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*```/.test(line)) {   // khối mã
+      const buf = []; i++;
+      while (i < lines.length && !/^\s*```/.test(lines[i])) buf.push(lines[i++]);
+      i++; closeLists(); container.append(el('pre', buf.join('\n'))); continue;
+    }
+    if (!line.trim()) { i++; continue; }
+    const t = line.trim();
+    // bảng: dòng có | và dòng sau là | --- | :---: |
+    if (t.startsWith('|') && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1])) {
+      closeLists();
+      const head = cells(t), aligns = cells(lines[i + 1]).map(c => c.startsWith(':') && c.endsWith(':') ? 'center' : c.endsWith(':') ? 'right' : '');
+      const wrap = el('div', '', 'md-table'), table = el('table'), thead = el('thead'), tr = el('tr');
+      head.forEach((h, j) => { const th = el('th'); th.scope = 'col'; if (aligns[j]) th.style.textAlign = aligns[j]; inlineMarkdown(th, h); tr.append(th); });
+      thead.append(tr); table.append(thead);
+      const tbody = el('tbody'); i += 2;
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        const row = el('tr'); cells(lines[i]).forEach((c, j) => { if (j >= head.length) return; const td = el('td'); if (aligns[j]) td.style.textAlign = aligns[j]; inlineMarkdown(td, c); row.append(td); }); tbody.append(row); i++;
+      }
+      table.append(tbody); wrap.append(table); container.append(wrap); continue;
+    }
+    const heading = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(t);
+    if (heading) { closeLists(); const h = el(heading[1].length <= 2 ? 'h2' : heading[1].length === 3 ? 'h3' : 'h4'); inlineMarkdown(h, heading[2].replace(/\*\*/g, '')); container.append(h); i++; continue; }
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) { closeLists(); container.append(el('hr')); i++; continue; }
+    if (t.startsWith('>')) {
+      closeLists(); const bq = el('blockquote');
+      while (i < lines.length && lines[i].trim().startsWith('>')) { const p = el('p'); inlineMarkdown(p, lines[i].trim().replace(/^>\s?/, '')); bq.append(p); i++; }
+      container.append(bq); continue;
+    }
+    const li = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/.exec(line);
+    if (li) {
+      const indent = li[1].replace(/\t/g, '    ').length, type = /\d/.test(li[2]) ? 'ol' : 'ul';
+      while (stack.length && indent < stack[stack.length - 1].indent) stack.pop();
+      let top = stack[stack.length - 1];
+      if (!top || indent > top.indent || top.type !== type) {
+        if (top && indent === top.indent && top.type !== type) stack.pop();
+        const list = el(type); if (type === 'ol') { const start = parseInt(li[2], 10); if (start > 1) /** @type {HTMLOListElement} */ (list).start = start; }
+        const parentLi = stack[stack.length - 1]?.el.lastElementChild;
+        (parentLi && indent > (stack[stack.length - 1]?.indent ?? -1) ? parentLi : container).append(list);
+        stack.push({ el: list, indent, type }); top = stack[stack.length - 1];
+      }
+      const item = el('li'); inlineMarkdown(item, li[3]); top.el.append(item); i++; continue;
+    }
+    // dòng tiếp nối của mục danh sách (thụt lề, không có dấu đầu dòng)
+    if (stack.length && /^\s{2,}\S/.test(line)) { const last = stack[stack.length - 1].el.lastElementChild; if (last) { last.append(document.createTextNode(' ')); inlineMarkdown(/** @type {HTMLElement} */ (last), t); i++; continue; } }
+    closeLists();
+    const p = el('p'); inlineMarkdown(p, t); container.append(p); i++;
   }
-  if (codeLines.length) flushCode();
 }
 
 /**

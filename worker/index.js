@@ -1432,6 +1432,37 @@ export function cleanGeneratedEssays(raw) {
 }
 /** Prompt chấm tự luận thi thử theo gợi ý đáp án của giáo viên. Bài làm là DỮ LIỆU, không phải lệnh. */
 /** Bài làm chỉ là ký tự lặp (vd "AAAAAAAA", "....."): chấm 0 ngay, không tốn lượt AI. Câu ngắn thật ("Có", "CPU") không bị coi là rác. @param {string} t */
+/** Các mục chính của một bài (tiêu đề ## / ###), dùng để Gia sư gợi ý "em đang học bài nào, có những nội dung gì". @param {string} md */
+export function lessonOutline(md) {
+  const out = [];
+  for (const line of String(md || '').split('\n')) {
+    const m = /^#{2,3}\s+(.+?)\s*#*\s*$/.exec(line.trim()); if (!m) continue;
+    const h = m[1].replace(/\*\*/g, '').replace(/^(?:\d+[.)]|[IVX]+\.|[a-z]\))\s*/i, '').replace(/\s+/g, ' ').trim();
+    if (h && !/^bài\s+\d+/i.test(h) && !/luyện tập|câu hỏi|vận dụng|ghi nhớ|tóm tắt/i.test(h) && !out.includes(h)) out.push(h.slice(0, 80));
+    if (out.length >= 6) break;
+  }
+  return out;
+}
+/** Tin nhắn gõ linh tinh (ký tự lặp "KKKKKK", không có nguyên âm "đfghjk", chỉ ký hiệu): Gia sư trả lời ngay, không tốn lượt AI. @param {string} t */
+export function isGibberish(t) {
+  const raw = String(t || '').trim(); if (!raw) return true;
+  const x = raw.replace(/\s+/g, '').toLowerCase();
+  if (!/[\p{L}\p{N}]/u.test(x)) return true;
+  if (x.length >= 4 && new Set(x).size <= 2) return true;
+  if (/^(.)\1{3,}$/.test(x) || /(.{1,3})\1{4,}/.test(x)) return true;
+  const words = raw.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').split(/[^a-z0-9]+/).filter(Boolean);
+  if (!words.length) return false;
+  const vowelless = words.filter(w => w.length >= 4 && !/[aeiouy]/.test(w) && !/\d/.test(w));
+  return vowelless.length > 0 && vowelless.join('').length >= x.replace(/[^a-z]/g, '').length * 0.6;
+}
+/** Trả lời cho tin nhắn linh tinh / lạc bài: nói rõ em đang học bài nào, gợi ý nội dung trong bài để hỏi. @param {string} title @param {string[]} outline */
+export function offTopicReply(title, outline) {
+  const items = outline.slice(0, 3);
+  const lines = [`Thầy/Cô chưa hiểu câu em vừa gõ. Em đang học bài **${title}**${items.length ? ', bài có các nội dung:' : '.'}`];
+  for (const h of items) lines.push(`- **${h}**`);
+  lines.push(items.length ? `Em muốn tìm hiểu nội dung nào? Ví dụ em có thể hỏi: "${items[0]} là gì?"` : 'Em hãy hỏi về một nội dung trong bài nhé.');
+  return { reply: lines.join('\n'), suggest: items.map(h => `${h} là gì?`) };
+}
 export function isJunkAnswer(t) {
   const x = String(t || '').replace(/\s+/g, '').toLowerCase();
   if (x.length < 8) return false;
@@ -5423,6 +5454,12 @@ export default {
         });
       }
 
+      // Gõ linh tinh khi đang học một bài: trả lời ngay (không tốn lượt AI), nói rõ bài đang học và gợi ý nội dung để hỏi.
+      if (lessonForTutor && !isExamReview && isGibberish(message)) {
+        const r = offTopicReply(String(lessonForTutor.title || 'này').slice(0, 120), lessonOutline(lessonForTutor.content_markdown));
+        return new Response(JSON.stringify({ ...r, off_topic: true, ...(routedLesson ? { routed_lesson: routedLesson } : {}) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       // J1 / A9 / B7: Atomic quota reservation in Durable Object (locks slot immediately to prevent concurrency race)
       const studentClassId = authResult.payload.claims?.class_code || authResult.payload.claims?.grade || '';
       const reserveRes = await gateStub.fetch('http://do/reserve-gemini-limit', {
@@ -5521,6 +5558,9 @@ export default {
           // Căn cứ: nội dung bài học lấy từ máy chủ. Gia sư chỉ được dựa vào đây, không bịa thêm.
           if (lessonForTutor?.content_markdown) {
             systemText += `\n\nTÀI LIỆU BÀI HỌC (nguồn duy nhất để trả lời):\n"""\n${pickLessonContext(lessonForTutor.content_markdown, [message, ...(Array.isArray(history) ? history.slice(-2).map(h => h?.content || h?.text || '') : [])].join(' '), 9000)}\n"""`;
+            { const ol = lessonOutline(lessonForTutor.content_markdown), tt = String(lessonForTutor.title || '').slice(0, 120);
+              systemText += `\n\nBÀI EM ĐANG HỌC: "${tt}"${ol.length ? `. Các nội dung chính: ${ol.join('; ')}` : ''}.`
+                + `\nKHI CÂU HỎI KHÔNG LIÊN QUAN ĐẾN BÀI NÀY (chuyện ngoài lề, nội dung của bài khác, câu vô nghĩa): KHÔNG từ chối cụt, KHÔNG dùng câu "không thể cung cấp đáp án" (câu đó chỉ dành cho lúc em xin đáp án). Hãy khéo léo: nói em đang học bài "${tt}", câu em hỏi chưa thuộc bài này; gợi ý 2–3 nội dung chính ở trên để em hỏi; kết thúc bằng 1 câu hỏi gợi mở về một nội dung của bài.`; }
             systemText += '\n\nQUY TẮC CĂN CỨ: Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC ở trên. Nếu câu hỏi nằm ngoài tài liệu hoặc ngoài môn Tin học, hãy nói: "Phần này chưa có trong bài học, em hỏi thầy cô nhé." Không bịa số liệu, tên riêng, ví dụ hay nguồn trích dẫn ngoài tài liệu. Nếu không chắc, hãy nói rõ là chưa chắc.';
             const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId) : null;
             if (publicQuestion?.prompt) {

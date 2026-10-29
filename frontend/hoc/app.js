@@ -295,13 +295,24 @@ function lessonRow(course, summary, exerciseOnly = false) {
   const row = el('article', '', 'lesson-card'); const description = el('div', '', 'lesson-description');
   const tile = el('span', '', exerciseOnly ? 'tile tone-amber' : 'tile tone-blue'); tile.append(icon(exerciseOnly ? 'pencil' : 'book'));
   const chip = el('span', '', 'chip'); chip.append(icon('list', 'ic ic-sm'), el('span', `${summary.question_count} câu luyện tập`));
-  description.append(el('p', `${course.subject_name} · Lớp ${course.grade}`, 'meta'), el('h3', summary.title), chip);
+  const chips = el('div', '', 'lesson-chips'); chips.append(chip);
+  const rp = readProgress.readPct(course.id, summary.id, session?.identity.uid || '');
+  if (rp > 0) { const rc = el('span', '', 'chip read-chip' + (rp >= 100 ? ' is-done' : '')); rc.append(icon(rp >= 100 ? 'check' : 'book', 'ic ic-sm'), el('span', rp >= 100 ? 'Đã đọc hết' : `Đã đọc ${rp}%`)); chips.append(rc); row.classList.add(rp >= 100 ? 'is-read' : 'is-reading'); }
+  description.append(el('p', `${course.subject_name} · Lớp ${course.grade}`, 'meta'), el('h3', summary.title), chips);
   const entry = withIcon(button(exerciseOnly ? 'Luyện tập' : 'Mở bài', () => loadLesson(course.id, summary.id, summary.version, exerciseOnly), 'lesson-open'), 'arrow', true);
   entry.dataset.lessonId = summary.id; entry.dataset.courseId = course.id;
   row.append(tile, description, entry); return row;
 }
+let readSynced = '';
+/** Một lần mỗi phiên: lấy % đọc bài từ Firebase (đổi máy vẫn thấy bài đã đọc). */
+function syncReads() {
+  const uid = session?.identity.uid || ''; if (!uid || !catalog || readSynced === uid) return;
+  readSynced = uid;
+  const lessons = gradeCourses().flatMap(c => c.lessons.map(l => ({ course_id: c.id, id: l.id })));
+  void readProgress.syncFromServer(lessons, uid, () => { if (currentView === 'catalog') renderCatalog(); else if (currentView === 'progress') void progress(); });
+}
 function renderCatalog() {
-  updateResume();
+  updateResume(); syncReads();
   const courses = node('courses'); courses.replaceChildren(); node('lesson-list').replaceChildren();
   if (!catalog) {
     node('catalog-view').setAttribute('aria-busy', 'true');
@@ -457,6 +468,7 @@ async function openLesson(lesson, saved = null, generation = ++viewGeneration, o
   if (tutorMsgs) tutorMsgs.replaceChildren();
   updateTutorStatus();
   show('lesson');
+  window.scrollTo(0, 0);   // bài học đọc từ trên xuống: luôn mở ở đầu bài (trước đây giữ vị trí cuộn của danh sách → mở ở cuối bài, % đọc nhảy lên 100%)
   node('lesson-title').textContent = lesson.title;
   node('lesson-subject').textContent = catalog?.courses.find(course => course.id === lesson.course_id)?.title || lesson.course_id;
   node('lesson-version').textContent = `Phiên bản ${lesson.version.slice(0, 8)}`;
@@ -795,13 +807,16 @@ async function progressBuild(target, syncButton, generation) {
       index += 1;
       const readOnly = item.summary.question_count === 0;
       const li = el('li', '', `path-step is-${readOnly ? 'read' : item.state}${item.state === 'learning' && item.best < REVIEW_PERCENT ? ' is-review' : ''}`);
-      const node_ = el('span', '', 'path-node'); if (item.state === 'mastered') node_.append(icon('check')); else node_.append(document.createTextNode(String(index)));
+      const node_ = el('span', '', 'path-node'); if (item.state === 'mastered' || (readOnly && readProgress.readPct(item.course.id, item.summary.id, session?.identity.uid || '') >= 100)) node_.append(icon('check')); else node_.append(document.createTextNode(String(index)));
       const body = el('div', '', 'path-body'); const top = el('div', '', 'stat-row-top');
-      top.append(el('h3', item.summary.title), el('strong', readOnly ? 'Chỉ đọc' : item.state === 'none' ? 'Chưa làm' : `${item.best}%`, 'stat-row-score'));
+      top.append(el('h3', item.summary.title), el('strong', readOnly ? 'Chỉ đọc' : item.state === 'none' ? 'Chưa làm bài tập' : `${item.best}%`, 'stat-row-score'));
       body.append(top);
+      const rp = readProgress.readPct(item.course.id, item.summary.id, session?.identity.uid || '');
+      const read = el('p', '', 'meta path-read' + (rp >= 100 ? ' is-done' : '')); read.append(icon(rp >= 100 ? 'check' : 'book', 'ic ic-sm'), el('span', rp >= 100 ? 'Học bài: đã đọc hết' : rp > 0 ? `Học bài: đã đọc ${rp}%` : 'Học bài: chưa đọc'));
+      body.append(read);
       if (!readOnly) {
         const bar = el('div', '', 'bar'); const fill = el('span'); fill.style.width = item.best + '%'; bar.append(fill); body.append(bar);
-        const status = item.state === 'none' ? `${item.summary.question_count} câu luyện tập` : `${item.count} lượt làm · tốt nhất ${item.best}% câu đúng${item.best < REVIEW_PERCENT ? ' · cần ôn' : ''}`;
+        const status = item.state === 'none' ? `Bài tập: chưa làm (${item.summary.question_count} câu luyện tập)` : `Bài tập: ${item.count} lượt làm · tốt nhất ${item.best}% câu đúng${item.best < REVIEW_PERCENT ? ' · cần ôn' : ''}`;
         body.append(el('p', status, 'meta'));
       }
       const go = withIcon(button(readOnly ? 'Đọc' : item.state === 'none' ? 'Bắt đầu' : item.state === 'mastered' ? 'Xem lại' : 'Ôn lại', () => loadLesson(item.course.id, item.summary.id, item.summary.version, !readOnly && item.state === 'learning'), 'path-go'), 'arrow', true);
@@ -1316,7 +1331,12 @@ form('tutor-form').addEventListener('submit', async event => {
     const botMsg = el('div', '', 'tutor-msg tutor-bot');
     msgs.append(botMsg);
     await typeOut(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.', () => { msgs.scrollTop = msgs.scrollHeight; });
-    if (!res.no_match) { tutorHistory.push({ role: 'user', content: text }); tutorHistory.push({ role: 'model', content: res.reply || '' }); }
+    if (Array.isArray(res.suggest) && res.suggest.length) {   // câu gõ linh tinh / lạc bài: gợi ý nội dung của bài để bấm hỏi
+      const sg = el('div', '', 'tutor-suggest'); sg.setAttribute('aria-label', 'Gợi ý câu hỏi về bài đang học');
+      for (const q of res.suggest.slice(0, 3)) sg.append(button(String(q), () => { const inp = /** @type {HTMLInputElement} */ (node('tutor-input')); inp.value = String(q); sg.remove(); form('tutor-form').requestSubmit(); }, 'tutor-chip'));
+      msgs.append(sg); msgs.scrollTop = msgs.scrollHeight;
+    }
+    if (!res.no_match && !res.off_topic) { tutorHistory.push({ role: 'user', content: text }); tutorHistory.push({ role: 'model', content: res.reply || '' }); }
     refreshTutorQuota().catch(() => {});
   } catch (err) {
     loadingMsg.remove();

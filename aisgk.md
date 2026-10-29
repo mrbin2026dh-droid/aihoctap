@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã deploy Cloudflare Worker bản a3622d90 (kích hoạt /api/teacher/ai-tl); test_tl_core 22/22 PASS, test_tl_ai 8/8 PASS, test_tl_live 51/51 PASS, test_quiz_live 53/53 PASS; kiểm thử live HTTPS https://aihoctap.online nghiệm thu 5 loại câu hỏi thảo luận, bộ lọc từ ngữ tiếng Việt, duyệt/ẩn, đám mây gộp từ, 0 lỗi F12; chi tiết tại docs/handoff/antigravity-claude-thao-luan-xong.md.
+- Yêu cầu mới nhất: Sửa 4 lỗi học bài (Gia sư lạc bài/gõ linh tinh nêu bài đang học + gợi ý, đánh dấu % đã đọc ở danh sách và Tiến độ, mở bài luôn ở đầu, Markdown bảng/danh sách/công thức); chờ Antigravity deploy Worker và thử thật theo docs/handoff/claude-antigravity-hoc-bai-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4290,4 +4290,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: tests/test_live_thao_luan_https.cjs, docs/handoff/antigravity-claude-thao-luan-xong.md, aisgk.md.
 - Kiểm thực tế: test_tl_core 22/22 PASS; test_tl_ai 8/8 PASS; test_tl_live 51/51 PASS; test_quiz_live 53/53 PASS; test_live_thao_luan_https 13/13 PASS; tools/package_student_pwa.py --check PASS; Worker deploy a3622d90-17c2-425c-a02b-1c9281d633a9.
 - Việc tiếp: Thầy dán rules tl_* lên Firebase Console và trải nghiệm phân hệ Thảo luận mới trên lớp; Claude nghiệm thu tổng thể.
+
+### 29/10/2026 21:30 — Claude — Sửa lỗi học bài: Gia sư lạc bài, đã đọc, mở bài ở cuối, ký tự lạ
+- Nguyên nhân: prompt Gia sư không có lối "câu vô nghĩa/lạc bài" nên trả câu "không thể cung cấp đáp án"; openLesson không cuộn lên đầu (giữ vị trí cuộn danh sách, % đọc nhảy 100% sai); danh sách/Tiến độ không đọc % đọc; renderMarkdown cũ không hiểu bảng, danh sách, nghiêng, mã, công thức.
+- Đã làm: isGibberish/lessonOutline/offTopicReply + mục BÀI EM ĐANG HỌC trong prompt; nút gợi ý câu hỏi; scrollTo(0,0); readPct/syncFromServer, nhãn Đã đọc, dòng Học bài trong Tiến độ; renderMarkdown mới an toàn.
+- Tệp đổi: worker/index.js, frontend/hoc/dom.js, app.js, read-progress.js, styles.css, whats-new.json, sw.js; tests/test_markdown_render.cjs, tests/test_read_status.cjs, tests/test_tutor_offtopic.mjs (mới).
+- Kiểm thực tế: 3 test mới PASS (9, 8, 6); hồi quy tutor/offline/lesson/quiz/tl/PWA PASS; UI học sinh 0 vi phạm.
+- Việc tiếp: Antigravity deploy Worker, thử thật https.
 
