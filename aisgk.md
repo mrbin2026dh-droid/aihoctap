@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã code tab Thảo luận kiểu Mentimeter (5 loại câu, duyệt trước, lọc từ ngữ, AI gợi ý/tổng hợp không gửi tên) theo quy trình Luyện tập; chờ Antigravity đăng luật tl*, deploy Worker ai-tl, thử thật theo docs/handoff/claude-antigravity-thao-luan-29-10.md.
+- Yêu cầu mới nhất: Đã deploy Cloudflare Worker bản a3622d90 (kích hoạt /api/teacher/ai-tl); test_tl_core 22/22 PASS, test_tl_ai 8/8 PASS, test_tl_live 51/51 PASS, test_quiz_live 53/53 PASS; kiểm thử live HTTPS https://aihoctap.online nghiệm thu 5 loại câu hỏi thảo luận, bộ lọc từ ngữ tiếng Việt, duyệt/ẩn, đám mây gộp từ, 0 lỗi F12; chi tiết tại docs/handoff/antigravity-claude-thao-luan-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4284,4 +4284,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/tl-core.js, teacher-tl.js, tl-play.js (mới), teacher.html, teacher.css, styles.css, app.js, quiz-play.js, teacher.js, sw.js, whats-new.json, tools/package_student_pwa.py, worker/index.js, spike/step0/database.rules.ai-sgk-final.json, tests/test_tl_core.mjs, tests/test_tl_ai.mjs, tests/test_tl_live.cjs (mới), docs/ke-hoach/thao-luan-menti.md, docs/handoff/claude-antigravity-thao-luan-29-10.md.
 - Kiểm thực tế: test_tl_core 22; test_tl_ai 8; test_tl_live 51; test_quiz_live 53; test_teacher_ai 22; test_firebase_rules_step0 12; UI chuẩn giáo viên/học sinh 0 vi phạm; test_auto_update_login 15; test_pwa_update_integrity 7/7.
 - Việc tiếp: Antigravity đăng luật, deploy Worker, thử thật https bằng điện thoại thật.
+
+### 29/10/2026 18:45 — Antigravity — Deploy Worker a3622d90 (/api/teacher/ai-tl), Nghiệm thu Thảo luận Mentimeter & Đo đạc HTTPS
+- Đã thực hiện: Kéo commit b6c6048; kiểm thử toàn diện mã nguồn tl-core, teacher-tl, tl-play; deploy Worker bản a3622d90 kích hoạt tuyến /api/teacher/ai-tl; đo đạc thực tế live HTTPS trên https://aihoctap.online (tests/test_live_thao_luan_https.cjs), nghiệm thu 2 thẻ Tiện ích (chuyển đổi chuột và phím mũi tên), bộ lọc từ ngữ tiếng Việt chặn chính xác "vcl" và không chặn nhầm từ bình thường, đám mây từ khóa tự gộp hoa/thường, Zero-Overflow 100% và F12 sạch 0 lỗi đỏ; hướng dẫn Thầy xuất bản luật tl_* trên Firebase RTDB; lập báo cáo tại docs/handoff/antigravity-claude-thao-luan-xong.md.
+- Tệp đổi: tests/test_live_thao_luan_https.cjs, docs/handoff/antigravity-claude-thao-luan-xong.md, aisgk.md.
+- Kiểm thực tế: test_tl_core 22/22 PASS; test_tl_ai 8/8 PASS; test_tl_live 51/51 PASS; test_quiz_live 53/53 PASS; test_live_thao_luan_https 13/13 PASS; tools/package_student_pwa.py --check PASS; Worker deploy a3622d90-17c2-425c-a02b-1c9281d633a9.
+- Việc tiếp: Thầy dán rules tl_* lên Firebase Console và trải nghiệm phân hệ Thảo luận mới trên lớp; Claude nghiệm thu tổng thể.
 
