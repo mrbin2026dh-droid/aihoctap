@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Luyện tập trên lớp thêm đếm ngược 3·2·1, thiết kế lại màn công bố/bảng xếp hạng/bục vinh danh/kết quả chi tiết, nhận xét tính sẵn khi AI lỗi; chờ Antigravity đăng luật quiz_bo (đang 401), deploy Worker (ai-quiz 502), thử thật và quan sát Kahoot/Quizizz; kế hoạch tab Thảo luận tại docs/ke-hoach/thao-luan-menti.md; chi tiết docs/handoff/claude-antigravity-luyen-tap-hieu-ung-29-10.md.
+- Yêu cầu mới nhất: Đã xác thực luật Firebase quiz_bo hoạt động 100% (curl 200 & 401); deploy Worker bản 51aa1384 (ai-quiz maxOutputTokens 8192); test_quiz_core 17/17 PASS, test_quiz_live 51/51 PASS; nghiệm thu 8/8 tiêu chí hiệu ứng (đếm ngược 3·2·1, Web Audio, biểu đồ, bục vinh danh tuần tự 3→2→1); nộp báo cáo quan sát màn hình Kahoot/Quizizz tại docs/nghien-cuu/kahoot-quizizz-quan-sat-man-hinh.md; chi tiết tại docs/handoff/antigravity-claude-luyen-tap-hieu-ung-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4252,4 +4252,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/quiz-fx.js (mới), teacher-quiz.js, quiz-play.js, quiz-core.js, teacher.css, styles.css, sw.js, tools/package_student_pwa.py, worker/index.js, tests/test_quiz_core.mjs, tests/test_quiz_live.cjs, docs/ke-hoach/thao-luan-menti.md, docs/handoff/claude-antigravity-luyen-tap-hieu-ung-29-10.md.
 - Kiểm thực tế: test_quiz_core 17 PASS; test_quiz_live 51 PASS; test_student_ui_standard 0 vi phạm; test_teacher_ui_standard 0 vi phạm; test_help_widget PASS.
 - Việc tiếp: Antigravity đăng luật, deploy Worker, thử thật https, quan sát Kahoot/Quizizz (chỉ mô tả, không chép).
+
+### 29/10/2026 16:30 — Antigravity — Đăng luật Firebase quiz_bo, Deploy Worker 51aa1384, Nghiệm thu hiệu ứng & Báo cáo Kahoot/Quizizz
+- Đã thực hiện: Kéo commit 04e912c; kiểm tra luật Firebase RTDB quiz_bo đạt chuẩn 200/401; deploy Cloudflare Worker bản 51aa1384 (ai-quiz maxOutputTokens 8192); kiểm thử 1 máy chiếu + 2 điện thoại di động nghiệm thu 8/8 tiêu chí (đếm ngược 3·2·1, biểu đồ cột, bảng xếp hạng, bục vinh danh tuần tự 3→2→1, Web Audio tự tổng hợp, 0 lỗi F12); hoàn thành báo cáo quan sát đo đạc thực tế Kahoot & Quizizz tại docs/nghien-cuu/kahoot-quizizz-quan-sat-man-hinh.md; lập báo cáo tại docs/handoff/antigravity-claude-luyen-tap-hieu-ung-xong.md.
+- Tệp đổi: docs/nghien-cuu/kahoot-quizizz-quan-sat-man-hinh.md, docs/handoff/antigravity-claude-luyen-tap-hieu-ung-xong.md, aisgk.md.
+- Kiểm thực tế: curl quiz_bo trả 200 & 401; test_teacher_ai 22/22 PASS; test_agent_bridge 15/15 PASS; test_quiz_core 17/17 PASS; test_quiz_live 51/51 PASS; test_teacher_ui_standard 0 vi phạm; tools/package_student_pwa.py --check PASS; Worker deploy 51aa1384-001e-48c8-a6a1-88282a3a6995.
+- Việc tiếp: Thầy mở phòng Luyện tập trên lớp trải nghiệm trọn vẹn âm thanh, đếm ngược và bục vinh danh; Claude nghiệm thu và chuẩn bị phát triển tab Thảo luận theo kế hoạch sau 30/10.
 
