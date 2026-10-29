@@ -9,8 +9,10 @@ const { chromium } = require('playwright');
 const assert = require('assert');
 
 const BASE_URL = 'https://aihoctap.online';
-const STUDENT_CODE = '9A9001';
-const STUDENT_PIN = '123456';
+// Không ghi mã/PIN học sinh thật vào kho: truyền qua biến môi trường, chỉ dùng tài khoản THỬ.
+const STUDENT_CODE = process.env.LIVE_CODE || '';
+const STUDENT_PIN = process.env.LIVE_PIN || '';
+if (!/^TH9\d{3}$/i.test(STUDENT_CODE) || !STUDENT_PIN) { console.error('Đặt LIVE_CODE=TH9xxx và LIVE_PIN (tài khoản THỬ).'); process.exit(2); }
 
 (async () => {
   console.log('=== BẮT ĐẦU KIỂM THỬ THỰC TẾ HỌC BÀI TRÊN HTTPS: ' + BASE_URL + ' ===');
