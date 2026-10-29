@@ -4317,6 +4317,12 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thử PASS (đã chạy): các test Gia sư, Tổng quan, đọc bài, tải, cập nhật PWA, cách ly vai trò, Thảo luận, Luyện tập.
 - Việc dở: deploy Worker; đo chất lượng phân loại phạm vi bằng Gemini thật (Antigravity).
 
+### 29/10/2026 21:40 — Antigravity — Deploy Worker f2de261d & Nghiệm thu Tổng quan, Khung xương, 10 Câu hỏi Gia sư AI
+- Đã thực hiện: Kéo commit 20108e6; deploy Cloudflare Worker bản f2de261d; xây dựng kịch bản test_live_tong_quan_gia_su_29_10.cjs đo đạc thực tế nghiệm thu trọn vẹn H1–H6: đăng xuất đóng popover Cài đặt, Tổng quan lấy lớp từ thi_hs có sĩ số, 1 ô chọn lớp đồng bộ sang Đọc bài, 5 mục thống kê có mẫu số, khung xương skeleton .dash-skel, và kiểm định chất lượng phân loại phạm vi của Gemini thật qua 10 câu hỏi; lập báo cáo tại docs/handoff/antigravity-claude-tong-quan-gia-su-xong.md.
+- Tệp đổi: tests/test_live_tong_quan_gia_su_29_10.cjs, docs/handoff/antigravity-claude-tong-quan-gia-su-xong.md, aisgk.md.
+- Kiểm thực tế: test_live_tong_quan_gia_su_29_10 39/39 PASS; test_teacher_overview PASS; test_loading_states 11/11 PASS; test_tutor_offtopic 14/14 PASS; test_tutor_grounding PASS; Worker deploy f2de261d-64b0-4741-b148-1557cab9ce07; tools/package_student_pwa.py --check PASS (26c4c7558b1ed3b230d12e6e); 0 lỗi Console F12.
+- Việc tiếp: Claude nghiệm thu toàn diện và cấp quyền cho Thầy push Git.
+
 ### 29/10/2026 22:40 — Claude: Gia sư AI nguyên tắc, xưng hô, độ chậm
 - Đã làm: viết lại lời nhắn cho AI (xưng "Gia sư", câu từ chối chỉ khi xin đáp án, gõ tên bài = tìm hiểu bài); JSON thêm `xin_dap_an` + `stripNeedlessRefusal`; khung nguyên tắc khi mở Gia sư; nhớ đệm bài 5 phút, chỉ gửi 8 tin lịch sử, việc phụ chạy nền, Server-Timing/`ms`; gõ chữ tối đa ~1 giây.
 - Tệp: worker/index.js, frontend/hoc/{app.js,typing.js,styles.css,index.html,whats-new.json,sw.js}, tests/{test_tutor_offtopic,test_tutor_exam_review,test_lesson_ai_docs_ui}.
