@@ -168,7 +168,13 @@ thiApp.setGrader(async payload => {
   if (!navigator.onLine || !session) throw new Error('offline');
   if (!session.token && session.pin) await workerToken(session.identity.uid, session.pin);
   if (!session?.token) throw new Error('no token');
-  return api('/pwa/exam-essay', { method: 'POST', token: session.token, timeout: 60000, body: payload });
+  const call = () => api('/pwa/exam-essay', { method: 'POST', token: session?.token || '', timeout: 60000, body: payload });
+  try { return await call(); }
+  catch (e) {
+    // Token Worker hết hạn (12 giờ, ví dụ đăng nhập từ tối hôm trước) → lấy token mới bằng mã + PIN đã lưu rồi chấm lại một lần.
+    if (e instanceof ApiError && e.status === 401 && session?.pin) { await workerToken(session.identity.uid, session.pin, true); if (session?.token) return call(); }
+    throw e;
+  }
 });
 
 

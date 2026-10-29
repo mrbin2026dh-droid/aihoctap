@@ -7,6 +7,8 @@
 2. Nếu có việc được giao: đọc đúng tệp `docs/handoff/<tên>.md` mà người dùng chỉ định. Không đọc thêm tệp ngoài danh sách trong tệp đó, trừ khi bắt buộc và phải ghi lý do.
 3. Chỉ tra mục nhật ký cũ khi cần một sự kiện cụ thể; dùng tìm kiếm, không đọc hết.
 
+4. **Kế hoạch dài hạn đã ghi nhớ (người dùng dặn 29/10/2026):** khi thầy yêu cầu làm tính năng phụ huynh quản lý con (vị trí, thời gian dùng app/mạng xã hội/game, tiện ích máy tính, AI phân tích dùng máy quá mức), PHẢI đọc `docs/ke-hoach/phu-huynh-giam-sat-con.md` trước, làm đúng các ràng buộc pháp lý và dữ liệu trong đó.
+
 ## B. Bảng định tuyến (ai làm loại việc nào)
 | Loại việc | AI phụ trách | Chuyển tiếp cho |
 |---|---|---|

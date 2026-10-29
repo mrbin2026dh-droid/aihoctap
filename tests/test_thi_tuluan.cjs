@@ -69,14 +69,14 @@ try{
   const db={thi_hs:{hs01:{ma:'HS01',ten:'Nguyễn Văn An',lop:'9A',khoi:9,h:h('hs01','123456')}},
    thi_bai:{t1:{tieu_de:'Thi thử tự luận',che_do:'thu',khoi:9,lop:'9A',trang_thai:'mo',so_cau:3,xem_diem:true,noi_dung:'tn_tl'}},
    thi_de:{t1:[{id:'r2',stt:1,text:'CPU là gì?',options:{A:'Bộ xử lý',B:'Bộ nhớ'},answer:'A',points:1,topic:'Phần cứng'},{id:'r3',stt:2,kind:'tl',text:'Nêu hai ví dụ thiết bị số.',points:2,topic:'Thiết bị số',goi_y:'- Điện thoại (1đ)\n- Máy tính (1đ)'},{id:'r4',stt:3,text:'RAM là?',options:{A:'Bộ nhớ',B:'Ổ cứng'},answer:'A',points:1}]}};
-  const writes=[],grades=[];let gradeFail=false;
+  const writes=[],grades=[];let gradeFail=false,logins=0;
   const ctx=await b.newContext({viewport:vp,serviceWorkers:'block'});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
   await pg.route('**/api/**',async r=>{const p=new URL(r.request().url()).pathname;let body={schema_version:1,revision:'r',courses:[]},status=200;
    if(r.request().method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
-   if(p.endsWith('/login'))body={token:'worker-token',must_change_pin:false};
+   if(p.endsWith('/login')){logins++;body={token:logins===1?'old-token':'worker-token',must_change_pin:false};}
    if(p.endsWith('/pwa/me'))body={uid:'HS01',student_name:'Nguyễn Văn An',class_code:'9A',grade:9};
    if(p.endsWith('/pwa/tutor'))body={reply:'Em làm tốt.'};
-   if(p.endsWith('/pwa/exam-essay')){const q=JSON.parse(r.request().postData());grades.push({q,auth:r.request().headers()['authorization']});await new Promise(x=>setTimeout(x,300));if(gradeFail){status=502;body={detail:'AI chưa trả lời được (mã 503).'};}else body={items:q.items.map(()=>({diem:1.5,nhan_xet:'Em nêu đúng điện thoại, còn thiếu ví dụ thứ hai.'})),tong_ket:'Cố lên'};}
+   if(p.endsWith('/pwa/exam-essay')){const q=JSON.parse(r.request().postData());const au=r.request().headers()['authorization'];if(au==='Bearer old-token'){grades.push({expired:true});return r.fulfill({status:401,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({detail:'Phiên đăng nhập đã hết.'})});}grades.push({q,auth:au});await new Promise(x=>setTimeout(x,300));if(gradeFail){status=502;body={detail:'AI chưa trả lời được (mã 503).'};}else body={items:q.items.map(()=>({diem:1.5,nhan_xet:'Em nêu đúng điện thoại, còn thiếu ví dụ thứ hai.'})),tong_ket:'Cố lên'};}
    r.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(body)})});
   await pg.route(DB+'/**',r=>{const u=new URL(r.request().url());const parts=u.pathname.replace(/\.json$/,'').split('/').filter(Boolean);const m=r.request().method();
    const getAt=()=>parts.reduce((o,k)=>(o===null||o===undefined)?undefined:o[k],db);
@@ -106,6 +106,7 @@ try{
   await pg.click('.thi-submit');await pg.waitForSelector('dialog[open]');await pg.click('dialog[open] button:has-text("Nộp bài")');
   await pg.waitForSelector('.thi-grading');ok((await pg.textContent('.thi-grading')).includes('AI đang chấm'),'nộp → báo AI đang chấm tự luận');
   await pg.waitForSelector('.thi-tl-result');
+  ok(grades[0]&&grades[0].expired&&logins>=2,'token Worker hết hạn (401) → tự lấy token mới bằng mã + PIN rồi chấm lại, không "chờ chấm"');grades.shift();
   const g0=grades[0];ok(g0&&g0.auth==='Bearer worker-token'&&g0.q.items.length===1&&g0.q.items[0].guide.includes('Máy tính')&&g0.q.items[0].max===2&&g0.q.items[0].answer.startsWith('Ví dụ'),'gửi AI: đề + gợi ý đáp án + bài làm + điểm tối đa (token học sinh)');
   const rec=writes.filter(w=>w.path.endsWith('/thi_nop/t1/hs01.json')).at(-1).v;
   ok(rec.diem===2.5&&rec.diem_tn===1&&rec.tong===4&&rec.tu_luan.r3.d===1.5&&rec.tu_luan.r3.max===2&&rec.tu_luan.r3.nx&&rec.cho_cham===false&&!('r3' in rec.tra_loi)&&rec.tra_loi.r2==='A','ghi điểm: trắc nghiệm 1 + tự luận 1,5 = 2,5/4; bài làm tự luận ở tu_luan, không lẫn vào tra_loi');
