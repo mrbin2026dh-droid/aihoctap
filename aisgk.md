@@ -4337,3 +4337,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã kiểm 3 đường thi trong kho; đường đang dùng (Sheet + Firebase công khai) lộ đáp án (thi_de công khai), điểm do máy học sinh tự ghi, không kiểm đã nộp thực hành → không dùng cho thi thật. Kế hoạch dùng Worker chấm ở máy chủ, ca thi theo lớp + mã ca, màn thi 2 phần, Drive theo em, màn chấm giáo viên duyệt.
 - Tệp: docs/ke-hoach/thi-that.md. Chờ thầy chốt 5 câu hỏi ở mục 6; chưa code.
 
+### 30/10/2026 00:50 — Claude: kế hoạch Thi thật bản 2
+- Ghi quyết định của thầy (không chặn toàn trường, không đếm giờ, thi lại do giáo viên, không cho học sinh xem điểm, theo dõi tức thì + ghi chú vắng, thông báo nộp + mở Drive, 4 trạng thái). Thêm máy trạng thái, luồng giáo viên/học sinh, lưu trữ, tình huống biên, 7 bước.
+- Tệp: docs/ke-hoach/thi-that.md. Chờ thầy xác nhận 3 điểm mục 9; chưa code.
+

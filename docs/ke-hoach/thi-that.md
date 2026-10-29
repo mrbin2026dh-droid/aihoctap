@@ -1,91 +1,121 @@
-# Kế hoạch: THI THẬT tại phòng máy (Trắc nghiệm + Tự luận / Trắc nghiệm + Thực hành)
+# Kế hoạch: THI THẬT tại phòng máy (bản 2 – đã chốt với thầy 30/10/2026 00:28)
 
-Người lập: Claude, 30/10/2026 00:30. Trạng thái: **KẾ HOẠCH – chờ thầy chốt 5 câu hỏi ở mục 6**, chưa code.
-Phạm vi: dùng thật trong trường sau cuộc thi. Mức bảo mật: **CAO** (AGENTS.md mục H: đề, đáp án, chấm điểm, đăng nhập).
+Người lập: Claude. Trạng thái: **KẾ HOẠCH v2 – chờ thầy xác nhận 3 điểm ở mục 9**, chưa code.
+Mức bảo mật: **CAO** (AGENTS.md mục H: đề, đáp án, chấm điểm, đăng nhập).
+
+## 0. Thầy đã chốt
+| # | Quyết định | Hệ quả thiết kế |
+|---|---|---|
+| Q1 | Không chặn đăng nhập toàn trường | Chỉ học sinh **đang được mở thi** bị đưa vào màn thi (tắt học bài, Gia sư AI); các em khác dùng app bình thường |
+| Q2 | **Không đếm giờ**, học sinh nộp muộn được, giáo viên chờ | Không có đồng hồ, không tự nộp khi hết giờ. Ca thi kết thúc khi giáo viên chủ động đóng |
+| Q3 | Máy hỏng → giáo viên cho thi lại ở ca sau hoặc thi lại ngay | Trạng thái **Thi lại** do giáo viên bật cho từng em; bài làm dở được giữ |
+| Q4 | **Học sinh không xem điểm** | Không hiện điểm ở bất kỳ đâu: màn nộp, danh sách bài, Tổng quan học sinh, Bản đồ năng lực, Gia sư nhận xét |
+| Q5 | Màn giáo viên cập nhật tức thì em nào đã vào thi; ghi chú em vắng + lý do, lưu lại | Màn **Theo dõi ca thi**; ghi chú vắng lưu Sheet + Firebase |
+| Q6 | Học sinh nộp → giáo viên thấy thông báo nộp thành công, bấm vào em đó mở bài trên Google Drive | Thông báo nổi + dòng có nút "Mở bài trên Drive" (thư mục của em) và dấu kiểm đủ file |
+| Q7 | 4 trạng thái học sinh: **Chưa mở thi** (mặc định), **Chưa thi**, **Đã thi**, **Thi lại** | Máy trạng thái ở mục 2, chỉ máy chủ được đổi |
 
 ## 1. Hiện tại đang có gì (đã kiểm mã)
-Trong kho có **ba đường thi**, giao diện đang dùng đường thứ nhất:
+Trong kho có ba đường thi:
+- **① Đang dùng:** Google Sheet + Firebase công khai (`teacher-thi.js`, `thi-app.js`, `apps-script/sheet-exam/Code.gs`). Đã làm được: soạn và nhập đề Excel, Mở/Khóa bài, theo dõi tức thì, đảo câu và phương án, bắt buộc làm hết câu, nộp file thực hành lên Drive, AI chấm tự luận, sổ chấm thực hành có AI gợi ý, file chữ minh chứng trên Drive.
+- **② Worker** (`exam.js`, `/api/pwa/exams*`): chấm ở máy chủ, đăng nhập JWT, theo lớp.
+- **③ Firebase Auth "Cổng 2–3"** (`exam-fb.js`, `apps-script/exam`): đã thử 26/10, chưa nối với menu giáo viên.
 
-| Đường | Tệp | Đang dùng? | Ghi chú |
+**Đường ① không dùng được cho thi thật:** đề kèm đáp án đọc công khai; điểm do máy học sinh tự tính và tự ghi (sửa được, nộp thay bạn được); bài làm cả trường đọc công khai; không kiểm đã nộp thực hành. → Giữ ① cho **Luyện tập và thi thử**; thi thật dùng nền ② (máy chủ giữ đáp án và chấm).
+
+## 2. Máy trạng thái của MỘT học sinh trong MỘT kỳ thi
+| Trạng thái | Nghĩa | Học sinh thấy | Làm bài được? |
 |---|---|---|---|
-| ① Thi nhanh qua Google Sheet + Firebase công khai | `teacher-thi.js`, `thi-app.js`, `apps-script/sheet-exam/Code.gs`, nhánh `thi_*` | **Có** (menu Thi giáo viên, tab Thi học sinh) | Nhanh, đủ tính năng, nhưng **không an toàn cho thi thật** (mục 3) |
-| ② Thi qua Worker | `exam.js`, `/api/pwa/exams*`, `exam_defs` | Có mã, ít dùng | Chấm ở máy chủ, đồng hồ máy chủ, giới hạn số lần, cộng giờ, theo lớp (`class_codes`) |
-| ③ Thi qua Firebase Auth "Cổng 2–3" | `exam-fb.js`, `apps-script/exam/Code.gs` | Có mã, đã thử 26/10, không nối với menu giáo viên | Đề chỉ đọc trong giờ thi, Apps Script chấm, nhận file xlsx/pptx/docx/pdf |
+| **Chưa mở thi** (mặc định) | Chưa tới lượt | Thẻ bài "Chưa mở thi", không có nút | Không |
+| **Chưa thi** | Giáo viên đã mở, em chưa nộp | Nút **Vào thi** | Có |
+| **Đã thi** | Em đã nộp, máy chủ nhận đủ | "Em đã nộp bài" (không có điểm) | Không |
+| **Thi lại** | Giáo viên cho thi lại (máy hỏng, vắng, nộp lỗi) | Nút **Vào thi lại** | Có |
 
-Đường ① đã làm được:
-- **Giáo viên:** tạo bài (thật/thử, khối, **một** lớp, năm học, hình thức, nội dung TN / TN+TL / TN+TH); nhập đề từ Excel (mẫu cột STT, Loại, Câu hỏi, A–D, Đáp án, Điểm, Chủ đề, Gợi ý); Mở/Khóa; Cho xem điểm; theo dõi tức thì (phòng chờ / đang thi / đã nộp); thống kê; sổ chấm thực hành và AI gợi ý điểm theo tiêu chí; kéo điểm về trang KetQua.
-- **Học sinh:** chỉ thấy bài của lớp mình; vào được khi bài **Mở**; thi thật đảo thứ tự câu và phương án theo từng em; bắt buộc làm hết câu; đếm số lần rời màn hình; nộp một lần (luật Firebase); tải file thực hành (Apps Script → Drive); AI chấm tự luận ngay khi nộp.
-- **Minh chứng:** Drive `Bài thi - Góc học tập / Năm học / Lớp … / Hình thức - Tiêu đề /`, mỗi em một file chữ (đề, phương án, đáp án đúng, em chọn, đúng/sai, điểm) và file thực hành `Mã - Tên - Thực hành - …`.
-
-## 2. Đối chiếu quy trình của thầy
-| # | Bước thầy muốn | Hiện tại | Cần làm |
-|---|---|---|---|
-| 1 | Soạn đề trên máy hoặc Google Sheet | Có (Excel / soạn trong app; Sheet trang DeThi) | Giữ. Thêm: một đề có **nhiều mã đề** (đảo đã có) |
-| 2 | Mỗi buổi, giáo viên cập nhật đề lên | Có (đề đẩy lên Firebase khi lưu) | Đề **chỉ đưa cho học sinh khi ca thi bắt đầu** (hiện công khai mọi lúc) |
-| 3 | Kiểm tra học sinh vào phòng máy, mở máy | Có phòng chờ + trạng thái trực tuyến | Thêm **mã ca thi** 6 số giáo viên đọc tại phòng: chỉ em có mặt mới vào được |
-| 4 | Giáo viên chọn lớp → cho thi | Mở/Khóa **theo bài**, một bài chỉ **một lớp** | **Ca thi = đề × lớp**, trạng thái riêng từng lớp: Chưa thi → Đang thi → Đã thi |
-| 5 | Lớp khác không được thi, không đăng nhập | Lớp khác không thấy bài; vẫn đăng nhập học bình thường | Chặn đúng ca thi; còn chặn đăng nhập toàn trường thì xem câu hỏi 6.1 |
-| 6 | Thi xong → "Đã thi", không vào lại | Thi thật nộp một lần; bài vẫn "Mở" tới khi khóa tay | Kết thúc ca → lớp sang "Đã thi", không vào lại; em chưa nộp được tự nộp phần đã làm |
-| 7 | Đề TN+TL làm bình thường | Có | Giữ, chuyển chấm về máy chủ |
-| 8 | Đề TN+TH: làm thực hành (Word/Excel/PowerPoint) trên máy, tải lên, rồi làm TN | Có tải file, nhưng `accept` chỉ .xlsx/.py | Nhận .docx/.xlsx/.pptx/.pdf; giao diện 2 phần rõ ràng |
-| 9 | Nộp: thiếu TN hoặc thiếu TH thì cảnh báo, không cho nộp | Chỉ kiểm câu TN/TL; **không kiểm đã nộp thực hành**; trạng thái nộp file chỉ lưu trong trình duyệt | Máy chủ xác nhận file đã nằm trên Drive mới cho nộp; hộp thoại liệt kê đúng phần thiếu |
-| 10 | Lưu Drive theo Kỳ thi / Lớp / Tên học sinh: file chữ TN + bài thực hành | Có, theo Năm học / Lớp / Hình thức - Tiêu đề; file chữ chạy **sau** (khi kéo điểm) | Thư mục mỗi em: `Kỳ thi / Lớp / Mã - Tên /`; ghi file chữ ngay khi nộp; kiểm cả hai file tồn tại mới "Hoàn thành" |
-| 11 | Chấm: TN tự động; TL và TH AI gợi ý, giáo viên duyệt | TN chấm **trên máy học sinh**; TL AI chấm khi nộp; TH AI gợi ý trong sổ chấm | TN chấm ở máy chủ; màn "Chấm bài" theo ca: điểm TN, gợi ý AI cho TL/TH, giáo viên sửa và duyệt; xuất bảng điểm |
-
-## 3. Lỗi nghiêm trọng phải sửa trước khi thi thật (đường ①)
-1. **Đáp án công khai:** `thi_de` đọc được không cần đăng nhập và chứa `answer` → học sinh xem đáp án ở nhà bất cứ lúc nào.
-2. **Điểm do máy học sinh tự tính và tự ghi:** `thi_nop/{bài}/{mã}` ghi bằng REST không xác thực → em sửa được điểm của mình, hoặc nộp thay bạn khác (chỉ cần biết mã).
-3. **Bài làm và điểm cả trường đọc công khai** (`thi_nop .read: true`).
-4. **Đăng nhập kiểm trên máy học sinh** bằng băm PIN trong `thi_hs` công khai → dò được PIN 6 số (đã báo 29/10).
-5. Nộp bài không kiểm đã nộp thực hành; "đã nộp file" chỉ lưu trong trình duyệt.
-→ Đường ① **giữ cho Luyện tập và thi thử**. Thi thật phải đi đường có máy chủ (mục 4).
-
-## 4. Thiết kế đề xuất
-**Nguyên tắc:** học sinh không bao giờ giữ đáp án; máy chủ quyết định ai được thi, lúc nào, và chấm điểm; Drive là nơi lưu minh chứng; giáo viên duyệt điểm cuối.
-
-**Nền:** dùng **đường ② (Worker)** đã có JWT, chấm ở máy chủ, đồng hồ máy chủ, `class_codes`, cộng giờ. Soạn đề vẫn trên Sheet/Excel như hiện tại; khi giáo viên "Đưa đề lên cho buổi thi", Apps Script gửi đề sang Worker (`exam_defs`, đáp án lưu riêng, học sinh không đọc được).
-
-**Dữ liệu mới (Worker/Firebase, chỉ máy chủ ghi):**
-```
-ky_thi/{id}      {ten, nam_hoc, hinh_thuc, khoi, noi_dung: tn_tl|tn_th, phut, de_id, tieu_chi_th[]}
-ca_thi/{id}/{lop} {trang_thai: chua_thi|dang_thi|tam_dung|da_thi, ma_ca: 6 số, bat_dau, ket_thuc, gv}
-bai_nop/{id}/{ma} {tn:{...}, tl:{...}, th:{file_id, ten, size, at}, diem_tn, goi_y_tl, goi_y_th, diem_gv, trang_thai: dang_lam|thieu_th|hoan_thanh|da_cham}
-```
-
-**Luồng giáo viên:** Kỳ thi → chọn đề → bấm "Đưa đề lên" (kiểm đề: đủ đáp án, điểm, tiêu chí thực hành) → buổi thi chọn **Lớp** → màn ca thi: mã ca 6 số, danh sách lớp (trực tuyến / đã vào / đang làm / đã nộp TH / đã nộp) → **Bắt đầu** → (Tạm dừng, Cộng giờ cho một em, Cho em vào lại khi máy hỏng) → **Kết thúc ca** (xác nhận) → lớp sang "Đã thi".
-
-**Luồng học sinh:**
-1. Đăng nhập. Lớp đang có ca "Đang thi" thì vào thẳng màn thi (tắt Gia sư AI, tắt học bài).
-2. Nhập **mã ca** giáo viên đọc → phòng chờ → giáo viên bấm Bắt đầu → máy chủ cấp đề (không có đáp án) và đồng hồ.
-3. Đề TN+TL: một trang, như hiện tại.
-4. Đề TN+TH: hai thẻ **Phần 1 · Thực hành** (đề thực hành, chọn file .docx/.xlsx/.pptx/.pdf ≤ 10 MB, Tải lên, máy chủ trả tên + dung lượng + giờ, nộp lại được để thay file) và **Phần 2 · Trắc nghiệm**. Thanh trên cùng: đồng hồ, "TN 18/20 · TH: đã nộp ✓ / chưa nộp".
-5. Bấm Nộp bài → kiểm theo thứ tự: (a) còn câu TN/TL chưa làm → liệt kê số câu; (b) **chưa có file thực hành được máy chủ xác nhận** → "Em chưa nộp bài thực hành", nút đi tới Phần 1. Đủ cả hai mới hiện xác nhận "Nộp bài? Nộp rồi không làm lại được".
-6. Nộp xong: máy chủ chấm TN, ghi file chữ minh chứng vào Drive, **kiểm lại** cả file chữ và file thực hành đều có trên Drive → trạng thái "Hoàn thành". Thiếu (Drive lỗi) → báo em "Nộp lại phần thực hành" ngay tại chỗ, giáo viên thấy cờ đỏ.
-7. Hết giờ: máy chủ tự nộp phần đã làm (nháp lưu 1,5 giây/lần), ghi "thiếu thực hành" nếu chưa có file (xem 6.2).
-
-**Drive:** `Bài thi - Góc học tập / <Năm học> / <Kỳ thi> / Lớp <lớp> / <Mã> - <Tên> /` gồm `trac-nghiem.txt` (đề, đáp án đúng, em chọn, đúng/sai, điểm, giờ nộp, số lần rời màn hình) và file thực hành gốc.
-
-**Chấm (giáo viên):** màn "Chấm bài" theo ca: mỗi em một dòng: TN (tự động), TL (AI gợi ý + lý do), TH (AI gợi ý theo tiêu chí từ nội dung file + kiểm tự động công thức Excel nếu có), ô điểm giáo viên, nút **Duyệt**; mở file Drive một chạm; xuất bảng điểm Excel. AI chỉ gợi ý, điểm chính thức là điểm giáo viên duyệt. Gửi AI không kèm tên/mã học sinh.
-
-**Ổn định khi cả phòng máy thi:** đề tải một lần lúc bắt đầu; nháp lưu trên máy và gửi máy chủ 1,5 giây/lần; mất mạng vẫn làm tiếp, có mạng tự gửi; máy hỏng thì giáo viên bấm "Cho vào lại" để em sang máy khác, bài làm còn nguyên.
-
-## 5. Các bước làm (mỗi bước Claude kiểm rồi mới sang bước sau)
-| Bước | Việc | Xong khi |
+Chuyển trạng thái (**chỉ máy chủ ghi**, học sinh không tự đổi được):
+| Từ → Đến | Ai/lúc nào | Ghi chú |
 |---|---|---|
-| 0 | Chặn rủi ro ngay: `thi_de` bỏ đáp án (chỉ đưa câu hỏi); đề thi thật không đẩy lên Firebase công khai | Test luật: đọc `thi_de` không thấy `answer` |
-| 1 | Worker: `ky_thi`, `ca_thi` (theo lớp, mã ca), cấp đề khi ca "Đang thi" + đúng lớp + đúng mã ca | Test: lớp khác 403; sai mã ca 403; ca "Đã thi" 403 |
-| 2 | Apps Script: "Đưa đề lên" từ Sheet sang Worker; kiểm đề | Test: đề thiếu đáp án bị từ chối, có báo dòng lỗi |
-| 3 | Học sinh: màn thi 2 phần, đồng hồ, nộp TH qua Apps Script trả `file_id` cho Worker | Test DOM: thiếu TN chặn, thiếu TH chặn, đủ mới nộp |
-| 4 | Máy chủ chấm TN, ghi Drive, kiểm cả 2 file, trạng thái Hoàn thành / Thiếu | Test: Drive lỗi → "thiếu", em được nộp lại |
-| 5 | Giáo viên: màn ca thi (bắt đầu, tạm dừng, cộng giờ, cho vào lại, kết thúc) | Test: kết thúc → tự nộp nháp, lớp "Đã thi" |
-| 6 | Màn chấm: AI gợi ý TL/TH, giáo viên duyệt, xuất Excel | Test: điểm chính thức = điểm giáo viên duyệt |
-| 7 | Thi thử toàn trình với lớp 9TH (30 tài khoản thử) trên phòng máy thật | Báo cáo có ảnh, 0 lỗi nghiêm trọng |
+| Chưa mở thi → Chưa thi | Giáo viên bấm **Mở thi cho lớp** (cả lớp) hoặc **Mở cho em này** (từng em) | Lớp khác giữ nguyên "Chưa mở thi" |
+| Chưa thi → Đã thi | Em nộp thành công (đủ phần, Drive đã có file) | Giáo viên nhận thông báo |
+| Chưa thi → Chưa mở thi | Giáo viên bấm **Đóng thi lớp này** (hết lượt lớp) | Em vắng hoặc chưa vào: về "Chưa mở thi", **ghi chú vắng được giữ**; bài làm dở (nếu có) được giữ trên máy chủ |
+| Đã thi → Thi lại | Giáo viên bấm **Cho thi lại** (bắt buộc ghi lý do) | Lần nộp trước vẫn lưu trên Drive |
+| Thi lại → Đã thi | Em nộp lần thi lại | Lần mới là lần chính thức (xem mục 9.1) |
+| Thi lại → Chưa mở thi | Giáo viên đóng lớp khi em chưa nộp lần thi lại | Thi lại ở ca sau: mở lại cho em đó |
 
-Ước lượng: bước 0 nửa ngày; bước 1–4 hai đến ba ngày; bước 5–6 hai ngày; bước 7 một buổi.
+Bất biến: (a) đã ở "Đã thi" thì **không vào được** cho đến khi giáo viên bật "Thi lại"; (b) học sinh chỉ nhận đề khi trạng thái là "Chưa thi" hoặc "Thi lại"; (c) mọi lần đổi trạng thái ghi nhật ký: ai, lúc nào, lý do.
 
-## 6. Câu hỏi thầy cần chốt
-1. **Chặn đăng nhập lớp khác trong giờ thi:** Claude đề xuất **không chặn toàn trường** (học sinh ở nhà vẫn học được; tải phòng máy khoảng 40 máy là nhẹ với hệ thống), chỉ chặn đúng lớp đang thi ra khỏi phần học và Gia sư. Nếu thầy vẫn muốn chặn, sẽ là một công tắc "Giờ thi: chỉ lớp đang thi được đăng nhập".
-2. **Hết giờ mà chưa nộp thực hành:** tự nộp TN và ghi 0 điểm thực hành, hay giữ ca cho em đó thêm vài phút để nộp file?
-3. **Thời gian làm bài:** đồng hồ đếm ngược theo từng em (bắt đầu khi em vào) hay theo cả ca (giáo viên bấm Bắt đầu là tính chung)?
-4. **Máy hỏng giữa giờ:** cho em vào lại trên máy khác (giữ thời gian còn lại) do giáo viên bấm. Thầy đồng ý cách này không?
-5. **Xem điểm:** sau khi giáo viên duyệt mới cho học sinh xem điểm (đề xuất), hay xem điểm TN ngay khi nộp?
+## 3. Luồng giáo viên
+1. **Soạn đề** trên máy (Excel) hoặc Google Sheet như hiện tại. Đề có: tiêu đề, năm học, hình thức (15 phút, giữa kỳ…), khối, nội dung (**TN + TL** hoặc **TN + TH**), câu hỏi, đáp án, điểm; đề thực hành và tiêu chí chấm.
+2. **Đưa đề lên** trước buổi thi: kiểm đề (đủ đáp án, điểm, tiêu chí thực hành; báo dòng lỗi). Đề chuyển sang máy chủ, đáp án lưu chỗ học sinh không đọc được. Mọi học sinh của khối ở "Chưa mở thi".
+3. **Tới lượt một lớp:** mở màn **Theo dõi ca thi** → chọn **Lớp** → bấm **Mở thi cho lớp** (hộp thoại xác nhận: "Mở thi cho lớp 9A9, 34 em"). Màn hiện **mã ca 6 số** để đọc cho lớp (xem 9.2).
+4. **Theo dõi tức thì** (mỗi em một dòng, xếp theo trạng thái):
+   - Trực tuyến / Đã vào thi lúc … / Đang làm (TN 12/20, TH đã nộp ✓ hoặc chưa) / **Đã nộp lúc …** / Vắng (ghi chú).
+   - Ô đếm đầu màn: Sĩ số 34 · Đã vào 31 · Đang làm 20 · Đã nộp 11 · Chưa vào 3.
+   - Em nộp: **thông báo nổi** "Nguyễn Văn A (9A9) đã nộp bài" + dòng đổi màu; nút **Mở bài trên Drive** (thư mục của em) và hai dấu kiểm "Trắc nghiệm.txt ✓ · Thực hành ✓" (máy chủ đã kiểm file có trên Drive).
+   - Em chưa vào: nút **Ghi chú vắng** → hộp thoại chọn lý do (Ốm, Có phép, Không phép, Khác + ô ghi) → lưu.
+   - Từng em: **Cho thi lại** (bắt buộc lý do), **Mở cho em này**.
+5. **Đóng thi lớp này** khi giáo viên thấy đủ (không đếm giờ). Hộp thoại xác nhận nêu: "Còn 2 em đang làm, 3 em chưa vào. Đóng thì các em này về Chưa mở thi, bài làm dở được giữ." Em đang làm mà mất mạng hoặc máy hỏng vẫn còn bài làm dở.
+6. **Chấm bài** (màn riêng, theo lớp): TN máy chủ chấm sẵn; TL và TH có **AI gợi ý điểm + lý do** (gửi AI không kèm tên/mã); giáo viên sửa điểm, bấm **Duyệt**; mở bài trên Drive một chạm; xuất bảng điểm Excel. Điểm chính thức là điểm giáo viên duyệt.
+
+## 4. Luồng học sinh
+1. Đăng nhập như thường. Nếu em đang ở "Chưa thi"/"Thi lại" của một kỳ thi: app mở thẳng tab Thi, thẻ bài có nút **Vào thi**; Gia sư AI và học bài tạm tắt.
+2. Bấm Vào thi → nhập **mã ca** (nếu bật) → máy chủ ghi "đã vào thi" (giáo viên thấy ngay) → nhận đề (không có đáp án). Không có đồng hồ.
+3. **Đề TN + TL:** một trang, như hiện tại.
+4. **Đề TN + TH:** hai thẻ:
+   - **Phần 1 · Thực hành:** đề thực hành; chọn file .docx/.xlsx/.pptx/.pdf (≤ 10 MB) → **Tải lên** → máy chủ trả "Đã nhận: bai-lam.xlsx, 245 KB, 09:12" (nộp lại được để thay file).
+   - **Phần 2 · Trắc nghiệm.**
+   - Thanh trên cùng: "TN 18/20 · Thực hành: đã nộp ✓ / chưa nộp".
+5. Bài làm dở **lưu lên máy chủ 1,5 giây/lần** và lưu trên máy; mất mạng vẫn làm tiếp, có mạng tự gửi; sang máy khác (khi được thi lại) thì bài làm dở hiện lại.
+6. Bấm **Nộp bài** → kiểm theo thứ tự:
+   - Thiếu câu TN/TL → hộp thoại "Còn câu 3, 7 chưa làm" + đưa tới câu đầu tiên còn thiếu.
+   - Đề TN+TH mà máy chủ **chưa xác nhận file thực hành** → "Em chưa nộp bài thực hành" + nút "Tới Phần 1".
+   - Đủ cả hai → "Nộp bài? Nộp rồi không làm lại được." → Nộp.
+7. Máy chủ: chấm TN, ghi `Trắc nghiệm.txt` vào thư mục Drive của em, **kiểm lại** cả hai file có trên Drive → trạng thái **Đã thi** → học sinh thấy "Em đã nộp bài thành công" (**không có điểm**); giáo viên nhận thông báo. Drive lỗi → học sinh thấy "Chưa lưu được bài thực hành, em bấm Nộp lại", trạng thái giữ "Chưa thi", giáo viên thấy cờ đỏ.
+
+## 5. Lưu trữ
+**Google Drive (minh chứng):** `Bài thi - Góc học tập / <Năm học> / <Hình thức> - <Tiêu đề> / Lớp <lớp> / <Mã> - <Họ tên> /`
+- `Trắc nghiệm.txt`: đề từng câu, các phương án, đáp án đúng, em chọn, đúng/sai, điểm TN, giờ vào, giờ nộp, số lần rời màn hình. Có cả bài tự luận nếu đề TN+TL.
+- File thực hành gốc (giữ tên em đặt, thêm tiền tố mã).
+- Thi lại: thêm `Lần 2 - …`, không xóa lần trước.
+
+**Google Sheet (theo dõi lâu dài):** trang `CaThi` (mỗi lần mở/đóng lớp), `DiemDanhThi` (mã, tên, lớp, kỳ thi, trạng thái, giờ vào, giờ nộp, **vắng + lý do**, người ghi), `KetQua` (điểm TN, gợi ý AI, điểm giáo viên duyệt, đường dẫn Drive).
+
+**Máy chủ (chỉ máy chủ ghi; học sinh chỉ đọc trạng thái của chính mình):**
+```
+ky_thi/{id}             {tieu_de, nam_hoc, hinh_thuc, khoi, noi_dung, de_id, tieu_chi_th[], tao_luc}
+thi_tt/{id}/{ma}        {tt: chua_mo|chua_thi|da_thi|thi_lai, lop, vao_luc, nop_luc, lan, ma_ca?}
+thi_vang/{id}/{ma}      {ly_do, ghi, gv, at}
+thi_nhat_ky/{id}/{n}    {ma|lop, tu, den, gv, ly_do, at}
+bai_lam/{id}/{ma}/{lan} {tn, tl, th:{file_id,ten,size,at}, drive:{folder_id, txt_ok, th_ok}, diem_tn, goi_y, diem_gv, duyet}
+```
+Đáp án nằm ở kho riêng của máy chủ (như `packages_private`/`exam_defs`), không bao giờ gửi về máy học sinh.
+
+## 6. Tình huống biên (đã tính)
+| Tình huống | Xử lý |
+|---|---|
+| Em ở nhà (lớp đang được mở) vào thi thay | Mã ca 6 số chỉ đọc tại phòng (9.2); giáo viên thấy em "đã vào" mà không có mặt thì đánh dấu và cho thi lại |
+| Hai máy cùng đăng nhập một em | Máy chủ chỉ nhận một phiên làm bài; máy thứ hai thấy "Tài khoản đang thi trên máy khác" |
+| Mất mạng giữa bài | Làm tiếp trên máy, có mạng tự gửi; giáo viên thấy "mất kết nối lúc …" |
+| Nộp file thực hành sai định dạng hoặc quá 10 MB | Báo ngay, không nhận |
+| Giáo viên đóng lớp khi em đang làm | Hộp thoại cảnh báo; bài dở giữ; em về "Chưa mở thi" |
+| Đổi đề sau khi đã có em nộp | Chặn sửa đáp án; chỉ cho tạo đề mới |
+| Học sinh xem điểm qua chỗ khác | Không trả điểm trong mọi API của học sinh; tắt "Gia sư nhận xét bài thi" và cập nhật Bản đồ năng lực cho thi thật |
+
+## 7. Các bước làm (mỗi bước Claude kiểm rồi mới sang bước sau)
+| Bước | Việc | Xong khi (test FAIL trước) |
+|---|---|---|
+| 0 | Chặn rủi ro đường ①: không đẩy đề thi thật lên `thi_de` công khai; `thi_de` thi thử bỏ đáp án nếu chấm được ở máy chủ | Đọc `thi_de` của đề thi thật → không có |
+| 1 | Máy chủ: kỳ thi, trạng thái 4 mức + nhật ký, mở/đóng theo lớp, từng em, thi lại, ghi chú vắng | Test: học sinh tự đổi trạng thái → 403; lớp khác → 403; "Đã thi" vào lại → 403; thi lại → vào được |
+| 2 | Đưa đề từ Sheet/Excel lên máy chủ, kiểm đề | Đề thiếu đáp án bị từ chối, báo đúng dòng |
+| 3 | Học sinh: màn thi 2 phần, lưu nháp lên máy chủ, nộp TH (Apps Script trả `file_id` cho máy chủ), kiểm thiếu khi nộp | Test DOM: thiếu TN chặn, thiếu TH chặn, đủ mới nộp; không có điểm trên màn |
+| 4 | Nộp: chấm TN, ghi Drive, kiểm đủ file → Đã thi; Drive lỗi → Nộp lại | Test: Drive lỗi giả lập → giữ "Chưa thi", báo nộp lại |
+| 5 | Giáo viên: màn Theo dõi ca thi (tức thì, thông báo nộp, mở Drive, ghi chú vắng, cho thi lại, đóng lớp) | Test: 2 em nộp → 2 thông báo, nút Drive đúng thư mục; vắng có lý do lưu Sheet |
+| 6 | Màn chấm: AI gợi ý TL/TH, giáo viên duyệt, xuất Excel | Điểm chính thức = điểm giáo viên duyệt |
+| 7 | Thi thử toàn trình lớp 9TH (30 tài khoản thử) trên phòng máy | Báo cáo có ảnh, 0 lỗi nghiêm trọng |
+Ước lượng: bước 0 nửa ngày; 1–4 ba ngày; 5–6 hai ngày; 7 một buổi.
+
+## 8. Thay đổi so với bản 1
+Bỏ đồng hồ, bỏ tự nộp khi hết giờ, bỏ cộng giờ; thêm trạng thái 4 mức theo từng em, ghi chú vắng, thông báo nộp + mở Drive, mở cho từng em, không cho xem điểm.
+
+## 9. Cần thầy xác nhận (3 điểm)
+1. **Điểm khi thi lại:** lần thi lại là điểm chính thức (lần trước vẫn lưu Drive làm minh chứng) – Claude đề xuất cách này. Hay lấy điểm cao hơn?
+2. **Mã ca 6 số:** giữ (chặn em vắng ở nhà vào thi khi lớp đang mở) – đề xuất giữ. Hay bỏ cho nhanh, chỉ dựa vào việc giáo viên quan sát?
+3. **Đóng lớp khi còn em đang làm:** các em này về "Chưa mở thi" và thi tiếp ở ca sau (bài dở còn nguyên) – đúng ý thầy không?
