@@ -38,3 +38,10 @@
 
 ## 5. Dọn dữ liệu sau cuộc thi (chỉ lớp 9TH, không đụng dữ liệu thật)
 Xóa theo mã `th9001`…`th9030` và lớp `9TH`: Firebase `attempts/{mã}`, `attempt_details/{mã}`, `doc_read/*/{mã}`, `thoi_gian/*/{mã}`, `presence/{mã}`, `nang_luc/{mã}`, `thi_vao|thi_nop/{đề thử}/…`, phòng `quiz/…`, `tl/…` đã dùng; Sheet: xóa 30 dòng HocSinh và các dòng KetQua của đề thử; nhật ký Bộ não lớp 9TH. Ghi lại lệnh/đường dẫn đã xóa vào báo cáo.
+
+## 6. Chống báo cáo không có thật (thầy yêu cầu 29/10 23:25)
+Mọi số liệu phải nằm trên hệ thống thật (Firebase, Google Sheet) để thầy và Claude tự kiểm tra lại, không chỉ có trong báo cáo:
+1. Chạy trên https://aihoctap.online (bản thật), không chạy trên localhost hay dữ liệu giả lập.
+2. Sau khi chạy, xuất nguyên bản (không chỉnh sửa) các nhánh của lớp 9TH: `attempts/th90xx`, `doc_read/*/th90xx`, `thi_nop/<đề thử>`, `thoi_gian/<ngày>` (chỉ các mã th90xx), vào `tests/sim/out/firebase-9TH.json`, rồi **commit** (không chứa PIN).
+3. `tests/sim/out/log.jsonl` có thời điểm từng bước; Claude sẽ đối chiếu thời điểm này với `at`/`submitted_at` trong Firebase. Lệch thì coi như báo cáo sai.
+4. Thầy tự kiểm tra: Tổng quan chọn **Lớp 9TH**, Tài khoản lọc lớp 9TH, Sheet trang KetQua có các dòng của đề thử. Số trên màn hình phải khớp với bảng trong báo cáo.
