@@ -22,7 +22,9 @@
 Đáp án chọn theo tỉ lệ đúng của nhóm, ngẫu nhiên có hạt giống cố định (`seed=2026`) để chạy lại ra cùng kết quả.
 
 ## 3. Cách chạy
-- Viết `tests/sim/run_simulation.cjs` (Playwright, Chromium), mỗi em một context riêng, chạy **song song 10 em**, viewport điện thoại 390×844 cho nửa số em và 1280×800 cho nửa còn lại.
+- **Script đã có sẵn:** `tests/sim/run_simulation.cjs` (Claude viết; đã chạy thử trên máy với máy chủ giả lập: đăng nhập, mở bài, đọc theo tỉ lệ nhóm, luyện tập + "Làm lại", Gia sư đều chạy, 0 lỗi). Script chỉ chấp nhận mã dạng `TH9xxx` (mã học sinh thật bị chặn). Nửa số em dùng khổ điện thoại 390×844, nửa còn lại 1280×800.
+- Tạo 30 tài khoản: dán 30 dòng vào trang HocSinh (lớp `9TH`, tên `[THỬ] …`), rồi vào app Tài khoản → bấm **"Đẩy lên Firebase ngay"** (hoặc menu Sheet → Cập nhật lên Firebase). Ghi `tests/fixtures/sim-accounts.json` dạng `[{"ma":"TH9001","pin":"…","nhom":"A"}, …]` (đã gitignore).
+- Chạy thử 1 em trước: `NODE_PATH=$(npm root -g) node tests/sim/run_simulation.cjs --chi=TH9001`, rồi chạy tất cả: `--song-song=8`. Kết quả ở `tests/sim/out/` (log.jsonl, tong-ket.json, anh/).
 - Ghi cho mỗi bước: thời gian (ms), mã HTTP, lỗi Console/pageerror, ảnh khi lỗi. Ghi `tests/sim/out/log.jsonl` (không có PIN).
 - Gia sư: dùng `ms`/Server-Timing trong phản hồi `/api/pwa/tutor`. Tổng số câu hỏi Gia sư ≤ 80 (giữ hạn mức Gemini).
 - Thi thử: giáo viên tạo 1 đề thi thử 10 câu cho lớp `9TH`, mở 20 phút; nhóm A–C vào thi cùng lúc.
@@ -45,3 +47,7 @@ Mọi số liệu phải nằm trên hệ thống thật (Firebase, Google Sheet
 2. Sau khi chạy, xuất nguyên bản (không chỉnh sửa) các nhánh của lớp 9TH: `attempts/th90xx`, `doc_read/*/th90xx`, `thi_nop/<đề thử>`, `thoi_gian/<ngày>` (chỉ các mã th90xx), vào `tests/sim/out/firebase-9TH.json`, rồi **commit** (không chứa PIN).
 3. `tests/sim/out/log.jsonl` có thời điểm từng bước; Claude sẽ đối chiếu thời điểm này với `at`/`submitted_at` trong Firebase. Lệch thì coi như báo cáo sai.
 4. Thầy tự kiểm tra: Tổng quan chọn **Lớp 9TH**, Tài khoản lọc lớp 9TH, Sheet trang KetQua có các dòng của đề thử. Số trên màn hình phải khớp với bảng trong báo cáo.
+
+## 7. Cho Ban giám khảo xem (đúng sự thật)
+- Trong bài dự thi ghi rõ: "Lớp **9TH** là lớp minh họa dùng tài khoản thử để kiểm thử hệ thống; số liệu học sinh thật ở các lớp 9A9, 9A10, 8A7, 8A8 là thí điểm từ 29/10/2026."
+- Khi Ban giám khảo đăng nhập, Tổng quan chọn **Lớp 9TH** sẽ hiện đủ 5 mục (tham gia, mức nắm bài, kết quả theo bài, kiến thức cần củng cố, từng học sinh); chọn lớp thật sẽ hiện số liệu thí điểm thật.

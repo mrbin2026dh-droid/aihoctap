@@ -46,4 +46,3 @@ agent/.env
 
 # PIN tài khoản thử của kiểm thử mô phỏng (không commit)
 tests/fixtures/sim*
-tests/sim/out/
