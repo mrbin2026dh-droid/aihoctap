@@ -31,3 +31,10 @@ ok(r.qs.length === 1 && r.qs[0].text === 'Bit là gì?' && !r.errors.length, 'nh
 ok(parseQuizRows([['x', 'y']]).fatal && parseQuizRows([['STT', 'Câu', 'A']]).fatal, 'sai mẫu → báo lỗi rõ');
 ok(setClasses({ lop: '9A' }).join() === '9A' && setClasses({ lops: ['9A', '9B'], lop: '9A' }).join() === '9A,9B', 'bộ câu hỏi cũ một lớp vẫn dùng được');
 console.log('QUIZ CORE OK ' + n);
+import { classSummary } from '../frontend/hoc/quiz-core.js';
+{
+  const s = classSummary([{ text: 'a', opts: { A: 'x', B: 'y' }, ans: 'A', topic: 'Bit', pct: 90, counts: { A: 9, B: 1 } }, { text: 'b', opts: { A: 'CPU', B: 'RAM' }, ans: 'A', topic: 'Phần cứng', pct: 20, counts: { A: 2, B: 8 } }]);
+  ok(s.muc_hieu === 'Trung bình' && s.muc[1].items[0].includes('Câu 1 (Bit)') && s.muc[2].items[0].includes('nhiều em chọn B. "RAM"') && s.muc[3].items[0].includes('Phần cứng'), 'nhận xét tính sẵn khi AI lỗi: mức hiểu, câu tốt, hiểu lầm, đề xuất');
+  ok(classSummary([]).muc.length === 0, 'chưa có câu nào → không nhận xét');
+  console.log('QUIZ CORE SUMMARY OK');
+}

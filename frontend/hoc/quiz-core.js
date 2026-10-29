@@ -104,3 +104,29 @@ export function parseQuizRows(rows) {
 
 /** Lớp của một bộ câu hỏi (tương thích bản cũ chỉ có một lớp). @param {{lop?:string,lops?:string[]}} s */
 export const setClasses = s => Array.isArray(s?.lops) && s.lops.length ? s.lops.map(String) : s?.lop ? [String(s.lop)] : [];
+
+/**
+ * Nhận xét nhanh tính sẵn trên máy (dùng khi AI chưa trả lời được). Chỉ dựa số liệu, không gửi đi đâu.
+ * @param {{text:string,opts:Record<string,string>,ans:string,topic?:string,pct:number,counts:Record<string,number>}[]} stats
+ * @returns {{muc_hieu:string, muc:{lab:string,items:string[]}[]}}
+ */
+export function classSummary(stats) {
+  const list = (stats || []).filter(Boolean);
+  if (!list.length) return { muc_hieu: '', muc: [] };
+  const avg = Math.round(list.reduce((a, s) => a + (Number(s.pct) || 0), 0) / list.length);
+  const muc_hieu = avg >= 80 ? 'Tốt' : avg >= 65 ? 'Khá' : avg >= 50 ? 'Trung bình' : 'Cần dạy lại';
+  const name = (/** @type {any} */ s, /** @type {number} */ i) => `Câu ${i + 1}${s.topic ? ` (${s.topic})` : ''}`;
+  const idx = list.map((s, i) => ({ s, i }));
+  const good = idx.filter(x => x.s.pct >= 70).map(x => `${name(x.s, x.i)}: ${x.s.pct}% đúng`);
+  const weak = idx.filter(x => x.s.pct < 50).map(x => {
+    const w = L.filter(k => k !== x.s.ans && x.s.counts?.[k]).sort((a, b) => x.s.counts[b] - x.s.counts[a])[0];
+    return `${name(x.s, x.i)}: ${x.s.pct}% đúng${w ? `; nhiều em chọn ${w}. "${x.s.opts[w]}" thay vì ${x.s.ans}. "${x.s.opts[x.s.ans]}"` : ''}`;
+  });
+  const topics = [...new Set(idx.filter(x => x.s.pct < 50).map(x => x.s.topic || name(x.s, x.i)))];
+  return { muc_hieu, muc: [
+    { lab: 'Mức hiểu chung', items: [`Đúng trung bình ${avg}% trên ${list.length} câu: ${muc_hieu.toLowerCase()}.`] },
+    { lab: 'Lớp nắm tốt', items: good.length ? good : ['Chưa có câu nào đạt từ 70% đúng.'] },
+    { lab: 'Cần dạy lại', items: weak.length ? weak : ['Không có câu dưới 50% đúng.'] },
+    { lab: 'Đề xuất', items: topics.length ? [`Dành 5–10 phút giảng lại: ${topics.join(', ')}; hỏi lại lớp bằng một câu tương tự.`] : ['Chuyển sang nội dung mới, giao bài vận dụng.'] },
+  ] };
+}

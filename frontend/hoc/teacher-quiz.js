@@ -13,7 +13,8 @@ import { api } from './api.js';
 import * as ui from './teacher-ui.js?v=20261029a';
 import { confirmBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
-import { L, MAX_Q, QUIZ_COLUMNS, awards, blankScore, parseQuizRows, ranked as rankScore, scoreQuestion, setClasses } from './quiz-core.js';
+import { L, MAX_Q, QUIZ_COLUMNS, awards, blankScore, classSummary, parseQuizRows, ranked as rankScore, scoreQuestion, setClasses } from './quiz-core.js';
+import * as fx from './quiz-fx.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -256,8 +257,9 @@ $('qz-exam-go').addEventListener('click', async () => {
 });
 
 /* ---------- Phòng luyện tập (máy chiếu) ---------- */
-/** @type {null|{room:string,key:string,set:QSet,i:number,phase:'lobby'|'q'|'pause'|'reveal'|'end',players:Record<string,{ten:string}>,score:Record<string,import('./quiz-core.js').Score>,stats:any[],lopKeys:string[],stops:(()=>void)[],ansStop?:()=>void,answers:Record<string,any>,timer:number,qAt:number,off:number,end:number,left:number,prevRank:Record<string,number>,muc?:string}} */ let room = null;
+/** @type {null|{room:string,key:string,set:QSet,i:number,phase:'lobby'|'ready'|'q'|'pause'|'reveal'|'board'|'end',players:Record<string,{ten:string}>,score:Record<string,import('./quiz-core.js').Score>,stats:any[],lopKeys:string[],stops:(()=>void)[],ansStop?:()=>void,answers:Record<string,any>,timer:number,qAt:number,off:number,end:number,left:number,prevRank:Record<string,number>,muc?:string}} */ let room = null;
 const host = $('qz-host'), main = $('qz-h-main'), foot = $('qz-h-foot');
+const initials = (/** @type {string} */ v) => String(v || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase();
 const rnd = (/** @type {number} */ n) => { const a = new Uint8Array(n); crypto.getRandomValues(a); return a; };
 // Bằng chứng MỚI cho mỗi lần ghi (khóa|số đếm): luật yêu cầu bằng chứng đổi trong chính lần ghi đó.
 let proofN = 0;
@@ -296,21 +298,33 @@ async function startRoom(s) {
   try { await write(paths); } catch (e) { status('Chưa mở được phòng: ' + (e instanceof Error ? e.message : ''), 'error'); room = null; return; }
   writeLS(liveKey(), { room: code, key, setId: s.id, lopKeys: room.lopKeys });
   room.stops.push(store.listen(`quiz/${code}/ds`, d => { if (!room) return; room.players = d || {}; for (const [k, v] of Object.entries(room.players)) if (!room.score[k]) room.score[k] = blankScore(String(/** @type {any} */ (v)?.ten || k)); if (room.phase === 'lobby') drawLobby(); else if (room.phase === 'q') drawQ(); }));
-  openHost(); drawLobby();
+  main.dataset.n = '0'; openHost(); drawLobby();
 }
 function openHost() { host.hidden = false; document.body.classList.add('qz-hosting'); $('qz-h-close').focus(); }
 function drawLobby() {
   if (!room) return;
   $('qz-h-kicker').textContent = `${lopText(room.set.lops)} · ${room.set.qs.length} câu · ${room.set.lim} giây/câu`; $('qz-h-title').textContent = room.set.name;
   const n = Object.keys(room.players).length;
+  if (n > Number(main.dataset.n || 0)) fx.sfx.join(); main.dataset.n = String(n);
   const code = el('div', 'qz-code'); code.append(el('span', '', 'Mã phòng'), el('strong', '', room.room.replace(/(\d{3})(\d{3})/, '$1 $2')));
   const hint = el('p', 'qz-hint', `Học sinh ${room.set.lops.map(l => 'lớp ' + l).join(', ')} đăng nhập AI Học Tập → mục Luyện tập → bấm Vào phòng.`);
   const chips = el('ul', 'qz-chips'); chips.setAttribute('aria-label', 'Học sinh đã vào phòng');
   for (const v of Object.values(room.players)) chips.append(el('li', '', String(/** @type {any} */ (v)?.ten || '')));
   const count = el('p', 'qz-count', n ? `${n} học sinh đã vào phòng` : 'Đang chờ học sinh vào phòng…'); count.setAttribute('aria-live', 'polite');
   main.replaceChildren(code, hint, count, chips);
-  const go = btn('Bắt đầu', 't-primary qz-big', () => void nextQ()); go.disabled = !n; go.id = 'qz-start';
-  foot.replaceChildren(go);
+  const go = btn('Bắt đầu', 't-primary qz-big', () => void startGame()); go.disabled = !n; go.id = 'qz-start';
+  foot.replaceChildren(go, fx.soundToggle('t-button qz-sound'));
+}
+/** Bắt đầu: cả lớp cùng thấy đếm ngược 3 · 2 · 1 rồi vào câu 1. */
+async function startGame() {
+  if (!room || room.phase !== 'lobby') return;
+  room.phase = 'ready';
+  foot.replaceChildren();
+  await write({ [P('phase')]: 'ready', [P('ready')]: store.SERVER_TIME }).catch(() => {});
+  $('qz-h-kicker').textContent = `${room.set.qs.length} câu · ${room.set.lim} giây/câu`;
+  main.replaceChildren();
+  await fx.countdown(host, { title: room.set.name });
+  await nextQ();
 }
 /** Đồng hồ máy chiếu chạy theo hạn room.end. */
 function tick() {
@@ -319,7 +333,8 @@ function tick() {
   room.timer = window.setInterval(() => {
     if (!room || room.phase !== 'q') return;
     const left = Math.max(0, room.end - Date.now()), s = Math.ceil(left / 1000);
-    const t = main.querySelector('.qz-timer'); if (t) { t.textContent = String(s); /** @type {HTMLElement} */ (t).style.setProperty('--p', String(left / (room.set.lim * 1000))); }
+    const t = main.querySelector('.qz-timer'); if (t && t.textContent !== String(s) && s <= 5 && s > 0) fx.sfx.tick();
+    if (t) { t.textContent = String(s); t.classList.toggle('is-low', s <= 5); /** @type {HTMLElement} */ (t).style.setProperty('--p', String(left / (room.set.lim * 1000))); }
     if (left <= 0) void reveal();
   }, 200);
 }
@@ -330,7 +345,7 @@ async function nextQ() {
   room.phase = 'q'; room.answers = {}; room.prevRank = Object.fromEntries(ranked().map((r, i) => [r.k, i + 1]));
   /** @type {Record<string,string>} */ const opts = {}; for (const x of L) if (q.opts[x]) opts[x] = q.opts[x];
   const lim = room.set.lim * 1000;
-  await write({ [P('phase')]: 'q', [P('q')]: { k, i: room.i, text: q.text, opts, lim: room.set.lim, left: lim, at: store.SERVER_TIME }, [P('reveal')]: null, [P('pause')]: null });
+  await write({ [P('phase')]: 'q', [P('q')]: { k, i: room.i, text: q.text, opts, lim: room.set.lim, left: lim, at: store.SERVER_TIME }, [P('reveal')]: null, [P('pause')]: null, [P('ready')]: null });
   const at = Number(await store.get(`quiz/${room.room}/pub/q/at`).catch(() => 0)) || Date.now();
   room.qAt = at; room.off = at - Date.now(); room.end = Date.now() + lim;
   room.ansStop?.(); room.ansStop = store.listen(`quiz/${room.room}/ans/${k}`, d => { if (!room || room.phase !== 'q' || room.i !== Number(k.slice(1))) return; room.answers = d || {}; drawQ(); const np = Object.keys(room.players).length; if (np && Object.keys(room.answers).length >= np) void reveal(); });
@@ -378,21 +393,55 @@ async function reveal() {
   await write({ [P('phase')]: 'reveal', [P('reveal')]: { k, ans: q.ans, counts }, [P('top')]: rk.slice(0, 5).map((r, i) => ({ ten: r.ten, p: r.p, up: (room?.prevRank[r.k] || rk.length) - (i + 1) })), [`quiz/${room.room}/kq`]: kq }).catch(() => {});
   drawReveal(counts);
 }
-/** @param {Record<string, number>} counts */
+/** Màn công bố đáp án: biểu đồ cột số em chọn từng phương án (cột đúng có dấu ✓), các phương án sai mờ đi.
+ * @param {Record<string, number>} counts */
 function drawReveal(counts) {
   if (!room) return;
-  const q = room.set.qs[room.i], max = Math.max(1, ...L.map(x => counts[x] || 0));
-  const grid = el('ul', 'qz-opts is-reveal');
+  fx.sfx.reveal();
+  const q = room.set.qs[room.i], s = room.stats[room.i], total = Object.keys(room.players).length;
+  const max = Math.max(1, ...L.map(x => counts[x] || 0));
+  const chart = el('div', 'qz-chart'); chart.setAttribute('role', 'img');
+  chart.setAttribute('aria-label', L.filter(x => q.opts[x]).map(x => `${x}: ${counts[x] || 0} em${x === q.ans ? ' (đúng)' : ''}`).join(', '));
   for (const x of L) if (q.opts[x]) {
-    const li = el('li', 'qz-opt qz-' + x + (x === q.ans ? ' is-ans' : ' is-dim')); li.append(el('b', '', SHAPE[x]), el('span', '', q.opts[x]));
-    const bar = el('span', 'qz-bar'); bar.style.setProperty('--pct', Math.round(100 * (counts[x] || 0) / max) + '%'); li.append(bar, el('em', 'qz-n', String(counts[x] || 0))); grid.append(li);
+    const col = el('div', `qz-col qz-col-${x}${x === q.ans ? ' is-ans' : ''}`);
+    const bar = el('span', 'qz-col-bar'); bar.style.setProperty('--hv', String(Math.max(0.03, (counts[x] || 0) / max)));
+    const key = el('span', 'qz-col-key'); key.append(el('b', '', SHAPE[x]), ...(x === q.ans ? [el('i', 'qz-check', '✓')] : []));
+    const track = el('span', 'qz-col-track'); track.append(el('span', 'qz-col-n', String(counts[x] || 0)), bar); col.append(track, key); chart.append(col);
   }
-  const top = el('ol', 'qz-top');
-  ranked().slice(0, 5).forEach((r, i) => { const up = (room?.prevRank[r.k] || 0) - (i + 1); const li = el('li'); li.append(el('span', 'qz-top-name', r.ten), el('small', 'qz-move', up > 0 && room?.i ? `lên ${up}` : ''), el('strong', '', String(r.p))); top.append(li); });
-  const s = room.stats[room.i];
-  main.replaceChildren(el('p', 'qz-qtext', q.text), grid, el('p', 'qz-count', `${s.pct}% trả lời đúng${counts.none ? ` · ${counts.none} em chưa trả lời` : ''}`), el('h3', 'qz-sub', 'Bảng xếp hạng'), top);
-  const last = room.i + 1 >= room.set.qs.length;
-  foot.replaceChildren(btn(last ? 'Xem kết quả' : 'Câu tiếp theo', 't-primary qz-big qz-next', () => void nextQ()), ...(last ? [] : [btn('Kết thúc', 'qz-stop', () => void stopEarly())]));
+  const grid = el('ul', 'qz-opts is-reveal');
+  for (const x of L) if (q.opts[x]) { const li = el('li', 'qz-opt qz-' + x + (x === q.ans ? ' is-ans' : ' is-dim')); li.append(el('b', '', SHAPE[x]), el('span', '', q.opts[x]), ...(x === q.ans ? [el('i', 'qz-check', '✓')] : [])); grid.append(li); }
+  const ok = counts[q.ans] || 0;
+  const sum = el('p', 'qz-sum'); sum.append(el('strong', '', `${ok}/${total}`), document.createTextNode(` em trả lời đúng (${s.pct}%)${counts.none ? ` · ${counts.none} em chưa trả lời` : ''}`));
+  main.replaceChildren(el('p', 'qz-qtext qz-qtext-sm', q.text), chart, sum, grid);
+  $('qz-h-kicker').textContent = `Câu ${room.i + 1}/${room.set.qs.length} · Đáp án`;
+  foot.replaceChildren(btn('Bảng xếp hạng', 't-primary qz-big qz-board-btn', () => drawBoard()), btn('Kết thúc', 'qz-stop', () => void stopEarly()));
+}
+/** Bảng xếp hạng sau mỗi câu: 5 em dẫn đầu, điểm vừa nhận, lên hạng, chuỗi đúng; lời khen khi có chuỗi đúng hoặc lên từ 3 hạng. */
+function drawBoard() {
+  if (!room) return;
+  room.phase = 'board';
+  const rk = ranked(), last = room.i + 1 >= room.set.qs.length;
+  const board = el('ol', 'qz-board'); board.setAttribute('aria-label', 'Năm bạn dẫn đầu');
+  rk.slice(0, 5).forEach((r, i) => {
+    const up = room?.i ? (room.prevRank[r.k] || rk.length) - (i + 1) : 0;
+    const li = el('li', 'qz-row' + (i === 0 ? ' is-first' : '')); li.style.setProperty('--i', String(i));
+    const name = el('span', 'qz-row-name'); name.append(el('span', 'qz-row-ten', r.ten));
+    if (r.streak >= 2) name.append(el('small', 'qz-chip qz-chip-streak', `Chuỗi ${r.streak}`));
+    li.append(el('span', 'qz-rank-badge', String(i + 1)), el('span', 'qz-av', initials(r.ten)), name,
+      el('small', 'qz-row-move' + (up > 0 ? ' is-up' : ''), up > 0 ? `▲ ${up}` : ''),
+      el('small', 'qz-row-gain', r.lastOk ? `+${r.last}` : ''), el('strong', 'qz-row-p', String(r.p)));
+    board.append(li);
+  });
+  const cheers = [];
+  const streak = [...rk].sort((a, b) => b.streak - a.streak)[0];
+  if (streak && streak.streak >= 3) cheers.push(`${streak.ten} đúng ${streak.streak} câu liên tiếp!`);
+  if (room.i) { const jump = rk.map((r, i) => ({ r, up: (room?.prevRank[r.k] || rk.length) - (i + 1) })).sort((a, b) => b.up - a.up)[0]; if (jump && jump.up >= 3) cheers.push(`${jump.r.ten} vừa vượt lên ${jump.up} hạng!`); }
+  const kids = [el('h3', 'qz-stage-title', 'Bảng xếp hạng'), board];
+  if (cheers.length) { const c = el('p', 'qz-cheer'); c.textContent = cheers.join(' '); kids.push(c); }
+  if (rk.length > 5) kids.push(el('p', 'qz-hint', `Các bạn khác xem hạng của mình trên điện thoại (${rk.length} em).`));
+  main.replaceChildren(...kids);
+  $('qz-h-kicker').textContent = `Sau câu ${room.i + 1}/${room.set.qs.length}`;
+  foot.replaceChildren(btn(last ? 'Bục vinh danh' : 'Câu tiếp theo', 't-primary qz-big qz-next', () => void nextQ()), ...(last ? [] : [btn('Kết thúc', 'qz-stop', () => void stopEarly())]));
 }
 async function stopEarly() {
   if (!room || room.phase === 'end') return;
@@ -406,30 +455,82 @@ async function endGame() {
   const rk = ranked(), aw = awards(room.score), players = rk.length, stats = room.stats.filter(Boolean);
   const avg = stats.length ? Math.round(stats.reduce((a, s) => a + s.pct, 0) / stats.length) : 0;
   /** @type {Record<string, any>} */ const kq = {}; rk.forEach((r, i) => { kq[r.k] = { p: r.p, c: r.c, r: i + 1, n: rk.length, best: r.best, giai: aw.filter(a => a.k === r.k).map(a => a.giai) }; });
-  /** @type {Record<string, unknown>} */ const paths = { [P('phase')]: 'end', [P('q')]: null, [P('pause')]: null, [P('podium')]: rk.slice(0, 3).map(r => ({ ten: r.ten, p: r.p })), [P('awards')]: aw.map(a => ({ ten: a.ten, giai: a.giai, chi_tiet: a.chi_tiet })), [P('so_cau')]: stats.length, [`quiz/${room.room}/kq`]: kq };
+  /** @type {Record<string, unknown>} */ const paths = { [P('phase')]: 'end', [P('q')]: null, [P('pause')]: null, [P('ready')]: null, [P('podium')]: rk.slice(0, 3).map(r => ({ ten: r.ten, p: r.p, c: r.c })), [P('awards')]: aw.map(a => ({ ten: a.ten, giai: a.giai, chi_tiet: a.chi_tiet })), [P('so_cau')]: stats.length, [`quiz/${room.room}/kq`]: kq };
   for (const lk of room.lopKeys) paths[`quiz_lop/${lk}`] = null;
   await write(paths).catch(() => {});
   try { localStorage.removeItem(liveKey()); } catch { /* bỏ qua */ }
   const hist = /** @type {any[]} */ (readLS(histKey(), [])); hist.unshift({ name: room.set.name, lops: room.set.lops, at: Date.now(), players, avg }); writeLS(histKey(), hist.slice(0, 20));
-  $('qz-h-kicker').textContent = `Kết thúc · ${players} em · ${stats.length} câu · đúng trung bình ${avg}%`;
-  const pod = el('ol', 'qz-podium'); pod.setAttribute('aria-label', 'Bục vinh danh');
-  rk.slice(0, 3).forEach((r, i) => { const li = el('li', 'qz-pod qz-pod-' + (i + 1)); li.append(el('b', '', String(i + 1)), el('span', 'qz-pod-name', r.ten), el('strong', '', r.p + ' điểm'), el('small', '', `${r.c}/${stats.length} câu đúng`)); pod.append(li); });
-  const awBox = el('ul', 'qz-awards'); for (const a of aw) { const li = el('li'); li.append(el('strong', '', a.giai), el('span', '', a.ten), el('small', '', a.chi_tiet)); awBox.append(li); }
-  const full = el('table', 't-table qz-rank'); const fh = el('thead'); const fr = el('tr'); for (const h of ['Hạng', 'Học sinh', 'Điểm', 'Đúng', 'Chuỗi đúng dài nhất']) fr.append(el('th', '', h)); fh.append(fr); full.append(fh);
-  const fb = el('tbody'); rk.forEach((r, i) => { const tr = el('tr'); for (const [lab, v] of [['Hạng', String(i + 1)], ['Học sinh', r.ten], ['Điểm', String(r.p)], ['Đúng', `${r.c}/${stats.length}`], ['Chuỗi đúng dài nhất', String(r.best)]]) { const td = el('td', '', v); td.dataset.label = lab; tr.append(td); } fb.append(tr); }); full.append(fb);
-  const table = el('table', 't-table qz-stat'); const th = el('thead'); const tr0 = el('tr'); for (const h of ['Câu', 'Chủ đề', 'Đúng', 'Phương án sai chọn nhiều nhất']) tr0.append(el('th', '', h)); th.append(tr0); table.append(th);
-  const tb = el('tbody');
-  stats.forEach((s, i) => {
-    const wrong = L.filter(x => x !== s.ans && s.counts[x]).sort((a, b) => s.counts[b] - s.counts[a])[0];
-    const tr = el('tr', s.pct < 50 ? 'is-weak' : ''); for (const [lab, v] of [['Câu', `${i + 1}. ${s.text}`], ['Chủ đề', s.topic || '—'], ['Đúng', s.pct + '%'], ['Phương án sai chọn nhiều nhất', wrong ? `${wrong}. ${s.opts[wrong]} (${s.counts[wrong]} em)` : '—']]) { const td = el('td', '', v); td.dataset.label = lab; tr.append(td); } tb.append(tr);
+  void drawPodium();
+}
+/** Bục vinh danh: hạng 3 → hạng 2 → (trống dồn) → quán quân, pháo giấy. */
+async function drawPodium() {
+  if (!room) return;
+  const rk = ranked(), n = room.stats.filter(Boolean).length, token = room.room + Date.now();
+  main.dataset.pod = token;
+  $('qz-h-kicker').textContent = 'Kết thúc · Vinh danh';
+  const stage = el('ol', 'qz-stage'); stage.setAttribute('aria-label', 'Bục vinh danh');
+  /** @type {HTMLElement[]} */ const steps = [];
+  for (const place of [2, 1, 3]) {
+    const r = rk[place - 1]; if (!r) continue;
+    const li = el('li', `qz-step qz-step-${place}`);
+    const who = el('div', 'qz-step-who'); who.append(el('span', 'qz-av qz-av-lg', initials(r.ten)), el('span', 'qz-step-name', r.ten), el('strong', 'qz-step-p', `${r.p} điểm`), el('small', '', `${r.c}/${n} câu đúng`));
+    const block = el('div', 'qz-step-block'); block.append(el('b', 'qz-step-rank', String(place)));
+    li.append(who, block); stage.append(li); steps[place] = li;
+  }
+  const title = el('h3', 'qz-stage-title', rk.length ? 'Bục vinh danh' : 'Chưa có học sinh tham gia');
+  main.replaceChildren(title, stage);
+  const details = btn('Xem kết quả chi tiết', 't-primary qz-big qz-details', () => drawDetails());
+  foot.replaceChildren(details, btn('Tải kết quả CSV', 'qz-csv', exportCsv));
+  const wait = (/** @type {number} */ ms) => new Promise(r => setTimeout(r, ms));
+  const alive = () => main.dataset.pod === token && room?.phase === 'end';
+  for (const place of [3, 2]) { if (!steps[place]) continue; await wait(900); if (!alive()) return; steps[place].classList.add('is-on'); fx.sfx.reveal(); }
+  if (!steps[1]) return;
+  fx.sfx.drum(); await wait(1200); if (!alive()) return;
+  steps[1].classList.add('is-on'); fx.sfx.fanfare(); fx.confetti(host);
+}
+/** Kết quả chi tiết: tóm tắt, danh hiệu, bảng xếp hạng đầy đủ, từng câu (phân bố lựa chọn), AI phân tích. */
+function drawDetails() {
+  if (!room) return;
+  delete main.dataset.pod; host.querySelectorAll('.qfx-confetti').forEach(c => c.remove());
+  const rk = ranked(), aw = awards(room.score), stats = room.stats.filter(Boolean), n = stats.length;
+  const avg = n ? Math.round(stats.reduce((a, s) => a + s.pct, 0) / n) : 0;
+  $('qz-h-kicker').textContent = `Kết quả · ${rk.length} em · ${n} câu · đúng trung bình ${avg}%`;
+  const tiles = el('ul', 'qz-tiles');
+  for (const [v, lab] of [[String(rk.length), 'học sinh'], [String(n), 'câu đã chơi'], [avg + '%', 'đúng trung bình'], [String(rk[0]?.p ?? 0), 'điểm cao nhất']]) { const li = el('li'); li.append(el('strong', '', v), el('span', '', lab)); tiles.append(li); }
+  const kids = [tiles];
+  if (aw.length) {
+    const awBox = el('ul', 'qz-awards');
+    for (const a of aw) { const li = el('li'); li.append(el('span', 'qz-aw-ic', a.giai === 'Quán quân' ? '1' : a.giai === 'Chính xác nhất' ? '✓' : a.giai === 'Nhanh như chớp' ? '»' : '∞'), el('strong', '', a.giai), el('span', 'qz-aw-name', a.ten), el('small', '', a.chi_tiet)); awBox.append(li); }
+    kids.push(el('h3', 'qz-sub', 'Danh hiệu'), awBox);
+  }
+  const list = el('ol', 'qz-rank'); list.setAttribute('aria-label', 'Bảng xếp hạng đầy đủ');
+  rk.forEach((r, i) => {
+    const li = el('li', 'qz-rank-row');
+    const bar = el('span', 'qz-acc'); bar.style.setProperty('--w', (n ? Math.round(100 * r.c / n) : 0) + '%'); bar.setAttribute('aria-hidden', 'true');
+    const mid = el('span', 'qz-rank-mid'); mid.append(el('span', 'qz-rank-ten', r.ten), bar);
+    li.append(el('span', 'qz-rank-badge', String(i + 1)), mid, el('span', 'qz-rank-c', `${r.c}/${n} đúng`), el('strong', 'qz-rank-p', `${r.p} điểm`));
+    list.append(li);
   });
-  table.append(tb);
-  const low = rk.filter(r => stats.length && r.c < Math.ceil(stats.length / 2)).map(r => r.ten);
-  const help = el('p', 'qz-count', !stats.length ? 'Chưa có câu nào được công bố đáp án.' : low.length ? `Cần hỗ trợ thêm (đúng dưới một nửa): ${low.join(', ')}` : 'Mọi em đều đúng từ một nửa số câu trở lên.');
-  const aiBox = el('section', 'qz-ai-out'); aiBox.id = 'qz-ai-out';
-  main.replaceChildren(pod, ...(aw.length ? [el('h3', 'qz-sub', 'Danh hiệu'), awBox] : []), el('h3', 'qz-sub', 'Bảng xếp hạng'), full, el('h3', 'qz-sub', 'Lớp có hiểu bài không?'), table, help, aiBox);
-  const aiBtn = btn('AI phân tích lớp hiểu bài', 't-primary thi-ai-btn qz-big', () => void analyze(aiBtn)); aiBtn.id = 'qz-ai-analyze'; aiBtn.disabled = !stats.length;
-  foot.replaceChildren(aiBtn, btn('Tải kết quả CSV', 'qz-csv', exportCsv));
+  kids.push(el('h3', 'qz-sub', 'Bảng xếp hạng'), list);
+  const qs = el('ol', 'qz-stat'); qs.setAttribute('aria-label', 'Kết quả từng câu');
+  stats.forEach((s, i) => {
+    const tot = Math.max(1, L.reduce((a, x) => a + (s.counts[x] || 0), 0) + (s.counts.none || 0));
+    const li = el('li', 'qz-stat-row' + (s.pct < 50 ? ' is-weak' : s.pct >= 80 ? ' is-good' : ''));
+    const head = el('div', 'qz-stat-head'); head.append(el('span', 'qz-stat-i', String(i + 1)), el('span', 'qz-stat-text', s.text), el('strong', 'qz-stat-pct', s.pct + '%'));
+    const dist = el('div', 'qz-dist'); dist.setAttribute('role', 'img');
+    dist.setAttribute('aria-label', L.filter(x => s.opts[x]).map(x => `${x}: ${s.counts[x] || 0} em${x === s.ans ? ' (đúng)' : ''}`).join(', ') + (s.counts.none ? `, chưa trả lời: ${s.counts.none} em` : ''));
+    for (const x of [...L, 'none']) { const c = s.counts[x] || 0; if (!c) continue; const seg = el('span', `qz-seg qz-seg-${x}${x === s.ans ? ' is-ans' : ''}`, `${x === 'none' ? '–' : SHAPE[x]} ${c}`); seg.style.setProperty('--w', (100 * c / tot).toFixed(1) + '%'); dist.append(seg); }
+    const wrong = L.filter(x => x !== s.ans && s.counts[x]).sort((a, b) => s.counts[b] - s.counts[a])[0];
+    const meta = el('p', 'qz-stat-meta', `Đáp án ${SHAPE[s.ans]} ${s.ans}. ${s.opts[s.ans]}${s.topic ? ' · ' + s.topic : ''}${wrong ? ` · Nhiều em nhầm sang ${SHAPE[wrong]} ${wrong}. ${s.opts[wrong]} (${s.counts[wrong]} em)` : ''}`);
+    li.append(head, dist, meta); qs.append(li);
+  });
+  kids.push(el('h3', 'qz-sub', 'Lớp có hiểu bài không?'), n ? qs : el('p', 'qz-hint', 'Chưa có câu nào được công bố đáp án.'));
+  const low = rk.filter(r => n && r.c < Math.ceil(n / 2)).map(r => r.ten);
+  if (n) kids.push(el('p', 'qz-help', low.length ? `Cần hỗ trợ thêm (đúng dưới một nửa): ${low.join(', ')}` : 'Mọi em đều đúng từ một nửa số câu trở lên.'));
+  const aiBox = el('section', 'qz-ai-out'); aiBox.id = 'qz-ai-out'; kids.push(aiBox);
+  main.replaceChildren(...kids); main.scrollTop = 0;
+  const aiBtn = btn('AI phân tích lớp hiểu bài', 't-primary thi-ai-btn qz-big', () => void analyze(aiBtn)); aiBtn.id = 'qz-ai-analyze'; aiBtn.disabled = !n;
+  foot.replaceChildren(aiBtn, btn('Bục vinh danh', 'qz-podium-btn', () => void drawPodium()), btn('Tải kết quả CSV', 'qz-csv', exportCsv));
 }
 /** @param {HTMLButtonElement} b */
 async function analyze(b) {
@@ -440,7 +541,13 @@ async function analyze(b) {
     out.replaceChildren(); if (r.muc_hieu) out.append(el('p', 'qz-muc', 'Mức hiểu: ' + r.muc_hieu));
     for (const line of String(r.nhan_xet || '').split(/\n+/)) { const p = el('p'); for (const [i, part] of line.split(/\*\*/).entries()) p.append(i % 2 ? el('strong', '', part) : document.createTextNode(part)); out.append(p); }
     room.muc = r.muc_hieu; const hist = /** @type {any[]} */ (readLS(histKey(), [])); if (hist[0]) { hist[0].muc = r.muc_hieu; writeLS(histKey(), hist); }
-  } catch (e) { out.replaceChildren(el('p', 'notice error', e instanceof Error ? e.message : 'AI chưa phân tích được.')); }
+  } catch (e) {
+    // AI chưa trả lời được (hết lượt, mạng, máy chủ AI bận): vẫn có nhận xét tính sẵn từ số liệu buổi chơi.
+    const sum = classSummary(room?.stats.filter(Boolean) || []);
+    out.replaceChildren(el('p', 'qz-ai-note', `AI chưa trả lời được (${e instanceof Error ? e.message : 'lỗi mạng'}). Dưới đây là nhận xét tính sẵn từ số liệu buổi chơi.`));
+    if (sum.muc_hieu) out.append(el('p', 'qz-muc', 'Mức hiểu: ' + sum.muc_hieu));
+    for (const m of sum.muc) { out.append(el('h4', 'qz-ai-h', m.lab)); const ul = el('ul'); for (const it of m.items) ul.append(el('li', '', it)); out.append(ul); }
+  }
   finally { b.disabled = false; b.removeAttribute('aria-busy'); b.textContent = label; }
 }
 const csvCell = (/** @type {unknown} */ v) => { let s = v === null || v === undefined ? '' : String(v); if (/^[=+\-@]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };

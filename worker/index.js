@@ -4926,7 +4926,7 @@ export default {
         if (url.pathname === '/api/teacher/ai-quiz') {
           if (!Array.isArray(body.questions) || !body.questions.length) return j(400, { detail: 'Chưa có kết quả trò chơi để phân tích.' });
           await spend();
-          const text = await geminiOnce(env, gateStub, buildQuizAnalysisPrompt(body), { maxOutputTokens: 2048, temperature: 0.3 });
+          const text = await geminiOnce(env, gateStub, buildQuizAnalysisPrompt(body), { maxOutputTokens: 8192, temperature: 0.3 });
           const parsed = parseJsonLoose(text) || {};
           const nx = String(parsed.nhan_xet || '').trim();
           if (!nx) return j(502, { detail: 'AI chưa phân tích được. Thử lại.' });

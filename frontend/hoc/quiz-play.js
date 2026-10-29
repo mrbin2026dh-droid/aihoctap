@@ -4,6 +4,8 @@
 // mỗi câu em chọn đáp án trên điện thoại → xem đúng/sai, điểm, hạng → kết thúc: hạng, danh hiệu, bục vinh danh.
 // Em không thấy đáp án trước (chỉ máy giáo viên giữ đáp án đến lúc công bố).
 import * as store from './thi-store.js';
+import * as fx from './quiz-fx.js';
+fx.setDefault(false);   // điện thoại học sinh mặc định im lặng; em tự bật âm thanh nếu muốn
 
 const L = ['A', 'B', 'C', 'D'];
 const SHAPE = /** @type {Record<string,string>} */ ({ A: '▲', B: '◆', C: '●', D: '■' });
@@ -14,7 +16,7 @@ let room = '', playing = '', dismissed = '';
 /** @type {any} */ let info = null, pub = null, mine = null;
 let players = 0;
 /** @type {Record<string,string>} */ let chosen = {};
-let timer = 0, lastKey = '', qSeen = '', qEnd = 0;
+let timer = 0, lastKey = '', qSeen = '', qEnd = 0, readySeen = '', fxSeen = '';
 /** @type {() => void} */ let onChange = () => {};
 
 /** App gọi để vẽ lại mục Luyện tập khi có / hết buổi luyện tập. @param {() => void} fn */
@@ -90,7 +92,7 @@ function overlay() {
     o = t('div', 'lt-play'); o.id = 'lt-play'; o.hidden = true; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Luyện tập');
     const header = t('header', 'lt-top');
     const score = t('span', 'lt-score'); score.setAttribute('aria-live', 'polite');
-    header.append(t('strong', 'lt-top-title'), score, b('×', 'lt-close', () => closeOverlay()));
+    header.append(t('strong', 'lt-top-title'), score, fx.soundToggle('lt-sound'), b('×', 'lt-close', () => closeOverlay()));
     /** @type {HTMLElement} */ (header.querySelector('.lt-close')).setAttribute('aria-label', 'Thoát màn hình luyện tập');
     const main = t('main', 'lt-main'); main.setAttribute('aria-live', 'polite');
     o.append(header, main);
@@ -119,7 +121,7 @@ async function join() {
   onChange();
   /** @type {HTMLElement} */ (o.querySelector('.lt-close')).focus();
 }
-function leaveRoom() { playing = ''; stops.forEach(f => f()); stops = []; clearInterval(timer); pub = null; mine = null; chosen = {}; lastKey = ''; qSeen = ''; const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
+function leaveRoom() { playing = ''; stops.forEach(f => f()); stops = []; clearInterval(timer); pub = null; mine = null; chosen = {}; lastKey = ''; qSeen = ''; readySeen = ''; fxSeen = ''; const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
 function drawScore() { const s = document.querySelector('#lt-play .lt-score'); if (s) s.textContent = mine ? `${mine.p} điểm · hạng ${mine.r}/${mine.n}` : ''; }
 const initials = (/** @type {string} */ s) => String(s || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase();
 
@@ -135,6 +137,11 @@ function draw() {
   if (pub.phase === 'lobby') {
     const av = t('span', 'lt-avatar', initials(me?.ten || ''));
     main.replaceChildren(av, t('p', 'lt-name', me?.ten || ''), t('h2', 'lt-big', 'Em đã vào phòng'), t('p', 'lt-wait', 'Nhìn lên màn chiếu, chờ thầy cô bắt đầu.'), t('p', 'lt-count', players ? `${players} bạn đã vào phòng` : ''), t('span', 'lt-pulse', ''));
+    return;
+  }
+  if (pub.phase === 'ready') {
+    main.replaceChildren(t('h2', 'lt-big', 'Chuẩn bị!'), t('p', 'lt-wait', 'Câu hỏi đầu tiên sắp hiện.'));
+    if (readySeen !== String(pub.ready)) { readySeen = String(pub.ready); void fx.countdown(o, { title: String(pub.title || 'Chuẩn bị!') }); }
     return;
   }
   if (pub.phase === 'pause') {
@@ -164,29 +171,37 @@ function draw() {
   }
   if (pub.phase === 'reveal' && pub.reveal) {
     const r = pub.reveal, my = chosen[r.k], ok = !!my && my === r.ans;
+    if (fxSeen !== 'r' + r.k) { fxSeen = 'r' + r.k; if (my) (ok ? fx.sfx.correct : fx.sfx.wrong)(); }
     const box = t('div', 'lt-result ' + (ok ? 'is-ok' : my ? 'is-bad' : 'is-none'));
-    box.append(t('strong', '', ok ? 'Chính xác!' : my ? 'Chưa đúng' : 'Em chưa trả lời'));
+    box.append(t('span', 'lt-res-ic', ok ? '✓' : my ? '✕' : '–'), t('strong', '', ok ? 'Chính xác!' : my ? 'Chưa đúng' : 'Em chưa trả lời'));
     if (ok && mine?.last) box.append(t('span', 'lt-gain', `+${mine.last} điểm`));
-    if (!ok) box.append(t('span', '', `Đáp án đúng: ${SHAPE[r.ans] || ''} ${r.ans}`));
-    if (ok && mine?.streak >= 2) box.append(t('span', 'lt-streak', `Chuỗi đúng: ${mine.streak} câu`));
-    const top = t('ol', 'lt-top5'); for (const x of Object.values(pub.top || {})) { const li = t('li'); li.append(t('span', '', x.ten), t('strong', '', String(x.p))); top.append(li); }
-    main.replaceChildren(box, t('p', 'lt-rank', mine ? `Hạng ${mine.r}/${mine.n} · ${mine.p} điểm` : ''), t('h3', 'lt-sub', 'Bảng xếp hạng'), top, t('p', 'lt-wait', 'Chờ câu tiếp theo…'));
+    if (!ok) box.append(t('span', 'lt-res-ans', `Đáp án đúng: ${SHAPE[r.ans] || ''} ${r.ans}`));
+    if (ok && mine?.streak >= 2) box.append(t('span', 'lt-streak', `Chuỗi đúng ${mine.streak} câu`));
+    if (mine) box.append(t('span', 'lt-res-rank', `Em đang hạng ${mine.r}/${mine.n} · ${mine.p} điểm`));
+    const top = t('ol', 'lt-top5'); top.setAttribute('aria-label', 'Năm bạn dẫn đầu');
+    Object.values(pub.top || {}).forEach((x, i) => { const li = t('li', i === 0 ? 'is-first' : ''); li.append(t('b', '', String(i + 1)), t('span', '', x.ten), t('strong', '', String(x.p))); top.append(li); });
+    main.replaceChildren(box, t('h3', 'lt-sub', 'Bảng xếp hạng'), top, t('p', 'lt-wait', 'Nhìn lên màn chiếu, chờ câu tiếp theo…'));
     return;
   }
   if (pub.phase === 'end') {
     const r = Number(mine?.r) || 0, n = Number(mine?.n) || 0, total = Number(pub.so_cau) || Number(pub.n) || 0;
-    const box = t('div', 'lt-result is-end' + (r && r <= 3 ? ' is-top' : ''));
-    box.append(t('span', 'lt-medal', r ? String(r) : '★'), t('strong', '', r ? (r === 1 ? 'Quán quân!' : r <= 3 ? `Hạng ${r} — Xuất sắc!` : `Hạng ${r}/${n}`) : 'Buổi luyện tập kết thúc'));
-    if (mine) box.append(t('span', '', `${mine.p} điểm · đúng ${mine.c}/${total} câu`));
+    const box = t('div', 'lt-result is-end' + (r && r <= 3 ? ' is-top lt-top-' + r : ''));
+    box.append(t('span', 'lt-medal', r ? String(r) : '★'), t('strong', '', r ? (r === 1 ? 'Quán quân!' : r <= 3 ? `Hạng ${r}. Xuất sắc!` : `Hạng ${r}/${n}`) : 'Buổi luyện tập kết thúc'));
+    if (mine) box.append(t('span', 'lt-res-rank', `${mine.p} điểm · đúng ${mine.c}/${total} câu`));
     const kids = [box];
     const giai = Array.isArray(mine?.giai) ? mine.giai : Object.values(mine?.giai || {});
     if (giai.length) { const ul = t('ul', 'lt-awards'); for (const g of giai) ul.append(t('li', '', String(g))); kids.push(t('h3', 'lt-sub', 'Danh hiệu của em'), ul); }
     const pod = Object.values(pub.podium || {});
-    if (pod.length) { const ol = t('ol', 'lt-podium'); pod.forEach((p, i) => { const li = t('li', 'lt-pod-' + (i + 1)); li.append(t('b', '', String(i + 1)), t('span', '', p.ten), t('small', '', `${p.p} điểm`)); ol.append(li); }); kids.push(t('h3', 'lt-sub', 'Bục vinh danh'), ol); }
+    if (pod.length) {
+      const ol = t('ol', 'lt-stage'); ol.setAttribute('aria-label', 'Bục vinh danh');
+      for (const place of [2, 1, 3]) { const p = pod[place - 1]; if (!p) continue; const li = t('li', 'lt-step lt-step-' + place); li.append(t('span', 'lt-step-name', p.ten), t('small', '', `${p.p} điểm`), t('b', 'lt-step-block', String(place))); ol.append(li); }
+      kids.push(t('h3', 'lt-sub', 'Bục vinh danh'), ol);
+    }
     const pct = total && mine ? mine.c / total : 0;
     kids.push(t('p', 'lt-wait', !mine ? 'Cảm ơn em đã tham gia.' : pct >= 0.8 ? 'Em nắm bài rất chắc. Tiếp tục phát huy!' : pct >= 0.5 ? 'Em làm khá tốt. Xem lại các câu sai để chắc hơn nhé.' : 'Em cần ôn lại bài. Hỏi Gia sư AI hoặc thầy cô ở các câu còn sai nhé.'));
     kids.push(b('Đóng', 'primary lt-done', () => closeOverlay()));
     main.replaceChildren(...kids);
+    if (fxSeen !== 'end' && mine) { fxSeen = 'end'; if (r && r <= 3) { fx.sfx.fanfare(); fx.confetti(o); } }
   }
 }
 /** @param {string} k @param {string} x */
