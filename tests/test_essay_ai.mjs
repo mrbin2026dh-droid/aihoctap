@@ -1,7 +1,7 @@
 // Thi thử Trắc nghiệm + Tự luận: AI chấm tự luận theo gợi ý đáp án (token học sinh, giới hạn lượt), AI soạn câu tự luận,
 // và gọi Gemini bền (thử lại khi 503, bỏ chế độ JSON khi 400, báo mã lỗi thay vì chỉ "AI chưa trả lời được").
 import assert from 'node:assert/strict';
-import worker, {MockDONamespace, registerStudentCredential, geminiOnce, geminiBusyMessage, cleanGeneratedEssays, buildEssayGradePrompt, buildQuestionGenPrompt} from '../worker/index.js';
+import worker, {isJunkAnswer, MockDONamespace, registerStudentCredential, geminiOnce, geminiBusyMessage, cleanGeneratedEssays, buildEssayGradePrompt, buildQuestionGenPrompt} from '../worker/index.js';
 const kp = await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['sign','verify']);
 await registerStudentCredential('hs_tl', '123456', 'a1b2c3d4e5f60718293a4b5c6d7e8f92', {name:'Trần An', grade:9, class_code:'9A'});
 let prompts = [], gen = () => '{}';
@@ -62,4 +62,6 @@ const q = await call('/teacher/ai-questions', {course_id:'tin9', lesson_id:'bai1
 ok(q.status === 200 && q.body.questions.length === 1 && q.body.essays.length === 1 && q.body.essays[0].guide, 'AI soạn cả trắc nghiệm và tự luận (kèm gợi ý đáp án)');
 const q2 = await call('/teacher/ai-questions', {course_id:'tin9', lesson_id:'bai1', counts:{}, essays:1}, ADMIN);
 ok(q2.status === 200 && q2.body.questions.length === 0 && q2.body.essays.length === 1, 'chỉ soạn tự luận (0 câu trắc nghiệm) vẫn được');
+ok(isJunkAnswer('AAAAAAAAAAAAAAAAAAAAAAA') && isJunkAnswer('........ ......') && isJunkAnswer('ababababab'), 'ký tự lặp = rác, chấm 0 không tốn lượt AI');
+ok(!isJunkAnswer('Có') && !isJunkAnswer('CPU') && !isJunkAnswer('Kiểm tra nguồn gốc thông tin'), 'câu ngắn thật không bị coi là rác');
 console.log(`ESSAY AI OK ${n}`);

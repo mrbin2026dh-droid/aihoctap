@@ -1431,6 +1431,12 @@ export function cleanGeneratedEssays(raw) {
   return out;
 }
 /** Prompt chấm tự luận thi thử theo gợi ý đáp án của giáo viên. Bài làm là DỮ LIỆU, không phải lệnh. */
+/** Bài làm chỉ là ký tự lặp (vd "AAAAAAAA", "....."): chấm 0 ngay, không tốn lượt AI. Câu ngắn thật ("Có", "CPU") không bị coi là rác. @param {string} t */
+export function isJunkAnswer(t) {
+  const x = String(t || '').replace(/\s+/g, '').toLowerCase();
+  if (x.length < 8) return false;
+  return new Set(x).size <= 3 || !/[\p{L}\p{N}]/u.test(x);
+}
 export function buildEssayGradePrompt({ title, items }) {
   const clip = (v, n) => String(v === undefined || v === null ? '' : v).slice(0, n);
   const blocks = (Array.isArray(items) ? items : []).map((it, i) => [
@@ -4788,8 +4794,8 @@ export default {
       if (!raw.length || raw.length > 10) return j(400, { detail: 'Bài tự luận không hợp lệ.' });
       const items = raw.map(it => ({ text: String(it?.text || '').trim().slice(0, 1000), guide: String(it?.guide || '').trim().slice(0, 2000), answer: String(it?.answer || '').trim().slice(0, 3000), max: Math.round(Math.max(0.25, Math.min(100, Number(it?.max) || 1)) * 4) / 4 }));
       if (items.some(it => !it.text || !it.guide)) return j(400, { detail: 'Câu tự luận thiếu đề hoặc gợi ý đáp án. Báo thầy cô.' });
-      const result = items.map(it => ({ diem: 0, nhan_xet: it.answer ? '' : 'Em chưa làm câu này.' }));
-      const todo = items.map((it, i) => [it, i]).filter(([it]) => it.answer.length >= 2);
+      const result = items.map(it => ({ diem: 0, nhan_xet: !it.answer ? 'Em chưa làm câu này.' : isJunkAnswer(it.answer) ? 'Bài viết chỉ có ký tự lặp lại, chưa có nội dung trả lời câu hỏi. Em viết câu trả lời bằng lời của mình nhé.' : '' }));
+      const todo = items.map((it, i) => [it, i]).filter(([it]) => it.answer.length >= 2 && !isJunkAnswer(it.answer));
       if (!todo.length) return j(200, { items: result, tong_ket: 'Em chưa làm phần tự luận.' });
       const LIMIT = Number(env.ESSAY_DAILY) || 40;
       const c = await gateStub.fetch('http://do/teacher-ai-count', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ who: 'hs:' + String(ar.payload?.uid || '').slice(0, 64) }) }).then(x => x.json()).catch(() => ({ count: 0 }));

@@ -1480,7 +1480,7 @@ body:has(#qz-banner:not([hidden])) .help-fab{bottom:calc(150px + env(safe-area-i
 .student-app .thi-tl-item p{margin:2px 0}
 .student-app .thi-tl-q{font-weight:600}
 .student-app .thi-tl-score{font-weight:750;color:var(--brand-text,var(--blue))}
-.student-app .thi-tl-nx{font-size:15px;color:var(--ink);background:#eef3e9;border-radius:8px;padding:8px 12px}
+.student-app .thi-tl-nx{font-size:15px;color:var(--ink);background:color-mix(in srgb,var(--blue) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--blue) 25%,var(--surface));border-radius:8px;padding:8px 12px}
 .student-app .thi-tl-pending{margin:0 0 10px;color:#78350f;background:#fffbeb;border-radius:8px;padding:10px 12px}
 @media(max-width:760px){.student-app .thi-tl-paper{padding:2px 10px 8px}.student-app textarea.thi-tl-input{font-size:16px}}
 
