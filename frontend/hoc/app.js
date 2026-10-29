@@ -1311,7 +1311,8 @@ form('tutor-form').addEventListener('submit', async event => {
       course_id: tutorLesson?.course_id,
       lesson_id: tutorLesson?.lesson_id,
       // Chưa chọn bài: gửi danh sách bài của khối em để Gia sư (máy chủ) tự chọn bài khớp câu hỏi nhất.
-      candidates: tutorLesson ? undefined : (catalog?.courses || []).filter(c => c.grade === grade).flatMap(c => c.lessons.map(l => ({course_id: c.id, lesson_id: l.id}))).slice(0, 40),
+      // Danh sách bài để Gia sư tìm đúng bài: chưa chọn bài → tự chọn; đã chọn bài mà hỏi kiến thức bài khác → chỉ ra bài đó. Ưu tiên khối của em, rồi các khối dưới.
+      candidates: (catalog?.courses || []).filter(c => c.grade <= (grade || 12)).sort((x, y) => Number(y.grade === grade) - Number(x.grade === grade) || y.grade - x.grade).flatMap(c => c.lessons.map(l => ({course_id: c.id, lesson_id: l.id, title: l.title}))).slice(0, 60),
       message: text,
       history: tutorHistory,
       question_id: active && tutorQuestionId && tutorLesson?.lesson_id === active.lesson_id ? tutorQuestionId : undefined,
@@ -1332,6 +1333,10 @@ form('tutor-form').addEventListener('submit', async event => {
     const botMsg = el('div', '', 'tutor-msg tutor-bot');
     msgs.append(botMsg);
     await typeOut(botMsg, res.reply || 'Thầy/Cô chưa có câu trả lời cho câu này.', () => { msgs.scrollTop = msgs.scrollHeight; });
+    if (res.other_lesson?.lesson_id) {   // kiến thức em hỏi nằm ở bài khác: nút mở bài đó
+      const ol = res.other_lesson, c = catalog?.courses.find(x => x.id === ol.course_id), sm = c?.lessons.find(x => x.id === ol.lesson_id);
+      if (c && sm) { const box = el('div', '', 'tutor-suggest'); box.append(withIcon(button(`Mở bài: ${ol.title || sm.title}`, () => { closeTutor(); void loadLesson(c.id, sm.id, sm.version, false); }, 'tutor-chip tutor-open-lesson'), 'arrow', true)); msgs.append(box); msgs.scrollTop = msgs.scrollHeight; }
+    }
     if (Array.isArray(res.suggest) && res.suggest.length) {   // câu gõ linh tinh / lạc bài: gợi ý nội dung của bài để bấm hỏi
       const sg = el('div', '', 'tutor-suggest'); sg.setAttribute('aria-label', 'Gợi ý câu hỏi về bài đang học');
       for (const q of res.suggest.slice(0, 3)) sg.append(button(String(q), () => { const inp = /** @type {HTMLInputElement} */ (node('tutor-input')); inp.value = String(q); sg.remove(); form('tutor-form').requestSubmit(); }, 'tutor-chip'));

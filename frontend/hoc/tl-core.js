@@ -49,7 +49,7 @@ export function cloud(entries, hidden = [], extra = []) {
   return [...m.entries()].map(([w, n]) => ({ w, n })).sort((a, b) => b.n - a.n || a.w.localeCompare(b.w, 'vi')).slice(0, CLOUD_TOP);
 }
 /** Cỡ chữ của một từ trong đám mây (px), tỉ lệ căn bậc hai theo số lần. @param {number} n @param {number} max @param {number} [lo] @param {number} [hi] */
-export const cloudSize = (n, max, lo = 20, hi = 76) => Math.round(lo + (hi - lo) * Math.sqrt(Math.max(0, n - 1) / Math.max(1, max - 1)));
+export const cloudSize = (n, max, lo = 20, hi = 76) => Math.round(lo + (hi - lo) * Math.sqrt(Math.max(0, Math.min(n, max)) / Math.max(1, max)));   // từ nhiều nhất luôn to nhất (kể cả khi mới có 1 từ)
 
 /** Đếm bình chọn. @param {string[]} values chỉ số phương án ("0".."5") @param {number} nOpts */
 export function pollCounts(values, nOpts) {

@@ -164,24 +164,50 @@ async function send(k, n, v, err, btn) {
   catch { err.textContent = 'Chưa gửi được (thầy cô đã dừng nhận hoặc mạng chậm). Thử lại.'; return false; }
   finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
 }
-/** @param {any} s @param {string} k @param {number} n */
+/** Ô nhập từ khóa / ý kiến / câu hỏi: hiện ĐỦ số ô còn được gửi (câu cho 3 từ khóa → 3 ô), gửi một lần. @param {any} s @param {string} k @param {number} n số ý đã gửi */
 function textForm(s, k, n) {
   const f = t('form', 'tl-form'); f.noValidate = true;
-  const id = `tl-in-${k}`, lim = MAX_LEN[s.type] || 200, multi = s.type !== 'cloud';
-  const lab = /** @type {HTMLLabelElement} */ (t('label', 'tl-label', s.type === 'cloud' ? `Từ khóa ${n + 1}/${Number(s.max) || 1} (tối đa ${lim} ký tự)` : s.type === 'qa' ? 'Câu hỏi của em' : 'Ý kiến của em')); lab.htmlFor = id;
-  const inp = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (t(multi ? 'textarea' : 'input', 'tl-input')); inp.id = id; inp.maxLength = lim; inp.required = true; inp.setAttribute('aria-describedby', id + '-err');
-  if (multi) /** @type {HTMLTextAreaElement} */ (inp).rows = 3; else inp.setAttribute('autocomplete', 'off');
-  const err = t('p', 'tl-err', ''); err.id = id + '-err'; err.setAttribute('role', 'alert');
+  const lim = MAX_LEN[s.type] || 200, multi = s.type !== 'cloud', total = s.type === 'open' ? 1 : Math.max(1, Number(s.max) || 1), left = Math.max(1, total - n);
+  /** @type {(HTMLInputElement|HTMLTextAreaElement)[]} */ const inputs = [];
+  const errs = [];
+  for (let j = 0; j < left; j++) {
+    const idx = n + j + 1, id = `tl-in-${k}-${idx}`;
+    const wrap = t('div', 'tl-field');
+    const lab = /** @type {HTMLLabelElement} */ (t('label', 'tl-label', s.type === 'cloud' ? `Từ khóa ${idx}${total > 1 ? `/${total}` : ''}` : s.type === 'qa' ? `Câu hỏi ${idx}${total > 1 ? `/${total}` : ''}` : 'Ý kiến của em')); lab.htmlFor = id;
+    const inp = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (t(multi ? 'textarea' : 'input', 'tl-input')); inp.id = id; inp.maxLength = lim; inp.setAttribute('aria-describedby', id + '-err');
+    if (multi) /** @type {HTMLTextAreaElement} */ (inp).rows = 2; else { inp.setAttribute('autocomplete', 'off'); inp.setAttribute('enterkeyhint', j === left - 1 ? 'send' : 'next'); }
+    inp.placeholder = s.type === 'cloud' ? 'Một từ hoặc cụm từ ngắn' : '';
+    const err = t('p', 'tl-err', ''); err.id = id + '-err';
+    inp.addEventListener('input', () => { err.textContent = ''; inp.removeAttribute('aria-invalid'); });
+    wrap.append(lab, inp, err); f.append(wrap); inputs.push(inp); errs.push(err);
+  }
+  const hint = t('p', 'tl-hint', s.type === 'cloud' ? `Mỗi ô tối đa ${lim} ký tự. Không bắt buộc điền hết các ô.` : `Tối đa ${lim} ký tự.`);
+  const status = t('p', 'tl-err', ''); status.setAttribute('role', 'alert');
   const btn = /** @type {HTMLButtonElement} */ (t('button', 'primary tl-send', s.type === 'qa' ? 'Gửi câu hỏi' : 'Gửi')); btn.type = 'submit';
-  inp.addEventListener('input', () => { err.textContent = ''; inp.removeAttribute('aria-invalid'); });
   f.addEventListener('submit', async ev => {
-    ev.preventDefault();
-    const v = inp.value.replace(/\s+/g, ' ').trim();
-    const why = !v ? (s.type === 'cloud' ? 'Nhập một từ hoặc cụm từ ngắn.' : 'Nhập nội dung trước khi gửi.') : v.length > lim ? `Tối đa ${lim} ký tự.` : badWord(v, pub?.cam || []) ? 'Có từ ngữ không phù hợp. Em sửa lại nhé.' : '';
-    if (why) { err.textContent = why; inp.setAttribute('aria-invalid', 'true'); inp.focus(); return; }
-    if (await send(k, n, v, err, btn)) inp.value = '';
+    ev.preventDefault(); status.textContent = '';
+    /** @type {string[]} */ const vals = []; let bad = -1;
+    inputs.forEach((inp, j) => {
+      const v = inp.value.replace(/\s+/g, ' ').trim(); if (!v) return;
+      const why = v.length > lim ? `Tối đa ${lim} ký tự.` : badWord(v, pub?.cam || []) ? 'Có từ ngữ không phù hợp. Em sửa lại nhé.' : '';
+      if (why) { errs[j].textContent = why; inp.setAttribute('aria-invalid', 'true'); if (bad < 0) bad = j; } else vals.push(v);
+    });
+    if (bad >= 0) { inputs[bad].focus(); return; }
+    const uniq = [...new Map(vals.map(v => [v.toLowerCase(), v])).values()];
+    if (!uniq.length) { errs[0].textContent = s.type === 'cloud' ? 'Nhập ít nhất một từ khóa.' : 'Nhập nội dung trước khi gửi.'; inputs[0].setAttribute('aria-invalid', 'true'); inputs[0].focus(); return; }
+    await sendMany(k, n, uniq, status, btn);
   });
-  f.append(lab, inp, err, btn); return f;
+  f.append(hint, status, btn); return f;
+}
+/** Gửi nhiều ý một lượt (mỗi ý một ô trên máy chủ: …/y/{câu}/{mã}/{số}). @param {string} k @param {number} n @param {string[]} vals @param {HTMLElement} err @param {HTMLButtonElement} btn */
+async function sendMany(k, n, vals, err, btn) {
+  if (!me || !playing || pub?.phase !== 'open' || pub?.slide?.k !== k) { err.textContent = 'Thầy cô đã dừng nhận ý kiến.'; return; }
+  btn.disabled = true; btn.setAttribute('aria-busy', 'true'); const label = btn.textContent; btn.textContent = 'Đang gửi…';
+  let sent = 0;
+  try { for (const [j, v] of vals.entries()) { await store.put(`tl/${playing}/y/${k}/${me.key}/${n + j}`, { v, t: store.SERVER_TIME }); (mine[k] ||= []).push(v); sent++; } fx.sfx.join(); }
+  catch { err.textContent = sent ? `Đã gửi ${sent} ý; ý còn lại chưa gửi được (thầy cô đã dừng nhận hoặc mạng chậm).` : 'Chưa gửi được (thầy cô đã dừng nhận hoặc mạng chậm). Thử lại.'; }
+  finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
+  if (sent) { lastKey = ''; draw(); }
 }
 /** @param {any} s @param {string} k */
 function pollForm(s, k) {

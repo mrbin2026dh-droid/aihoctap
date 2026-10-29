@@ -1845,3 +1845,25 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 @media(prefers-color-scheme:dark){:where(:root:not([data-theme=light])) .student-app .read-chip.is-done,:where(:root:not([data-theme=light])) .path-read.is-done{color:#86efac}}
 .tutor-suggest{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
 .student-app .tutor-chip{min-height:44px;padding:6px 14px;border-radius:999px;font-size:14px;font-weight:700;text-align:left}
+/* Cập nhật ứng dụng (thiết kế lại 29/10): chấm đỏ tĩnh, rõ ở cả nền sáng và tối; biểu tượng không quay. Bỏ thanh chạy ngang mép trên. */
+.student-app .update-btn .badge-dot,.student-app .update-btn .ic{animation:none}
+.student-app .update-btn .badge-dot{top:5px;right:5px;width:11px;height:11px;background:#dc2626;border:2px solid var(--surface);box-shadow:none}
+.student-app .update-btn{border-color:color-mix(in srgb,#dc2626 45%,var(--line))}
+:where(:root[data-theme=dark]) .student-app .badge-dot,:where(:root[data-theme=dark]) .student-app .update-btn .badge-dot{background:#f87171}
+@media(prefers-color-scheme:dark){:where(:root:not([data-theme=light])) .student-app .badge-dot,:where(:root:not([data-theme=light])) .student-app .update-btn .badge-dot{background:#f87171}}
+.net-bar,#net-bar{display:none!important}
+/* Thảo luận (học sinh), bản thiết kế 29/10 tối */
+.tl-main{max-width:600px}
+.tl-slide{gap:14px;padding-top:4px}
+.tl-slide .lt-idx{display:inline-flex;align-self:start;padding:4px 12px;border-radius:999px;background:#ffffff1a;color:#cfc9ff;font-size:14px}
+.tl-q{font-size:20px;line-height:1.4;padding:18px 20px;box-shadow:0 8px 24px #0004}
+.tl-form{gap:14px;padding:16px;border-radius:18px;background:#ffffff0d;border:1px solid #ffffff1f}
+.tl-field{display:grid;gap:6px}
+.tl-play .tl-input{min-height:52px;background:#0f1230;border-color:#ffffff38}
+.tl-play textarea.tl-input{min-height:84px;resize:vertical;line-height:1.45}
+.tl-hint{margin:-4px 0 0;font-size:13px;color:#cfc9ff}
+.tl-err:empty{display:none}
+.tl-mine li{background:#ffd16626;color:#ffe9b3;border:1px solid #ffd16655}
+.tl-choice{background:#0f1230;border:1px solid #ffffff2e}
+.tl-dot{background:#0f1230;border:1px solid #ffffff2e}
+.tl-scale{padding:12px;border-radius:14px;background:#ffffff0a}

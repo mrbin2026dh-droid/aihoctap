@@ -59,7 +59,7 @@ try{
  const S=i=>`#tl-list .tl-slide-ed >> nth=${i}`;
  ok((await tp.inputValue(`${S(0)} >> .tl-type`))==='cloud','trang đầu mặc định: Đám mây từ khóa');
  await tp.fill(`${S(0)} >> .tl-text`,'Nghĩ đến Internet, em nghĩ đến từ gì?');await tp.selectOption(`${S(0)} >> .tl-max`,'2');
- for(const t of ['open','scale','qa']){await tp.selectOption('#tl-add-type',t);await tp.click('#tl-add');}
+ for(const t of ['open','scale','qa'])await tp.click(`.tl-add-type[data-type="${t}"]`);
  await tp.fill(`${S(1)} >> .tl-text`,'Internet giúp gì cho việc học của em?');ok(await tp.isChecked(`${S(1)} >> .tl-mod-in`),'câu trả lời mở: "Duyệt trước khi hiện" bật sẵn');
  await tp.fill(`${S(2)} >> .tl-text`,'Em tự đánh giá sau bài học');
  await tp.click('#tl-save');ok((await tp.textContent('#tl-form-err')).includes('Câu 3')&&(await tp.textContent('#tl-form-err')).includes('tiêu chí'),'thang điểm chưa có tiêu chí → báo đúng câu');
@@ -97,13 +97,12 @@ try{
  // ===== Câu 1: đám mây =====
  await tp.click('#tl-start');await tp.waitForSelector('#tl-host .qfx-count');await sp.waitForSelector('#tl-play .qfx-count',{timeout:8000});ok(true,'Bắt đầu: máy chiếu và điện thoại cùng đếm ngược 3 · 2 · 1');
  await sp.waitForSelector('#tl-play .tl-input',{timeout:12000});await sp2.waitForSelector('#tl-play .tl-input',{timeout:12000});await sp.waitForSelector('#tl-play .qfx-count',{state:'detached',timeout:8000});await sp2.waitForSelector('#tl-play .qfx-count',{state:'detached',timeout:8000});
- ok((await sp.textContent('.tl-q')).includes('Internet')&&(await sp.getAttribute('.tl-input','maxlength'))==='25','đám mây: ô nhập từ khóa tối đa 25 ký tự');
- await sp.fill('.tl-input','vcl');await sp.click('.tl-send');ok((await sp.textContent('.tl-err')).includes('không phù hợp')&&!db.tl[code].y,'từ ngữ không phù hợp bị chặn ngay trên điện thoại');
- await sp.fill('.tl-input','Internet');await sp.click('.tl-send');await sp.waitForFunction(()=>document.querySelector('.tl-mine')?.textContent.includes('Internet'));
- await sp.fill('.tl-input','học tập');await sp.click('.tl-send');await sp.waitForFunction(()=>document.querySelectorAll('.tl-mine li').length===2);
- ok(!(await sp.locator('.tl-input').count())&&(await sp.textContent('.tl-slide')).includes('Cảm ơn'),'gửi đủ 2 từ khóa (giới hạn của câu) → hết ô nhập');
+ ok((await sp.textContent('.tl-q')).includes('Internet')&&(await sp.getAttribute('.tl-input >> nth=0','maxlength'))==='25'&&await sp.locator('.tl-input').count()===2,'đám mây (tối đa 2 từ khóa): hiện đủ 2 ô nhập, mỗi ô tối đa 25 ký tự');
+ await sp.fill('.tl-input >> nth=0','vcl');await sp.click('.tl-send');ok((await sp.textContent('.tl-form')).includes('không phù hợp')&&!db.tl[code].y,'từ ngữ không phù hợp bị chặn ngay trên điện thoại');
+ await sp.fill('.tl-input >> nth=0','Internet');await sp.fill('.tl-input >> nth=1','học tập');await shot(sp,'s1a-cloud-form');await sp.click('.tl-send');await sp.waitForFunction(()=>document.querySelectorAll('.tl-mine li').length===2);
+ ok(!(await sp.locator('.tl-input').count())&&(await sp.textContent('.tl-slide')).includes('Cảm ơn'),'điền 2 ô, bấm Gửi một lần → gửi đủ 2 từ khóa, hết ô nhập');
  const third=await sp.evaluate(async([u,c])=>(await fetch(`${u}/tl/${c}/y/s0/hs01/2.json`,{method:'PUT',body:JSON.stringify({v:'thêm',t:{'.sv':'timestamp'}})})).status,[DB,code]);ok(third===401,'máy chủ chặn gửi quá số từ khóa cho phép');
- await sp2.fill('.tl-input','internet');await sp2.click('.tl-send');await sp2.waitForFunction(()=>document.querySelector('.tl-mine')?.textContent.includes('internet'));
+ await sp2.fill('.tl-input >> nth=0','internet');await sp2.click('.tl-send');await sp2.waitForFunction(()=>document.querySelector('.tl-mine')?.textContent.includes('internet'));
  await tp.waitForFunction(()=>document.querySelectorAll('#tl-host .tl-word').length===2&&/2\/2 em/.test(document.querySelector('#tl-host .tl-qmeta')?.textContent||''),null,{timeout:8000});await tp.waitForTimeout(400);
  const sizes=await tp.$$eval('#tl-host .tl-word',a=>Object.fromEntries(a.map(x=>[x.textContent,parseFloat(getComputedStyle(x).fontSize)])));
  ok(sizes['internet']>sizes['học tập']&&(await tp.textContent('#tl-host .tl-qmeta')).includes('2/2 em đã gửi'),'máy chiếu: đám mây gộp "Internet/internet", từ gửi nhiều to hơn; 2/2 em đã gửi');
@@ -133,7 +132,7 @@ try{
  await tp.click('.tl-toggle');await sp.waitForFunction(()=>document.querySelector('.tl-note')?.textContent.includes('dừng nhận'),null,{timeout:8000});await tp.click('.tl-toggle');ok(true,'Dừng nhận ý kiến: học sinh thấy thông báo; Mở lại được');
  // ===== Câu 4: hỏi đáp =====
  await tp.click('.tl-next');await sp.waitForFunction(()=>document.querySelector('.tl-q')?.textContent.includes('thắc mắc'),null,{timeout:8000});
- await sp.fill('.tl-input','Wifi và Internet khác nhau thế nào?');await sp.click('.tl-send');await sp.waitForFunction(()=>document.querySelector('.tl-mine')?.textContent.includes('Wifi'));
+ ok(await sp.locator('.tl-input').count()===2,'hỏi đáp (mỗi em 2 câu): hiện 2 ô câu hỏi');await sp.fill('.tl-input >> nth=0','Wifi và Internet khác nhau thế nào?');await sp.click('.tl-send');await sp.waitForFunction(()=>document.querySelector('.tl-mine')?.textContent.includes('Wifi'));
  await tp.waitForSelector('#tl-host .tl-queue-list li .tl-ok',{timeout:8000});await tp.click('#tl-host .tl-queue-list li .tl-ok');await tp.waitForSelector('#tl-host .tl-qa-wall li');
  await sp2.waitForSelector('.tl-qa-list li .tl-vote',{timeout:8000});ok((await sp2.textContent('.tl-qa-list')).includes('Wifi'),'học sinh khác thấy câu hỏi đã duyệt');
  ok(await sp.isDisabled('.tl-qa-list li .tl-vote'),'không tự bấm "Cùng thắc mắc" cho câu của mình');

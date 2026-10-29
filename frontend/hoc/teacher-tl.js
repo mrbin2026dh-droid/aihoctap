@@ -123,8 +123,8 @@ function slideRow(s = { type: 'open' }) {
   if (type === 'poll' || type === 'scale') {
     const list = (type === 'poll' ? s.opts : s.items) || [];
     const grid = el('div', 'thi-qe-opts tl-opts');
-    for (let i = 0; i < 6; i++) { const o = /** @type {HTMLInputElement} */ (el('input', 'tl-opt')); o.maxLength = 80; o.value = list[i] || ''; grid.append(field(`${type === 'poll' ? 'Lựa chọn' : 'Tiêu chí'} ${i + 1}${i < (type === 'poll' ? 2 : 1) ? '' : ' (không bắt buộc)'}`, o, 'f-o' + i)); }
-    fs.append(grid);
+    for (let i = 0; i < 6; i++) { const o = /** @type {HTMLInputElement} */ (el('input', 'tl-opt')); o.maxLength = 80; o.value = list[i] || ''; grid.append(field(`${type === 'poll' ? 'Lựa chọn' : 'Tiêu chí'} ${i + 1}`, o, 'f-o' + i)); }
+    fs.append(el('p', 't-hint tl-opts-hint', type === 'poll' ? 'Điền ít nhất 2 lựa chọn; các ô còn lại để trống nếu không dùng.' : 'Điền ít nhất 1 tiêu chí; học sinh chấm 1–5 cho từng tiêu chí.'), grid);
   }
   if (type === 'cloud' || type === 'qa') {
     const mx = /** @type {HTMLSelectElement} */ (el('select', 'tl-max')); for (const v of [1, 2, 3]) mx.append(new Option(`${v} ${type === 'cloud' ? 'từ khóa' : 'câu hỏi'}`, String(v))); mx.value = String(s.max || (type === 'cloud' ? 3 : 2));
@@ -168,7 +168,7 @@ async function loadLops(s) {
 const pickedLops = () => [...$('tl-lops').querySelectorAll('input[type=checkbox]:checked')].map(c => /** @type {HTMLInputElement} */ (c).value);
 $('tl-new').addEventListener('click', () => void openEditor(null));
 $('tl-list').addEventListener('input', ev => { $('tl-form-err').textContent = ''; /** @type {HTMLElement} */ (ev.target).removeAttribute?.('aria-invalid'); });
-$('tl-add').addEventListener('click', () => { const r = slideRow({ type: /** @type {any} */ (sel('tl-add-type').value) }); $('tl-list').append(r); slideNumber(); /** @type {HTMLElement} */ (r.querySelector('.tl-text')).focus(); });
+for (const b of document.querySelectorAll('.tl-add-type')) b.addEventListener('click', () => { const r = slideRow({ type: /** @type {any} */ (/** @type {HTMLElement} */ (b).dataset.type) }); $('tl-list').append(r); slideNumber(); r.scrollIntoView({ block: 'nearest' }); /** @type {HTMLElement} */ (r.querySelector('.tl-text')).focus(); });
 $('tl-lops').addEventListener('change', () => { $('tl-lops').removeAttribute('aria-invalid'); $('tl-lops-err').textContent = ''; });
 $('tl-lops-all').addEventListener('click', () => { const cs = [...$('tl-lops').querySelectorAll('input[type=checkbox]')]; const all = cs.every(c => /** @type {HTMLInputElement} */ (c).checked); cs.forEach(c => { /** @type {HTMLInputElement} */ (c).checked = !all; }); $('tl-lops').removeAttribute('aria-invalid'); $('tl-lops-err').textContent = ''; });
 $('tl-form').addEventListener('submit', async ev => {
@@ -206,10 +206,12 @@ $('tl-ai').addEventListener('click', async () => {
 $('tl-ai-go').addEventListener('click', async () => {
   const l = lessons.find(x => x.key === sel('tl-ai-lesson').value); $('tl-ai-err').textContent = '';
   if (!l) { $('tl-ai-err').textContent = 'Chọn bài học.'; return; }
+  const nIn = inp('tl-ai-n'), nVal = Number(nIn.value); nIn.removeAttribute('aria-invalid');
+  if (!Number.isInteger(nVal) || nVal < 1 || nVal > 10) { nIn.setAttribute('aria-invalid', 'true'); $('tl-ai-err').textContent = 'Nhập số câu hỏi từ 1 đến 10.'; nIn.focus(); return; }
   const b = /** @type {HTMLButtonElement} */ ($('tl-ai-go')), label = b.textContent; b.disabled = true; b.setAttribute('aria-busy', 'true'); b.textContent = 'AI đang gợi ý… (10–30 giây)';
   try {
     const c = cred();
-    const r = await api('/teacher/ai-tl', { method: 'POST', token: c.tok || undefined, timeout: 90000, body: { mode: 'goi_y', course_id: l.course_id, lesson_id: l.lesson_id, n: Number(sel('tl-ai-n').value) || 5, topic: inp('tl-ai-topic').value.trim(), ...(c.tok ? {} : { gv_ma: c.gv_ma, gv_pin: c.gv }) } });
+    const r = await api('/teacher/ai-tl', { method: 'POST', token: c.tok || undefined, timeout: 90000, body: { mode: 'goi_y', course_id: l.course_id, lesson_id: l.lesson_id, n: nVal, topic: inp('tl-ai-topic').value.trim(), ...(c.tok ? {} : { gv_ma: c.gv_ma, gv_pin: c.gv }) } });
     const list = (r?.slides || []).map(cleanSlide).filter((/** @type {Slide} */ s) => !slideError(s));
     if (!list.length) throw new Error('AI chưa gợi ý được câu hỏi. Thử lại.');
     appendSlides(list); $('tl-ai-box').hidden = true;

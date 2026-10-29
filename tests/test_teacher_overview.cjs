@@ -31,7 +31,7 @@ await pg.click('.a-chipbtn:has-text("Yếu")');assert.strictEqual(await pg.locat
 await pg.click('.a-student summary');assert(/Cần ôn:[\s\S]*Phần cứng máy tính \(0%\)/.test(await pg.innerText('.a-student')));assert((await pg.innerText('.a-student')).includes('hôm qua'));assert((await pg.innerText('.a-student table')).includes('Kiểm tra'));
 await pg.click('.a-chipbtn:has-text("Tất cả")');await pg.fill('.a-tools input','lê');assert.strictEqual(await pg.locator('.a-student').count(),1);assert((await pg.textContent('.a-student')).includes('Chưa có bài nộp'));
 // lọc lớp
-assert.deepEqual(await pg.$$eval('#overview-class option',o=>o.map(x=>x.value)),['','9A1','9A2']);
+assert.deepEqual(await pg.$$eval('#overview-class option',o=>o.map(x=>x.value)),['','k:9','9A1','9A2']);assert.deepEqual(await pg.$$eval('#overview-class optgroup',o=>o.map(x=>x.label)),['Khối 9']);
 await pg.selectOption('#overview-class','9A2');await pg.waitForFunction(()=>/lớp 9A2/.test(document.getElementById('a-head-sub').innerText));assert(asked.at(-1).includes('class=9A2'));assert.strictEqual(await pg.locator('.a-tile').first().innerText().then(x=>x.replace(/\s+/g,' ')),'Học sinh đã làm bài 2');
 if(SH)await pg.screenshot({path:SH+'/ov-desktop.png',fullPage:true});
 // điện thoại + tối

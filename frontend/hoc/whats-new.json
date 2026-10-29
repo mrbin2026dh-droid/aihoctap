@@ -1,10 +1,9 @@
 {
   "title": "Phiên bản 29/10/2026 (tối)",
   "items": [
-    "Bài học mở từ đầu bài, không còn nhảy xuống cuối.",
-    "Bảng và công thức trong bài hiển thị đúng, không còn ký tự lạ.",
-    "Danh sách bài và Tiến độ cho biết em đã đọc bài bao nhiêu phần trăm.",
-    "Gia sư AI nhắc em đang học bài nào và gợi ý nội dung để hỏi khi câu hỏi chưa liên quan.",
-    "Mới: Thảo luận trên lớp ở mục Luyện tập."
+    "Thảo luận: câu cho nhiều từ khóa hoặc nhiều câu hỏi hiện đủ ô để em điền một lần.",
+    "Gia sư AI chỉ ra bài có nội dung em hỏi và có nút mở bài đó.",
+    "Bỏ thanh chạy ngang ở mép trên; nút cập nhật có chấm đỏ rõ, không nhấp nháy.",
+    "Bài học mở từ đầu bài; bảng và công thức hiển thị đúng."
   ]
 }

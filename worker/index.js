@@ -3663,8 +3663,14 @@ export default {
       const classes = [...new Set(records.map(r => r.class_code).filter(Boolean))].sort();
       const classFilter = (url.searchParams.get('class') || '').trim().toUpperCase();
       if (classFilter) records = records.filter(r => String(r.class_code || '').toUpperCase() === classFilter);
+      // Trường nhiều lớp, nhiều môn: lọc thêm theo khối (?grade=9) và theo môn/khóa học (?course=tin-hoc-9)
+      const gradeFilter = Number(url.searchParams.get('grade') || 0);
+      if (gradeFilter) records = records.filter(r => Number(String(r.class_code || '').match(/^\d+/)?.[0] || 0) === gradeFilter);
+      const courses = Object.entries(records.reduce((a, r) => { const c = String(r.course_id || ''); if (c) a[c] = (a[c] || 0) + 1; return a; }, /** @type {Record<string, number>} */ ({}))).map(([id, n]) => ({ id, n }));
+      const courseFilter = (url.searchParams.get('course') || '').trim();
+      if (courseFilter) records = records.filter(r => String(r.course_id || '') === courseFilter);
       const lessons = await loadLessonsFor(env, records, signingKeys);
-      return new Response(JSON.stringify({ ...analyzeAttempts(records, lessons), classes, class_filter: classFilter || null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ...analyzeAttempts(records, lessons), classes, courses, class_filter: classFilter || null, grade_filter: gradeFilter || null, course_filter: courseFilter || null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Teacher Publish Lesson: /api/pwa/teacher/publish (Phase 1, B2, C1)
@@ -5454,6 +5460,23 @@ export default {
         });
       }
 
+      // Đang học một bài mà hỏi kiến thức của bài khác (vd "thông tin là gì" khi đang học "Thế giới kĩ thuật số"):
+      // tìm bài khớp hơn trong danh sách bài máy gửi lên → giải thích ngắn theo bài đó + mời mở bài đó (không trả lời cụt "hỏi thầy cô").
+      /** @type {{course_id:string, lesson_id:string, title:string, content:string}|null} */ let otherLesson = null;
+      if (lessonForTutor && !routedLesson && !isExamReview && Array.isArray(requestData.candidates) && requestData.candidates.length && TutorContract.isValidMessage(message) && !isGibberish(message)) {
+        // Chỉ tải THÊM 1 bài (giới hạn số yêu cầu con của Worker): chọn theo tên bài máy gửi lên, rồi so nội dung với bài đang học.
+        const cands = requestData.candidates.filter(c => c && IdValidationContract.isValidId(String(c.course_id || '')) && IdValidationContract.isValidId(String(c.lesson_id || '')) && typeof c.title === 'string' && !(String(c.course_id) === String(courseId) && String(c.lesson_id) === String(lessonId))).slice(0, 60);
+        const byTitle = routeLesson(message, cands.map(c => ({ title: String(c.title).slice(0, 120) })));
+        if (byTitle.index >= 0) {
+          const c = cands[byTitle.index];
+          const other = await loadPublicLesson(env, String(c.course_id), String(c.lesson_id)).catch(() => null);
+          if (other?.content_markdown) {
+            const both = routeLesson(message, [lessonForTutor, other]);
+            if (both.index === 1) otherLesson = { course_id: String(c.course_id), lesson_id: String(c.lesson_id), title: String(other.title || c.title).slice(0, 120), content: pickLessonContext(other.content_markdown, message, 3500) };
+          }
+        }
+      }
+
       // Gõ linh tinh khi đang học một bài: trả lời ngay (không tốn lượt AI), nói rõ bài đang học và gợi ý nội dung để hỏi.
       if (lessonForTutor && !isExamReview && isGibberish(message)) {
         const r = offTopicReply(String(lessonForTutor.title || 'này').slice(0, 120), lessonOutline(lessonForTutor.content_markdown));
@@ -5561,7 +5584,10 @@ export default {
             { const ol = lessonOutline(lessonForTutor.content_markdown), tt = String(lessonForTutor.title || '').slice(0, 120);
               systemText += `\n\nBÀI EM ĐANG HỌC: "${tt}"${ol.length ? `. Các nội dung chính: ${ol.join('; ')}` : ''}.`
                 + `\nKHI CÂU HỎI KHÔNG LIÊN QUAN ĐẾN BÀI NÀY (chuyện ngoài lề, nội dung của bài khác, câu vô nghĩa): KHÔNG từ chối cụt, KHÔNG dùng câu "không thể cung cấp đáp án" (câu đó chỉ dành cho lúc em xin đáp án). Hãy khéo léo: nói em đang học bài "${tt}", câu em hỏi chưa thuộc bài này; gợi ý 2–3 nội dung chính ở trên để em hỏi; kết thúc bằng 1 câu hỏi gợi mở về một nội dung của bài.`; }
-            systemText += '\n\nQUY TẮC CĂN CỨ: Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC ở trên. Nếu câu hỏi nằm ngoài tài liệu hoặc ngoài môn Tin học, hãy nói: "Phần này chưa có trong bài học, em hỏi thầy cô nhé." Không bịa số liệu, tên riêng, ví dụ hay nguồn trích dẫn ngoài tài liệu. Nếu không chắc, hãy nói rõ là chưa chắc.';
+            if (otherLesson) systemText += `\n\nNỘI DUNG EM HỎI ĐƯỢC DẠY Ở BÀI KHÁC: "${otherLesson.title}". TÀI LIỆU BÀI ĐÓ:\n\"\"\"\n${otherLesson.content}\n\"\"\"\nHãy: (1) nói ngắn gọn kiến thức này nằm ở bài "${otherLesson.title}"; (2) giải thích 2–4 câu ở mức THCS, CHỈ dựa trên tài liệu bài đó; (3) mời em mở bài đó để học kỹ; (4) nối lại với bài đang học bằng 1 câu hỏi gợi mở.`;
+            systemText += '\n\nQUY TẮC CĂN CỨ: Chỉ dùng thông tin trong TÀI LIỆU BÀI HỌC ở trên' + (otherLesson ? ' và TÀI LIỆU BÀI KHÁC' : '') + '. Không bịa số liệu, tên riêng, ví dụ hay nguồn trích dẫn ngoài tài liệu; không chắc thì nói rõ là chưa chắc.'
+              + ' Nếu là kiến thức Tin học cơ bản mà tài liệu chưa có: giải thích ngắn gọn ở mức THCS, nói rõ "kiến thức này chưa có trong bài đang học", rồi nối lại với bài.'
+              + ' CHỈ khi câu hỏi hoàn toàn ngoài môn Tin học mới nói: "Phần này nằm ngoài bài học, em hỏi thầy cô nhé." KHÔNG lặp lại câu từ chối giống lượt trước; nếu em hỏi lại cùng ý, hãy giải thích theo cách khác hoặc chỉ em mục nào trong bài.';
             const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId) : null;
             if (publicQuestion?.prompt) {
               systemText += `\n\nCÂU HỎI HỌC SINH ĐANG LÀM:\n"""\n${String(publicQuestion.prompt).slice(0, 1000)}\n"""`;
@@ -5766,7 +5792,8 @@ export default {
             status: 'success',
             driver: driverLabel,
             student: studentUid,
-            ...(routedLesson ? { lesson: routedLesson } : {})
+            ...(routedLesson ? { lesson: routedLesson } : {}),
+            ...(otherLesson ? { other_lesson: { course_id: otherLesson.course_id, lesson_id: otherLesson.lesson_id, title: otherLesson.title } } : {})
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -5796,7 +5823,8 @@ export default {
           status: 'success',
           driver: 'mock_offline',
           student: studentUid,
-          ...(routedLesson ? { lesson: routedLesson } : {})
+          ...(routedLesson ? { lesson: routedLesson } : {}),
+          ...(otherLesson ? { other_lesson: { course_id: otherLesson.course_id, lesson_id: otherLesson.lesson_id, title: otherLesson.title } } : {})
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

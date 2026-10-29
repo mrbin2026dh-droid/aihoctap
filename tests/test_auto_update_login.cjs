@@ -27,9 +27,9 @@ const at=p=>p.split('/').filter(Boolean).reduce((o,k)=>(o===null||o===undefined)
   await p.waitForSelector('#update-notice:not([hidden])',{timeout:15000});
   ok(await p.locator('#update-notice .badge-dot').isVisible(),'có bản mới: hiện icon cập nhật kèm chấm đỏ');
   await p.waitForSelector('#msg-dialog[open]',{timeout:10000});
-  ok((await p.textContent('#msg-title')).includes('Có bản cập nhật mới')&&(await p.textContent('#msg-body')).includes('Nội dung cập nhật')&&(await p.textContent('#msg-body')).includes('Luyện tập'),'có bản mới: hộp thoại nêu nội dung cập nhật (lấy từ whats-new.json)');
+  ok((await p.textContent('#msg-title')).includes('Có bản cập nhật mới')&&(await p.textContent('#msg-body')).includes('Nội dung cập nhật')&&(await p.textContent('#msg-body')).includes(JSON.parse(fs.readFileSync(path.join(root,'whats-new.json'),'utf8')).items[0]),'có bản mới: hộp thoại nêu nội dung cập nhật (lấy từ whats-new.json)');
   ok((await p.textContent('#msg-ok'))==='Cập nhật ngay'&&(await p.textContent('#msg-cancel'))==='Để sau'&&await p.locator('#update-overlay').isHidden(),'chưa tự cập nhật khi em chưa đồng ý');
-  const anim=await p.$eval('#update-notice .badge-dot',e=>getComputedStyle(e).animationName);ok(anim.includes('uo-ping'),'chấm đỏ nhấp nháy để dễ thấy');
+  const dot=await p.$eval('#update-notice .badge-dot',e=>{const c=getComputedStyle(e);const i=getComputedStyle(e.parentElement.querySelector('.ic'));return [c.animationName,i.animationName,c.backgroundColor]});ok(dot[0]==='none'&&dot[1]==='none'&&/rgb\((220, 38, 38|248, 113, 113)\)/.test(dot[2]),'chấm đỏ tĩnh, rõ màu; biểu tượng không quay (không gây rối mắt)');
   await p.click('#msg-cancel');await p.waitForSelector('#msg-dialog[open]',{state:'detached'}).catch(()=>{});await p.waitForTimeout(300);
   ok(!(await p.locator('#msg-dialog[open]').count())&&await p.locator('#update-notice').isVisible()&&await p.locator('#update-overlay').isHidden(),'bấm Để sau: đóng hộp thoại, giữ chấm đỏ');
   await p.waitForSelector('#gate-student');await p.click('#gate-student');await p.waitForSelector('#login-dialog[open]');

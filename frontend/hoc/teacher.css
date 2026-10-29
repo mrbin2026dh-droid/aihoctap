@@ -750,3 +750,34 @@ body.qz-hosting{overflow:hidden}
 .qz-host .t-button:hover{background:#ffffff26;border-color:#ffffff80;color:#fff}
 .qz-host .t-button.t-primary:hover{background:#3ad6b9;border-color:#3ad6b9;color:#062b25}
 .qz-host .t-button:disabled{opacity:.45}
+/* Thảo luận: trình soạn (thiết kế lại 29/10 tối) */
+.teacher-app .t-field{align-content:start}
+.teacher-app .tl-tools{display:grid;gap:12px;margin:20px 0 16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.teacher-app .tl-addbar,.teacher-app .tl-srcbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.teacher-app .tl-add-lab{font-weight:800;margin-right:4px;min-width:110px}
+.teacher-app .tl-add-type{min-height:44px;padding:0 14px;border-radius:999px;font-weight:700}
+.teacher-app .tl-add-type::before{content:"+";font-weight:900;margin-right:6px;color:var(--t-accent,#1f7a6c)}
+.teacher-app .tl-srcbar{padding-top:12px;border-top:1px solid var(--line)}
+.teacher-app .tl-count{margin-left:auto;font-weight:700}
+.teacher-app .tl-slide-ed{border:1px solid var(--line);border-left:5px solid var(--t-accent,#1f7a6c);border-radius:14px;padding:16px 18px;margin:0 0 14px;background:var(--surface)}
+.teacher-app .tl-slide-ed[data-type=cloud]{border-left-color:#d4a017}.teacher-app .tl-slide-ed[data-type=open]{border-left-color:#1f7a6c}.teacher-app .tl-slide-ed[data-type=poll]{border-left-color:#2563eb}.teacher-app .tl-slide-ed[data-type=scale]{border-left-color:#c2410c}.teacher-app .tl-slide-ed[data-type=qa]{border-left-color:#7c3aed}
+.teacher-app .tl-slide-ed>legend{font-weight:900;padding:2px 12px;border-radius:999px;background:var(--line);font-size:14px}
+.teacher-app .tl-ed-head{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:4px}
+.teacher-app .tl-ed-head .t-field{flex:1;max-width:340px;margin:0}
+.teacher-app .tl-type-hint{margin:2px 0 10px;color:var(--muted)}
+.teacher-app .tl-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 14px;margin-top:8px}
+.teacher-app .tl-slide-ed .t-field+.t-field,.teacher-app .tl-slide-ed .tl-mod{margin-top:10px}
+.teacher-app #tl-ai-n{max-width:140px}
+:root .teacher-app .danger-btn,:root .teacher-app #msg-dialog .danger-btn{background:#b42318!important;border-color:#b42318!important;color:#fff!important}
+:root .teacher-app .danger-btn:hover{background:#8f1c13!important;border-color:#8f1c13!important}
+.teacher-app .tl-opts-hint{margin:10px 0 0}
+/* Học sinh đọc bài: tổng hợp theo bài (29/10) */
+.teacher-app .read-filters{grid-template-columns:repeat(auto-fit,minmax(220px,320px))}
+.teacher-app .read-sum{margin-top:12px}
+.teacher-app .read-sum-open{all:unset;cursor:pointer;font-weight:700;color:var(--ink);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--brand) 50%,transparent);text-underline-offset:3px}
+.teacher-app .read-sum-open:hover{color:var(--brand)}
+.teacher-app .read-sum-open:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:4px}
+.teacher-app .read-sum tr.is-current td{background:color-mix(in srgb,var(--brand) 10%,transparent)}
+.teacher-app .read-mini-lg{width:120px}
+.teacher-app .read-none{color:var(--muted)}
+.teacher-app .read-detail{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}

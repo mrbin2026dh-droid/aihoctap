@@ -7,7 +7,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; console.log('ok  ', m); 
 const c = cloud(['Internet', 'internet ', 'INTERNET!', 'Học tập', 'học  tập', 'Giải trí', 'đm', 'cấm'], ['cấm']);
 ok(c[0].w === 'internet' && c[0].n === 3 && c[1].w === 'học tập' && c[1].n === 2, 'đám mây: gộp chữ thường, bỏ dấu câu, đếm, xếp nhiều lên trước');
 ok(!c.some(x => x.w === 'đm') && !c.some(x => x.w === 'cấm'), 'đám mây: bỏ từ bị lọc và từ giáo viên đã ẩn');
-ok(cloudSize(1, 10) === 20 && cloudSize(10, 10) === 76 && cloudSize(5, 10) > 40, 'cỡ chữ đám mây tăng theo số lần');
+ok(cloudSize(1, 1) === 76 && cloudSize(10, 10) === 76 && cloudSize(1, 10) < 40 && cloudSize(5, 10) > cloudSize(2, 10), 'cỡ chữ đám mây tăng theo số lần; từ nhiều nhất luôn to nhất (kể cả khi mới có 1 từ)');
 ok(MAX_LEN.cloud === 25 && MAX_LEN.open === 200, 'giới hạn độ dài: từ khóa 25, ý kiến 200 ký tự');
 
 ok(badWord('Bạn ấy đm thật') && badWord('d.m') === 'dm' && badWord('VCL') === 'vcl' && badWord('đ1t m3') !== '', 'lọc từ ngữ: viết tắt, chữ hoa, chèn dấu chấm, lách bằng số');

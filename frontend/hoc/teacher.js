@@ -493,7 +493,7 @@ function renderOverview() {
   const target = node('teacher-analytics'); const data = overview.data; if (!data) return;
   target.replaceChildren();
   const students = /** @type {any[]} */ (data.students || []); const lessons = /** @type {any[]} */ (data.lessons || []); const topics = /** @type {any[]} */ (data.topics || []);
-  node('a-head-sub').textContent = `${data.total_attempts || 0} lượt nộp · ${students.length} học sinh · ${lessons.length} bài${data.class_filter ? ` · lớp ${data.class_filter}` : ''}`;
+  node('a-head-sub').textContent = `${data.total_attempts || 0} lượt nộp · ${students.length} học sinh · ${lessons.length} bài${data.class_filter ? ` · lớp ${data.class_filter}` : data.grade_filter ? ` · khối ${data.grade_filter}` : ''}${data.course_filter ? ` · ${courseNames?.[data.course_filter] || data.course_filter}` : ''}`;
   if (!students.length) { target.append(h('p', 'Chưa có bài nộp nào. Báo cáo sẽ xuất hiện khi học sinh nộp bài luyện tập hoặc bài kiểm tra.', 't-muted')); return; }
   const count = (/** @type {string} */ lv) => students.filter(s => s.level === lv).length;
   const classAvg = Math.round(students.reduce((sum, s) => sum + (s.avg_percent || 0), 0) / students.length);
@@ -570,24 +570,44 @@ function renderOverview() {
   for (const l of lessons) { const tr = h('tr'); const cells = [[l.title, 'Bài', ''], [l.is_exam ? 'Kiểm tra' : 'Luyện tập', 'Loại', ''], [String(l.students), 'Học sinh', 't-number'], [String(l.attempts), 'Lượt nộp', 't-number']]; for (const [v, lab, cls] of cells) { const td = h('td', v, cls); td.dataset.label = lab; tr.append(td); } const td = h('td'); td.dataset.label = 'Đúng trung bình'; td.append(levelBar(l.avg_percent, l.level)); tr.append(td); lb.append(tr); }
   if (lessons.length) { lt.append(lh, lb); lessonCard.append(lt); } else lessonCard.append(h('p', 'Chưa có bài nào được làm.', 't-muted')); target.append(lessonCard);
 }
+/** Danh mục bài (tên môn) cho bộ lọc Tổng quan. @type {Record<string,string>|null} */ let courseNames = null;
 async function loadAnalytics() {
   const captured = generation;
   const target = node('teacher-analytics'); target.replaceChildren(h('p', 'Đang tải báo cáo…', 't-muted ld-box'));
-  const select = /** @type {HTMLSelectElement} */ (node('overview-class'));
-  const cls = select.value;
+  const select = /** @type {HTMLSelectElement} */ (node('overview-class')), csel = /** @type {HTMLSelectElement} */ (node('overview-course'));
+  const v = select.value, course = csel.value;
+  // Lớp: "" = tất cả lớp, "k:9" = cả khối 9, "9A" = một lớp. Môn: course_id hoặc "".
+  const q = new URLSearchParams(); if (v.startsWith('k:')) q.set('grade', v.slice(2)); else if (v) q.set('class', v); if (course) q.set('course', course);
   /** @type {any} */ let data;
-  try { data = await api(`/pwa/teacher/analytics${cls ? `?class=${encodeURIComponent(cls)}` : ''}`, {token}); }
+  try { data = await api(`/pwa/teacher/analytics${q.toString() ? '?' + q : ''}`, {token}); }
   catch (error) {
     if (isAuthError(error)) throw error;
     if (captured === generation) { node('a-head-sub').textContent = 'Chưa tải được báo cáo.'; target.replaceChildren(h('p', error instanceof ApiError && error.status === 404 ? 'Máy chủ chưa cập nhật tính năng báo cáo. Hãy triển khai bản máy chủ mới rồi tải lại.' : 'Chưa tải được báo cáo. Bấm "Tải lại báo cáo" để thử lại.', 't-muted')); }
     return;
   }
   if (captured !== generation || !token) return;
-  const classes = /** @type {string[]} */ (data.classes || []);
-  if (!cls) { select.replaceChildren(); const all = h('option', 'Tất cả các lớp'); all.value = ''; select.append(all); for (const c of classes) { const o = h('option', `Lớp ${c}`); o.value = c; select.append(o); } select.value = ''; }
+  const classes = /** @type {string[]} */ (data.classes || []).slice().sort((x, y) => x.localeCompare(y, 'vi', { numeric: true }));
+  const gradeOf = (/** @type {string} */ c) => Number(String(c).match(/^\d+/)?.[0]) || 0;
+  // Lớp: nhóm theo khối, có "Cả khối N" khi khối có nhiều lớp
+  const keep = select.value; select.replaceChildren(); const all = h('option', 'Tất cả các lớp'); all.value = ''; select.append(all);
+  for (const g of [...new Set(classes.map(gradeOf))].sort((x, y) => y - x)) {
+    const og = document.createElement('optgroup'); og.label = g ? `Khối ${g}` : 'Khác'; const cl = classes.filter(c => gradeOf(c) === g);
+    if (g && cl.length > 1) { const o = h('option', `Cả khối ${g}`); o.value = 'k:' + g; og.append(o); }
+    for (const c of cl) { const o = h('option', `Lớp ${c}`); o.value = c; og.append(o); }
+    select.append(og);
+  }
+  select.value = [...select.options].some(o => o.value === keep) ? keep : '';
+  // Môn: chỉ hiện khi dữ liệu có từ 2 môn/khóa học trở lên
+  if (!courseNames) { courseNames = {}; try { const cat = await api('/pwa/catalog'); for (const c of cat?.courses || []) courseNames[c.id] = c.title || `${c.subject_name || c.id} ${c.grade || ''}`.trim(); } catch { /* bỏ qua */ } }
+  const cs = /** @type {{id:string,n:number}[]} */ (data.courses || []);
+  const ckeep = csel.value; csel.replaceChildren(); const ca = h('option', 'Tất cả các môn'); ca.value = ''; csel.append(ca);
+  for (const c of cs.sort((x, y) => (courseNames?.[x.id] || x.id).localeCompare(courseNames?.[y.id] || y.id, 'vi', { numeric: true }))) { const o = h('option', `${courseNames?.[c.id] || c.id} (${c.n} bài nộp)`); o.value = c.id; csel.append(o); }
+  csel.value = [...csel.options].some(o => o.value === ckeep) ? ckeep : '';
+  node('overview-course-field').hidden = cs.length < 2 && !csel.value;
   overview.data = data; renderOverview();
 }
 document.getElementById('overview-class')?.addEventListener('change', () => { loadAnalytics().catch(fail); });
+document.getElementById('overview-course')?.addEventListener('change', () => { loadAnalytics().catch(fail); });
 /** @param {PublishLesson} document */
 function fill(document) {
   /** @type {Array<keyof Omit<PublishLesson,'questions'>>} */

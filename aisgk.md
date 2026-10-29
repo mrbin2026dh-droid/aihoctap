@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã deploy Worker 4c55a03b (Gia sư lạc bài/gõ linh tinh nêu bài học và gợi ý nội dung, không tốn lượt); test_markdown_render 9/9 PASS, test_read_status 8/8 PASS, test_tutor_offtopic 6/6 PASS, test_live_hoc_bai_https 18/18 PASS; nghiệm thu thực tế trên https://aihoctap.online mở bài luôn ở đầu (scrollY=0), bảng Markdown sạch sẽ, % đọc bài và chip "Đã đọc hết", Gia sư từ chối khéo câu lạc đề; chi tiết tại docs/handoff/antigravity-claude-hoc-bai-xong.md.
+- Yêu cầu mới nhất: Chấm đỏ cập nhật tĩnh + bỏ thanh chạy ngang; Tổng quan lọc khối/môn; Học sinh đọc bài tổng hợp theo bài; Thảo luận soạn bằng nút loại câu, số câu AI nhập, đủ ô nhập; Gia sư chỉ bài liên quan; chờ Antigravity deploy Worker và thử thật theo docs/handoff/claude-antigravity-giao-dien-29-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4305,3 +4305,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: frontend/hoc/app.js, frontend/hoc/sw.js, tests/test_live_hoc_bai_https.cjs, docs/handoff/antigravity-claude-hoc-bai-xong.md, aisgk.md.
 - Kiểm thực tế: test_markdown_render 9/9 PASS; test_read_status 8/8 PASS; test_tutor_offtopic 6/6 PASS; test_worker_tutor_guardrails 7/7 PASS; test_tutor_accuracy 17/17 PASS; test_pwa_update_integrity 7/7 PASS; test_live_hoc_bai_https 18/18 PASS trên https://aihoctap.online (Zero-Overflow 100%, 0 lỗi Console F12); Worker deploy 4c55a03b-6ba4-462e-801e-b79e0f255508; tools/package_student_pwa.py --check PASS.
 - Việc tiếp: Claude nghiệm thu toàn diện và cấp quyền cho Thầy push Git.
+### 29/10/2026 22:30 — Claude — Giao diện: chấm đỏ, thống kê nhiều lớp/môn, Thảo luận, Gia sư chỉ bài liên quan
+- Đã làm: chấm đỏ tĩnh, bỏ net-bar chạy ngang; analytics ?grade/?course + bộ lọc khối/môn; teacher-read.js viết lại (Lớp → Môn → bảng mọi bài → từng em); trình soạn Thảo luận (nút loại câu, số câu AI 1–10, thẻ màu theo loại), nhiều ô nhập cho học sinh, cỡ đám mây; nút nguy hiểm tối; Gia sư tìm bài khớp theo tên + nút Mở bài, bỏ câu "hỏi thầy cô" lặp.
+- Tệp đổi: frontend/hoc/styles.css, teacher.css, teacher.html, teacher.js, teacher-read.js, teacher-tl.js, tl-play.js, tl-core.js, app.js, whats-new.json, sw.js; worker/index.js; tests (loading_states, auto_update_login, teacher_thi_ui, teacher_overview, weakness_analytics, tl_live, tl_core, tutor_offtopic).
+- Kiểm thực tế: các test liên quan PASS; UI chuẩn 0 vi phạm.
+- Việc tiếp: Antigravity deploy Worker, thử thật.
+

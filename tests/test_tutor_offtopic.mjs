@@ -14,7 +14,7 @@ ok(r.reply.includes('Em đang học bài **Thế giới kĩ thuật số**') && 
 const kp = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
 await registerStudentCredential('hs_ot', '123456', 'a1b2c3d4e5f60718293a4b5c6d7e8f92', { name: 'Học sinh thử', grade: 9, class_code: '9A' });
 const env = { GATE_DO: new MockDONamespace(), SIGNING_KEYPAIR: kp, MOCK_MODE: true, GEMINI_API_KEY: 'k', ALLOWED_ORIGIN: 'https://x.github.io', FIREBASE_CLIENT_EMAIL: 'x@y.iam.gserviceaccount.com', FIREBASE_PRIVATE_KEY_ID: 'k',
-  TEST_LESSONS: { 'tin9:bai1': { course_id: 'tin9', lesson_id: 'bai1', title: 'Thế giới kĩ thuật số', content_markdown: md + '\nCPU là bộ xử lý trung tâm.', questions: [] } } };
+  TEST_LESSONS: { 'tin9:bai1': { course_id: 'tin9', lesson_id: 'bai1', title: 'Thế giới kĩ thuật số', content_markdown: md + '\nCPU là bộ xử lý trung tâm.', questions: [] }, 'tin6:bai1': { course_id: 'tin6', lesson_id: 'bai1', title: 'Thông tin và dữ liệu', content_markdown: '# Thông tin và dữ liệu\n## Thông tin là gì\nThông tin là những gì đem lại hiểu biết cho con người về thế giới xung quanh. Dữ liệu là thông tin được lưu trữ.', questions: [] } } };
 const call = async (path, body, headers = {}) => { const res = await worker.fetch(new Request('http://localhost/api' + path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) }), env); return { status: res.status, body: await res.json().catch(() => ({})) }; };
 const t = (await call('/login', { student_id: 'hs_ot', pin: '123456' })).body.token;
 let gemini = 0, sys = ''; const real = globalThis.fetch;
@@ -23,5 +23,11 @@ const a = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', messa
 ok(a.status === 200 && a.body.off_topic && a.body.reply.includes('Thế giới kĩ thuật số') && a.body.suggest.length && gemini === 0, 'gõ "KKKKKKKKKK": trả lời ngay theo bài đang học, gợi ý câu hỏi, không gọi AI (không tốn lượt)');
 const b = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', message: 'Đội bóng nào vô địch World Cup?' }, { Authorization: 'Bearer ' + t });
 ok(b.status === 200 && gemini === 1 && sys.includes('BÀI EM ĐANG HỌC: "Thế giới kĩ thuật số"') && sys.includes('Ưu thế của máy tính') && sys.includes('KHÔNG từ chối cụt'), 'câu hỏi lạc bài: AI được dặn nói rõ bài đang học, gợi ý nội dung bài, từ chối khéo');
+const cands = [{ course_id: 'tin9', lesson_id: 'bai1', title: 'Thế giới kĩ thuật số' }, { course_id: 'tin6', lesson_id: 'bai1', title: 'Thông tin và dữ liệu' }];
+const c = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', message: 'E MUỐN HỎI THÔNG TIN LÀ GÌ', candidates: cands }, { Authorization: 'Bearer ' + t });
+ok(c.status === 200 && c.body.other_lesson?.title === 'Thông tin và dữ liệu' && sys.includes('ĐƯỢC DẠY Ở BÀI KHÁC: "Thông tin và dữ liệu"') && sys.includes('đem lại hiểu biết'), 'hỏi kiến thức của bài khác: Gia sư biết bài "Thông tin và dữ liệu", giải thích theo bài đó và trả nút mở bài');
+ok(!sys.includes('Phần này chưa có trong bài học, em hỏi thầy cô nhé') && sys.includes('KHÔNG lặp lại câu từ chối'), 'không còn dặn AI trả lời cụt "chưa có trong bài, hỏi thầy cô" cho câu hỏi Tin học');
+const d = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', message: 'CPU là gì?', candidates: cands }, { Authorization: 'Bearer ' + t });
+ok(d.status === 200 && !d.body.other_lesson && !sys.includes('BÀI KHÁC'), 'câu hỏi đúng bài đang học: không chuyển bài');
 globalThis.fetch = real;
 console.log('TUTOR OFFTOPIC OK ' + n);

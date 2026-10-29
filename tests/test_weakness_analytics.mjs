@@ -42,6 +42,10 @@ assert.deepEqual(rep.body.classes, ['9A'], 'danh sách lớp để lọc'); asse
 const sa = rep.body.students.find(x => x.uid === 'hs_a'); assert.ok(sa.items.length === 2 && sa.items[0].percent <= sa.items[1].percent && sa.last_at > 0, 'chi tiết từng bài của học sinh');
 const none = await call('GET', '/pwa/teacher/analytics?class=ZZ', null, admin); assert.equal(none.body.total_attempts, 0, 'lọc lớp khác -> rỗng'); assert.equal(none.body.class_filter, 'ZZ');
 assert.equal((await call('GET', '/pwa/teacher/analytics?class=9a', null, admin)).body.total_attempts, 4, 'lọc lớp không phân biệt hoa thường');
+{ const g = (await call('GET', '/pwa/teacher/analytics?grade=9', null, admin)).body; assert.equal(g.total_attempts, 4, 'lọc cả khối 9'); assert.equal(g.grade_filter, 9); assert.ok(Array.isArray(g.courses) && g.courses.length >= 1, 'trả danh sách môn/khóa học để giáo viên lọc');
+  assert.equal((await call('GET', '/pwa/teacher/analytics?grade=8', null, admin)).body.total_attempts, 0, 'khối khác -> rỗng');
+  const c0 = g.courses[0].id; assert.equal((await call('GET', '/pwa/teacher/analytics?course=' + c0, null, admin)).body.course_filter, c0, 'lọc theo môn');
+  assert.equal((await call('GET', '/pwa/teacher/analytics?course=khong-co', null, admin)).body.total_attempts, 0, 'môn không có -> rỗng'); }
 const hw = rep.body.topics.find(t => t.topic === 'Phần cứng'), net = rep.body.topics.find(t => t.topic === 'Mạng');
 assert.deepEqual([hw.correct, hw.total, hw.percent], [1, 6, 17]); assert.equal(net.percent, 67);
 assert.equal(rep.body.topics[0].topic, 'Bảo mật', 'chủ đề yếu nhất xếp đầu');
