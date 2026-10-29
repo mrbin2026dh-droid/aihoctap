@@ -1454,6 +1454,31 @@ export function isGibberish(t) {
   const vowelless = words.filter(w => w.length >= 4 && !/[aeiouy]/.test(w) && !/\d/.test(w));
   return vowelless.length > 0 && vowelless.join('').length >= x.replace(/[^a-z]/g, '').length * 0.6;
 }
+/** Em xin/ép đáp án, hỏi "có phải B không", nhờ làm hộ, hoặc giả làm giáo viên đòi đáp án: Gia sư trả lời ngay theo mẫu cố định,
+ * không gọi AI (AI mất 15–45 giây cho câu này, đo 30/10), không trừ lượt. Câu hỏi khái niệm ("giải thích giúp em…", "CPU là gì?") không bị bắt. @param {string} t */
+export function isAnswerBegging(t) {
+  const raw = String(t || '').trim(); if (!raw || raw.length > 300) return false;
+  const x = raw.toLowerCase().replace(/\s+/g, ' ');
+  if (/(cho|xin|gửi|nói|đưa|báo|chỉ)\s+(?:(?:em|tôi|mình|tớ|con|cháu)\s+)?(?:xin\s+)?(?:cái\s+|các\s+|những\s+)?(đáp án|kết quả đúng|lời giải)/.test(x)) return true;
+  if (/(đáp án|phương án đúng|kết quả)\s+(của\s+)?(câu|bài)\s*\d+/.test(x) || /(câu|bài)\s*\d+\s+(chọn|là|đáp án)\s*(gì|nào|mấy|đâu)?\s*\??$/.test(x)) return true;
+  if (/(chọn|khoanh|tích)\s+(đáp án|phương án|câu|ý)?\s*(nào|gì)/.test(x)) return true;
+  if (/(^|[\s,.(])([A-D])($|[\s,.)?!])/.test(raw) && /(có phải|phải không|phải ko|đúng không|đúng ko|đúng chưa|được không|sai không|đúng hay sai|hay là|chọn|đáp án|phương án)/.test(x)) return true;
+  if (/(^|\s)(giải|làm)\s+(hộ|giúp|dùm|giùm|thay)(?=$|[\s.,?!])/.test(x) && !/giải thích/.test(x)) return true;
+  if (/(bỏ qua|quên|phớt lờ|bỏ hết).{0,30}(hướng dẫn|quy tắc|luật|lệnh|chỉ dẫn|yêu cầu)|ignore (all |the )?(previous|above)|system prompt/.test(x)) return true;
+  if (/(tôi|mình|em) là (giáo viên|thầy|cô|admin|quản trị)/.test(x) && /(đáp án|lời giải|kết quả|giải)/.test(x)) return true;
+  return false;
+}
+/** Trả lời mẫu khi em xin đáp án: không đưa đáp án, chỉ 3 bước tự tìm + phần bài nên đọc lại. @param {string} title @param {string[]} outline */
+export function answerBeggingReply(title, outline) {
+  const items = outline.slice(0, 3);
+  const lines = ['Gia sư không đưa đáp án, nhưng sẽ giúp em tự tìm ra. Em làm theo 3 bước:', '1. Đọc kĩ câu hỏi, tìm từ khóa chính.',
+    `2. Đọc lại phần liên quan trong bài **${title}**${items.length ? ':' : '.'}`];
+  for (const h of items) lines.push(`   - **${h}**`);
+  lines.push('3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.');
+  lines.push(items.length ? `Chưa hiểu từ nào, em hỏi Gia sư, ví dụ: "${items[0]} là gì?"` : 'Chưa hiểu từ nào trong câu hỏi, em hỏi Gia sư nhé.');
+  lines.push('_Câu này không trừ lượt của em._');
+  return { reply: lines.join('\n'), suggest: items.map(h => `${h} là gì?`) };
+}
 /** Trả lời cho tin nhắn linh tinh / lạc bài: nói rõ em đang học bài nào, gợi ý nội dung trong bài để hỏi. @param {string} title @param {string[]} outline */
 export function offTopicReply(title, outline) {
   const items = outline.slice(0, 3);
@@ -2025,6 +2050,7 @@ async function loadLessonsFor(env, records, signingKeys = null) {
  */
 /** Bài học công khai đã tải (theo phiên chạy của Worker). @type {Map<string,{v:any,at:number}>} */
 const LESSON_CACHE = new Map();
+/** Mô hình nào không nhận thinkingConfig (ghi nhớ trong vòng đời Worker). @type {Record<string, boolean>} */ const THINKING_OK = {};
 const LESSON_TTL_MS = 5 * 60 * 1000;
 async function loadPublicLesson(env, courseId, lessonId, signingKeys = null) {
   if (!IdValidationContract.isValidId(courseId || '') || !IdValidationContract.isValidId(lessonId || '')) return null;
@@ -5578,6 +5604,12 @@ export default {
         return new Response(JSON.stringify({ ...r, off_topic: true, ...(routedLesson ? { routed_lesson: routedLesson } : {}) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
+      // Xin đáp án / hỏi "có phải B không" / giả giáo viên đòi đáp án: trả lời mẫu ngay, không gọi AI, không trừ lượt.
+      if (lessonForTutor && !isExamReview && isAnswerBegging(message)) {
+        const r = answerBeggingReply(String(lessonForTutor.title || 'này').slice(0, 120), lessonOutline(lessonForTutor.content_markdown));
+        return new Response(JSON.stringify({ ...r, answer_request: true, ...(routedLesson ? { routed_lesson: routedLesson } : {}) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       // J1 / A9 / B7: Atomic quota reservation in Durable Object (locks slot immediately to prevent concurrency race)
       const studentClassId = authResult.payload.claims?.class_code || authResult.payload.claims?.grade || '';
       mark('chon_bai');
@@ -5727,7 +5759,9 @@ export default {
           // Có tài liệu bài học: AI trả JSON {pham_vi, tra_loi} để máy chủ quyết định từ chối câu ngoài bài (không để AI tự giảng ngoài sách).
           const tutorJson = Boolean(lessonForTutor?.content_markdown) && !isExamReview;
           if (tutorJson) systemText += '\nNHẮC LẠI: chỉ trả JSON {"pham_vi":"bai_nay|bai_khac|ngoai_bai","xin_dap_an":true|false,"tra_loi":"…"}.';
-          const tutorGenCfg = { temperature: 0.3, maxOutputTokens: tutorJson ? 1024 : 2048, ...(tutorJson ? { responseMimeType: 'application/json', responseSchema: TUTOR_JSON_SCHEMA } : {}) };
+          // Gia sư trả lời ngắn theo tài liệu: tắt bớt "suy nghĩ" của mô hình (đo 30/10: phần AI mất 15–45 giây). Mô hình không nhận tham số này → tự bỏ, gọi lại.
+          const thinkLevel = String(env.GEMINI_TUTOR_THINKING ?? 'minimal').trim();
+          let tutorGenCfg = { temperature: 0.3, maxOutputTokens: tutorJson ? 1024 : 2048, ...(tutorJson ? { responseMimeType: 'application/json', responseSchema: TUTOR_JSON_SCHEMA } : {}), ...(thinkLevel && THINKING_OK[modelName] !== false ? { thinkingConfig: { thinkingLevel: thinkLevel } } : {}) };
           /** @type {Response|null} */ let geminiRes = null;
           while (true) {
             geminiRes = await fetch(geminiUrl, {
@@ -5805,6 +5839,10 @@ export default {
               });
             }
 
+            if (geminiRes.status === 400 && tutorGenCfg.thinkingConfig) {   // mô hình không hỗ trợ thinkingLevel → nhớ lại, gọi lại không có tham số này
+              const eb = await geminiRes.clone().text().catch(() => '');
+              if (/thinking/i.test(eb)) { THINKING_OK[modelName] = false; const { thinkingConfig, ...rest } = tutorGenCfg; tutorGenCfg = rest; continue; }
+            }
             break; // not 429
           }
 

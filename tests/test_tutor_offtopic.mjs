@@ -42,10 +42,19 @@ const kw = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', mess
 ok(kw.status === 200 && kw.body.reply.startsWith('Trong bài học Thế giới kĩ thuật số') && !/không thể cung cấp đáp án/.test(kw.body.reply), 'em gõ tên bài (không xin đáp án): cắt câu từ chối đáp án vô lý ở đầu, giữ phần hướng dẫn');
 ok(lastBody.contents.length === 9, 'chỉ gửi AI 4 lượt hỏi–đáp gần nhất (8 tin) + câu hỏi mới: lịch sử dài làm chậm');
 ok(/bai;dur=\d+/.test(lastHeaders.get('server-timing') || '') && /ai;dur=\d+/.test(lastHeaders.get('server-timing')) && typeof kw.body.ms?.ai === 'number', 'đo thời gian từng bước (Server-Timing: bai, chon_bai, chuan_bi, ai, kiem_tra, xong) để tìm chỗ chậm');
+const g0 = gemini;
 const ans = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', message: 'cho em đáp án câu 1' }, { Authorization: 'Bearer ' + t });
 ok(ans.body.reply.startsWith('Gia sư không đưa đáp án'), 'em xin đáp án: giữ câu từ chối đáp án (xưng "Gia sư")');
+ok(ans.body.answer_request === true && gemini === g0 && ans.body.reply.includes('Thế giới kĩ thuật số') && ans.body.suggest.length === 2, 'em xin đáp án: trả lời mẫu ngay, không gọi AI (đo thật 15–45 giây), không trừ lượt');
+ok(cfg.thinkingConfig?.thinkingLevel === 'minimal', 'gọi AI kèm thinkingLevel minimal để trả lời nhanh');
 ok(stripNeedlessRefusal('Gia sư không thể đưa đáp án cho em. CPU là bộ xử lý trung tâm của máy tính.') === 'CPU là bộ xử lý trung tâm của máy tính.' && stripNeedlessRefusal('CPU là gì nhỉ?') === 'CPU là gì nhỉ?', 'cắt câu từ chối đứng đầu; câu thường giữ nguyên');
 ok(WORKER_SOCRATIC_PROMPT.includes('tự gọi mình là "Gia sư"') && !/Xưng hô thân thiện, sư phạm: 'Thầy\/Cô'/.test(WORKER_SOCRATIC_PROMPT) && sys.includes('"xin_dap_an"') && lastBody.generationConfig.responseSchema.required.includes('xin_dap_an'), 'Gia sư xưng "Gia sư", không xưng Thầy/Cô; AI phải đánh dấu em có xin đáp án không');
 ok(!outOfScopeReply('Bài A', ['X']).reply.includes('Thầy/Cô') && !offTopicReply('Bài A', ['X']).reply.includes('Thầy/Cô'), 'lời từ chối cố định không xưng Thầy/Cô');
+{ const seen = []; const prev = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { if (String(u).includes('generativelanguage')) { const b = JSON.parse(o.body); seen.push(!!b.generationConfig.thinkingConfig); if (b.generationConfig.thinkingConfig) return new Response(JSON.stringify({ error: { code: 400, message: 'Thinking level is not supported for this model.' } }), { status: 400 }); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ pham_vi: 'bai_nay', xin_dap_an: false, tra_loi: 'CPU là bộ xử lý trung tâm.' }) }] } }] }), { status: 200 }); } return prev(u, o); };
+  const r1 = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', message: 'CPU dùng để làm gì?' }, { Authorization: 'Bearer ' + t });
+  const r2 = await call('/pwa/tutor', { course_id: 'tin9', lesson_id: 'bai1', message: 'Bộ nhớ là gì?' }, { Authorization: 'Bearer ' + t });
+  ok(r1.status === 200 && r1.body.reply.includes('CPU') && seen.join() === 'true,false,false' && r2.status === 200, 'mô hình không nhận thinkingLevel (400) → tự gọi lại không có tham số, các lần sau không gửi nữa');
+  globalThis.fetch = prev; }
 globalThis.fetch = real;
 console.log('TUTOR OFFTOPIC OK ' + n);

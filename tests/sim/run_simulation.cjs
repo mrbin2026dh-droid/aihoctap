@@ -29,6 +29,9 @@ const logF = fs.createWriteStream(path.join(OUT, 'log.jsonl'), { flags: 'a' });
 const rows = [];
 const log = r => { const x = { at: new Date().toISOString(), ...r }; rows.push(x); logF.write(JSON.stringify(x) + '\n'); console.log(`${x.ma} ${x.buoc} ${x.ok ? 'OK' : 'LỖI'} ${x.ms ?? ''}ms ${x.ghi_chu || x.loi || ''}`); };
 
+// Tỉ lệ chọn đúng theo nhóm (lần 1 → lần cuối, em làm lại thì khá dần). Đáp án đúng do TH9001 dò trước (bước "do_dap_an", xem doDapAn).
+const DUNG = { A: [0.8, 1.0], B: [0.55, 0.75], C: [0.25, 0.4], D: [0.4, 0.5] };
+/** Đáp án đúng đã dò được: KNOW[bài][tên câu] = giá trị phương án đúng. */ const KNOW = {};
 const PLAN = {
   A: { bai: 3, doc: 1.0, lan: 4, hoi: ['Thiết bị số là gì?', 'Cho em ví dụ thiết bị có bộ xử lí thông tin', 'thế giới kỹ thuật'] },
   B: { bai: 2, doc: 1.0, lan: 2, hoi: ['CPU là gì?', 'Ưu thế của máy tính là gì?'] },
@@ -55,6 +58,7 @@ async function student(browser, a, idx) {
   if (process.env.SIM_MOCK) await require(process.env.SIM_MOCK)(page);   // chỉ dùng khi tự kiểm kịch bản trên máy (không dùng với bản thật)
   page.on('pageerror', e => errs.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text().slice(0, 200)); });
+  page.on('response', r => { if (r.status() >= 400) { const u = new URL(r.url()); errs.push(`HTTP ${r.status()} ${r.request().method()} ${u.host}${u.pathname}`); } });   // ghi đúng địa chỉ lỗi (không ghi query vì có thể chứa vé)
   const tutorMs = [];
   page.on('response', async r => { if (r.url().includes('/pwa/tutor') && r.request().method() === 'POST') { try { const j = await r.json(); tutorMs.push({ status: r.status(), ms: j.ms || null, off_topic: !!j.off_topic, reply: String(j.reply || j.detail || '').slice(0, 600) }); } catch { /* bỏ */ } } });
   const ma = a.ma, nhom = a.nhom;
@@ -88,7 +92,6 @@ async function student(browser, a, idx) {
       });
       // Luyện tập: làm lần 1 ngẫu nhiên, các lần sau giữ đáp án lần tốt nhất và đổi 2 câu (giống em làm lại sau khi xem điểm)
       if (b === 0 || nhom === 'A') {
-        let best = null, bestScore = -1;
         for (let lan = 1; lan <= plan.lan; lan++) {
           const okLan = await step(ma, nhom, `luyen_tap_bai_${b + 1}_lan_${lan}`, page, async () => {
             await page.evaluate(() => scrollTo(0, 0));
@@ -97,15 +100,16 @@ async function student(browser, a, idx) {
             await page.waitForSelector('#question-form:not([hidden]) fieldset.question', { timeout: 15000 });
             const qs = await page.$$eval('#question-form fieldset.question', fsets => fsets.map(f => [...f.querySelectorAll('input[type=radio]')].map(i => ({ name: i.name, value: i.value }))).filter(x => x.length));
             if (!qs.length) return 'bài không có câu trắc nghiệm';
-            const ans = {};
-            qs.forEach(opts => { const nm = opts[0].name; ans[nm] = best && best[nm] ? best[nm] : pick(opts).value; });
-            if (best) for (let k = 0; k < 2; k++) { const opts = pick(qs); ans[opts[0].name] = pick(opts).value; }
+            const ans = {}, know = KNOW[b] || {}, d = DUNG[nhom] || [0.25, 0.25];
+            const p = plan.lan > 1 ? d[0] + (d[1] - d[0]) * (lan - 1) / (plan.lan - 1) : d[0];
+            qs.forEach(opts => { const nm = opts[0].name, right = know[nm];
+              if (right && rnd() < p) ans[nm] = right;
+              else { const wrong = opts.filter(o => o.value !== right); ans[nm] = pick(wrong.length ? wrong : opts).value; } });
             for (const [nm, v] of Object.entries(ans)) await page.check(`#question-form input[name="${nm}"][value="${v}"]`);
             await page.click('#question-form button[type=submit]');
             await page.waitForSelector('.result-count:visible', { timeout: 30000 });
             const m = (await page.locator('.result-count:visible').first().textContent()).match(/(\d+)\/(\d+)/);
-            const sc = m ? Number(m[1]) : 0; if (sc > bestScore) { bestScore = sc; best = ans; }
-            return m ? `${m[1]}/${m[2]} câu đúng` : 'không đọc được điểm';
+            return m ? `${m[1]}/${m[2]} câu đúng (mục tiêu ${Math.round(p * 100)}%)` : 'không đọc được điểm';
           });
           if (!okLan) break;
         }
@@ -136,8 +140,61 @@ async function student(browser, a, idx) {
   }
 }
 
+/** Dò đáp án đúng của phần Luyện tập (máy học sinh không có đáp án): TH9001 nộp lần đầu, rồi mỗi lần chỉ đổi MỘT câu.
+ * Điểm tăng → phương án mới đúng; giảm → phương án cũ đúng; bằng → cả hai sai. Các lượt nộp này là thật, ghi bước "do_dap_an_bai_N". */
+async function doDapAn(browser, a, nBai) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'vi-VN' }); const page = await ctx.newPage();
+  if (process.env.SIM_MOCK) await require(process.env.SIM_MOCK)(page);
+  const ma = a.ma, nhom = a.nhom;
+  try {
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.click('#gate-student', { timeout: 15000 }); await page.waitForSelector('#login-dialog[open]');
+    await page.fill('#student-code', a.ma); await page.fill('#student-pin', a.pin); await page.click('#login-form button[type=submit]');
+    await page.waitForSelector('#main:not([hidden])', { timeout: 20000 }); await page.waitForTimeout(1500);
+    await page.click('[data-tab="catalog"]'); await page.waitForSelector('.lesson-card', { timeout: 15000 });
+    const soBai = Math.min(nBai, await page.locator('.lesson-card').count());
+    for (let b = 0; b < soBai; b++) {
+      await page.click('[data-tab="catalog"]'); await page.waitForSelector('.lesson-card');
+      await page.locator('.lesson-card').nth(b).locator('button').first().click(); await page.waitForSelector('#lesson-content:not(:empty)', { timeout: 15000 });
+      let first = true, cur = {}, score = -1, names = '';
+      const know = KNOW[b] = {}, tried = {};
+      const submit = async ans => {
+        await page.evaluate(() => scrollTo(0, 0));
+        if (first) { await page.click('#practice-lesson'); first = false; } else await page.locator('button:has-text("Làm lại")').first().click({ timeout: 10000 });
+        await page.waitForSelector('#question-form:not([hidden]) fieldset.question', { timeout: 15000 });
+        const qs = await page.$$eval('#question-form fieldset.question', fs => fs.map(f => [...f.querySelectorAll('input[type=radio]')].map(i => ({ name: i.name, value: i.value }))).filter(x => x.length));
+        const nm = qs.map(q => q[0].name).sort().join('|');
+        const use = {}; for (const q of qs) { const k = q[0].name; use[k] = ans && ans[k] && q.some(o => o.value === ans[k]) ? ans[k] : (know[k] || q[0].value); }
+        for (const [k, v] of Object.entries(use)) await page.check(`#question-form input[name="${k}"][value="${v}"]`);
+        await page.click('#question-form button[type=submit]'); await page.waitForSelector('.result-count:visible', { timeout: 30000 });
+        const m = (await page.locator('.result-count:visible').first().textContent()).match(/(\d+)\/(\d+)/);
+        return { qs, nm, use, sc: m ? Number(m[1]) : -1 };
+      };
+      let r = await submit(null); cur = r.use; score = r.sc; names = r.nm; let lan = 1;
+      log({ ma, nhom, buoc: `do_dap_an_bai_${b + 1}`, ok: r.sc >= 0, ghi_chu: `lần ${lan}: ${r.sc} đúng` });
+      for (const q of r.qs) {
+        const k = q[0].name; tried[k] = new Set([cur[k]]);
+        while (!know[k] && lan < 20) {
+          const next = q.find(o => !tried[k].has(o.value)); if (!next) break;
+          const ans = { ...cur, [k]: next.value }; const t = await submit(ans); lan++; tried[k].add(next.value);
+          if (t.nm !== names || t.sc < 0) { log({ ma, nhom, buoc: `do_dap_an_bai_${b + 1}`, ok: false, loi: 'bộ câu hỏi đổi giữa các lần, dừng dò bài này' }); break; }
+          if (t.sc > score) { know[k] = next.value; cur = ans; score = t.sc; }
+          else if (t.sc < score) { know[k] = cur[k]; }
+          else cur = ans;
+          if (!know[k] && tried[k].size === q.length - 1) know[k] = q.find(o => !tried[k].has(o.value)).value;   // còn đúng một phương án chưa thử → là đáp án
+        }
+        if (Object.keys(know).length < Object.keys(tried).length && !know[k]) break;
+      }
+      log({ ma, nhom, buoc: `do_dap_an_bai_${b + 1}`, ok: Object.keys(know).length === r.qs.length, ghi_chu: `đã biết ${Object.keys(know).length}/${r.qs.length} câu sau ${lan} lần nộp` });
+    }
+  } catch (e) { log({ ma, nhom, buoc: 'do_dap_an', ok: false, loi: String(e && e.message || e).split('\n')[0].slice(0, 300) }); }
+  finally { await ctx.close(); }
+}
+
 (async () => {
   const browser = await chromium.launch();
+  const dau = ACC.find(a => a.nhom === 'A');
+  if (dau && !process.argv.includes('--khong-do')) await doDapAn(browser, dau, PLAN.A.bai);
   const queue = ACC.map((a, i) => [a, i]);
   await Promise.all(Array.from({ length: Math.min(PAR, queue.length) }, async () => { while (queue.length) { const [a, i] = queue.shift(); await student(browser, a, i).catch(e => log({ ma: a.ma, nhom: a.nhom, buoc: 'tai_khoan', ok: false, loi: String(e.message || e) })); } }));
   await browser.close();
