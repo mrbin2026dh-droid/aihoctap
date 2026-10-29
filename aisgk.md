@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã kiểm tra toàn tuyến Bộ não đa agent sau khi có DNS: agent.aihoctap.online nhận IP VPS, Caddy cấp chứng chỉ SSL Let's Encrypt thành công, /status và chấm thật POST /grade 200 OK (1.0đ, độ tin cậy 1.0 có bằng chứng); phân tích nguyên nhân lỗi "Not secure" do cache HTTP cũ của trình duyệt; chi tiết tại docs/handoff/antigravity-claude-agent-dns-xong.md.
+- Yêu cầu mới nhất: Đã triển khai Worker bản chẩn đoán 6c75cf0c, làm sạch secret AGENT_KEY 64 ký tự và AGENT_URL; test_agent_bridge 15/15 PASS; Thầy bấm Kiểm tra AI ngay trên trang giáo viên để xác nhận thẻ Bộ não đa agent (VPS); chi tiết tại docs/handoff/antigravity-claude-agent-ket-noi-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2135,3 +2135,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-agent-dns-xong.md, aisgk.md.
 - Kiểm thực tế: DNS agent resolved; Caddy HTTPS certificate active; /health 200; /status 200; POST /grade live test 200 OK (3/3 votes gemini-3.5-flash-lite 200 OK); Playwright redirect http sang https://aihoctap.online/ 200 OK.
 - Việc tiếp: Thầy gõ https://aihoctap.online (hoặc Ctrl+Shift+R) trên trình duyệt để chuyển hẳn sang HTTPS có ổ khóa; vào teacher.html bấm Kiểm tra AI ngay để xem thẻ Bộ não đa agent (VPS).
+
+### 29/10/2026 14:28 — Antigravity — Triển khai Worker 6c75cf0c, làm sạch secret AGENT_KEY/AGENT_URL & sẵn sàng chẩn đoán
+- Đã thực hiện: Kéo commit 8ddd14d của Claude; chạy test_agent_bridge 15/15 PASS; nạp lại secret AGENT_KEY sạch 64 ký tự hex và AGENT_URL; triển khai thành công Worker bản 6c75cf0c; lập báo cáo tại docs/handoff/antigravity-claude-agent-ket-noi-xong.md.
+- Tệp đổi: docs/handoff/antigravity-claude-agent-ket-noi-xong.md, aisgk.md.
+- Kiểm thực tế: Worker deploy 6c75cf0c-2c46-4c8c-99bb-92d6087732a2; test_agent_bridge 15/15 PASS.
+- Việc tiếp: Thầy vào teacher.html bấm Kiểm tra AI ngay; nếu lỗi sửa theo dòng Lý do hiển thị chi tiết.
