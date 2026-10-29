@@ -4333,3 +4333,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Thầy đề nghị Antigravity đăng nhập tài khoản học sinh thật để tạo số liệu minh chứng. Claude không giao việc đó (dữ liệu giả lẫn vào hồ sơ thật, dùng thông tin đăng nhập của người khác, số liệu mô phỏng không được trình bày như hoạt động thật). Thay bằng kiểm thử mô phỏng với lớp thử 9TH, ghi nhãn rõ, kèm số liệu thí điểm thật tách riêng.
 - Tệp: docs/handoff/claude-antigravity-kiem-thu-mo-phong-29-10.md, .gitignore.
 
+### 30/10/2026 00:30 — Claude: kế hoạch Thi thật
+- Đã kiểm 3 đường thi trong kho; đường đang dùng (Sheet + Firebase công khai) lộ đáp án (thi_de công khai), điểm do máy học sinh tự ghi, không kiểm đã nộp thực hành → không dùng cho thi thật. Kế hoạch dùng Worker chấm ở máy chủ, ca thi theo lớp + mã ca, màn thi 2 phần, Drive theo em, màn chấm giáo viên duyệt.
+- Tệp: docs/ke-hoach/thi-that.md. Chờ thầy chốt 5 câu hỏi ở mục 6; chưa code.
+
