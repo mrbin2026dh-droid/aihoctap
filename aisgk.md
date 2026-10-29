@@ -26,7 +26,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Đã triển khai Worker bản 2892936a xử lý triệt để lỗi 502 (Gia sư tự thử lại, đổi khóa kho/mặc định, đổi fallback model; nút Kiểm tra AI cho giáo viên; học sinh hiện lý do lỗi chấm tự luận; tests 11/11, 8/8, 70/70 PASS); Thầy thực hiện bấm nút "Kiểm tra AI ngay" tại trang giáo viên và xử lý theo mã lỗi; chi tiết tại docs/handoff/antigravity-claude-ai-502-xong.md.
+- Yêu cầu mới nhất: Đã triển khai Worker bản d831f13d với Cloudflare Placement tại Mỹ (aws:us-east-1) giải quyết triệt để lỗi Google chặn Gemini từ Hong Kong; test_gemini_recovery 15/15 PASS; Thầy bấm nút "Kiểm tra AI ngay" tại trang giáo viên để xác nhận trạm gọi Google và kích hoạt chấm lại; chi tiết tại docs/handoff/antigravity-claude-ai-vung-hk-xong.md.
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
 - Bảo mật: File `.env`, file cơ sở dữ liệu SQLite trong `scratch/`, dữ liệu học sinh và mã PIN được loại trừ 100% qua `.gitignore`, không đưa lên repository công khai.
@@ -2109,3 +2109,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp đổi: docs/handoff/antigravity-claude-ai-502-xong.md, aisgk.md.
 - Kiểm thực tế: Worker deploy thành công Version ID `2892936a-72eb-4c5e-ab40-b6857b4891e7`; CORS OPTIONS 200 OK cho `https://aihoctap.online`; `test_gemini_recovery` 11/11 PASS; `test_thi_tuluan` 70/70 PASS; GitHub Pages deployment 40817254057 success.
 - Việc tiếp: Thầy vào https://aihoctap.online/teacher.html → Hồ sơ → Khóa API → Bấm "Kiểm tra AI ngay" và đọc bảng mã kết quả để xử lý theo hướng dẫn.
+
+
+### 29/10/2026 12:30 — Antigravity — Triển khai Worker bản d831f13d với Placement US (Khắc phục Google chặn vùng HKG), 15/15 Tests PASS
+- Đã thực hiện: Đồng bộ mã nguồn commit 1655220; cấu hình `placement.region = "aws:us-east-1"` trong `wrangler.toml` để ép Worker gọi Google từ Mỹ; triển khai Worker `aihoctap-gate` bản `d831f13d-15c0-4d97-9ad7-f10baf9ff15a` thành công; chạy kiểm thử `test_gemini_recovery.mjs` đạt 15/15 PASS (thêm ca test 400 location not supported & 400 API key invalid); cập nhật báo cáo tại `docs/handoff/antigravity-claude-ai-vung-hk-xong.md`.
+- Tệp đổi: docs/handoff/antigravity-claude-ai-vung-hk-xong.md, aisgk.md.
+- Kiểm thực tế: Worker deploy v d831f13d-15c0-4d97-9ad7-f10baf9ff15a 200 OK; test_gemini_recovery 15/15 PASS; GitHub Pages deployment 40822050213 success.
+- Việc tiếp: Thầy vào https://aihoctap.online/teacher.html → Hồ sơ → Khóa API → Bấm "Kiểm tra AI ngay" chụp bảng kết quả; sau đó nhờ học sinh bấm "Chấm lại phần tự luận".
