@@ -4341,3 +4341,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Ghi quyết định của thầy (không chặn toàn trường, không đếm giờ, thi lại do giáo viên, không cho học sinh xem điểm, theo dõi tức thì + ghi chú vắng, thông báo nộp + mở Drive, 4 trạng thái). Thêm máy trạng thái, luồng giáo viên/học sinh, lưu trữ, tình huống biên, 7 bước.
 - Tệp: docs/ke-hoach/thi-that.md. Chờ thầy xác nhận 3 điểm mục 9; chưa code.
 
+### 30/10/2026 01:00 — Claude: kế hoạch Thi thật bản 3 (đơn giản hóa)
+- Thầy chốt: lấy điểm thi lại, không mã ca, không đếm giờ (cho làm xong), không bảo mật rườm rà; thêm nhãn máy ngoài mạng trường khi nghi ngờ. Giữ hệ thống thi hiện tại, chỉ thêm: đề thật không kèm đáp án, Sheet chấm thay máy học sinh, Firebase chỉ nhận bài theo trạng thái 4 mức + có file thực hành.
+- Tệp: docs/ke-hoach/thi-that.md. Chờ thầy đồng ý để code (6 bước, ~2–3 ngày).
+
