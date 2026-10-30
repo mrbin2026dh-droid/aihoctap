@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Sửa lỗi Thảo luận đã gửi mà màn không báo (phải F5) + hỏi đáp mất chữ gõ dở + Luyện tập trực tiếp F5 mất đáp án; Antigravity deploy Pages và thử theo docs/handoff/claude-antigravity-thao-luan-gui-30-10.md. Việc trước còn chờ: deploy Thi thật + Worker Gia sư, chạy lại mô phỏng (docs/handoff/claude-antigravity-mo-phong-lan-2-30-10.md).
+- Yêu cầu mới nhất: Antigravity đã hoàn thành kiểm thử thực tế Thảo luận (Enter hiện ngay, Hỏi đáp giữ chữ gõ dở) và Luyện tập trực tiếp (F5 giữ đáp án) với tài khoản THỬ lớp 9TH, đủ 3 ảnh minh chứng; bàn giao Claude kiểm định độc lập (docs/handoff/antigravity-claude-thao-luan-gui-xong.md). Các việc trước: kết quả mô phỏng lần 2 đã đối chiếu (docs/handoff/antigravity-claude-mo-phong-lan-2-xong.md).
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4372,4 +4372,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Nguyên nhân: tl-play.js draw() chặn vẽ lại khi con trỏ còn trong ô nhập (Enter, hoặc chạm nút Gửi trên iPhone/iPad) → gửi thành công nhưng màn không đổi. Sửa: draw(force) sau khi gửi; giữ chữ gõ dở khi bạn khác gửi (hỏi đáp). quiz-play.js: F5 giữa câu đọc lại đáp án đã ghi; gửi lỗi thì bỏ chọn để chọn lại.
 - Tệp: frontend/hoc/{tl-play.js,quiz-play.js,whats-new.json,sw.js}, tests/{test_tl_live.cjs,test_quiz_live.cjs}.
 - Kiểm thử PASS (đã chạy): test FAIL trước khi sửa; sau sửa TL LIVE OK 56, QUIZ LIVE OK 54, UI học sinh 0 vi phạm, PWA P1–P7.
+
+### 30/10/2026 12:30 — Antigravity: kiểm thử thực tế Thảo luận (Enter hiện ngay, Hỏi đáp giữ chữ gõ dở) và Quiz Live F5 (lớp 9TH)
+- Đã làm: Xác nhận đồng bộ Web Client và dấu PWA; kiểm thử tự động trên 2 thiết bị (mobile 390x844 TH9001 và desktop 1280x800 TH9002) cho 3 kịch bản: (1) Thảo luận gõ xong nhấn Enter hiện ngay "Em đã gửi" không cần F5; (2) Hỏi đáp giữ nguyên 100% chữ TH9002 đang gõ dở và con trỏ khi bạn gửi và thầy duyệt; (3) Luyện tập trực tiếp chọn đáp án A, F5 giữa câu vào lại phòng vẫn thấy đáp án đã chọn (.is-chosen), các nút disabled không bấm lại được. Chụp đủ 3 ảnh minh chứng trên đĩa cứng; lập báo cáo docs/handoff/antigravity-claude-thao-luan-gui-xong.md.
+- Tệp: tests/test_live_thao_luan_gui_30_10.cjs, docs/handoff/anh/thao-luan-30-10/*.png, docs/handoff/antigravity-claude-thao-luan-gui-xong.md, aisgk.md.
+- Kiểm thực tế: tests/test_live_thao_luan_gui_30_10.cjs 17/17 PASS 100%; test_tl_live.cjs 56/56 PASS; test_quiz_live.cjs 54/54 PASS; python tools/package_student_pwa.py --check PASS 100%; 3/3 ảnh minh chứng đạt chuẩn.
+- Việc tiếp: Claude kiểm định độc lập và phán quyết ACCEPT; chuyển bước tiếp theo cho Thi thật và Gia sư theo chỉ đạo.
 

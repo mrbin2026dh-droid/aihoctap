@@ -1,0 +1,16 @@
+﻿KIß╗éM THß╗¼ M├ö PHß╗ÄNG ΓÇô lß╗¢p 9TH, kh├┤ng phß║úi hß╗ìc sinh thß║¡t. Lß║ºn chß║íy tß╗½ 2026-10-30T00:23:25.817Z
+- Sß╗æ em ─æ─âng nhß║¡p (─É├ú l├ám b├ái tr├¬n Tß╗òng quan nß║┐u em n├áo c┼⌐ng nß╗Öp ├¡t nhß║Ñt 1 lß║ºn): 26
+- L╞░ß╗út nß╗Öp Luyß╗çn tß║¡p trong kß╗ïch bß║ún (kh├┤ng t├¡nh d├▓ ─æ├íp ├ín): 57
+- L╞░ß╗út nß╗Öp d├▓ ─æ├íp ├ín (TH9001, cß╗Öng v├áo L╞░ß╗út nß╗Öp cß╗ºa Tß╗òng quan): 17
+- B├ái thß╗⌐ 1 trong danh mß╗Ñc: sß╗æ em / l╞░ß╗út nß╗Öp / % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt: 19 em / 33 l╞░ß╗út / 63%
+- B├ái thß╗⌐ 2 trong danh mß╗Ñc: sß╗æ em / l╞░ß╗út nß╗Öp / % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt: 3 em / 12 l╞░ß╗út / 100%
+- B├ái thß╗⌐ 3 trong danh mß╗Ñc: sß╗æ em / l╞░ß╗út nß╗Öp / % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt: 3 em / 12 l╞░ß╗út / 100%
+- Nh├│m A: % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt mß╗ùi b├ái: 100%
+- Nh├│m B: % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt mß╗ùi b├ái: 85%
+- Nh├│m C: % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt mß╗ùi b├ái: 39%
+- Nh├│m D: % ─æ├║ng TB lß║ºn gß║ºn nhß║Ñt mß╗ùi b├ái: 50%
+- ─Éß╗ìc b├ái tin-hoc-9~bai-1: sß╗æ em c├│ dß╗» liß╗çu / ─æß╗ìc hß║┐t (100%): 26 / 15
+- ─Éß╗ìc b├ái tin-hoc-9~bai-10: sß╗æ em c├│ dß╗» liß╗çu / ─æß╗ìc hß║┐t (100%): 15 / 15
+- ─Éß╗ìc b├ái tin-hoc-9~bai-2: sß╗æ em c├│ dß╗» liß╗çu / ─æß╗ìc hß║┐t (100%): 6 / 6
+- Thß╗¥i gian hß╗ìc ng├áy 2026-10-30: sß╗æ em / tß╗òng ph├║t: 4 / 10
+- Gia s╞░: sß╗æ c├óu / trung vß╗ï / p95 (ms): 67 / 3634 / 4323

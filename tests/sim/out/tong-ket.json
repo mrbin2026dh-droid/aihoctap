@@ -1,64 +1,71 @@
 {
   "nhan": "KIỂM THỬ MÔ PHỎNG – lớp 9TH, không phải học sinh thật",
-  "luc": "2026-10-29T17:06:34.008Z",
+  "luc": "2026-10-30T00:27:09.673Z",
   "co_so": "https://aihoctap.online",
   "so_tai_khoan": 30,
   "theo_buoc": {
+    "do_dap_an": {
+      "so_buoc": 6,
+      "so_loi": 0,
+      "ti_le_loi": 0,
+      "trung_vi_ms": null,
+      "p95_ms": null
+    },
     "mo_trang": {
       "so_buoc": 26,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 837,
-      "p95_ms": 3739
+      "trung_vi_ms": 841,
+      "p95_ms": 1436
     },
     "dang_nhap": {
       "so_buoc": 26,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 583,
-      "p95_ms": 1180
+      "trung_vi_ms": 508,
+      "p95_ms": 1075
     },
     "mo_danh_muc": {
       "so_buoc": 26,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 176,
-      "p95_ms": 274
+      "trung_vi_ms": 160,
+      "p95_ms": 315
     },
     "mo": {
       "so_buoc": 47,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 285,
-      "p95_ms": 407
+      "trung_vi_ms": 297,
+      "p95_ms": 448
     },
     "doc": {
       "so_buoc": 47,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 2593,
-      "p95_ms": 3680
+      "trung_vi_ms": 2555,
+      "p95_ms": 3566
     },
     "luyen_tap": {
-      "so_buoc": 101,
-      "so_loi": 0,
-      "ti_le_loi": 0,
-      "trung_vi_ms": 2518,
-      "p95_ms": 3436
+      "so_buoc": 70,
+      "so_loi": 13,
+      "ti_le_loi": 18.6,
+      "trung_vi_ms": 2472,
+      "p95_ms": 30873
     },
     "mo_gia_su": {
       "so_buoc": 26,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 385,
-      "p95_ms": 564
+      "trung_vi_ms": 409,
+      "p95_ms": 511
     },
     "gia_su": {
       "so_buoc": 67,
       "so_loi": 0,
       "ti_le_loi": 0,
-      "trung_vi_ms": 29037,
-      "p95_ms": 45130
+      "trung_vi_ms": 3634,
+      "p95_ms": 4323
     },
     "loi_trinh_duyet": {
       "so_buoc": 3,
