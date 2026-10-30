@@ -7,7 +7,7 @@ const OK = ['Thiết bị số là gì?', 'CPU là gì?', 'giải thích giúp e
 for (const t of BEG) ok(isAnswerBegging(t), 'bắt xin đáp án: ' + t);
 for (const t of OK) ok(!isAnswerBegging(t), 'không bắt câu hỏi học: ' + t);
 const r = answerBeggingReply('Thế giới kĩ thuật số', ['Thiết bị có gắn bộ xử lí thông tin', 'Ưu thế và ứng dụng của máy tính điện tử']);
-ok(r.reply.startsWith('Gia sư không đưa đáp án') && r.reply.includes('**Thế giới kĩ thuật số**') && r.reply.includes('Thiết bị có gắn bộ xử lí thông tin') && r.reply.includes('không trừ lượt') && !/thầy|cô/i.test(r.reply), 'trả lời mẫu: không đáp án, chỉ phần bài cần đọc, xưng Gia sư, báo không trừ lượt');
+ok(r.reply.startsWith('Gia sư không đưa đáp án') && r.reply.includes('**Thế giới kĩ thuật số**') && r.reply.includes('Thiết bị có gắn bộ xử lí thông tin') && !r.reply.includes('không trừ lượt') && !/thầy|cô/i.test(r.reply), 'trả lời mẫu: không đáp án, chỉ phần bài cần đọc, xưng Gia sư, không ghi "không trừ lượt" (thầy chốt 30/10)');
 ok(r.suggest.length === 2 && r.suggest[0] === 'Thiết bị có gắn bộ xử lí thông tin là gì?', 'gợi ý câu hỏi khái niệm để học tiếp');
 ok(isGibberish('KKKKKKKK') && !isAnswerBegging('KKKKKKKK'), 'gõ linh tinh vẫn theo đường cũ');
 console.log('WORKER TUTOR FAST OK ' + n);

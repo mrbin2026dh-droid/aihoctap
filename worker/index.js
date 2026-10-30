@@ -1480,7 +1480,6 @@ export function answerBeggingReply(title, outline) {
   for (const h of items) lines.push(`   - **${h}**`);
   lines.push('3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.');
   lines.push(items.length ? `Chưa hiểu từ nào, em hỏi Gia sư, ví dụ: "${items[0]} là gì?"` : 'Chưa hiểu từ nào trong câu hỏi, em hỏi Gia sư nhé.');
-  lines.push('_Câu này không trừ lượt của em._');
   return { reply: lines.join('\n'), suggest: items.map(h => `${h} là gì?`) };
 }
 /** Trả lời cho tin nhắn linh tinh / lạc bài: nói rõ em đang học bài nào, gợi ý nội dung trong bài để hỏi. @param {string} title @param {string[]} outline */
@@ -1622,14 +1621,10 @@ export function stripNeedlessRefusal(reply) {
 export function outOfScopeReply(title, outline, streak = 0) {
   const items = outline.slice(0, 3);
   const suggest = items.map(h => `${h} là gì?`);
-  if (streak >= 1) {
-    const lines = [`Câu này cũng chưa thuộc bài **${title}**, nên Gia sư không trả lời. Em bấm một gợi ý bên dưới để học tiếp nội dung của bài nhé.`];
-    return { reply: lines.join('\n'), suggest };
-  }
-  const lines = [`Câu hỏi này không thuộc bài **${title}** em đang học, nên Gia sư không trả lời để tránh nói sai so với sách.`];
-  if (items.length) { lines.push('Trong bài này, em có thể hỏi về:'); for (const h of items) lines.push(`- **${h}**`); lines.push('Em muốn tìm hiểu nội dung nào?'); }
-  else lines.push('Em hãy hỏi về một nội dung trong bài nhé.');
-  lines.push('_Câu này không trừ lượt của em._');
+  // Người dùng chốt 30/10 tối: không nói "Gia sư không trả lời để tránh sai với sách", không ghi "không trừ lượt" – chỉ mời hỏi lại theo nội dung bài.
+  const lines = [streak >= 1 ? `Câu này cũng chưa thuộc bài **${title}**.` : `Câu hỏi này không thuộc bài **${title}** em đang học.`];
+  if (items.length) { lines.push('Em hãy hỏi lại các câu liên quan đến nội dung sau nhé:'); for (const h of items) lines.push(`- **${h}**`); }
+  else lines.push(`Em hãy hỏi lại các câu liên quan đến nội dung bài **${title}** nhé.`);
   return { reply: lines.join('\n'), suggest };
 }
 /** Quy tắc phạm vi gửi cho AI (đi kèm TÀI LIỆU BÀI HỌC). @param {string} title @param {string[]} outline @param {boolean} hasOther */
@@ -5650,7 +5645,7 @@ export default {
           routedLesson = { course_id: courseId, lesson_id: lessonId, title: String(pick.l.title || '').slice(0, 120) };
           effectiveContext.course_id = courseId; effectiveContext.lesson_id = lessonId;   // nhật ký Bộ não ghi đúng bài
         } else {
-          return new Response(JSON.stringify({ reply: 'Gia sư chưa tìm thấy bài học nào nói về điều em hỏi. Em chọn một bài trong danh sách bên dưới, hoặc hỏi lại bằng từ khóa trong sách (ví dụ "mã nhị phân", "thông tin số"). Câu này không trừ lượt của em.', no_match: true }), {
+          return new Response(JSON.stringify({ reply: 'Gia sư chưa tìm thấy bài học nào nói về điều em hỏi. Em chọn một bài trong danh sách bên dưới, hoặc hỏi lại bằng từ khóa trong sách (ví dụ "mã nhị phân", "thông tin số").', no_match: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }

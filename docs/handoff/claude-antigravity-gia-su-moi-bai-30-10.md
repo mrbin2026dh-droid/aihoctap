@@ -60,3 +60,17 @@
 ## Xong khi
 - Test xanh, Worker mới chạy, tệp JSON đánh giá 13 bài có: tổng `lo = 0`, `xac_nhan = 0`, `khai_niem_dung_bai = khai_niem`.
 - Báo cáo `docs/handoff/antigravity-claude-gia-su-moi-bai-xong.md`: số liệu thật, ghi rõ "bản thật", không ghi PASS cho tiêu chí chưa kiểm.
+
+## 5. Bổ sung 21:05: đổi lời Gia sư theo yêu cầu thầy (cùng đợt deploy Worker ở mục 4)
+- Câu ngoài bài (`outOfScopeReply`) giờ trả lời:
+  ```
+  Câu hỏi này không thuộc bài **<bài>** em đang học.
+  Em hãy hỏi lại các câu liên quan đến nội dung sau nhé:
+  - **<mục 1>**
+  - **<mục 2>**
+  ```
+  Lần thứ hai liên tiếp mở đầu "Câu này cũng chưa thuộc bài **<bài>**."
+- Đã bỏ câu "nên Gia sư không trả lời để tránh nói sai so với sách".
+- Đã bỏ dòng "Câu này không trừ lượt của em" ở cả 3 lời mẫu: ngoài bài, xin đáp án, không tìm thấy bài. Hệ thống vẫn không trừ lượt như cũ.
+- Test đã sửa theo: test_tutor_offtopic 24, test_worker_tutor_fast 30 PASS.
+- Khi thử trên bản thật, chụp thêm 1 ảnh câu ngoài bài (vd "Đội bóng nào vô địch World Cup?").
