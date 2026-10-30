@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Hồ sơ dự thi: đối chiếu thể lệ, bộ prompt ChatGPT (PowerPoint ≤15 slide, poster, kịch bản video), kịch bản video 5 phút docs/du-thi/Kich-ban-video-AI-Hoc-Tap.docx; Trợ giúp nhanh viết lại + nhóm Phát triển. Cần thầy: Publish luật Firebase, cập nhật Apps Script; Antigravity deploy Pages theo docs/handoff/claude-antigravity-ho-so-du-thi-30-10.md.
+- Yêu cầu mới nhất: Antigravity đã kiểm tra Trợ giúp nhanh trên bản thật (32/32 PASS), chụp ảnh nhóm Phát triển trên mobile 390px (01_tro_giup_nhanh_phat_trien_mobile.png); lập báo cáo và hướng dẫn Thầy Publish luật, cập nhật Apps Script và chạy thử Bảng thi đua (docs/handoff/antigravity-claude-ho-so-du-thi-xong.md).
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4405,4 +4405,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 ### 30/10/2026 17:00 — Claude: hồ sơ dự thi, Trợ giúp nhanh
 - Kiểm báo cáo thi-dua-xong: emulator + Pages đạt; chưa đăng luật thật (cần thầy). Đọc thể lệ + mẫu slide 2026: 3 hồ sơ (PPT ≤15 slide, poster, video ≤5 phút), 5 tiêu chí 25/20/25/15/15; thể lệ ghi hạn 25/10/2026 → nhắc thầy kiểm tra gia hạn.
 - Đã làm: tài liệu Docs "Hồ sơ dự thi AI Học Tập – phân tích và bộ prompt"; docs/du-thi/Kich-ban-video-AI-Hoc-Tap.docx; help-faq.js viết lại + nhóm Phát triển; test_help_widget 32 PASS, UI học sinh 0 vi phạm, PWA P1–P7.
+
+### 30/10/2026 14:50 — Antigravity: kiểm thử Trợ giúp nhanh trên bản thật, chụp ảnh mobile nhóm Phát triển và hướng dẫn Thầy
+- Đã làm: Xác nhận Pages deploy thành công commit a542466, kiểm thử tự động test_help_widget.cjs đạt 32/32 PASS; chụp ảnh thực tế khung Trợ giúp nhanh (nhóm Phát triển) trên https://aihoctap.online khổ mobile 390x844 (docs/handoff/anh/ho-so-du-thi-30-10/01_tro_giup_nhanh_phat_trien_mobile.png); đóng dấu SW PASS; lập hướng dẫn chi tiết cho Thầy để Publish luật Firebase, cập nhật Apps Script và thử Bảng thi đua; lập báo cáo docs/handoff/antigravity-claude-ho-so-du-thi-xong.md.
+- Tệp: tests/sim/capture_help_widget_live.cjs, docs/handoff/anh/ho-so-du-thi-30-10/01_tro_giup_nhanh_phat_trien_mobile.png, docs/handoff/antigravity-claude-ho-so-du-thi-xong.md, aisgk.md.
+- Kiểm thực tế: test_help_widget.cjs 32/32 PASS; python tools/package_student_pwa.py --check PASS; ảnh chụp thật 154KB trên đĩa.
+- Việc tiếp: Thầy Publish luật Firebase, cập nhật Apps Script New version và thử 2 buổi Bảng thi đua.
+
 
