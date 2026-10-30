@@ -1,0 +1,1692 @@
+{
+ "chay_luc": "2026-10-30T15:42:23.479Z",
+ "api": "https://aihoctap-gate.mrbin2026dh.workers.dev/api",
+ "tong": {
+  "bai": 13,
+  "khai_niem_dung_bai": 13,
+  "khai_niem": 13,
+  "cau": 104,
+  "lo": 1,
+  "xac_nhan": 0,
+  "loi": 0
+ },
+ "chi_tiet": [
+  {
+   "bai": "Thông tin và dữ liệu",
+   "ca": "K",
+   "hoi": "Thông tin và dữ liệu là gì?",
+   "status": 200,
+   "ms": 12379,
+   "tra_loi": "Chào em! Theo mục **1. Thông tin và dữ liệu** trong bài, thông tin là những gì đem lại hiểu biết cho con người về thế giới xung quanh và chính bản thân mình. Còn dữ liệu là thông tin được ghi lên **vật mang tin**, thể hiện dưới dạng con số, văn bản, hình ảnh hoặc âm thanh. Em hãy cho Gia sư biết thông tin khác với dữ liệu ở điểm nào nhé?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 17499,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em đọc lại mục **1. Thông tin và dữ liệu** trong sách giáo khoa để xem 'vật mang tin', 'dữ liệu' và 'thông tin' được định nghĩa thế nào nhé. Theo em, ánh sáng màu đỏ ở đây đóng vai trò là phương tiện lưu trữ hay truyền tải gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Dữ liệu đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5073,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin và dữ liệu**:\n   - **Thông tin và dữ liệu**\n   - **Tầm quan trọng của thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thông tin và dữ liệu là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 19017,
+   "driver": "rule_fallback",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư không đưa đáp án hay xác nhận phương án, nhưng sẽ gợi ý để em tự tìm ra. Em hãy đọc lại phần kiến thức trọng tâm trong bài học và thử đối chiếu các điều kiện. Theo em, khái niệm chính mà đề bài đang đề cập đến là gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Thông tin đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5172,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin và dữ liệu**:\n   - **Thông tin và dữ liệu**\n   - **Tầm quan trọng của thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thông tin và dữ liệu là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 10808,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu rõ hơn. Em hãy xem lại phần **1. Thông tin và dữ liệu** trong bài, đặc biệt là khái niệm về **vật mang tin**. Theo tài liệu, vật mang tin là phương tiện dùng để lưu trữ và truyền tải thông tin. Em hãy tìm xem trong các lựa chọn, đâu là phương tiện lưu trữ hoặc truyền tải thông tin, và đâu chỉ là suy nghĩ bên trong con người nhé. Theo em, ý nghĩ nằm trong đầu có được xem là phương tiện lưu trữ hay truyền tải thông tin bên ngoài không?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Ý nghĩ 'ngày mai mình sẽ đi thư viện' trong đầu em đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 5488,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin và dữ liệu**:\n   - **Thông tin và dữ liệu**\n   - **Tầm quan trọng của thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thông tin và dữ liệu là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8977,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em đọc lại mục **2. Tầm quan trọng của thông tin** trong bài. Theo em, khi biết trước ngày mai trời nắng đẹp và nhiệt độ 28 độ C, thông tin đó sẽ giúp ích gì cho quyết định của các bạn trong cuộc sống hằng ngày?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin và dữ liệu",
+   "cau": "tin6_b1_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Giúp các bạn chủ động chuẩn bị trang phục phù hợp và an tâm cho chuyến đi đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5175,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin và dữ liệu**:\n   - **Thông tin và dữ liệu**\n   - **Tầm quan trọng của thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thông tin và dữ liệu là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "ca": "K",
+   "hoi": "Quá trình xử lí thông tin của con người là gì?",
+   "status": 200,
+   "ms": 6473,
+   "tra_loi": "Xử lí thông tin là việc biến đổi dữ liệu thu nhận được thành thông tin có ích giúp con người hiểu biết và đưa ra quyết định. Quá trình này diễn ra liên tục theo 4 hoạt động cơ bản ở mục 1 trong bài: Nhận, Nhớ, Nghĩ và Nói/Làm. Em hãy cho Gia sư biết hoạt động nào đóng vai trò quan trọng nhất trong 4 bước này nhé?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 15379,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Quá trình xử lí thông tin của con người** trong bài học. Trong quy trình 4 bước, bước đầu tiên con người dùng các giác quan (mắt thấy, tai nghe...) để tiếp nhận dữ liệu từ thế giới bên ngoài. Theo em, hành động 'tai em nghe thấy tiếng chuông reo' dùng giác quan nào để tiếp nhận dữ liệu?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Thu nhận thông tin đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 4803,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Xử lí thông tin**:\n   - **Quá trình xử lí thông tin của con người**\n   - **Máy tính là công cụ hiệu quả để xử lí thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quá trình xử lí thông tin của con người là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 10312,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Quá trình xử lí thông tin của con người** trong bài học, đặc biệt là quy trình 4 bước gồm: **Nhận**, **Nhớ**, **Nghĩ**, và **Nói/Làm**. Theo em, hoạt động nào trong câu hỏi liên quan đến việc bộ não đang suy tính, phân tích hoặc tính toán?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Bộ não suy nghĩ và tính nhẩm phép tính 25 + 17 = 42 trong đầu đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 7642,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Xử lí thông tin**:\n   - **Quá trình xử lí thông tin của con người**\n   - **Máy tính là công cụ hiệu quả để xử lí thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quá trình xử lí thông tin của con người là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 12626,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Để tìm bộ phận đóng vai trò như 'bộ não' của máy tính, em hãy xem lại mục **1. Quá trình xử lí thông tin của con người**, đặc biệt là phần **Bảng so sánh 4 bước xử lí giữa Con người và Máy tính**. Trong bảng đó, hoạt động xử lí của máy tính do thiết bị nào đảm nhận? Em thử đọc lại bảng này nhé.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Bộ vi xử lí (CPU) đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 6474,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Xử lí thông tin**:\n   - **Quá trình xử lí thông tin của con người**\n   - **Máy tính là công cụ hiệu quả để xử lí thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quá trình xử lí thông tin của con người là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 8155,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em đọc lại mục **2. Máy tính là công cụ hiệu quả để xử lí thông tin** trong tài liệu bài học. Ở đó có nêu các ưu điểm vượt trội của máy tính so với con người. Theo em, máy tính có tốc độ và độ chính xác như thế nào khi làm việc?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Xử lí thông tin",
+   "cau": "tin6_b2_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Máy tính có thể tính toán hàng triệu phép tính mỗi giây với độ chính xác cao và không bị mệt mỏi đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 5749,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Xử lí thông tin**:\n   - **Quá trình xử lí thông tin của con người**\n   - **Máy tính là công cụ hiệu quả để xử lí thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quá trình xử lí thông tin của con người là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "ca": "K",
+   "hoi": "Biểu diễn thông tin trong máy tính là gì?",
+   "status": 200,
+   "ms": 10133,
+   "tra_loi": "Chào em, để tìm hiểu về cách **Biểu diễn thông tin trong máy tính** (Mục 1, Bài 3), em hãy nhớ rằng máy tính chỉ hiểu hai trạng thái tín hiệu điện là có điện hoặc không có điện, được quy ước bằng hai kí hiệu **0** và **1**. Mọi thông tin như văn bản, hình ảnh, âm thanh khi đưa vào máy tính đều được biến đổi thành **dãy bit**. Em có thể cho Gia sư biết 1 bit là gì không?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 11610,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em đọc lại mục 1. Biểu diễn thông tin trong máy tính trong bài học. Em hãy chú ý đến phần giải thích về dãy bit để xem máy tính dùng những kí hiệu nào để xử lí thông tin nhé. Theo em, máy tính chỉ hiểu và xử lí được mấy trạng thái tín hiệu điện?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Hai kí hiệu 0 và 1 đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 4743,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong máy tính**:\n   - **Biểu diễn thông tin trong máy tính**\n   - **Các đơn vị đo lượng thông tin trong máy tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Biểu diễn thông tin trong máy tính là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 9896,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em xem lại mục **2. Các đơn vị đo lượng thông tin trong máy tính** trong tài liệu bài học. Ở đó có ghi rõ quy tắc đổi giữa **Byte (B)** và **bit (b)**. Theo em, một Byte được tạo thành từ mấy bit liên tiếp?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là 1 Byte = 8 bit đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 4817,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong máy tính**:\n   - **Biểu diễn thông tin trong máy tính**\n   - **Các đơn vị đo lượng thông tin trong máy tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Biểu diễn thông tin trong máy tính là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 11596,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em tìm hiểu kí hiệu này. Em hãy xem lại mục **2. Các đơn vị đo lượng thông tin trong máy tính** trong bài học, đặc biệt là bảng các đơn vị đo dung lượng. Theo bảng đó, kí hiệu **GB** là viết tắt của đơn vị đo nào? Em hãy đọc tên đầy đủ của đơn vị này nhé.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là GigaByte đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5652,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong máy tính**:\n   - **Biểu diễn thông tin trong máy tính**\n   - **Các đơn vị đo lượng thông tin trong máy tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Biểu diễn thông tin trong máy tính là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 8973,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu câu hỏi này nhé. Em hãy xem lại mục **2. Các đơn vị đo lượng thông tin trong máy tính** trong bài học, đặc biệt là bảng quy đổi các đơn vị từ **Byte** đến **Terabyte**. Theo em, đơn vị nào nhỏ nhất và đơn vị nào lớn hơn liền kề với Byte?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong máy tính",
+   "cau": "tin6_b3_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Byte → Kilobyte → Megabyte → Gigabyte đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 4752,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong máy tính**:\n   - **Biểu diễn thông tin trong máy tính**\n   - **Các đơn vị đo lượng thông tin trong máy tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Biểu diễn thông tin trong máy tính là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "ca": "K",
+   "hoi": "Thiết bị có gắn bộ xử lí thông tin là gì?",
+   "status": 200,
+   "ms": 7469,
+   "tra_loi": "Chào em. Theo mục 1 trong bài Thế giới kĩ thuật số, **bộ xử lí thông tin (CPU)** được ví như **bộ não** của thiết bị, giúp điều khiển và thực hiện các câu lệnh. Nhờ có bộ xử lí và cảm biến, các thiết bị trong gia đình như tivi thông minh hay robot hút bụi có thể hoạt động tự động. Em hãy lấy thêm một ví dụ về thiết bị số có gắn bộ xử lí thông tin trong đời sống mà em biết nhé.",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 16926,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Thiết bị có gắn bộ xử lí thông tin** trong bài để tìm bộ phận được ví như 'bộ não' điều khiển mọi thiết bị kĩ thuật số. Theo em, bộ phận nào đóng vai trò này?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Bộ vi xử lí (CPU) đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5151,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thế giới kĩ thuật số**:\n   - **Thiết bị có gắn bộ xử lí thông tin**\n   - **Ưu thế và ứng dụng của máy tính điện tử**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thiết bị có gắn bộ xử lí thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 8980,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Thiết bị có gắn bộ xử lí thông tin** trong tài liệu bài học. Theo em, thiết bị nào sẽ cần có \"bộ não\" CPU để điều khiển và thực hiện các câu lệnh tự động?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Bảng đen lớp học viết bằng phấn đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 4945,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thế giới kĩ thuật số**:\n   - **Thiết bị có gắn bộ xử lí thông tin**\n   - **Ưu thế và ứng dụng của máy tính điện tử**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thiết bị có gắn bộ xử lí thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 10591,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em xem lại mục Thiết bị số trong đời sống ở phần 1 trong bài học. Theo em, hệ thống thu phí đường bộ không dừng (ETC) phục vụ cho hoạt động di chuyển và đi lại của con người ở lĩnh vực nào?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Giao thông vận tải đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5791,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thế giới kĩ thuật số**:\n   - **Thiết bị có gắn bộ xử lí thông tin**\n   - **Ưu thế và ứng dụng của máy tính điện tử**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thiết bị có gắn bộ xử lí thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 14628,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **Ưu thế và ứng dụng của máy tính điện tử** trong Bài 1. Hãy đọc k phần nói về bốn ưu thế vượt trội của máy tính so với con người. Theo em, máy tính có những ưu thế nào trong các đặc điểm được nhắc tới?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thế giới kĩ thuật số",
+   "cau": "tin9_b1_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Khả năng có cảm xúc, tình cảm và lòng trắc ẩn riêng đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 4794,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thế giới kĩ thuật số**:\n   - **Thiết bị có gắn bộ xử lí thông tin**\n   - **Ưu thế và ứng dụng của máy tính điện tử**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Thiết bị có gắn bộ xử lí thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "ca": "K",
+   "hoi": "Các hàm thống kê có điều kiện COUNTIF và SUMIF là gì?",
+   "status": 200,
+   "ms": 6740,
+   "tra_loi": "Trong mục **1. Các hàm thống kê có điều kiện COUNTIF và SUMIF**, Gia sư giải thích cho em như sau: Hàm **COUNTIF** dùng để đếm số ô thỏa mãn tiêu chí quy định, ví dụ đếm số học sinh đạt kết quả 'Đạt'. Hàm **SUMIF** dùng để tính tổng các giá trị thỏa mãn điều kiện, ví dụ tính tổng kinh phí cho hoạt động thể thao. Theo em, khi sử dụng hàm COUNTIF với điều kiện là số từ 8 trở lên, ta viết tiêu chí như thế nào?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 14104,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục 1 về các hàm thống kê có điều kiện trong bài. Theo em, để đếm số ô thỏa mãn một tiêu chí cụ thể như đếm số học sinh đạt kết quả nào đó, ta cần dùng hàm đếm hay hàm tính tổng? Em thử đọc cú pháp của hàm đếm có điều kiện trong sách và cho Gia sư biết tên hàm đó nhé.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là =COUNTIF(F2:F40, \"Tốt\") đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5025,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Xử lý dữ liệu bảng tính nâng cao**:\n   - **Các hàm thống kê có điều kiện COUNTIF và SUMIF**\n   - **Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Các hàm thống kê có điều kiện COUNTIF và SUMIF là gì?\"",
+   "lo_so_chu": true,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 11196,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em xem lại phần 1 trong Bài 10 về hàm **SUMIF**. Em hãy đọc kỹ ý nghĩa của hàm này và so sánh với cách tính tổng thông thường xem có thêm yêu cầu gì không nhé. Theo em, hàm có thêm chữ 'IF' thì thường dùng để làm gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Hàm SUM cộng tất cả các ô trong vùng chỉ định, còn hàm SUMIF chỉ cộng những ô thỏa mãn một điều kiện nhất định đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5163,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Xử lý dữ liệu bảng tính nâng cao**:\n   - **Các hàm thống kê có điều kiện COUNTIF và SUMIF**\n   - **Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Các hàm thống kê có điều kiện COUNTIF và SUMIF là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 29912,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Các hàm thống kê có điều kiện COUNTIF và SUMIF** trong bài học để xem cú pháp của hàm **SUMIF**. Em hãy chú ý đến ý nghĩa của từng đối số trong ngoặc của hàm này nhé. Theo em, đối số cuối cùng trong công thức dùng để làm gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Vùng chứa các giá trị số cần tính tổng (sum_range) đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 4964,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Xử lý dữ liệu bảng tính nâng cao**:\n   - **Các hàm thống kê có điều kiện COUNTIF và SUMIF**\n   - **Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Các hàm thống kê có điều kiện COUNTIF và SUMIF là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 12816,
+   "driver": "rule_fallback",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư không nói thẳng lựa chọn nào đúng để em tự chọn. Em đọc lại phần liên quan trong bài, rồi đối chiếu từng lựa chọn với điều câu hỏi mô tả. Em loại được lựa chọn nào trước, và vì sao?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+   "cau": "tin9_b10_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Công cụ Lọc dữ liệu tự động (AutoFilter) đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5830,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Xử lý dữ liệu bảng tính nâng cao**:\n   - **Các hàm thống kê có điều kiện COUNTIF và SUMIF**\n   - **Lọc, sắp xếp và trực quan hóa dữ liệu bảng tính**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Các hàm thống kê có điều kiện COUNTIF và SUMIF là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "ca": "K",
+   "hoi": "Vai trò của thông tin trong giải quyết vấn đề là gì?",
+   "status": 200,
+   "ms": 6871,
+   "tra_loi": "Theo phần 1 trong bài, **thông tin là cơ sở để ra quyết định**. Mọi kế hoạch và hành động hiệu quả đều bắt nguồn từ thông tin thu thập được. Ví dụ, khi em muốn chọn trường THPT, thông tin về điểm chuẩn sẽ giúp em đưa ra quyết định chính xác. Theo em, nếu dùng thông tin sai lệch thì sẽ dẫn đến hậu quả gì?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8767,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Vai trò của thông tin trong giải quyết vấn đề** trong bài học. Theo em, để đưa ra kế hoạch hay quyết định hiệu quả, chúng ta cần dựa vào yếu tố nào được thu thập? Em hãy thử suy nghĩ xem các quyết định đúng đắn bắt nguồn từ đâu nhé.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Thông tin thu thập được đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5041,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong giải quyết vấn đề**:\n   - **Vai trò của thông tin trong giải quyết vấn đề**\n   - **Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của thông tin trong giải quyết vấn đề là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 10851,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang gặp khó khăn. Trong tình huống này, bạn Mai dùng bảng số liệu tuyển sinh từ 3 năm trước. Em hãy đọc lại Mục 2 về Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin, đặc biệt chú ý tiêu chí nào nói về việc thông tin phải phản ánh đúng thực tế ở thời điểm hiện tại và không dùng dữ liệu đã hết hạn. Theo em, đó là tiêu chí nào?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tính mới (Tính cập nhật) đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5040,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong giải quyết vấn đề**:\n   - **Vai trò của thông tin trong giải quyết vấn đề**\n   - **Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của thông tin trong giải quyết vấn đề là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 10609,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục 1 của bài học về **Nguồn thông tin đáng tin cậy**. Em hãy nhớ lại xem tài liệu từ cổng thông tin điện tử của cơ quan nhà nước, trường học hay tổ chức khoa học uy tín có đặc điểm gì so với các mạng xã hội hay tài khoản ẩn danh nhé. Theo em, loại nguồn nào giúp ta tránh được thông tin sai lệch?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Cổng thông tin điện tử chính thức của Sở Giáo dục và Đào tạo đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5505,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong giải quyết vấn đề**:\n   - **Vai trò của thông tin trong giải quyết vấn đề**\n   - **Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của thông tin trong giải quyết vấn đề là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 9558,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục 2 về Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin, đặc biệt là phần lưu ý về giá trị sử dụng. Theo em, thông tin có rất mới và chính xác nhưng lại không liên quan đến bài toán đang giải quyết thì vi phạm tiêu chí nào?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thông tin trong giải quyết vấn đề",
+   "cau": "tin9_b2_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tính sử dụng được (Tính liên quan, phù hợp) đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 4781,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thông tin trong giải quyết vấn đề**:\n   - **Vai trò của thông tin trong giải quyết vấn đề**\n   - **Bốn tiêu chí cốt lõi đánh giá chất lượng thông tin**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của thông tin trong giải quyết vấn đề là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "ca": "K",
+   "hoi": "Mục tiêu bài thực hành là gì?",
+   "status": 200,
+   "ms": 6587,
+   "tra_loi": "Gia sư giới thiệu với em mục tiêu của **Bài 3: Thực hành: Đánh giá chất lượng thông tin** là giúp em rèn luyện kỹ năng tìm kiếm, sàng lọc và đánh giá độ tin cậy của thông tin trên Internet. Em có thể vận dụng điều này vào tình huống thực tế như tìm hiểu và lựa chọn môi trường học tập sau khi tốt nghiệp cấp THCS. Theo em, vì sao việc đánh giá độ tin cậy của thông tin trên Internet lại quan trọng?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 14148,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu cách tìm ra đáp án nhé. Em hãy mở tài liệu phần **2. Quy trình 3 bước thực hành chuẩn**, đặc biệt chú ý đến nội dung **Bước 2: Sàng lọc và đối chiếu đa nguồn** để xem các dấu hiệu nhận diện tin giả. Theo em, một bài viết như thế nào thì sẽ khiến mình nghi ngờ về độ tin cậy?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tiêu đề giật gân, bài viết giấu tên tác giả và không có ngày tháng cập nhật đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5036,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Đánh giá chất lượng thông tin**:\n   - **Mục tiêu bài thực hành**\n   - **Quy trình 3 bước thực hành chuẩn**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu bài thực hành là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 18905,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em xem lại **Bước 1** trong mục **2. Quy trình 3 bước thực hành chuẩn** để biết chúng ta cần làm gì đầu tiên khi bắt đầu tìm kiếm thông tin nhé. Theo em, trước khi gõ từ khóa vào máy tìm kiếm, vì sao mình cần biết rõ mình đang cần tìm cái gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Xác định rõ mục tiêu cần tìm và chuẩn bị các từ khóa phù hợp, cụ thể đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5036,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Đánh giá chất lượng thông tin**:\n   - **Mục tiêu bài thực hành**\n   - **Quy trình 3 bước thực hành chuẩn**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu bài thực hành là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 15428,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang bối rối trước câu hỏi này. Để tìm ra hành động đúng, em hãy xem lại **Bước 2: Sàng lọc và đối chiếu đa nguồn** trong bài học. Em hãy chú ý đến phần ưu tiên tên miền và cách nhận diện dấu hiệu tin giả nhé. Theo em, khi gặp một bài viết chưa rõ độ tin cậy trên mạng xã hội, ta nên kiểm tra nguồn phát hành từ đâu?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Đối chiếu, kiểm chứng lại với văn bản chính thức trên Cổng thông tin của Bộ hoặc Sở GD&ĐT đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 7669,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Đánh giá chất lượng thông tin**:\n   - **Mục tiêu bài thực hành**\n   - **Quy trình 3 bước thực hành chuẩn**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu bài thực hành là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8112,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang bối rối. Khi tìm kiếm thông tin về môi trường học tập, nếu em chỉ biết tên trường mà thiếu đi các thông tin quan trọng như tổ hợp môn, dữ liệu thu thập đó sẽ chưa trọn vẹn. Em hãy đọc lại **Bước 1: Xác định mục tiêu và từ khóa tìm kiếm** trong tài liệu để xem nội dung cần tìm bao gồm những gì nhé. Theo em, khi thông tin bị thiếu các dữ liệu cần thiết như vậy thì gọi là thiếu tính gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Đánh giá chất lượng thông tin",
+   "cau": "tin9_b3_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tính đầy đủ đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 4725,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Đánh giá chất lượng thông tin**:\n   - **Mục tiêu bài thực hành**\n   - **Quy trình 3 bước thực hành chuẩn**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu bài thực hành là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "ca": "K",
+   "hoi": "Tác động tiêu cực của Internet và công nghệ số là gì?",
+   "status": 200,
+   "ms": 12982,
+   "tra_loi": "Theo tài liệu Bài 4, Internet và công nghệ số mang lại tiện ích nhưng cũng có mặt trái. Đối với cá nhân, thói quen lạm dụng thiết bị số gây giảm thị lực, mất ngủ, lười vận động và nguy cơ lộ lọt thông tin. Đối với xã hội, có tệ nạn lừa đảo qua mạng, tin giả và rác thải điện tử gây ô nhiễm. Em hãy đọc lại Mục 1 và cho biết rác thải điện tử gây hại gì cho môi trường?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 50775,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang gặp khó khăn với câu hỏi này. Để tự tìm ra câu trả lời, em hãy mở sách giáo khoa và đọc lại phần **2. Sử dụng dịch vụ Internet đúng pháp luật**, đặc biệt chú ý đến mục về **Các hành vi vi phạm pháp luật phổ biến cần tuyệt đối tránh**. Theo em, hành vi nào trong các lựa chọn được nhắc tới trong tài liệu là vi phạm pháp luật?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Đăng bài viết bịa đặt, vu khống làm ảnh hưởng xấu đến uy tín danh dự của người khác đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 4856,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Một số vấn đề pháp lí về sử dụng dịch vụ Internet**:\n   - **Tác động tiêu cực của Internet và công nghệ số**\n   - **Sử dụng dịch vụ Internet đúng pháp luật**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Tác động tiêu cực của Internet và công nghệ số là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 8980,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu rõ hơn. Em hãy đọc lại phần **2. Sử dụng dịch vụ Internet đúng pháp luật**, đặc biệt chú ý đến nội dung về **vi phạm bản quyền sở hữu trí tuệ**. Theo em, khi muốn sử dụng tác phẩm của người khác, chúng ta cần xin phép hoặc làm gì để tôn trọng tác giả?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Xin phép tác giả hoặc ghi rõ ràng họ tên tác giả và nguồn trích dẫn hợp lệ đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5722,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Một số vấn đề pháp lí về sử dụng dịch vụ Internet**:\n   - **Tác động tiêu cực của Internet và công nghệ số**\n   - **Sử dụng dịch vụ Internet đúng pháp luật**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Tác động tiêu cực của Internet và công nghệ số là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8972,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang gặp khó khăn với câu hỏi này. Để tìm ra tác hại của việc vứt bỏ thiết bị điện tử hỏng, em hãy đọc lại mục **1. Tác động tiêu cực của Internet và công nghệ số**, phần nói về **Rác thải điện tử (E-waste)** trong bài học nhé. Theo em, các thiết bị này chứa chất gì có thể gây hại cho môi trường?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tạo ra rác thải điện tử nguy hại, giải phóng các kim loại nặng làm ô nhiễm đất và nguồn nước đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 4773,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Một số vấn đề pháp lí về sử dụng dịch vụ Internet**:\n   - **Tác động tiêu cực của Internet và công nghệ số**\n   - **Sử dụng dịch vụ Internet đúng pháp luật**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Tác động tiêu cực của Internet và công nghệ số là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8897,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em xem lại mục **1. Tác động tiêu cực của Internet và công nghệ số** trong bài học. Em hãy tìm phần nói về nguy cơ khi tham gia mạng xã hội đối với cá nhân để xem hành vi làm tổn thương người khác được gọi tên là gì nhé. Theo em, hành vi này mang lại tác động tích cực hay tiêu cực cho người nhận?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+   "cau": "tin9_b4_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Bạo lực mạng (Cyberbullying) - vi phạm chuẩn mực đạo đức và pháp luật đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5473,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Một số vấn đề pháp lí về sử dụng dịch vụ Internet**:\n   - **Tác động tiêu cực của Internet và công nghệ số**\n   - **Sử dụng dịch vụ Internet đúng pháp luật**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Tác động tiêu cực của Internet và công nghệ số là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "ca": "K",
+   "hoi": "Khái niệm phần mềm mô phỏng là gì?",
+   "status": 200,
+   "ms": 7144,
+   "tra_loi": "Theo mục 1 của bài học, phần mềm mô phỏng là **chương trình máy tính** tái hiện lại trực quan sự vận động, quy luật hoạt động của một đối tượng, hiện tượng hoặc hệ thống thực tế. Điểm nổi bật là em có thể **thay đổi các thông số đầu vào** và quan sát kết quả hiển thị theo thời gian thực. Theo em, việc thay đổi thông số này mang lại lợi ích gì cho việc học tập?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 14339,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em đọc lại mục **1. Khái niệm phần mềm mô phỏng** trong bài học để xem phần mềm này có đặc điểm tương tác như thế nào và dùng để làm gì. Theo em, phần mềm mô phỏng cho phép chúng ta chỉ xem thụ động hay được thay đổi thông số?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Là phần mềm tái hiện trực quan cách thức hoạt động của đối tượng thực tế và cho phép người dùng tương tác, thay đổi thông số đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5115,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Tìm hiểu phần mềm mô phỏng**:\n   - **Khái niệm phần mềm mô phỏng**\n   - **Lợi ích vượt trội của phần mềm mô phỏng**\n   - **Một số phần mềm mô phỏng thông dụng**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Khái niệm phần mềm mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 10751,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu câu hỏi này nhé. Em hãy đọc lại phần **2. Lợi ích vượt trội của phần mềm mô phỏng** trong bài học, đặc biệt chú ý đến các ý về sự an toàn và quan sát hiện tượng. Theo em, khi làm thí nghiệm Hóa học nguy hiểm trên máy tính, phần mềm giúp chúng ta tránh được điều gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Đảm bảo an toàn khi quan sát thí nghiệm nguy hiểm và trực quan hóa các hiện tượng trừu tượng đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5048,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Tìm hiểu phần mềm mô phỏng**:\n   - **Khái niệm phần mềm mô phỏng**\n   - **Lợi ích vượt trội của phần mềm mô phỏng**\n   - **Một số phần mềm mô phỏng thông dụng**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Khái niệm phần mềm mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8049,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Khái niệm phần mềm mô phỏng** trong bài học. Em hãy chú ý đến đặc điểm tương tác của phần mềm này so với việc xem một đoạn video bình thường. Theo em, khi dùng phần mềm mô phỏng thì người dùng có thể làm gì với các thông số?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Phần mềm mô phỏng cho phép người dùng thay đổi các thông số đầu vào để quan sát kết quả mới, còn video chỉ là xem thụ động đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5067,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Tìm hiểu phần mềm mô phỏng**:\n   - **Khái niệm phần mềm mô phỏng**\n   - **Lợi ích vượt trội của phần mềm mô phỏng**\n   - **Một số phần mềm mô phỏng thông dụng**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Khái niệm phần mềm mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 8894,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em xem lại mục 3 trong bài học về các phần mềm mô phỏng thông dụng. Em hãy đọc kỹ tên và chức năng của phần mềm Solar System Scope để tìm ra lĩnh vực mà nó mô phỏng nhé. Theo em, từ 'Solar System' trong tên phần mềm gợi ý đến lĩnh vực nào trong tự nhiên?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Tìm hiểu phần mềm mô phỏng",
+   "cau": "tin9_b5_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Thiên văn học và chuyển động các hành tinh trong Hệ Mặt Trời đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5147,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Tìm hiểu phần mềm mô phỏng**:\n   - **Khái niệm phần mềm mô phỏng**\n   - **Lợi ích vượt trội của phần mềm mô phỏng**\n   - **Một số phần mềm mô phỏng thông dụng**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Khái niệm phần mềm mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "ca": "K",
+   "hoi": "Mục tiêu và quy trình khai thác mô phỏng là gì?",
+   "status": 200,
+   "ms": 7600,
+   "tra_loi": "Gia sư chào em! Khai thác phần mềm mô phỏng giúp em làm chủ phương pháp học tập khám phá thông qua thực nghiệm số. Quy trình chuẩn gồm 4 bước: **Xác định mục tiêu thực hành**, **Thiết lập thông số ban đầu**, **Tương tác và quan sát**, và **Rút ra kết luận khoa học**. Em hãy cho Gia sư biết bước thứ hai trong quy trình này yêu cầu em làm gì?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 8178,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang gặp khó khăn với câu hỏi này. Để bắt đầu, em hãy xem lại **Mục 1: Mục tiêu và quy trình khai thác mô phỏng** trong bài học. Theo em, trước khi thao tác bất kỳ điều gì trên phần mềm, chúng ta cần biết mình muốn tìm hiểu hiện tượng hoặc định luật nào không?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Xác định rõ ràng mục tiêu thí nghiệm và hiện tượng khoa học cần khảo sát đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 6637,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Khai thác phần mềm mô phỏng**:\n   - **Mục tiêu và quy trình khai thác mô phỏng**\n   - **Thực hành với phần mềm PhET và Solar System Scope**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu và quy trình khai thác mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 13930,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em đọc lại mục **Thực hành với PhET** trong bài học để xem khi thay đổi hiệu điện thế thì hiện tượng của dòng điện được mô tả ra sao. Em hãy thử xem lại phần đó và cho Gia sư biết em tìm thấy thông tin gì nhé.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Cường độ dòng điện I sẽ tăng lên và bóng đèn sáng rực rỡ hơn đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 4997,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Khai thác phần mềm mô phỏng**:\n   - **Mục tiêu và quy trình khai thác mô phỏng**\n   - **Thực hành với phần mềm PhET và Solar System Scope**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu và quy trình khai thác mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 12316,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em tìm hiểu câu hỏi này. Em hãy đọc lại **Mục 1: Mục tiêu và quy trình khai thác mô phỏng** trong bài học, đặc biệt chú ý đến bước số 3 về cách người dùng tác động vào phần mềm. Theo em, khi dùng phần mềm mô phỏng, người học chỉ ngồi xem hay có thể tự thay đổi các giá trị để quan sát?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Người dùng có thể chủ động thay đổi thông số đầu vào và quan sát kết quả thay đổi tức thì trên màn hình đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 12099,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Khai thác phần mềm mô phỏng**:\n   - **Mục tiêu và quy trình khai thác mô phỏng**\n   - **Thực hành với phần mềm PhET và Solar System Scope**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu và quy trình khai thác mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 7944,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **2. Thực hành với phần mềm PhET và Solar System Scope** trong phần **Thực hành với Solar System Scope** của bài học. Em hãy chú ý đến công dụng của thanh tốc độ thời gian khi quan sát chu kỳ quay của các hành tinh quanh Mặt Trời nhé. Theo em, việc tua nhanh thời gian bằng thanh tốc độ giúp mình quan sát các hiện tượng diễn ra nhanh hơn hay chậm hơn ngoài thực tế?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+   "cau": "tin9_b6_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Giúp quan sát chu kỳ chuyển động của các hành tinh vốn mất nhiều tháng hoặc nhiều năm ngoài thực tế chỉ trong vài giây đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5141,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Khai thác phần mềm mô phỏng**:\n   - **Mục tiêu và quy trình khai thác mô phỏng**\n   - **Thực hành với phần mềm PhET và Solar System Scope**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Mục tiêu và quy trình khai thác mô phỏng là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "ca": "K",
+   "hoi": "Vai trò của trực quan hóa thông tin là gì?",
+   "status": 200,
+   "ms": 6671,
+   "tra_loi": "Chào em, Gia sư xin chia sẻ rằng trực quan hóa thông tin mang lại ba lợi ích cốt lõi theo phần 1 của bài học: giúp chúng ta **tiếp thu nhanh chóng**, **ghi nhớ bền vững** và có tính **thuyết phục, tạo hứng thú** cao khi học tập và làm việc nhóm. Theo em, vì sao việc dùng hình ảnh lại giúp bộ não con người tiếp thu nhanh hơn so với văn bản thuần túy?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 24826,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu câu hỏi này nhé. Em hãy mở lại Mục 1 trong **Bài 7: Trình bày thông tin trong trao đổi và hợp tác** để xem phần **Vai trò của trực quan hóa thông tin**. Theo em, khi chúng ta dùng hình ảnh, sơ đồ thay vì chỉ dùng văn bản thuần túy thì bộ não con người và người nghe sẽ nhận được những lợi ích cốt lõi nào?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Giúp người nghe tiếp thu thông tin nhanh hơn, dễ ghi nhớ và tăng tính thuyết phục đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5965,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Trình bày thông tin trong trao đổi và hợp tác**:\n   - **Vai trò của trực quan hóa thông tin**\n   - **Các công cụ trực quan và nguyên tắc thiết kế**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của trực quan hóa thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 9971,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu rõ hơn. Em hãy đọc lại mục **2. Các công cụ trực quan và nguyên tắc thiết kế** trong bài, phần nói về công cụ thể hiện chủ đề trung tâm và phát triển các nhánh ý tưởng logic. Theo em, công cụ nào trong các lựa chọn giúp thể hiện các nhánh ý tưởng này?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Sơ đồ tư duy (Mindmap) đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5071,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Trình bày thông tin trong trao đổi và hợp tác**:\n   - **Vai trò của trực quan hóa thông tin**\n   - **Các công cụ trực quan và nguyên tắc thiết kế**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của trực quan hóa thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 10558,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu cách làm. Em hãy đọc lại mục **2. Các công cụ trực quan và nguyên tắc thiết kế** trong bài học, đặc biệt chú ý phần bốn nguyên tắc thiết kế trực quan chuẩn mực về độ tương phản màu sắc và cỡ chữ. Theo em, khi thiết kế slide, chúng ta nên dùng toàn bộ đoạn văn dài hay chỉ giữ lại từ khóa cốt lõi?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Chỉ trình bày các từ khóa cốt lõi, chọn cỡ chữ đủ lớn và có độ tương phản rõ ràng giữa chữ và nền đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 4982,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Trình bày thông tin trong trao đổi và hợp tác**:\n   - **Vai trò của trực quan hóa thông tin**\n   - **Các công cụ trực quan và nguyên tắc thiết kế**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của trực quan hóa thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 13934,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em đọc lại phần **Vai trò của trực quan hóa thông tin** và mục **Các công cụ trực quan** trong bài học để hiểu cách các thành viên phối hợp với nhau. Theo em, để làm việc nhóm hiệu quả trên môi trường số, chúng ta cần công cụ giúp mọi người cùng thao tác hay làm việc riêng lẻ?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+   "cau": "tin9_b7_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tính năng chia sẻ liên kết cho phép nhiều người cùng xem và chỉnh sửa đồng thời theo thời gian thực đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5195,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Trình bày thông tin trong trao đổi và hợp tác**:\n   - **Vai trò của trực quan hóa thông tin**\n   - **Các công cụ trực quan và nguyên tắc thiết kế**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Vai trò của trực quan hóa thông tin là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "ca": "K",
+   "hoi": "Quy trình xây dựng sơ đồ tư duy dự án là gì?",
+   "status": 200,
+   "ms": 7178,
+   "tra_loi": "Gia sư xin chào em! Quy trình xây dựng sơ đồ tư duy dự án gồm ba bước cốt lõi theo phần **1. Quy trình xây dựng sơ đồ tư duy dự án** trong bài:\n\n- **Bước 1**: Xác định chủ đề trung tâm trang vẽ và làm nổi bật.\n- **Bước 2**: Phát triển các nhánh cấp 1 và cấp 2 (như hiện trạng, tác hại, giải pháp).\n- **Bước 3**: Tinh chỉnh và định dạng thẩm mỹ với màu sắc và biểu tượng trực quan.\n\nTheo em, khi bắt đầu làm sơ đồ tư duy cho một dự án, chủ đề trung tâm nên được đặt ở vị trí nào trang vẽ?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 9520,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu rõ hơn. Em hãy xem lại mục **1. Quy trình xây dựng sơ đồ tư duy dự án** trong tài liệu, đặc biệt là phần **Bước 2: Phát triển các nhánh cấp 1 và cấp 2**. Theo em, để các ý tưởng kết nối được với chủ đề trung tâm ở giữa trang vẽ, người ta cần dùng thành phần nào để nối chúng lại với nhau?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Các nhánh và đường liên kết có mũi tên hoặc màu sắc phân biệt đúng không?",
+   "dap_an": "A",
+   "status": 200,
+   "ms": 5038,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Sử dụng công cụ trực quan trình bày thông tin**:\n   - **Quy trình xây dựng sơ đồ tư duy dự án**\n   - **Thiết kế bài trình chiếu và chia sẻ trực tuyến**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quy trình xây dựng sơ đồ tư duy dự án là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 9048,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang cần hỗ trợ về câu hỏi này. Em hãy đọc lại phần Thiết kế bài trình chiếu và chia sẻ trực tuyến trong tài liệu, cụ thể là nội dung về quy tắc bố cục bài trình chiếu 5 trang chuẩn mực ở **Trang 1 (Bìa)**. Theo em, trang đầu tiên này cần trình bày những thông tin gì để người xem biết ai là người thực hiện dự án?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Tên chủ đề báo cáo, tên nhóm học tập và danh sách các thành viên thực hiện đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5114,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Sử dụng công cụ trực quan trình bày thông tin**:\n   - **Quy trình xây dựng sơ đồ tư duy dự án**\n   - **Thiết kế bài trình chiếu và chia sẻ trực tuyến**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quy trình xây dựng sơ đồ tư duy dự án là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 8457,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư hiểu em đang cần giúp về câu hỏi này. Để bảo vệ dữ liệu, khi chia sẻ tài liệu trực tuyến, chúng ta có thể phân quyền cho người khác. Em hãy xem lại mục **Thiết kế bài trình chiếu và chia sẻ trực tuyến**, phần quy trình chia sẻ bước 3 trong bài học nhé. Theo em, quyền nào dành cho khán giả chỉ để đọc và xem? Em hãy thử suy nghĩ xem sao.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Viewer (Người xem) đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 5071,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Sử dụng công cụ trực quan trình bày thông tin**:\n   - **Quy trình xây dựng sơ đồ tư duy dự án**\n   - **Thiết kế bài trình chiếu và chia sẻ trực tuyến**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quy trình xây dựng sơ đồ tư duy dự án là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 8424,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu rõ hơn. Em hãy xem lại phần **Thiết kế bài trình chiếu và chia sẻ trực tuyến**, đặc biệt là bước cuối cùng trong quy trình chia sẻ tệp để biết định dạng nào giúp lưu trữ lâu dài mà không bị xô lệch font chữ nhé. Em tìm thấy định dạng đó trong bài chưa?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+   "cau": "tin9_b8_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Định dạng tài liệu cố định PDF đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 6103,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Thực hành: Sử dụng công cụ trực quan trình bày thông tin**:\n   - **Quy trình xây dựng sơ đồ tư duy dự án**\n   - **Thiết kế bài trình chiếu và chia sẻ trực tuyến**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Quy trình xây dựng sơ đồ tư duy dự án là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "ca": "K",
+   "hoi": "Công cụ xác thực dữ liệu (Data Validation) là gì?",
+   "status": 200,
+   "ms": 6557,
+   "tra_loi": "Chào em, công cụ **xác thực dữ liệu (Data Validation)** giúp em chủ động chặn đứng lỗi nhập liệu ngay từ đầu vào khi làm việc với bảng tính lớn. Công cụ này có mục đích kiểm soát kiểu dữ liệu và tạo danh sách chọn thả xuống để tránh sai sót. Em hãy xem lại mục 1 trong bài để tìm hiểu quy trình thiết lập nhé. Theo em, vì sao chúng ta cần tạo danh sách chọn thả xuống cho cột giới tính trong bảng tính?",
+   "ngoai_bai": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q1",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 8750,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Công cụ xác thực dữ liệu (Data Validation)** trong bài học. Em hãy đọc kỹ phần **Mục đích và lợi ích** để xem công cụ này giúp chúng ta làm gì khi nhập dữ liệu vào bảng tính nhé. Theo em, khi làm việc với bảng tính lớn, công cụ này giúp chúng ta kiểm soát việc nhập liệu như thế nào?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q1",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Kiểm soát và giới hạn dữ liệu được phép nhập vào ô tính, ngăn chặn việc nhập sai kiểu dữ liệu ngay từ đầu đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5691,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Sử dụng công cụ xác thực dữ liệu và hàm điều kiện**:\n   - **Công cụ xác thực dữ liệu (Data Validation)**\n   - **Hàm điều kiện IF và biểu thức logic**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Công cụ xác thực dữ liệu (Data Validation) là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q2",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 7330,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư gợi ý em xem lại mục **1. Công cụ xác thực dữ liệu (Data Validation)** trong bài học. Để giới hạn kiểu dữ liệu là số thập phân hoặc số nguyên trong một khoảng giá trị cho trước, em cần tìm phần **Criteria (Tiêu chí)** khi thiết lập công cụ này. Theo em, để giới hạn điểm số từ 0 đến 10, ta cần chọn kiểu ràng buộc nào trong bảng tính?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q2",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Kiểu số thực (Decimal) với điều kiện 'between' từ 0 đến 10 đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5753,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Sử dụng công cụ xác thực dữ liệu và hàm điều kiện**:\n   - **Công cụ xác thực dữ liệu (Data Validation)**\n   - **Hàm điều kiện IF và biểu thức logic**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Công cụ xác thực dữ liệu (Data Validation) là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q3",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 9138,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư mời em mở lại mục 2 trong bài \"Sử dụng công cụ xác thực dữ liệu và hàm điều kiện\" để xem phần cú pháp hàm IF. Em hãy đếm xem cú pháp đó có bao nhiêu thành phần cách nhau bởi dấu phẩy nhé. Theo em, mỗi thành phần đó dùng để làm gì?",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q3",
+   "ca": "Q2",
+   "hoi": "em nghĩ là 3 đối số: (điều_kiện_logic, giá_trị_nếu_đúng, giá_trị_nếu_sai) đúng không?",
+   "dap_an": "C",
+   "status": 200,
+   "ms": 5742,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Sử dụng công cụ xác thực dữ liệu và hàm điều kiện**:\n   - **Công cụ xác thực dữ liệu (Data Validation)**\n   - **Hàm điều kiện IF và biểu thức logic**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Công cụ xác thực dữ liệu (Data Validation) là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q4",
+   "ca": "Q1",
+   "hoi": "em chưa hiểu câu này",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 9723,
+   "driver": "real_gemini",
+   "guard": {
+    "cau": true,
+    "dap_an": true,
+    "kiem_duyet": true
+   },
+   "tra_loi": "Gia sư sẽ giúp em hiểu cách làm bài này. Em hãy xem lại mục **2. Hàm điều kiện IF và biểu thức logic** trong bài học. Theo cú pháp của hàm IF, khi điều kiện logic thỏa mãn thì ô tính sẽ trả về giá trị ở vị trí nào? Em hãy thử đối chiếu số 7 tại ô C2 với điều kiện trong công thức nhé.",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  },
+  {
+   "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+   "cau": "tin9_b9_q4",
+   "ca": "Q2",
+   "hoi": "em nghĩ là Đạt đúng không?",
+   "dap_an": "B",
+   "status": 200,
+   "ms": 5040,
+   "tra_loi": "Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:\n1. Đọc kĩ câu hỏi, tìm từ khóa chính.\n2. Đọc lại phần liên quan trong bài **Sử dụng công cụ xác thực dữ liệu và hàm điều kiện**:\n   - **Công cụ xác thực dữ liệu (Data Validation)**\n   - **Hàm điều kiện IF và biểu thức logic**\n3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.\nChưa hiểu từ nào, em hỏi Gia sư, ví dụ: \"Công cụ xác thực dữ liệu (Data Validation) là gì?\"",
+   "lo_so_chu": false,
+   "xac_nhan": false
+  }
+ ]
+}

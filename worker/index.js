@@ -2643,44 +2643,61 @@ export async function resolveCorrectAnswerText(env, courseId, lessonId, question
   if (!safeCourseId || !safeLessonId) {
     const m = String(questionId).match(/tin(\d+)_b(\d+)_q(\d+)/i);
     if (m) {
-      safeCourseId = `tin${m[1]}`;
-      safeLessonId = `b${m[2]}`;
+      safeCourseId = `tin-hoc-${m[1]}`;
+      safeLessonId = `bai-${m[2]}`;
     }
   }
-  if (!safeCourseId || !safeLessonId) return null;
+  let normCourseId = safeCourseId;
+  let normLessonId = safeLessonId;
+  if (normCourseId && /^tin(\d+)$/i.test(normCourseId)) normCourseId = `tin-hoc-${normCourseId.match(/\d+/)[0]}`;
+  if (normLessonId && /^(?:b|bai)?(\d+)$/i.test(normLessonId)) normLessonId = `bai-${normLessonId.match(/\d+/)[0]}`;
 
-  const pkgKey = encodeURIComponent(`${safeCourseId}:${safeLessonId}`);
   let privPkg = null;
   let pubPkg = null;
 
-  // 1. Try test stores / in-memory mocks first
-  if (env.TEST_PACKAGES_PRIVATE?.[pkgKey]) {
-    privPkg = env.TEST_PACKAGES_PRIVATE[pkgKey];
-  } else if (env.TEST_PACKAGES_PRIVATE?.[`${safeCourseId}_${safeLessonId}`]) {
-    privPkg = env.TEST_PACKAGES_PRIVATE[`${safeCourseId}_${safeLessonId}`];
-  } else if (privatePackagesStore.has(pkgKey)) {
-    privPkg = privatePackagesStore.get(pkgKey);
-  } else if (privatePackagesStore.has(`${safeCourseId}_${safeLessonId}`)) {
-    privPkg = privatePackagesStore.get(`${safeCourseId}_${safeLessonId}`);
-  }
+  // 1. Try test stores / in-memory mocks first (checking both original and normalized keys)
+  const tryMockPriv = (c, l) => {
+    if (!c || !l) return null;
+    const k1 = encodeURIComponent(`${c}:${l}`);
+    const k2 = `${c}_${l}`;
+    return env.TEST_PACKAGES_PRIVATE?.[k1] ||
+           env.TEST_PACKAGES_PRIVATE?.[k2] ||
+           privatePackagesStore.get(k1) ||
+           privatePackagesStore.get(k2) ||
+           null;
+  };
+  const tryMockPub = (c, l) => {
+    if (!c || !l) return null;
+    const k1 = encodeURIComponent(`${c}:${l}`);
+    const k2 = `${c}_${l}`;
+    return env.TEST_LESSONS?.[k1] ||
+           env.TEST_LESSONS?.[k2] ||
+           null;
+  };
 
-  if (env.TEST_LESSONS?.[pkgKey]) {
-    pubPkg = env.TEST_LESSONS[pkgKey];
-  } else if (env.TEST_LESSONS?.[`${safeCourseId}_${safeLessonId}`]) {
-    pubPkg = env.TEST_LESSONS[`${safeCourseId}_${safeLessonId}`];
-  }
+  privPkg = tryMockPriv(courseId, lessonId) || tryMockPriv(safeCourseId, safeLessonId) || tryMockPriv(normCourseId, normLessonId);
+  pubPkg = tryMockPub(courseId, lessonId) || tryMockPub(safeCourseId, safeLessonId) || tryMockPub(normCourseId, normLessonId);
 
   // 2. Try Firebase RTDB if configured
   if ((!privPkg || !pubPkg) && env.FIREBASE_DATABASE_URL) {
     try {
       const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
       const headers = getRtdbHeaders(rtdbAccessToken);
-      const [privRes, pubRes] = await Promise.all([
-        fetch(`${env.FIREBASE_DATABASE_URL}/packages_private/${pkgKey}.json`, { headers }).catch(() => null),
-        fetch(`${env.FIREBASE_DATABASE_URL}/packages/${pkgKey}.json`, { headers }).catch(() => null)
-      ]);
-      if (privRes?.ok) privPkg = await privRes.json().catch(() => null);
-      if (pubRes?.ok) pubPkg = await pubRes.json().catch(() => null);
+      const pkgKeys = [
+        encodeURIComponent(`${normCourseId || safeCourseId}:${normLessonId || safeLessonId}`),
+        encodeURIComponent(`${safeCourseId}:${safeLessonId}`)
+      ].filter((v, i, a) => a.indexOf(v) === i);
+
+      for (const k of pkgKeys) {
+        if (!privPkg || !pubPkg) {
+          const [privRes, pubRes] = await Promise.all([
+            !privPkg ? fetch(`${env.FIREBASE_DATABASE_URL}/packages_private/${k}.json`, { headers }).catch(() => null) : null,
+            !pubPkg ? fetch(`${env.FIREBASE_DATABASE_URL}/packages/${k}.json`, { headers }).catch(() => null) : null
+          ]);
+          if (!privPkg && privRes?.ok) privPkg = await privRes.json().catch(() => null);
+          if (!pubPkg && pubRes?.ok) pubPkg = await pubRes.json().catch(() => null);
+        }
+      }
     } catch {
       // Fail-safe
     }
@@ -2688,20 +2705,32 @@ export async function resolveCorrectAnswerText(env, courseId, lessonId, question
 
   if (!privPkg || !pubPkg) return null;
 
-  const privQ = (privPkg.questions || []).find(q => q.id === questionId);
-  if (!privQ || !privQ.correct_answer) return null;
-  const correctLetter = privQ.correct_answer;
+  const qNum = (String(questionId).match(/(?:_|^)q(\d+)$/i) || [])[1];
+  const qIdx = qNum ? Number(qNum) - 1 : -1;
 
-  const pubQ = (pubPkg.questions || []).find(q => q.id === questionId);
+  let pubQ = (pubPkg.questions || []).find(q => q.id === questionId);
+  if (!pubQ && qNum) {
+    pubQ = (pubPkg.questions || []).find(q => q.id === `q${qNum}` || String(q.id).endsWith(`_q${qNum}`));
+    if (!pubQ && qIdx >= 0 && qIdx < (pubPkg.questions || []).length) {
+      pubQ = pubPkg.questions[qIdx];
+    }
+  }
   if (!pubQ || !pubQ.options) return null;
 
+  let privQ = (privPkg.questions || []).find(q => q.id === questionId);
+  if (!privQ && qNum) {
+    privQ = (privPkg.questions || []).find(q => q.id === `q${qNum}` || String(q.id).endsWith(`_q${qNum}`));
+    if (!privQ && qIdx >= 0 && qIdx < (privPkg.questions || []).length) {
+      privQ = privPkg.questions[qIdx];
+    }
+  }
+  if (!privQ || !privQ.correct_answer) return null;
+
+  const correctLetter = privQ.correct_answer;
   const correctText = pubQ.options[correctLetter];
   return correctText ? String(correctText).trim() : null;
 }
 
-/**
- * Output sanitizer to guarantee zero direct answer leaks & enforce Socratic pedagogy (E2, F1, F2, F3)
- */
 export function sanitizeWorkerOutput(reply, userMessage = '', context = {}) {
   if (!reply || typeof reply !== 'string') {
     return {
@@ -5793,7 +5822,8 @@ export default {
             const tutorTitle = String(lessonForTutor.title || '').slice(0, 120), tutorOutline = lessonOutline(lessonForTutor.content_markdown);
             if (otherLesson) systemText += `\n\nTÀI LIỆU BÀI KHÁC: "${otherLesson.title}" (em hỏi có thể thuộc bài này):\n\"\"\"\n${otherLesson.content}\n\"\"\"`;
             systemText += '\n\n' + tutorScopeRules(tutorTitle, tutorOutline, Boolean(otherLesson));
-            const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId) : null;
+            const qNumForTutor = (String(questionId).match(/(?:_|^)q(\d+)$/i) || [])[1];
+            const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId || (qNumForTutor && (q?.id === `q${qNumForTutor}` || String(q?.id).endsWith(`_q${qNumForTutor}`)))) : null;
             if (publicQuestion?.prompt) {
               systemText += `\n\nCÂU HỎI HỌC SINH ĐANG LÀM:\n"""\n${String(publicQuestion.prompt).slice(0, 1000)}\n"""`;
               if (publicQuestion.topic) systemText += `\nChủ đề kiến thức của câu hỏi: ${String(publicQuestion.topic).slice(0, 60)}`;

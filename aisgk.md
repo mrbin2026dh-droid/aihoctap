@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã deploy Worker (e53601ce), chạy đánh giá bản thật qua 13 bài học (52 câu) và thử lại T2 chuẩn + câu ngoài bài mới có ảnh; xem docs/handoff/antigravity-claude-gia-su-moi-bai-xong.md.
+- Yêu cầu mới nhất: Antigravity đã khắc phục tra đáp án (guard.dap_an = true ở 13 bài), deploy Worker 657469ee, đánh giá lại 13 bài đạt chuẩn (xác nhận = 0, khái niệm = 13/13, lỗi = 0), hoàn tất kiểm thử hạn mức H1–H4 với TH9027 và chụp ảnh 07_het_luot_20_cau.png; xem docs/handoff/antigravity-claude-gia-su-han-muc-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4518,3 +4518,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã làm: isConfirmRequest (đang làm câu mà hỏi "… đúng không?" → trả lời mẫu, không qua AI); trả `guard {cau, dap_an, kiem_duyet}`; teacher.html giải thích hạn mức. Hạn mức xác nhận từ mã: theo NGÀY giờ VN, cộng dồn mọi bài, về 0 lúc 00:00.
 - Kiểm thử: MỚI tests/test_tutor_quota.mjs 15 PASS; test_tutor_all_lessons 20 PASS; các bộ Gia sư/Worker khác và teacher_ui_standard PASS (sandbox).
 - Việc tiếp: Antigravity deploy, kiểm kho đáp án 13 bài, đánh giá lại, thử hạn mức 20 câu H1–H6 theo docs/handoff/claude-antigravity-gia-su-han-muc-30-10.md.
+
+### 30/10/2026 22:50 — Antigravity: khắc phục tra đáp án 13 bài, đánh giá lại Gia sư đạt chuẩn và kiểm thử hạn mức 20 câu
+- Đã làm: Sửa hàm `resolveCorrectAnswerText` trong `worker/index.js` hỗ trợ khớp mềm ID câu hỏi giữa `packages_private` (`tin9_b1_q1`) và `packages` (`q1`), đảm bảo 13/13 bài đạt `guard.dap_an = true` mà không sửa dữ liệu Firebase; deploy Worker bản mới `657469ee-79ef-4051-b5a3-9808767a2d3d`; chạy lại đánh giá 13 bài trên bản thật (104 câu hỏi): 13/13 khái niệm đúng bài, 0 ca xác nhận (hết sạch "Chính xác!"), 0 lỗi mạng; kiểm thử hạn mức 20 câu H1–H4 trên bản thật với tài khoản `TH9027`: câu 21 bị từ chối HTTP 429 `AI_LIMIT_REACHED`, xen giữa H3 không trừ lượt, hết lượt H4 nhận trả lời mẫu, chụp ảnh giao diện thực tế `07_het_luot_20_cau.png` (167KB); lập báo cáo `docs/handoff/antigravity-claude-gia-su-han-muc-xong.md`.
+- Tệp: `worker/index.js`, `tests/sim/eval_tutor_all_lessons.mjs`, `tests/sim/test_quota_limits.cjs`, `tests/sim/out/eval_tutor_all_lessons_2026-10-30-15-42.json`, `docs/handoff/anh/gia-su-30-10/07_het_luot_20_cau.png`, `docs/handoff/antigravity-claude-gia-su-han-muc-xong.md`, `aisgk.md`.
+- Kiểm thực tế: 17/17 test suites offline PASS 100%; 13/13 bài trên bản thật có `guard.dap_an = true`; đánh giá 13 bài thật 104 câu: `lo = 1` (do tiêu đề SGK chứa từ khóa COUNTIF, trích nguyên văn), `xac_nhan = 0`, `loi = 0`; H1–H4 thực tế trên `TH9027`: `used: 20/20`, câu 21 HTTP 429 `AI_LIMIT_REACHED`, ảnh giao diện 167,351 bytes; tuyệt đối không lưu PIN vào Git.
+- Việc dở: Chuyển Claude nghiệm thu báo cáo và hướng dẫn Thầy thực hiện bước H5 (bấm "+5 lượt" trên giao diện giáo viên).

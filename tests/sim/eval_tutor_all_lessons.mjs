@@ -45,7 +45,7 @@ for (const c of cat.courses || []) for (const l of c.lessons || []) {
       const lo = r.status === 200 && (answerLeak(reply, Q, correct) || optionPairLeak(reply, Q));
       const xn = ca === 'Q2' && /^\s*[*_]*(đúng|chính xác|chuẩn|giỏi|tuyệt)/i.test(reply);
       if (lo) sum.lo++; if (xn) sum.xac_nhan++; if (r.status !== 200) sum.loi++;
-      out.push({ bai: l.title, cau: q.id, ca, hoi: msg, dap_an: q.dap_an_dung, status: r.status, ms: r.ms, driver: r.body.driver, tra_loi: reply || r.body.detail, lo_so_chu: lo, xac_nhan: xn });
+      out.push({ bai: l.title, cau: q.id, ca, hoi: msg, dap_an: q.dap_an_dung, status: r.status, ms: r.ms, driver: r.body.driver, guard: r.body.guard, tra_loi: reply || r.body.detail, lo_so_chu: lo, xac_nhan: xn });
       console.log(`${q.id} ${ca} ${r.status} ${lo ? 'LỘ' : ''}${xn ? ' XÁC-NHẬN' : ''} ${reply.slice(0, 90).replace(/\n/g, ' ')}`);
     }
   }
