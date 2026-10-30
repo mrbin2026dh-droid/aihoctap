@@ -112,6 +112,8 @@ try{
  await tp.waitForTimeout(1200);await tp.click('.qz-resume');await sp.waitForSelector('.lt-opt:not([disabled])',{timeout:8000});
  ok(db.quiz[code].pub.q.at>at1+900,'tiếp tục: dời mốc bắt đầu, thời gian tạm dừng không tính vào giờ làm bài');
  await sp.click('.lt-opt.lt-C');await tp.waitForFunction(()=>/1\/2 em đã trả lời/.test(document.querySelector('.qz-answered')?.textContent||''));
+ await sp.reload();await sp.waitForSelector('#main:not([hidden])',{timeout:10000});await sp.click('button[data-tab="practice"]');await sp.waitForSelector('#practice-list .lt-join',{timeout:10000});await sp.click('#practice-list .lt-join');
+ await sp.waitForSelector('.lt-opt.lt-C.is-chosen',{timeout:6000});ok(await sp.isDisabled('.lt-opt.lt-A')&&(await sp.textContent('#lt-play .lt-wait')).includes('Em đã chọn'),'F5 giữa câu: vào lại phòng vẫn thấy đáp án đã chọn, không bấm lại được (máy chủ đã ghi)');
 await tp.click('.qz-reveal');await sp2.waitForFunction(()=>document.querySelector('.lt-result')?.textContent.includes('chưa trả lời'),null,{timeout:8000});
  ok(true,'giáo viên Hiện đáp án sớm; em không trả lời thấy "Em chưa trả lời"');
  await sp.waitForFunction(()=>document.querySelector('.lt-streak')?.textContent.includes('2 câu'),null,{timeout:8000});ok(true,'đúng 2 câu liên tiếp: hiện chuỗi đúng');
