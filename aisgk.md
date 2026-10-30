@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã chạy emulator luật đạt THI DUA RULES OK và THI THAT RULES OK, Pages đã live bản 20261030c (200 OK); chuẩn bị script tự động 3 học sinh auto_students_quiz_live.cjs (docs/handoff/antigravity-claude-thi-dua-xong.md). Thầy đăng luật lên Firebase Console và mở phòng thật lớp 9TH.
+- Yêu cầu mới nhất: Hồ sơ dự thi: đối chiếu thể lệ, bộ prompt ChatGPT (PowerPoint ≤15 slide, poster, kịch bản video), kịch bản video 5 phút docs/du-thi/Kich-ban-video-AI-Hoc-Tap.docx; Trợ giúp nhanh viết lại + nhóm Phát triển. Cần thầy: Publish luật Firebase, cập nhật Apps Script; Antigravity deploy Pages theo docs/handoff/claude-antigravity-ho-so-du-thi-30-10.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4402,4 +4402,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: emulator THI DUA RULES OK; emulator THI THAT RULES OK; curl teacher.html có 200 OK và ?v=20261030c; thidua-play.js HTTP 200 OK; test_thidua_core 20/20 PASS; test_thidua_ui 26/26 PASS; test_quiz_live 67/67 PASS.
 - Việc tiếp: Thầy đăng nội dung spike/step0/database.rules.ai-sgk-final.json lên Firebase Console, mở phòng thật trên aihoctap.online (2 buổi, 3 em) để lưu ảnh minh chứng.
 
+### 30/10/2026 17:00 — Claude: hồ sơ dự thi, Trợ giúp nhanh
+- Kiểm báo cáo thi-dua-xong: emulator + Pages đạt; chưa đăng luật thật (cần thầy). Đọc thể lệ + mẫu slide 2026: 3 hồ sơ (PPT ≤15 slide, poster, video ≤5 phút), 5 tiêu chí 25/20/25/15/15; thể lệ ghi hạn 25/10/2026 → nhắc thầy kiểm tra gia hạn.
+- Đã làm: tài liệu Docs "Hồ sơ dự thi AI Học Tập – phân tích và bộ prompt"; docs/du-thi/Kich-ban-video-AI-Hoc-Tap.docx; help-faq.js viết lại + nhóm Phát triển; test_help_widget 32 PASS, UI học sinh 0 vi phạm, PWA P1–P7.
 

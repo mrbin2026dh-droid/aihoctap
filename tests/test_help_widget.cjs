@@ -20,12 +20,13 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
    const pr=await p.$eval('#help-panel',e=>{const r=e.getBoundingClientRect();return{l:r.left,r:r.right,t:r.top,b:r.bottom}});
    ok(pr.l>=0&&pr.r<=w&&pr.t>=0&&pr.b<=h,`${name}: khung trợ giúp nằm gọn trong màn hình`);
    ok((await p.textContent('.help-log')).includes('Xin chào'),`${name}: có lời chào`);
-   ok(await p.locator('.help-tab').count()===4&&await p.locator('.help-chip').count()>=5,`${name}: có 4 nhóm và các câu hỏi gợi ý`);
+   ok(await p.locator('.help-tab').count()===5&&await p.locator('.help-chip').count()>=5,`${name}: có 5 nhóm (thêm Phát triển) và các câu hỏi gợi ý`);
    await p.click('.help-chip >> nth=0');await p.waitForFunction(()=>document.querySelector('.help-log').textContent.includes('AI Học Tập là gia sư AI'),null,{timeout:3000});
    const log=await p.textContent('.help-log');ok(log.includes('Ứng dụng này là gì?')&&log.includes('AI Học Tập là gia sư AI'),`${name}: bấm câu hỏi → hiện câu trả lời có sẵn`);
    ok(await p.locator('.help-chip.done').count()===1,`${name}: câu đã hỏi được đánh dấu mờ`);
    await p.click('.help-tab >> text=Học sinh');await p.click('.help-chip >> text=Gia sư AI có làm hộ bài không?');await p.waitForFunction(()=>document.querySelector('.help-log').textContent.includes('không đưa đáp án'));
    ok(true,`${name}: nhóm Học sinh trả lời đúng (Gia sư AI không đưa đáp án)`);
+   await p.click('.help-tab >> text=Phát triển');await p.click('.help-chip >> text=Có nhân rộng cho trường khác được không?');await p.waitForFunction(()=>document.querySelector('.help-log').textContent.includes('Google Sheet'));ok(true,`${name}: nhóm Phát triển trả lời khả năng nhân rộng`);
    ok((await p.getAttribute('#zalo-help','href')).startsWith('https://zalo.me/')&&await p.isVisible('#zalo-help'),`${name}: có nút nhắn Zalo giáo viên ở cuối khung`);
    if(SHOT)await p.screenshot({path:`${SHOT}/help-chat-${w}.png`});
    await p.keyboard.press('Escape');ok(await p.locator('#help-panel').isHidden()&&await p.evaluate(()=>document.activeElement.id==='help-fab'),`${name}: Esc đóng khung, trả tiêu điểm về nút`);
