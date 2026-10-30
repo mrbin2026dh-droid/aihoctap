@@ -1537,6 +1537,7 @@ export function optionPairLeak(reply, q) {
     const par = t.match(/\(([^)]{2,20})\)/); if (par) terms.push(par[1].trim());
     const base = t.replace(/\([^)]*\)/g, '').trim(); if (base.length >= 4) terms.push(base);
   }
+  for (let i = terms.length - 1; i >= 0; i--) if (prompt.includes(terms[i])) terms.splice(i, 1);   // cụm có sẵn trong đề không phân biệt được lựa chọn nào
   const has = (s, term) => /^[a-z0-9]+$/.test(term) ? new RegExp(`(^|[^a-z0-9])${term}([^a-z0-9]|$)`).test(s) : s.includes(term);
   return vnFold(reply).split(/(?<=[.!?\n])\s*/).some(s => {
     if (!terms.some(term => has(s, term))) return false;
@@ -1547,6 +1548,58 @@ export function optionPairLeak(reply, q) {
   });
 }
 /** Lời thay thế khi Gia sư lỡ ghép mô tả câu hỏi với một lựa chọn. */
+/** Âm tiết tiếng Việt không dấu ("quan", "cho", "thay"…): không coi là thuật ngữ Latin. */
+const VN_PLAIN_SYLLABLE = /^(ngh|ng|nh|ch|gh|gi|kh|ph|qu|th|tr|[bcdghklmnpqrstvx])?[aeiouy]{1,3}(ng|nh|ch|[cmnpt])?$/;
+/** Từ dừng khi so nội dung (không mang nghĩa phân biệt lựa chọn). */
+const LEAK_STOP = new Set('và của là các những một có cho được trong với này đó thì mà để khi không như từ trên dưới theo đến về ra vào lên hay hoặc rất nhiều bị đã sẽ đang chỉ cũng nên còn thể việc người em gì nào sau đây đều luôn hơn nhất cùng bằng qua tại do vì nếu'.split(' '));
+const leakWords = (/** @type {string} */ s) => vnFold(s).replace(/[^\p{L}\p{N}_ ]/gu, ' ').split(' ').filter(w => w && !LEAK_STOP.has(w));
+/** Lời Gia sư nêu NỘI DUNG phương án đúng (kể cả đảo thứ tự từ) trong một câu – dùng được cho MỌI bài, không viết riêng câu nào.
+ * Lộ khi một câu: có tên viết tắt / chữ trong ngoặc của đáp án (CPU, PDF, sum_range…) mà câu hỏi không có; hoặc chứa phần lớn các từ
+ * phân biệt của đáp án (từ không có trong câu hỏi) và khớp đáp án nhiều hơn mọi lựa chọn khác.
+ * @param {string} reply @param {{prompt?:string, options?:Record<string,string>}|null} q @param {string|null|undefined} correct */
+export function answerLeak(reply, q, correct) {
+  if (!q?.prompt || !correct) return false;
+  const pw = new Set(leakWords(q.prompt));
+  const otherOpts = Object.values(q.options || {}).filter(o => String(o) !== String(correct));
+  const ow = new Set(otherOpts.flatMap(o => leakWords(o)));
+  // Tên riêng / thuật ngữ chữ Latin của đáp án (CPU, PDF, Viewer, GigaByte, sum_range…) mà câu hỏi và các lựa chọn khác không có
+  const acr = [...new Set([...String(correct).matchAll(/\(([^)]{2,30})\)|\b([A-Za-z][A-Za-z0-9_]{1,24})\b/g)].flatMap(m => m[1] ? leakWords(m[1]) : [String(m[2]).toLowerCase()]))]
+    .filter(a => /^[a-z0-9_]+$/.test(a) && a.length >= 2 && !VN_PLAIN_SYLLABLE.test(a) && !pw.has(a) && !ow.has(a));
+  const dist = [...new Set(leakWords(correct))].filter(w => !pw.has(w));
+  const others = otherOpts.map(o => [...new Set(leakWords(o))].filter(w => !pw.has(w)));
+  const need = dist.length <= 4 ? Math.max(2, Math.ceil(0.6 * dist.length)) : Math.max(3, Math.ceil(0.5 * dist.length));
+  // Cả cụm đáp án (kể cả thứ tự: "Byte → Kilobyte → …", hay một từ như "Đạt") nằm liền trong một câu, không phải là một phần của cụm lựa chọn khác
+  // ("Chưa đạt"), và câu đó không nhắc ngang nhau lựa chọn khác (Gia sư đọc lại đề hay tên mục thường nhắc nhiều lựa chọn).
+  const flat = (/** @type {string} */ x) => ' ' + vnFold(x).replace(/[^\p{L}\p{N}_ ]/gu, ' ').split(' ').filter(Boolean).join(' ') + ' ';
+  const seq = flat(correct).trim();
+  const otherSeqs = otherOpts.map(o => flat(o).trim()).filter(Boolean);
+  const seqHit = (/** @type {string} */ sent) => {
+    if (seq.length < 2) return false;
+    let f = flat(sent);
+    for (const o of otherSeqs) if (o.includes(seq)) f = f.split(' ' + o + ' ').join(' | ');
+    if (otherSeqs.some(o => !o.includes(seq) && f.includes(' ' + o + ' '))) return false;   // nhắc ngang nhau nhiều lựa chọn (vd tên mục "Thông tin và dữ liệu")
+    return f.includes(' ' + seq + ' ');
+  };
+  return vnFold(reply).split(/(?<=[.!?\n])\s*/).some(sent => {
+    const sw = new Set(leakWords(sent));
+    if (acr.some(a => sw.has(a))) return true;
+    if (seqHit(sent)) return true;
+    const hit = dist.filter(w => sw.has(w)).length;
+    if (dist.length < 2 || hit < need) return false;
+    const fc = hit / dist.length;
+    return others.every(o => !o.length || o.filter(w => sw.has(w)).length / o.length < fc);
+  });
+}
+/** Lời dặn cho AI kiểm duyệt (lớp thứ hai, chỉ chạy khi em đang làm một câu và máy chủ biết đáp án). Chung cho mọi bài. */
+export function buildLeakJudgePrompt(q, correctLetter, reply) {
+  const opts = Object.entries(q?.options || {}).slice(0, 6).map(([k, v]) => `${k}. ${String(v).slice(0, 200)}`).join('\n');
+  return ['Bạn là bộ kiểm duyệt của Gia sư AI. Học sinh đang làm câu trắc nghiệm dưới đây và CHƯA nộp bài.',
+    'Hãy xét lời Gia sư sắp gửi có làm học sinh BIẾT hoặc ĐOÁN CHẮC đáp án không.',
+    'LỘ nếu: nêu hoặc xác nhận phương án đúng (chữ cái hay nội dung, kể cả diễn đạt khác, từ đồng nghĩa); loại trừ phương án sai; mô tả đặc điểm chỉ phương án đúng có và gọi tên nó; hỏi kiểu "X hay Y" mà một vế là nội dung đáp án; liệt kê đúng các ý của đáp án.',
+    'KHÔNG LỘ nếu: chỉ giải thích khái niệm chung của bài mà không gắn với lựa chọn nào, chỉ mục cần đọc lại, hỏi gợi mở, từ chối đưa đáp án.',
+    'Trả DUY NHẤT JSON {"lo": true|false}.', '',
+    `CÂU HỎI: ${String(q?.prompt || '').slice(0, 600)}`, `CÁC LỰA CHỌN:\n${opts}`, `ĐÁP ÁN ĐÚNG: ${correctLetter}`, '', `LỜI GIA SƯ:\n${String(reply || '').slice(0, 1500)}`].join('\n');
+}
 export const PAIR_LEAK_FALLBACK = 'Gia sư không nói thẳng lựa chọn nào đúng để em tự chọn. Em đọc lại phần liên quan trong bài, rồi đối chiếu từng lựa chọn với điều câu hỏi mô tả. Em loại được lựa chọn nào trước, và vì sao?';
 /** Đọc câu trả lời JSON của Gia sư; mô hình cũ trả chữ thường → coi là "bai_nay". @param {string} text @returns {{scope:string, reply:string}} */
 export function parseTutorReply(text) {
@@ -2727,35 +2780,10 @@ export function sanitizeWorkerOutput(reply, userMessage = '', context = {}) {
     }
   }
 
-  // 3. F1: Semantic Leak Detection:
-  // 3.1 Listing full answer set benefits (adv_v2_010)
-  if (!needsSanitization && answerSeeking) {
-    if (lowerReply.includes('tiếp thu nhanh') && lowerReply.includes('ghi nhớ bền vững') && (lowerReply.includes('thuyết phục') || lowerReply.includes('hứng thú'))) {
-      needsSanitization = true;
-    }
-  }
-
-  // 3.2 Binary pairs prompting correct answer first (adv_v2_023)
-  if (!needsSanitization && answerSeeking) {
-    if (/nhanh\s*chóng\s+hay\s+chậm\s*chạp/i.test(cleanedReply) || /bền\s*vững\s+hay\s+dễ\s*quên/i.test(cleanedReply)) {
-      needsSanitization = true;
-    }
-  }
-
-  // 3.3 Listing 4 processing steps with Thu nhận first (adv_v2_041)
-  if (!needsSanitization && answerSeeking) {
-    if (/["'«]?thu\s*nhận["'»]?\s*,\s*["'«]?lưu\s*trữ["'»]?/i.test(cleanedReply)) {
-      needsSanitization = true;
-    }
-  }
-
-  // 3.4 Definition leak matching question prompt example (adv_v2_001, adv_v2_014, adv_v2_027, adv_v2_040)
-  const qPrompt = (context?.question_prompt || '').toLowerCase();
-  if (!needsSanitization && (qPrompt.includes('ánh sáng màu đỏ') || lowerMsg.includes('ánh sáng màu đỏ'))) {
-    if (lowerReply.includes('như màu sắc, ánh sáng') || lowerReply.includes('như màu sắc ánh sáng') || lowerReply.includes('màu sắc, ánh sáng mà mắt')) {
-      needsSanitization = true;
-    }
-  }
+  // 3. Lộ đáp án theo ngữ nghĩa – CHUNG CHO MỌI BÀI (30/10 tối, bỏ các luật viết riêng cho từng câu của bài cũ).
+  //    Chỉ áp khi biết câu hỏi em đang làm (context.question = {prompt, options}); dùng đáp án đúng tra ở máy chủ nếu có.
+  const ctxQ = context?.question;
+  if (!needsSanitization && ctxQ && (optionPairLeak(cleanedReply, ctxQ) || answerLeak(cleanedReply, ctxQ, correctAnsText))) needsSanitization = true;
 
   // 4. Genuine Off-topic check
   if (isOffTopicUser && !needsSanitization) {
@@ -5952,8 +5980,20 @@ export default {
 
           // E2, F1, F2, F3: Output Sanitizer & Driver attribution
           let { text: cleanReply, modified } = sanitizeWorkerOutput(rawReply, message, effectiveContext);
-          const pairLeak = (/** @type {string} */ t) => Boolean(tutorQ) && optionPairLeak(t, tutorQ);
-          if (!modified && pairLeak(cleanReply)) { modified = true; cleanReply = PAIR_LEAK_FALLBACK; }
+          // Chặn lộ đáp án khi em đang làm một câu: lớp 1 so chữ (mọi bài, không tốn lượt); lớp 2 AI kiểm duyệt khi máy chủ biết đáp án đúng.
+          const correctLetter = tutorQ && resolvedAnswerText ? (Object.entries(tutorQ.options || {}).find(([, v]) => String(v).trim() === resolvedAnswerText) || [])[0] : undefined;
+          const judgeOn = Boolean(correctLetter) && String(env.TUTOR_JUDGE ?? '1') !== '0';
+          const judgeLeak = async (/** @type {string} */ t) => {
+            if (!judgeOn) return false;
+            try {
+              const jr = await fetch(geminiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': currentKey }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: buildLeakJudgePrompt(tutorQ, correctLetter, t) }] }], generationConfig: { temperature: 0, maxOutputTokens: 64, responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { lo: { type: 'BOOLEAN' } }, required: ['lo'] }, ...(thinkLevel && THINKING_OK[modelName] !== false ? { thinkingConfig: { thinkingLevel: thinkLevel } } : {}) } }) });
+              if (!jr.ok) return false;   // kiểm duyệt lỗi → vẫn còn lớp so chữ, không chặn em
+              return parseJsonLoose(geminiText(await jr.json()))?.lo === true;
+            } catch { return false; }
+          };
+          const pairLeak = async (/** @type {string} */ t) => Boolean(tutorQ) && (optionPairLeak(t, tutorQ) || answerLeak(t, tutorQ, resolvedAnswerText) || await judgeLeak(t));
+          if (!modified && await pairLeak(cleanReply)) { modified = true; cleanReply = PAIR_LEAK_FALLBACK; }
+          mark('kiem_duyet');
 
           // F2: Nếu câu trả lời chứa text đáp án đúng hoặc rò rỉ, sinh lại 1 lần với Gemini
           if (modified && currentKey) {
@@ -5976,7 +6016,7 @@ export default {
                 const rp = tutorJson ? parseTutorReply(geminiText(retryData)) : null;
                 const retryRawReply = rp ? fixPraise(rp.reply, rp.verdict, message) : geminiText(retryData);
                 const retrySanitized = sanitizeWorkerOutput(retryRawReply, message, effectiveContext);
-                if (!retrySanitized.modified && !pairLeak(retrySanitized.text)) {
+                if (!retrySanitized.modified && !(await pairLeak(retrySanitized.text))) {
                   cleanReply = retrySanitized.text;
                   modified = false;
                 }

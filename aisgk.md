@@ -4498,3 +4498,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: test_tutor_guided 29 PASS, test_tutor_offtopic 24 PASS, test_worker_tutor_fast 30 PASS; Playwright bản thật 5/5 PASS, 5 ảnh chụp từ 185KB–212KB có watermark thời gian thực.
 - Việc dở: Chuyển Claude kiểm định báo cáo nghiệm thu và chuẩn bị các nội dung tiếp theo.
 
+
+### 30/10/2026 21:10 — Claude — Kiểm định báo cáo Gia sư T1–T5; Gia sư chung cho mọi bài (bỏ luật viết riêng), thêm AI kiểm duyệt
+- Phán quyết báo cáo Antigravity: ĐẠT MỘT PHẦN (deploy đúng; T1/T2/T3/T5 báo PASS nhưng script không kiểm đúng tiêu chí; PIN tài khoản thử bị ghi cứng và đẩy lên GitHub → đã chuyển sang SIM_PIN, người dùng cần đổi PIN TH9001).
+- Đã làm: bỏ luật lộ đáp án viết riêng cho vài câu (3.1–3.4) trong sanitizeWorkerOutput; thêm answerLeak chung + lớp AI kiểm duyệt (buildLeakJudgePrompt, chỉ khi biết đáp án từ packages_private, TUTOR_JUDGE=0 để tắt); optionPairLeak bỏ cụm có sẵn trong đề.
+- Kiểm thử: MỚI tests/test_tutor_all_lessons.mjs 19 PASS trên 13 bài/52 câu đọc tự động; guardrails và accuracy viết lại theo luật chung; các bộ test Gia sư/Worker khác PASS (sandbox, AI giả). Script đánh giá bản thật tests/sim/eval_tutor_all_lessons.mjs (chưa chạy).
+- Việc tiếp: Antigravity deploy + chạy đánh giá 13 bài theo docs/handoff/claude-antigravity-gia-su-moi-bai-30-10.md.

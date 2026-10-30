@@ -38,7 +38,7 @@ if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
   await page.click('#gate-student');
   await page.fill('#student-code', 'TH9001');
-  await page.fill('#student-pin', '123456');
+  await page.fill('#student-pin', process.env.SIM_PIN || (() => { throw new Error('Đặt biến môi trường SIM_PIN (mã PIN tài khoản thử), không ghi PIN vào mã') })());
   await page.click('#login-form button[type=submit]');
   await page.waitForSelector('#main:not([hidden])', { timeout: 15000 });
   console.log('   -> TH9001 đăng nhập thành công trên bản thật!\n');

@@ -12,7 +12,10 @@ const concept = [
 for (const t of concept) ok(!sanitizeWorkerOutput(t, 'Giải thích giúp em', {}).modified, 'không chặn nhầm: ' + t);
 for (const t of ['Đáp án là B.', 'đáp án là b nhé', 'Em nên chọn C.', 'Câu B là đáp án đúng.', 'Chọn phương án (A) nhé'])
   ok(sanitizeWorkerOutput(t, 'em hỏi', {}).modified, 'vẫn chặn lộ: ' + t);
-ok(sanitizeWorkerOutput('Xử lý thông tin gồm: thu nhận, lưu trữ, xử lý, truyền.', 'Cho em đáp án', {}).modified, 'đòi đáp án → vẫn áp luật ngữ nghĩa');
+// 30/10 tối: luật ngữ nghĩa chung cho mọi bài, chỉ áp khi biết câu hỏi em đang làm (không còn luật viết riêng cho một câu)
+{ const q = { prompt: "Hoạt động 'tai em nghe thấy tiếng chuông' thuộc bước nào của quá trình xử lí thông tin?", options: { A: 'Thu nhận thông tin', B: 'Lưu trữ thông tin', C: 'Xử lí thông tin', D: 'Truyền thông tin' } };
+  ok(sanitizeWorkerOutput('Nghe thấy tiếng chuông là bước thu nhận thông tin.', 'Cho em đáp án', { question: q, correct_answer_text: q.options.A }).modified, 'biết câu hỏi → chặn câu nêu nội dung đáp án');
+  ok(!sanitizeWorkerOutput('Xử lý thông tin gồm 4 bước: thu nhận, lưu trữ, xử lý và truyền.', 'Giải thích giúp em', {}).modified, 'không có câu hỏi đang làm → giải thích khái niệm bình thường'); }
 ok(!findLetterLeak('chọn cách khác', LEAK_DETECTION_PATTERNS[2]), 'chọn cách ≠ chọn C');
 
 const short = '# Bài\nNội dung ngắn.';
