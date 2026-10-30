@@ -4418,3 +4418,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã làm: đối chiếu mã (brain/analyze.py, brain/report.py, agent/grading.py, agent/verify.py, worker /api/teacher/ai-quiz, ai-tl) rồi viết lại trong tài liệu Docs "Hồ sơ dự thi AI Học Tập – phân tích và bộ prompt": mục mới "Ba điểm nhấn AI" (Bộ não AI báo cáo 7 mục + hiểu lầm riêng gửi Gia sư, AI phân tích buổi Luyện tập, AI tổng hợp Thảo luận); viết lại Khối thông tin sản phẩm, Prompt slide (slide 7–9 cho 3 điểm nhấn), Prompt poster (10 khối, khối 5 Ba điểm nhấn), Prompt video (9 cảnh, 10 câu giám khảo); checklist số liệu đổi [SỐ_EM_ĐÃ_HỌC] → [SỐ_EM_ĐÃ_LÀM_BÀI], thêm [HIỂU_LẦM_VÍ_DỤ], [SỐ_NHÓM_Ý], [SỐ_GIỜ].
 - Tệp đổi: chỉ aisgk.md (nội dung nằm trong tài liệu Docs). Không đổi mã.
 - Việc dở: kiểm Bộ não AI trên VPS đã bật lại chưa (tạm dừng 28/10) trước khi chụp ảnh báo cáo; file docs/du-thi/Kich-ban-video-AI-Hoc-Tap.docx chưa cập nhật theo kịch bản 9 cảnh mới.
+
+### 30/10/2026 19:50 — Claude — Gia sư "học có hướng dẫn": chống khen sai, chặn lộ phương án qua câu ghép
+- Đã làm: phân tích 4 ảnh hội thoại thật (khen "Đúng rồi" khi em trả lời sai; "(CPU) … bộ não" lộ phương án; trôi khỏi câu hỏi chính; "đáp án đó chĩnh xác" đi qua AI). Sửa worker/index.js: trường `danh_gia` bắt buộc trong JSON, `fixPraise`, `isHedgedAnswer`, `optionPairLeak` + `PAIR_LEAK_FALLBACK`, 3 quy tắc học có hướng dẫn + mục tiêu quay lại câu hỏi chính, `isAnswerBegging` bắt thêm mẫu câu.
+- Kiểm thử: MỚI tests/test_tutor_guided.mjs 29 PASS; các bộ test Gia sư/Worker cũ PASS (sandbox, AI giả). CHƯA thử với Gemini thật.
+- Việc tiếp: Antigravity deploy Worker, thử T1–T5 theo docs/handoff/claude-antigravity-gia-su-huong-dan-30-10.md.

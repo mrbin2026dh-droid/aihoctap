@@ -1462,6 +1462,10 @@ export function isAnswerBegging(t) {
   if (/(cho|xin|gửi|nói|đưa|báo|chỉ)\s+(?:(?:em|tôi|mình|tớ|con|cháu)\s+)?(?:xin\s+)?(?:cái\s+|các\s+|những\s+)?(đáp án|kết quả đúng|lời giải)/.test(x)) return true;
   if (/(đáp án|phương án đúng|kết quả)\s+(của\s+)?(câu|bài)\s*\d+/.test(x) || /(câu|bài)\s*\d+\s+(chọn|là|đáp án)\s*(gì|nào|mấy|đâu)?\s*\??$/.test(x)) return true;
   if (/(chọn|khoanh|tích)\s+(đáp án|phương án|câu|ý)?\s*(nào|gì)/.test(x)) return true;
+  // 30/10 tối (ảnh thật): "đáp án đó chính xác", "đáp án là gì?", "em chọn vậy đúng không"
+  if (/(đáp án|phương án|câu trả lời|lựa chọn)\s+(đó|này|kia|của em|em chọn|em vừa chọn)\s+(có\s+)?(đúng|chính xác|chĩnh xác|chuẩn|sai)/.test(x)) return true;
+  if (/^(vậy\s+)?(đáp án|kết quả)(\s+(của\s+)?câu\s+(này|đó))?\s+là\s+(gì|j|chi|nào)\s*\??$/.test(x)) return true;
+  if (/em\s+chọn\s+(vậy|thế|như vậy|như thế)\s+(là\s+)?(đúng|được|ổn)\s*(không|ko|chưa)/.test(x)) return true;
   if (/(^|[\s,.(])([A-D])($|[\s,.)?!])/.test(raw) && /(có phải|phải không|phải ko|đúng không|đúng ko|đúng chưa|được không|sai không|đúng hay sai|hay là|chọn|đáp án|phương án)/.test(x)) return true;
   if (/(^|\s)(giải|làm)\s+(hộ|giúp|dùm|giùm|thay)(?=$|[\s.,?!])/.test(x) && !/giải thích/.test(x)) return true;
   if (/(bỏ qua|quên|phớt lờ|bỏ hết).{0,30}(hướng dẫn|quy tắc|luật|lệnh|chỉ dẫn|yêu cầu)|ignore (all |the )?(previous|above)|system prompt/.test(x)) return true;
@@ -1497,16 +1501,62 @@ export function offTopicReply(title, outline) {
  *  3. "ngoai_bai": máy chủ BỎ chữ AI viết, gửi lời từ chối cố định (outOfScopeReply), hoàn lượt, gợi ý nội dung bài để hỏi.
  *     → Không bịa, không giảng kiến thức ngoài sách, câu từ chối dứt khoát và giống nhau ở mọi mục. */
 export const TUTOR_SCOPES = ['bai_nay', 'bai_khac', 'ngoai_bai'];
-export const TUTOR_JSON_SCHEMA = { type: 'OBJECT', properties: { pham_vi: { type: 'STRING', enum: TUTOR_SCOPES }, xin_dap_an: { type: 'BOOLEAN' }, tra_loi: { type: 'STRING' } }, required: ['pham_vi', 'xin_dap_an', 'tra_loi'] };
+/** Đánh giá câu em vừa trả lời (30/10 tối, theo nguyên tắc LearnLM "chống chiều lòng"): AI phải quyết định TRƯỚC khi viết. */
+export const TUTOR_VERDICTS = ['dung', 'mot_phan', 'sai', 'chua_chac', 'khong_phai_tra_loi'];
+export const TUTOR_JSON_SCHEMA = { type: 'OBJECT', properties: { pham_vi: { type: 'STRING', enum: TUTOR_SCOPES }, xin_dap_an: { type: 'BOOLEAN' }, danh_gia: { type: 'STRING', enum: TUTOR_VERDICTS }, tra_loi: { type: 'STRING' } }, required: ['pham_vi', 'xin_dap_an', 'danh_gia', 'tra_loi'], propertyOrdering: ['pham_vi', 'xin_dap_an', 'danh_gia', 'tra_loi'] };
+/** Em trả lời kiểu đoán: "không?", "có ạ?", "chắc là có" → chưa được khen đúng, phải hỏi lý do trước. @param {string} t */
+export const isHedgedAnswer = t => /^\s*(?:chắc|hình như|có lẽ)?\s*(?:là\s+)?(?:có|không|ko|k|đúng|sai|phải|chắc vậy)\s*(?:ạ|à|ha|hả)?\s*\?+\s*$/i.test(String(t || '')) || /^\s*(?:chắc|hình như|có lẽ)\s+(?:là\s+)?(?:có|không|ko|đúng|sai)(?=$|[\s.,!?])/i.test(String(t || ''));
+const PRAISE_HEAD = /^\s*[*_]{0,2}(?:hoàn toàn\s+)?(?:đúng rồi|đúng vậy|đúng lắm|đúng|chính xác(?: rồi)?|chuẩn rồi|tuyệt(?: vời)?|giỏi lắm|rất tốt|xuất sắc)\b[^.!?\n]{0,80}[.!?]+[*_]{0,2}\s*/i;
+/** Ảnh thật 30/10: em trả lời "không?" (sai), Gia sư vẫn mở đầu "Đúng rồi em nhé!" rồi nói điều ngược lại.
+ * Máy chủ chặn: chỉ giữ lời khen khi AI tự đánh giá "dung" và em không trả lời kiểu đoán; còn lại thay câu khen bằng câu đúng với đánh giá.
+ * @param {string} reply @param {string} verdict @param {string} [message] */
+export function fixPraise(reply, verdict, message = '') {
+  const text = String(reply || '');
+  let v = TUTOR_VERDICTS.includes(verdict) ? verdict : 'khong_phai_tra_loi';
+  if (v === 'dung' && isHedgedAnswer(message)) v = 'chua_chac';
+  if (v === 'dung') return text;
+  const m = PRAISE_HEAD.exec(text); if (!m) return text;
+  const rest = text.slice(m[0].length).trim(); if (!rest) return text;
+  const lead = { sai: 'Chưa đúng em ạ, Gia sư cùng em xem lại nhé.', mot_phan: 'Em đúng một phần, còn thiếu một ý.', chua_chac: 'Em đang đoán phải không? Em thử nói vì sao em nghĩ vậy nhé.', khong_phai_tra_loi: '' }[v];
+  return (lead ? lead + ' ' : '') + rest.charAt(0).toUpperCase() + rest.slice(1);
+}
+/** So khớp tiếng Việt: chữ thường, gộp khoảng trắng, coi "lý"="lí", "kỹ"="kĩ". @param {string} s */
+const vnFold = s => String(s || '').toLowerCase().normalize('NFC').replace(/[ýỳỷỹỵ]/g, c => 'íìỉĩị'['ýỳỷỹỵ'.indexOf(c)]).replace(/\s+/g, ' ');
+/** Ảnh thật 30/10: câu hỏi "bộ phận nào là 'bộ não'…", em chưa nộp, Gia sư viết "Bộ xử lí thông tin (CPU) … được ví như bộ não" = lộ phương án.
+ * Lộ khi MỘT câu trong lời Gia sư vừa chứa mô tả của câu hỏi (cụm trong ngoặc, hoặc ≥ 2 cụm 3 từ trùng câu hỏi) vừa chứa nội dung một lựa chọn.
+ * @param {string} reply @param {{prompt?:string, options?:Record<string,string>}|null} q */
+export function optionPairLeak(reply, q) {
+  if (!q?.prompt || !q.options || typeof q.options !== 'object') return false;
+  const prompt = vnFold(q.prompt);
+  const quoted = [...prompt.matchAll(/['"“‘]([^'"”’]{3,40})['"”’]/g)].map(m => m[1].trim()).filter(x => x.length >= 3);
+  const words = prompt.replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(Boolean);
+  const tri = new Set(); for (let i = 0; i + 2 < words.length; i++) tri.add(words.slice(i, i + 3).join(' '));
+  const terms = [];
+  for (const v of Object.values(q.options)) {
+    const t = vnFold(v).replace(/^[a-d][.)]\s*/, '').trim();
+    const par = t.match(/\(([^)]{2,20})\)/); if (par) terms.push(par[1].trim());
+    const base = t.replace(/\([^)]*\)/g, '').trim(); if (base.length >= 4) terms.push(base);
+  }
+  const has = (s, term) => /^[a-z0-9]+$/.test(term) ? new RegExp(`(^|[^a-z0-9])${term}([^a-z0-9]|$)`).test(s) : s.includes(term);
+  return vnFold(reply).split(/(?<=[.!?\n])\s*/).some(s => {
+    if (!terms.some(term => has(s, term))) return false;
+    if (quoted.some(x => s.includes(x))) return true;
+    const w = s.replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(Boolean); let hit = 0;
+    for (let i = 0; i + 2 < w.length; i++) if (tri.has(w.slice(i, i + 3).join(' ')) && ++hit >= 2) return true;
+    return false;
+  });
+}
+/** Lời thay thế khi Gia sư lỡ ghép mô tả câu hỏi với một lựa chọn. */
+export const PAIR_LEAK_FALLBACK = 'Gia sư không nói thẳng lựa chọn nào đúng để em tự chọn. Em đọc lại phần liên quan trong bài, rồi đối chiếu từng lựa chọn với điều câu hỏi mô tả. Em loại được lựa chọn nào trước, và vì sao?';
 /** Đọc câu trả lời JSON của Gia sư; mô hình cũ trả chữ thường → coi là "bai_nay". @param {string} text @returns {{scope:string, reply:string}} */
 export function parseTutorReply(text) {
   const raw = String(text || '').trim();
   const j = /^[\[{]|^```/.test(raw) ? parseJsonLoose(raw) : null;
   if (j && typeof j === 'object' && !Array.isArray(j) && typeof j.tra_loi === 'string') {
     const scope = TUTOR_SCOPES.includes(j.pham_vi) ? j.pham_vi : 'bai_nay';
-    return { scope, reply: j.tra_loi.trim(), askAnswer: j.xin_dap_an === true };
+    return { scope, reply: j.tra_loi.trim(), askAnswer: j.xin_dap_an === true, verdict: TUTOR_VERDICTS.includes(j.danh_gia) ? j.danh_gia : 'khong_phai_tra_loi' };
   }
-  return { scope: 'bai_nay', reply: raw, askAnswer: false };
+  return { scope: 'bai_nay', reply: raw, askAnswer: false, verdict: 'khong_phai_tra_loi' };
 }
 /** Câu từ chối đáp án đứng đầu khi em KHÔNG xin đáp án (vd em gõ tên bài) làm câu trả lời khó hiểu → cắt bỏ, giữ phần hướng dẫn. @param {string} reply */
 export function stripNeedlessRefusal(reply) {
@@ -1541,7 +1591,10 @@ export function tutorScopeRules(title, outline, hasOther) {
     'CÁCH HƯỚNG DẪN: "bai_nay" hỏi khái niệm → giải thích theo tài liệu (định nghĩa ngắn + 1 ví dụ có trong tài liệu hoặc rất gần gũi), chỉ rõ mục nào của bài, rồi hỏi 1 câu kiểm tra hiểu bài. Hỏi bài tập/câu trắc nghiệm/đề thi → KHÔNG đưa, KHÔNG gợi ý, KHÔNG xác nhận đáp án; chỉ gợi ý từng bước suy nghĩ và mục cần đọc lại.',
     hasOther ? '"bai_khac" → 1–2 câu định hướng CHỈ dựa trên tài liệu bài khác, nói rõ nội dung này học ở bài đó và mời em mở bài đó; không giảng dài.' : '',
     'XIN ĐÁP ÁN: "xin_dap_an" = true CHỈ KHI em đòi/ép đáp án, hỏi chọn phương án nào, hỏi đúng hay sai, nhờ làm hộ. Hỏi khái niệm, gõ tên bài, chào hỏi → false (khi false, KHÔNG viết câu từ chối đáp án).',
-    'ĐỊNH DẠNG: trả DUY NHẤT JSON {"pham_vi":"bai_nay|bai_khac|ngoai_bai","xin_dap_an":true|false,"tra_loi":"…"}. "tra_loi" viết tiếng Việt, Markdown đơn giản, tự gọi là "Gia sư". Với "ngoai_bai" để "tra_loi" rỗng (hệ thống tự gửi lời từ chối).'
+    'ĐÁNH GIÁ CÂU EM VỪA TRẢ LỜI ("danh_gia", quyết định TRƯỚC khi viết, so với TÀI LIỆU BÀI HỌC, không theo giọng điệu của em): "dung" = đúng hoàn toàn theo tài liệu; "mot_phan" = đúng một phần; "sai" = ngược hoặc khác tài liệu; "chua_chac" = em đoán (có dấu ?, "chắc là", "hình như", chỉ đáp "có/không" chưa giải thích); "khong_phai_tra_loi" = em đang hỏi hoặc nói chuyện, không trả lời câu hỏi của Gia sư.',
+    'PHẢN HỒI ĐÚNG VỚI ĐÁNH GIÁ: chỉ được nói "Đúng rồi", "Chính xác", "Giỏi lắm" khi "danh_gia" = "dung". "sai" → nói nhẹ nhàng "Chưa đúng", chỉ ra chỗ nhầm dựa vào tài liệu, gợi ý một bước rồi hỏi lại. "mot_phan" → nêu phần đúng, hỏi phần còn thiếu. "chua_chac" → chưa kết luận, hỏi em vì sao em nghĩ vậy. Tuyệt đối không khen rồi nói điều ngược với câu em trả lời.',
+    'HỌC CÓ HƯỚNG DẪN (học tập chủ động, giảm tải nhận thức): mỗi lượt chỉ MỘT bước nhỏ; ưu tiên câu hỏi mở (vì sao, như thế nào, em hiểu thế nào, cho ví dụ); không hỏi dồn nhiều câu "có hay không" liên tiếp; khi em nói đúng, đề nghị em giải thích bằng lời của mình hoặc nêu một ví dụ để chắc em hiểu.',
+    'ĐỊNH DẠNG: trả DUY NHẤT JSON {"pham_vi":"bai_nay|bai_khac|ngoai_bai","xin_dap_an":true|false,"danh_gia":"dung|mot_phan|sai|chua_chac|khong_phai_tra_loi","tra_loi":"…"}. "tra_loi" viết tiếng Việt, Markdown đơn giản, tự gọi là "Gia sư". Với "ngoai_bai" để "tra_loi" rỗng (hệ thống tự gửi lời từ chối).'
   ].filter(Boolean).join('\n');
 }
 /** Tiền tố mạng: IPv4 3 số đầu, IPv6 4 nhóm đầu (/64). @param {string} ip */
@@ -5706,6 +5759,7 @@ export default {
 
           // E2: Socratic System Prompt with curriculum grounding (Zero answer keys)
           let systemText = WORKER_SOCRATIC_PROMPT;
+          /** @type {any} */ let tutorQ = null;   // câu hỏi em đang làm (để chặn lời Gia sư ghép mô tả câu hỏi với một lựa chọn)
           // Căn cứ: nội dung bài học lấy từ máy chủ. Gia sư chỉ được dựa vào đây, không bịa thêm.
           if (lessonForTutor?.content_markdown) {
             systemText += `\n\nTÀI LIỆU BÀI HỌC (nguồn duy nhất để trả lời):\n"""\n${pickLessonContext(lessonForTutor.content_markdown, [message, ...(Array.isArray(history) ? history.slice(-2).map(h => h?.content || h?.text || '') : [])].join(' '), 9000)}\n"""`;
@@ -5723,6 +5777,8 @@ export default {
                 if (typeof picked === 'string' && publicQuestion.options?.[picked]) systemText += `\nHọc sinh đang tạm chọn ${picked}. Hãy hỏi em vì sao em chọn như vậy; tuyệt đối không nói chọn đúng hay sai.`;
               }
               systemText += '\n(Không bao giờ tiết lộ đáp án; chỉ gợi ý từng bước dựa trên tài liệu và nói rõ phần nào của bài học cần xem lại.)';
+              systemText += '\nMỤC TIÊU CUỘC TRÒ CHUYỆN: giúp em TỰ giải câu hỏi đang làm. Câu hỏi phụ (ví dụ thiết bị khác) tối đa 2 lượt rồi đưa em quay lại câu hỏi chính. Khi em tự nêu đúng ý chính, khen ĐÚNG Ý ĐÓ nhưng không gọi tên lựa chọn, không viết câu ghép mô tả trong câu hỏi với nội dung một lựa chọn; mời em tự đối chiếu các lựa chọn rồi chọn.';
+              tutorQ = publicQuestion;
             }
           } else {
             systemText += '\n\nKHÔNG CÓ TÀI LIỆU BÀI HỌC KÈM THEO: chỉ dựa trên TÀI LIỆU THAM KHẢO bên dưới (nếu có); không có căn cứ thì nói em chọn một bài học để hỏi. Không bịa.';
@@ -5758,7 +5814,7 @@ export default {
 
           // Có tài liệu bài học: AI trả JSON {pham_vi, tra_loi} để máy chủ quyết định từ chối câu ngoài bài (không để AI tự giảng ngoài sách).
           const tutorJson = Boolean(lessonForTutor?.content_markdown) && !isExamReview;
-          if (tutorJson) systemText += '\nNHẮC LẠI: chỉ trả JSON {"pham_vi":"bai_nay|bai_khac|ngoai_bai","xin_dap_an":true|false,"tra_loi":"…"}.';
+          if (tutorJson) systemText += '\nNHẮC LẠI: chỉ trả JSON {"pham_vi":"bai_nay|bai_khac|ngoai_bai","xin_dap_an":true|false,"danh_gia":"dung|mot_phan|sai|chua_chac|khong_phai_tra_loi","tra_loi":"…"}.';
           // Gia sư trả lời ngắn theo tài liệu: tắt bớt "suy nghĩ" của mô hình (đo 30/10: phần AI mất 15–45 giây). Mô hình không nhận tham số này → tự bỏ, gọi lại.
           const thinkLevel = String(env.GEMINI_TUTOR_THINKING ?? 'minimal').trim();
           let tutorGenCfg = { temperature: 0.3, maxOutputTokens: tutorJson ? 1024 : 2048, ...(tutorJson ? { responseMimeType: 'application/json', responseSchema: TUTOR_JSON_SCHEMA } : {}), ...(thinkLevel && THINKING_OK[modelName] !== false ? { thinkingConfig: { thinkingLevel: thinkLevel } } : {}) };
@@ -5892,10 +5948,12 @@ export default {
           }
           // Em không xin đáp án (AI tự đánh dấu + kiểm bằng mẫu câu) mà AI mở đầu bằng câu từ chối đáp án → cắt câu đó cho dễ hiểu
           const seeksAnswer = parsed.askAnswer || ANSWER_SEEKING_RE.test(String(message || ''));
-          const rawReply = (seeksAnswer ? parsed.reply : stripNeedlessRefusal(parsed.reply)) || 'Gia sư chưa thể phản hồi lúc này.';
+          const rawReply = fixPraise((seeksAnswer ? parsed.reply : stripNeedlessRefusal(parsed.reply)) || 'Gia sư chưa thể phản hồi lúc này.', parsed.verdict, message);
 
           // E2, F1, F2, F3: Output Sanitizer & Driver attribution
           let { text: cleanReply, modified } = sanitizeWorkerOutput(rawReply, message, effectiveContext);
+          const pairLeak = (/** @type {string} */ t) => Boolean(tutorQ) && optionPairLeak(t, tutorQ);
+          if (!modified && pairLeak(cleanReply)) { modified = true; cleanReply = PAIR_LEAK_FALLBACK; }
 
           // F2: Nếu câu trả lời chứa text đáp án đúng hoặc rò rỉ, sinh lại 1 lần với Gemini
           if (modified && currentKey) {
@@ -5915,9 +5973,10 @@ export default {
               });
               if (retryRes.ok) {
                 const retryData = await retryRes.json();
-                const retryRawReply = tutorJson ? parseTutorReply(geminiText(retryData)).reply : geminiText(retryData);
+                const rp = tutorJson ? parseTutorReply(geminiText(retryData)) : null;
+                const retryRawReply = rp ? fixPraise(rp.reply, rp.verdict, message) : geminiText(retryData);
                 const retrySanitized = sanitizeWorkerOutput(retryRawReply, message, effectiveContext);
-                if (!retrySanitized.modified) {
+                if (!retrySanitized.modified && !pairLeak(retrySanitized.text)) {
                   cleanReply = retrySanitized.text;
                   modified = false;
                 }
