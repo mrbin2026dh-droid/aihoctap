@@ -119,7 +119,11 @@ async function restore(k) {
   lastKey = ''; draw();
 }
 
-function draw() {
+/** Vẽ lại màn thảo luận.
+ * @param {boolean} [force] true = ngay sau khi CHÍNH EM gửi xong: luôn vẽ lại để hiện "Em đã gửi".
+ *   Lỗi 30/10: em gõ xong bấm Enter (hoặc chạm nút Gửi trên iPhone/iPad – nút không nhận con trỏ) thì con trỏ vẫn nằm trong ô nhập,
+ *   chặn "đang gõ dở" bỏ qua lần vẽ lại → màn không báo đã gửi, phải F5 mới thấy. */
+function draw(force = false) {
   const o = document.getElementById('tl-play'); if (!o || o.hidden || !pub) return;
   /** @type {HTMLElement} */ (o.querySelector('.lt-top-title')).textContent = pub.title || 'Thảo luận';
   const main = /** @type {HTMLElement} */ (o.querySelector('.tl-main'));
@@ -128,8 +132,14 @@ function draw() {
   if (key === lastKey) return;
   // đang gõ dở: không vẽ lại đè lên ô nhập (chỉ vẽ khi đổi trang / đổi trạng thái)
   const typing = document.activeElement && main.contains(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).matches('input,textarea') && /** @type {HTMLElement} */ (main.querySelector('[data-k]'))?.dataset.k === k && pub.phase === 'open';
-  if (typing && s.type !== 'qa') return;
+  if (typing && !force && s.type !== 'qa') return;
   lastKey = key;
+  // Hỏi đáp: danh sách câu hỏi đổi liên tục khi bạn khác gửi/bình chọn → giữ nguyên chữ em đang gõ dở và vị trí con trỏ khi vẽ lại.
+  /** @type {Record<string,string>} */ const keep = {}; let focusId = '', selA = 0, selB = 0;
+  if (!force) for (const el of /** @type {NodeListOf<HTMLInputElement|HTMLTextAreaElement>} */ (main.querySelectorAll(`.tl-slide[data-k="${CSS.escape(k)}"] .tl-input`))) {
+    if (el.value) keep[el.id] = el.value;
+    if (el === document.activeElement) { focusId = el.id; selA = el.selectionStart ?? el.value.length; selB = el.selectionEnd ?? selA; }
+  }
   if (pub.phase !== 'open' && pub.phase !== 'closed' || s.type !== 'qa') unwatchQa();
   if (pub.phase === 'lobby') { main.replaceChildren(t('span', 'lt-avatar', String(me?.ten || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase()), t('p', 'lt-name', me?.ten || ''), t('h2', 'lt-big', 'Em đã vào phòng thảo luận'), t('p', 'lt-wait', 'Ý kiến của em hiện ẩn danh trên màn chiếu. Chờ thầy cô bắt đầu.'), t('span', 'lt-pulse', '')); return; }
   if (pub.phase === 'ready') { main.replaceChildren(t('h2', 'lt-big', 'Chuẩn bị!')); if (readySeen !== String(pub.ready)) { readySeen = String(pub.ready); void fx.countdown(o, { title: String(pub.title || 'Chuẩn bị!') }); } return; }
@@ -154,13 +164,15 @@ function draw() {
     else box.append(scaleForm(s, k));
   }
   main.replaceChildren(box);
+  for (const [id, v] of Object.entries(keep)) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if (el && main.contains(el)) el.value = v; }
+  if (focusId) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(focusId)); if (el && main.contains(el)) { el.focus(); try { el.setSelectionRange(selA, selB); } catch { /* bỏ qua */ } } }
 }
 
 /** @param {string} k @param {number} n @param {string} v @param {HTMLElement} err @param {HTMLButtonElement} btn */
 async function send(k, n, v, err, btn) {
   if (!me || !playing || pub?.phase !== 'open' || pub?.slide?.k !== k) { err.textContent = 'Thầy cô đã dừng nhận ý kiến.'; return false; }
   btn.disabled = true; btn.setAttribute('aria-busy', 'true'); const label = btn.textContent; btn.textContent = 'Đang gửi…';
-  try { await store.put(`tl/${playing}/y/${k}/${me.key}/${n}`, { v, t: store.SERVER_TIME }); (mine[k] ||= []).push(v); fx.sfx.join(); lastKey = ''; draw(); return true; }
+  try { await store.put(`tl/${playing}/y/${k}/${me.key}/${n}`, { v, t: store.SERVER_TIME }); (mine[k] ||= []).push(v); fx.sfx.join(); lastKey = ''; draw(true); return true; }
   catch { err.textContent = 'Chưa gửi được (thầy cô đã dừng nhận hoặc mạng chậm). Thử lại.'; return false; }
   finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
 }
@@ -207,7 +219,7 @@ async function sendMany(k, n, vals, err, btn) {
   try { for (const [j, v] of vals.entries()) { await store.put(`tl/${playing}/y/${k}/${me.key}/${n + j}`, { v, t: store.SERVER_TIME }); (mine[k] ||= []).push(v); sent++; } fx.sfx.join(); }
   catch { err.textContent = sent ? `Đã gửi ${sent} ý; ý còn lại chưa gửi được (thầy cô đã dừng nhận hoặc mạng chậm).` : 'Chưa gửi được (thầy cô đã dừng nhận hoặc mạng chậm). Thử lại.'; }
   finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = label; }
-  if (sent) { lastKey = ''; draw(); }
+  if (sent) { lastKey = ''; draw(true); }
 }
 /** @param {any} s @param {string} k */
 function pollForm(s, k) {

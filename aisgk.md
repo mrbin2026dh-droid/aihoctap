@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Báo cáo mô phỏng 29/10 CHƯA ĐẠT (ảnh màn giáo viên chụp trên localhost với số dựng sẵn; bảng đối chiếu sai). Đã sửa Gia sư chậm (câu xin đáp án trả lời ngay, thinkingLevel minimal), script mô phỏng dò đáp án để nhóm phân hóa đúng, thêm doi_chieu.cjs. Antigravity: deploy theo handoff thi thật, rồi chạy lại theo docs/handoff/claude-antigravity-mo-phong-lan-2-30-10.md.
+- Yêu cầu mới nhất: Sửa lỗi Thảo luận đã gửi mà màn không báo (phải F5) + hỏi đáp mất chữ gõ dở + Luyện tập trực tiếp F5 mất đáp án; Antigravity deploy Pages và thử theo docs/handoff/claude-antigravity-thao-luan-gui-30-10.md. Việc trước còn chờ: deploy Thi thật + Worker Gia sư, chạy lại mô phỏng (docs/handoff/claude-antigravity-mo-phong-lan-2-30-10.md).
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4367,4 +4367,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã sửa: worker isAnswerBegging/answerBeggingReply (trả lời ngay, không gọi AI, không trừ lượt), thinkingConfig minimal + tự bỏ khi 400; run_simulation dò đáp án (TH9001) + tỉ lệ đúng theo nhóm + ghi URL lỗi HTTP; tests/sim/doi_chieu.cjs.
 - Tệp: worker/index.js, tests/sim/{run_simulation.cjs,doi_chieu.cjs}, tests/test_worker_tutor_fast.mjs, tests/test_tutor_offtopic.mjs.
 - Kiểm thử PASS (đã chạy): tutor_fast 30, tutor_offtopic 24, tutor_guardrails, accuracy, auto_lesson, exam_review, grounding, questions, worker gate/scope/contract/thi_ip; mô phỏng chạy thử với máy chủ giả: dò 4/4 câu sau 7 lần, nhóm A 4/4.
+
+### 30/10/2026 11:30 — Claude: lỗi Thảo luận "gửi rồi không báo" (thầy báo sau buổi 3 lớp)
+- Nguyên nhân: tl-play.js draw() chặn vẽ lại khi con trỏ còn trong ô nhập (Enter, hoặc chạm nút Gửi trên iPhone/iPad) → gửi thành công nhưng màn không đổi. Sửa: draw(force) sau khi gửi; giữ chữ gõ dở khi bạn khác gửi (hỏi đáp). quiz-play.js: F5 giữa câu đọc lại đáp án đã ghi; gửi lỗi thì bỏ chọn để chọn lại.
+- Tệp: frontend/hoc/{tl-play.js,quiz-play.js,whats-new.json,sw.js}, tests/{test_tl_live.cjs,test_quiz_live.cjs}.
+- Kiểm thử PASS (đã chạy): test FAIL trước khi sửa; sau sửa TL LIVE OK 56, QUIZ LIVE OK 54, UI học sinh 0 vi phạm, PWA P1–P7.
 

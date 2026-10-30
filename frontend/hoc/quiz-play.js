@@ -17,6 +17,7 @@ let room = '', playing = '', dismissed = '';
 let players = 0;
 /** @type {Record<string,string>} */ let chosen = {};
 let timer = 0, lastKey = '', qSeen = '', qEnd = 0, readySeen = '', fxSeen = '';
+/** Câu đã hỏi máy chủ "em đã trả lời chưa" (F5 giữa câu vẫn hiện đáp án đã chọn). @type {Record<string, boolean>} */ let asked = {};
 /** @type {() => void} */ let onChange = () => {};
 
 /** App gọi để vẽ lại mục Luyện tập khi có / hết buổi luyện tập. @param {() => void} fn */
@@ -123,7 +124,7 @@ async function join() {
   onChange();
   /** @type {HTMLElement} */ (o.querySelector('.lt-close')).focus();
 }
-function leaveRoom() { playing = ''; stops.forEach(f => f()); stops = []; clearInterval(timer); pub = null; mine = null; chosen = {}; lastKey = ''; qSeen = ''; readySeen = ''; fxSeen = ''; const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
+function leaveRoom() { playing = ''; stops.forEach(f => f()); stops = []; clearInterval(timer); pub = null; mine = null; chosen = {}; asked = {}; lastKey = ''; qSeen = ''; readySeen = ''; fxSeen = ''; const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
 function drawScore() { const s = document.querySelector('#lt-play .lt-score'); if (s) s.textContent = mine ? `${mine.p} điểm · hạng ${mine.r}/${mine.n}` : ''; }
 const initials = (/** @type {string} */ s) => String(s || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase();
 
@@ -157,6 +158,10 @@ function draw() {
   }
   if (pub.phase === 'q' && pub.q) {
     const q = pub.q, my = chosen[q.k];
+    if (!my && !asked[q.k] && me && playing) {   // vào lại phòng / F5 giữa câu: đọc câu trả lời em đã ghi trên máy chủ
+      asked[q.k] = true; const room0 = playing;
+      void store.get(`quiz/${room0}/ans/${q.k}/${store.keyOf(me.ma)}`).then(d => { if (d?.a && playing === room0 && !chosen[q.k]) { chosen[q.k] = String(d.a); lastKey = ''; draw(); } }).catch(() => {});
+    }
     const stamp = `${q.k}|${q.at}`;
     if (qSeen !== stamp) { qSeen = stamp; qEnd = Date.now() + (Number(q.left) || Number(q.lim || 20) * 1000); }   // câu mới hoặc vừa tiếp tục sau tạm dừng
     const head = t('div', 'lt-head');
@@ -215,6 +220,16 @@ function draw() {
 async function answer(k, x) {
   if (!me || !playing || chosen[k] || pub?.phase !== 'q') return;
   chosen[k] = x; lastKey = ''; draw();
-  try { await store.put(`quiz/${playing}/ans/${k}/${store.keyOf(me.ma)}`, { a: x, t: store.SERVER_TIME }); }
-  catch { const w = document.querySelector('#lt-play .lt-wait'); if (w) w.textContent = 'Hết giờ hoặc mạng chậm, câu trả lời chưa được ghi.'; }
+  const room0 = playing, path = `quiz/${room0}/ans/${k}/${store.keyOf(me.ma)}`;
+  try { await store.put(path, { a: x, t: store.SERVER_TIME }); }
+  catch {
+    // Không ghi được: máy chủ đã có câu trả lời của em (mạng chập chờn gửi 2 lần) → hiện đúng đáp án đã ghi;
+    // chưa có → bỏ chọn để em chọn lại (trước đây vẫn hiện "đã chọn", công bố đáp án báo "Chính xác!" nhưng không được điểm).
+    const had = await store.get(path).catch(() => null);
+    if (playing !== room0) return;
+    if (had?.a) { chosen[k] = String(had.a); lastKey = ''; draw(); return; }
+    delete chosen[k]; lastKey = ''; draw();
+    const w = document.querySelector('#lt-play .lt-wait');
+    if (w) w.textContent = pub?.phase === 'q' && pub.q?.k === k && qEnd > Date.now() ? 'Chưa ghi được câu trả lời (mạng chậm). Em chọn lại nhé.' : 'Hết giờ, câu trả lời chưa được ghi.';
+  }
 }
