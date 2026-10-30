@@ -5,11 +5,12 @@
 import * as store from './thi-store.js';
 import * as fx from './quiz-fx.js';
 import { MAX_LEN, badWord, entriesOf, qaRank, scaleValue, visible } from './tl-core.js';
+import { alive } from './live-room.js';
 
 /** @type {{ma:string,ten:string,lop:string,key:string}|null} */ let me = null;
 /** @type {null|(() => void)} */ let stopLop = null, stopInfo = null, stopQa = null, stopVote = null;
 /** @type {(() => void)[]} */ let stops = [];
-let room = '', playing = '', dismissed = '', probeTimer = 0, lastKey = '', readySeen = '';
+let room = '', playing = '', dismissed = '', probeTimer = 0, tick = 0, lastKey = '', readySeen = '';
 /** @type {any} */ let info = null, pub = null;
 /** @type {Record<string, string[]>} ý em đã gửi theo trang */ let mine = {};
 /** @type {any} */ let qaY = null, qaVotes = null;
@@ -22,6 +23,7 @@ export function start(identity) {
   const next = { ma: identity.uid, ten: identity.student_name, lop: identity.class_code, key: store.keyOf(identity.uid) };
   if (me && me.ma === next.ma && stopLop) return;
   stop(); me = next; void probe();
+  tick = window.setInterval(() => { banner(); onChange(); if (playing) draw(); }, 30000);   // phòng treo (giáo viên tắt máy chưa bấm Kết thúc): tự ẩn sau 5 phút
 }
 async function probe() {
   if (!me || stopLop) return;
@@ -36,8 +38,8 @@ async function probe() {
     banner(); onChange();
   });
 }
-export function stop() { clearTimeout(probeTimer); stopLop?.(); stopLop = null; stopInfo?.(); stopInfo = null; leave(); room = ''; info = null; me = null; banner(); onChange(); }
-export const active = () => Boolean(room && info && info.phase !== 'end');
+export function stop() { clearTimeout(probeTimer); clearInterval(tick); tick = 0; stopLop?.(); stopLop = null; stopInfo?.(); stopInfo = null; leave(); room = ''; info = null; me = null; banner(); onChange(); }
+export const active = () => Boolean(room && info && alive(room, info));
 
 function t(/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ text = '') { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; }
 function b(/** @type {string} */ text, /** @type {string} */ cls, /** @type {() => void} */ fn) { const x = /** @type {HTMLButtonElement} */ (t('button', cls, text)); x.type = 'button'; x.addEventListener('click', fn); return x; }
@@ -80,7 +82,7 @@ function overlay() {
   return o;
 }
 function close() {
-  if (!pub || pub.phase === 'end' || playing !== room) leave();
+  if (!pub || pub.phase === 'end' || playing !== room || !alive(playing, pub)) leave();
   else { const o = document.getElementById('tl-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
   banner(); onChange();
 }
@@ -128,8 +130,10 @@ function draw(force = false) {
   /** @type {HTMLElement} */ (o.querySelector('.lt-top-title')).textContent = pub.title || 'Thảo luận';
   const main = /** @type {HTMLElement} */ (o.querySelector('.tl-main'));
   const s = pub.slide || {}, k = String(s.k || '');
-  const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, s.type === 'qa' ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0]);
+  const dead = pub.phase !== 'end' && !alive(playing, pub);
+  const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, s.type === 'qa' ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0, dead]);
   if (key === lastKey) return;
+  if (dead) { lastKey = key; unwatchQa(); main.replaceChildren(t('span', 'lt-res-ic tl-end-ic', '✓'), t('h2', 'lt-big', 'Phòng thảo luận đã đóng'), t('p', 'lt-wait', 'Thầy cô đã rời phòng. Ý kiến em gửi đã được lưu.'), b('Đóng', 'primary lt-done', () => close())); return; }
   // đang gõ dở: không vẽ lại đè lên ô nhập (chỉ vẽ khi đổi trang / đổi trạng thái)
   const typing = document.activeElement && main.contains(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).matches('input,textarea') && /** @type {HTMLElement} */ (main.querySelector('[data-k]'))?.dataset.k === k && pub.phase === 'open';
   if (typing && !force && s.type !== 'qa') return;

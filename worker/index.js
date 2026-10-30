@@ -3720,50 +3720,6 @@ export default {
       });
     }
 
-    // Dọn dữ liệu mô phỏng lớp 9TH trên Firebase RTDB (chỉ xóa th9001..th9030, không xóa dữ liệu khác)
-    if (url.pathname === '/api/pwa/sim/cleanup-9th' && request.method === 'POST') {
-      let cleaned = 0;
-      if (env.FIREBASE_DATABASE_URL) {
-        const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
-        const headers = getRtdbHeaders(rtdbAccessToken);
-        for (let i = 1; i <= 30; i++) {
-          const num = String(9000 + i);
-          const u1 = 'th' + num, u2 = 'TH' + num;
-          await fetch(`${env.FIREBASE_DATABASE_URL}/attempts/${u1}.json`, { method: 'DELETE', headers }).catch(() => null);
-          await fetch(`${env.FIREBASE_DATABASE_URL}/attempts/${u2}.json`, { method: 'DELETE', headers }).catch(() => null);
-          await fetch(`${env.FIREBASE_DATABASE_URL}/attempt_details/${u1}.json`, { method: 'DELETE', headers }).catch(() => null);
-          await fetch(`${env.FIREBASE_DATABASE_URL}/attempt_details/${u2}.json`, { method: 'DELETE', headers }).catch(() => null);
-          cleaned++;
-        }
-      }
-      return new Response(JSON.stringify({ ok: true, cleaned }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Endpoint xuất attempts lớp 9TH (phục vụ đối chiếu mô phỏng)
-    if (url.pathname === '/api/pwa/sim/export-attempts-9th' && request.method === 'GET') {
-      const attempts = {};
-      if (env.FIREBASE_DATABASE_URL) {
-        const rtdbAccessToken = await getOrFetchGoogleOAuthToken(env, signingKeys?.privateKey);
-        const headers = getRtdbHeaders(rtdbAccessToken);
-        for (let i = 1; i <= 30; i++) {
-          const num = String(9000 + i);
-          for (const prefix of ['th', 'TH']) {
-            const uid = prefix + num;
-            const res = await fetch(`${env.FIREBASE_DATABASE_URL}/attempts/${uid}.json`, { headers }).catch(() => null);
-            if (res && res.ok) {
-              const data = await res.json();
-              if (data && Object.keys(data).length > 0) attempts[uid] = data;
-            }
-          }
-        }
-      }
-      return new Response(JSON.stringify({ ok: true, attempts }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     // Bài kiểm tra Thử / Thật
     if (url.pathname.startsWith('/api/pwa/exams') || url.pathname.startsWith('/api/pwa/teacher/exams')) {
       const examResponse = await handleExamRoutes({ request, url, env, signingKeys, corsHeaders, gateStub });

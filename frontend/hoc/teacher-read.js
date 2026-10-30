@@ -6,7 +6,7 @@
 // Dữ liệu: Firebase doc_read/{bài}/{mã} (học sinh tự ghi % đọc) + thi_hs (danh sách lớp). Bảng tổng hợp đọc mỗi bài MỘT lần (không nghe liên tục).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261030a';
+import * as ui from './teacher-ui.js?v=20261030b';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const sel = (/** @type {string} */ id) => /** @type {HTMLSelectElement} */ ($(id));

@@ -5,6 +5,7 @@
 // Em không thấy đáp án trước (chỉ máy giáo viên giữ đáp án đến lúc công bố).
 import * as store from './thi-store.js';
 import * as fx from './quiz-fx.js';
+import { alive } from './live-room.js';
 fx.setDefault(false);   // điện thoại học sinh mặc định im lặng; em tự bật âm thanh nếu muốn
 
 const L = ['A', 'B', 'C', 'D'];
@@ -29,9 +30,10 @@ export function start(identity) {
   if (me && me.ma === next.ma && stopLop) return;
   stop(); me = next;
   void probe();
+  tick = window.setInterval(() => { banner(); onChange(); if (playing) draw(); }, 30000);   // phòng treo (giáo viên tắt máy chưa bấm Kết thúc): tự ẩn sau 5 phút
 }
 /** Thử đọc một lần trước khi nghe liên tục (luật Firebase chưa có nhánh này thì thử lại sau 10 phút, không báo lỗi liên tục). */
-let probeTimer = 0;
+let probeTimer = 0, tick = 0;
 async function probe() {
   if (!me || stopLop) return;
   const path = `quiz_lop/${store.keyOf(me.lop)}`;
@@ -46,9 +48,9 @@ async function probe() {
   });
 }
 /** Đăng xuất. */
-export function stop() { clearTimeout(probeTimer); stopLop?.(); stopLop = null; stopInfo?.(); stopInfo = null; leaveRoom(); room = ''; info = null; me = null; banner(); onChange(); }
+export function stop() { clearTimeout(probeTimer); clearInterval(tick); tick = 0; stopLop?.(); stopLop = null; stopInfo?.(); stopInfo = null; leaveRoom(); room = ''; info = null; me = null; banner(); onChange(); }
 /** Đang có buổi luyện tập cho lớp em không. */
-export const active = () => Boolean(room && info && info.phase !== 'end');
+export const active = () => Boolean(room && info && alive(room, info));
 
 function t(/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ text = '') { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; }
 function b(/** @type {string} */ text, /** @type {string} */ cls, /** @type {() => void} */ fn) { const x = /** @type {HTMLButtonElement} */ (t('button', cls, text)); x.type = 'button'; x.addEventListener('click', fn); return x; }
@@ -104,7 +106,7 @@ function overlay() {
   return o;
 }
 function closeOverlay() {
-  if (!pub || pub.phase === 'end' || playing !== room) leaveRoom();
+  if (!pub || pub.phase === 'end' || playing !== room || !alive(playing, pub)) leaveRoom();
   else { const o = document.getElementById('lt-play'); if (o) o.hidden = true; document.body.classList.remove('lt-playing'); }
   banner(); onChange();
 }
@@ -134,9 +136,11 @@ function draw() {
   drawScore();
   const main = /** @type {HTMLElement} */ (o.querySelector('.lt-main'));
   const k = pub.q?.k || pub.reveal?.k || '';
-  const key = `${pub.phase}|${k}|${chosen[k] || ''}|${mine?.p ?? ''}|${pub.phase === 'lobby' ? players : ''}|${pub.q?.at || ''}`;
+  const dead = pub.phase !== 'end' && !alive(playing, pub);
+  const key = `${pub.phase}|${k}|${chosen[k] || ''}|${mine?.p ?? ''}|${pub.phase === 'lobby' ? players : ''}|${pub.q?.at || ''}|${dead}`;
   if (key === lastKey) return; lastKey = key;
   clearInterval(timer);
+  if (dead) { main.replaceChildren(t('span', 'lt-res-ic', '✓'), t('h2', 'lt-big', 'Phòng luyện tập đã đóng'), t('p', 'lt-wait', 'Thầy cô đã rời phòng. Các câu em trả lời đã được lưu.'), b('Đóng', 'primary lt-done', () => closeOverlay())); return; }
   if (pub.phase === 'lobby') {
     const av = t('span', 'lt-avatar', initials(me?.ten || ''));
     main.replaceChildren(av, t('p', 'lt-name', me?.ten || ''), t('h2', 'lt-big', 'Em đã vào phòng'), t('p', 'lt-wait', 'Nhìn lên màn chiếu, chờ thầy cô bắt đầu.'), t('p', 'lt-count', players ? `${players} bạn đã vào phòng` : ''), t('span', 'lt-pulse', ''));

@@ -78,6 +78,7 @@ try{
  await sp.click('button[data-tab="practice"]');await sp.waitForSelector('#practice-list .lt-empty');ok((await sp.textContent('#practice-list')).includes('Chưa có buổi luyện tập'),'mục Luyện tập học sinh: chưa có buổi luyện tập (đã bỏ danh sách luyện tập cũ)');
  // Mở luyện tập
  await tp.click('.qz-open');await tp.waitForSelector('#qz-host:not([hidden]) .qz-code');const code=(await tp.textContent('.qz-code strong')).replace(/\s/g,'');
+ ok(typeof db.quiz[code].pub.hb==='number'&&db.quiz[code].pub.hb>0,'mở phòng: ghi nhịp hb (giờ máy chủ) để học sinh biết phòng còn mở');
  ok(/^\d{6}$/.test(code)&&db.quiz_lop['9a']===code&&db.quiz_lop['9b']===code,'mở phòng: mã 6 số, mở cho cả 2 lớp 9A, 9B');
  ok(!JSON.stringify(db.quiz[code]).includes(db.quiz_key[code]),'khóa phòng không nằm ở chỗ học sinh đọc được');
  ok(await tp.isDisabled('#qz-start'),'chưa có học sinh → chưa bắt đầu được');

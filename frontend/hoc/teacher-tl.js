@@ -9,11 +9,12 @@
 // Chỉ máy có khóa phòng (tl_key) ghi được trạng thái phòng (luật tl_proof), như phòng luyện tập.
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261030a';
+import * as ui from './teacher-ui.js?v=20261030b';
 import { confirmBox } from './dom.js';
 import * as fx from './quiz-fx.js';
 import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible } from './tl-core.js';
 import { setClasses } from './quiz-core.js';
+import { HB_MS, STALE_MS } from './live-room.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -270,8 +271,18 @@ const initials = (/** @type {string} */ v) => String(v || '?').trim().split(/\s+
 const nameOf = (/** @type {string} */ ma) => String(room?.players?.[ma]?.ten || ma);
 const stOf = (/** @type {number} */ i) => { if (!room) return { ok: {}, an: {}, anw: [], done: {} }; return room.st[K(i)] ||= { ok: {}, an: {}, anw: [], done: {} }; };
 
-async function closeOrphan() {
+/** Nhịp "phòng còn mở" mỗi phút (pub/hb). Máy giáo viên tắt / đóng trình duyệt chưa bấm Kết thúc → nhịp dừng → học sinh tự thoát sau 5 phút.
+ * @param {string} code */
+function beat(code) {
+  const id = window.setInterval(() => {
+    if (!room || room.room !== code || room.phase === 'end') { clearInterval(id); return; }
+    void write({ [P('hb')]: store.SERVER_TIME }).then(() => { const live = readLS(liveKey(), null); if (live?.room === code) writeLS(liveKey(), { ...live, hbAt: Date.now() }); }).catch(() => {});
+  }, HB_MS);
+}
+/** @param {boolean} [force] true = mở phòng mới trên máy này. Không force: chỉ đóng khi phòng cũ đã ngừng nhịp (tab khác đang dẫn phòng thì không đóng nhầm). */
+async function closeOrphan(force = false) {
   const live = readLS(liveKey(), null); if (!live?.room || !live?.key || room) return;
+  if (!force && Date.now() - Number(live.hbAt || 0) < STALE_MS) return;
   /** @type {Record<string, unknown>} */ const paths = { [`tl/${live.room}/pub/phase`]: 'end', [`tl_proof/${live.room}`]: `${live.key}|${Date.now().toString(36)}x` };
   for (const lk of live.lopKeys || []) paths[`tl_lop/${lk}`] = null;
   await store.patch('', paths).catch(() => {});
@@ -282,16 +293,17 @@ async function startRoom(s) {
   if (!store.enabled()) { status('Chưa cài dự án Firebase (presence-config.js).', 'error'); return; }
   if (room) { openHost(); return; }
   if (!s.lops.length) { status('Bộ thảo luận chưa chọn lớp. Bấm Sửa để chọn lớp.', 'error'); return; }
-  await closeOrphan();
+  await closeOrphan(true);
   const key = [...rnd(24)].map(b => b.toString(16).padStart(2, '0')).join('');
   let code = '';
   for (let t = 0; t < 6 && !code; t++) { const c = String(100000 + ([...rnd(4)].reduce((a, b) => a * 256 + b, 0) % 900000)); try { await store.put(`tl_key/${c}`, key); code = c; } catch { /* trùng mã */ } }
   if (!code) { status('Chưa tạo được phòng. Kiểm tra mạng rồi thử lại.', 'error'); return; }
   room = { room: code, key, set: s, i: -1, phase: 'lobby', players: {}, y: {}, votes: {}, st: {}, hide: false, names: false, lopKeys: s.lops.map(l => store.keyOf(l)), stops: [], raf: 0, seen: new Set() };
-  /** @type {Record<string, unknown>} */ const paths = { [`tl/${code}/pub`]: { phase: 'lobby', title: s.name, lops: s.lops, n: s.slides.length, cam: s.cam, at: store.SERVER_TIME } };
+  /** @type {Record<string, unknown>} */ const paths = { [`tl/${code}/pub`]: { phase: 'lobby', title: s.name, lops: s.lops, n: s.slides.length, cam: s.cam, at: store.SERVER_TIME, hb: store.SERVER_TIME } };
   for (const lk of room.lopKeys) paths[`tl_lop/${lk}`] = code;
   try { await write(paths); } catch (e) { status('Chưa mở được phòng: ' + (e instanceof Error ? e.message : ''), 'error'); room = null; return; }
-  writeLS(liveKey(), { room: code, key, setId: s.id, lopKeys: room.lopKeys });
+  writeLS(liveKey(), { room: code, key, setId: s.id, lopKeys: room.lopKeys, hbAt: Date.now() });
+  beat(code);
   room.stops.push(store.listen(`tl/${code}/ds`, d => { if (!room) return; const before = Object.keys(room.players).length; room.players = d || {}; if (Object.keys(room.players).length > before) fx.sfx.join(); if (room.phase === 'lobby') drawLobby(); else schedule(); }, undefined, { prio: 2 }));
   main.dataset.n = '0'; openHost(); drawLobby();
 }
@@ -520,3 +532,4 @@ async function closeRoom() {
 $('tl-h-close').addEventListener('click', () => void closeRoom());
 $('nav-tools').addEventListener('click', () => { let t = 'tab-tools-quiz'; try { t = sessionStorage.getItem('tools-tab') || t; } catch { /* bỏ qua */ } pickTab(t === 'tab-tools-tl' ? t : 'tab-tools-quiz'); status(''); });
 document.getElementById('teacher-logout')?.addEventListener('click', () => { if (room) { room.stops.forEach(f => f()); room.yStop?.(); room.vStop?.(); room = null; host.hidden = true; document.body.classList.remove('qz-hosting'); } synced = false; });
+void closeOrphan();   // mở trang giáo viên: đóng phòng treo từ lần trước (máy tắt giữa buổi) nếu đã ngừng nhịp

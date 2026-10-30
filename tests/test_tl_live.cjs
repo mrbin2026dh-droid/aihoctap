@@ -87,6 +87,7 @@ try{
  await sp.click('button[data-tab="practice"]');await sp.waitForSelector('#practice-list .lt-empty');ok((await sp.textContent('#practice-list')).includes('Chưa có buổi luyện tập hay thảo luận'),'mục Luyện tập học sinh: chưa có buổi nào');
  // ===== Mở thảo luận =====
  await tp.click('.tl-open');await tp.waitForSelector('#tl-host:not([hidden]) .qz-code');const code=(await tp.textContent('#tl-host .qz-code strong')).replace(/\s/g,'');
+ ok(typeof db.tl[code].pub.hb==='number'&&db.tl[code].pub.hb>0,'mở phòng: ghi nhịp hb (giờ máy chủ) để học sinh biết phòng còn mở');
  ok(/^\d{6}$/.test(code)&&db.tl_lop['9a']===code&&db.tl_lop['9b']===code,'mở phòng: mã 6 số cho cả lớp 9A, 9B');
  ok(!JSON.stringify(db.tl[code]).includes(db.tl_key[code])&&await tp.isDisabled('#tl-start'),'khóa phòng không lộ; chưa có học sinh thì chưa bắt đầu được');
  await sp.waitForSelector('#practice-list .tl-card',{timeout:8000});await shot(sp,'s0-panel');ok((await sp.textContent('.tl-card')).includes('Khởi động: Internet')&&!(await sp.locator('#practice-list .lt-empty').count()),'học sinh 9A: mục Luyện tập hiện thẻ Thảo luận đang mở');
@@ -162,5 +163,13 @@ try{
  await tp.click('#tl-h-close');await tp.waitForSelector('#tl-host[hidden]',{state:'attached'});ok((await tp.textContent('#tl-history')).includes('Khởi động: Internet'),'lưu lịch sử buổi thảo luận');
  await sp.click('#tl-play .lt-done');await sp.waitForSelector('#tl-play[hidden]',{state:'attached'});await sp.waitForSelector('#practice-list .lt-empty');ok(true,'học sinh đóng → mục Luyện tập trở lại trống');
  await tp.click('.tl-set .t-icon-btn >> nth=1');await ack();await tp.waitForSelector('#tl-sets .tl-empty');ok(!Object.keys(db.tl_bo[owner]||{}).length,'xóa bộ thảo luận (có xác nhận), xóa cả trên mạng');
+ // ===== Phòng treo: giáo viên tắt máy / đóng trình duyệt mà chưa bấm Kết thúc =====
+ db.tl_key['654321']='k1';db.tl['654321']={pub:{phase:'open',title:'Phòng treo từ sáng',n:1,at:Date.now()-4*3600e3}};db.tl_lop['9b']='654321';
+ await sp2.reload();await sp2.waitForSelector('#main:not([hidden])');await sp2.waitForTimeout(2500);ok(!(await sp2.isVisible('#tl-banner')),'phòng mở từ 4 giờ trước, không có nhịp (bản cũ): học sinh không còn thấy thông báo Vào phòng');
+ db.tl_key['654322']='k2';db.tl['654322']={pub:{phase:'open',title:'Phòng mới',n:1,i:0,slide:{k:'s0',type:'cloud',text:'Một từ về Internet?',max:1},at:Date.now(),hb:Date.now()}};db.tl_lop['9b']='654322';
+ await sp2.clock.install();await sp2.reload();await sp2.waitForSelector('#main:not([hidden])');await sp2.waitForSelector('#tl-banner:not([hidden])',{timeout:8000});ok(true,'phòng có nhịp: hiện thông báo Vào phòng');
+ await sp2.click('.tl-banner-join');await sp2.waitForSelector('#tl-play:not([hidden]) .tl-slide');
+ await sp2.clock.fastForward('06:00');await sp2.waitForFunction(()=>document.querySelector('#tl-play .lt-big')?.textContent.includes('đã đóng'),null,{timeout:8000});ok(true,'giáo viên mất nhịp 6 phút: học sinh đang trong phòng thấy "Phòng thảo luận đã đóng", không bị kẹt');
+ await sp2.click('#tl-play .lt-done');await sp2.waitForSelector('#tl-play[hidden]',{state:'attached'});ok(!(await sp2.isVisible('#tl-banner')),'đóng → không còn thông báo phòng treo');
  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));
  console.log('TL LIVE OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});

@@ -10,11 +10,12 @@
 // Chỉ máy có "khóa phòng" (quiz_key, không ai đọc được) mới ghi được trạng thái phòng (luật Firebase quiz_proof).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261030a';
+import * as ui from './teacher-ui.js?v=20261030b';
 import { confirmBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
 import { L, MAX_Q, QUIZ_COLUMNS, awards, blankScore, classSummary, parseQuizRows, ranked as rankScore, scoreQuestion, setClasses } from './quiz-core.js';
 import * as fx from './quiz-fx.js';
+import { HB_MS, STALE_MS } from './live-room.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -279,8 +280,18 @@ const ranked = () => room ? rankScore(room.score) : [];
 const lopText = (/** @type {string[]} */ ls) => ls.map(l => 'Lớp ' + l).join(', ');
 
 /** Phòng còn treo từ lần trước (tải lại trang giữa chừng): đóng hẳn để học sinh không thấy phòng ma. */
-async function closeOrphan() {
+/** Nhịp "phòng còn mở" mỗi phút (pub/hb). Máy giáo viên tắt / đóng trình duyệt chưa bấm Kết thúc → nhịp dừng → học sinh tự thoát sau 5 phút.
+ * @param {string} code */
+function beat(code) {
+  const id = window.setInterval(() => {
+    if (!room || room.room !== code || room.phase === 'end') { clearInterval(id); return; }
+    void write({ [P('hb')]: store.SERVER_TIME }).then(() => { const live = readLS(liveKey(), null); if (live?.room === code) writeLS(liveKey(), { ...live, hbAt: Date.now() }); }).catch(() => {});
+  }, HB_MS);
+}
+/** @param {boolean} [force] true = mở phòng mới trên máy này. Không force: chỉ đóng khi phòng cũ đã ngừng nhịp (tab khác đang dẫn phòng thì không đóng nhầm). */
+async function closeOrphan(force = false) {
   const live = readLS(liveKey(), null); if (!live?.room || !live?.key || room) return;
+  if (!force && Date.now() - Number(live.hbAt || 0) < STALE_MS) return;
   const proof = `${live.key}|${Date.now().toString(36)}x`;
   /** @type {Record<string, unknown>} */ const paths = { [`quiz/${live.room}/pub/phase`]: 'end', [`quiz_proof/${live.room}`]: proof };
   for (const lk of live.lopKeys || []) paths[`quiz_lop/${lk}`] = null;
@@ -293,7 +304,7 @@ async function startRoom(s) {
   if (!store.enabled()) { status('Chưa cài dự án Firebase (presence-config.js).', 'error'); return; }
   if (room) { openHost(); return; }
   if (!s.lops.length) { status('Bộ câu hỏi chưa chọn lớp. Bấm Sửa để chọn lớp.', 'error'); return; }
-  await closeOrphan();
+  await closeOrphan(true);
   const key = [...rnd(24)].map(b => b.toString(16).padStart(2, '0')).join('');
   let code = '';
   for (let t = 0; t < 6 && !code; t++) {
@@ -302,10 +313,11 @@ async function startRoom(s) {
   }
   if (!code) { status('Chưa tạo được phòng. Kiểm tra mạng rồi thử lại.', 'error'); return; }
   room = { room: code, key, set: s, i: -1, phase: 'lobby', players: {}, score: {}, stats: [], lopKeys: s.lops.map(l => store.keyOf(l)), stops: [], answers: {}, timer: 0, qAt: 0, off: 0, end: 0, left: 0, prevRank: {} };
-  /** @type {Record<string, unknown>} */ const paths = { [`quiz/${code}/pub`]: { phase: 'lobby', title: s.name, lops: s.lops, n: s.qs.length, lim: s.lim, at: store.SERVER_TIME } };
+  /** @type {Record<string, unknown>} */ const paths = { [`quiz/${code}/pub`]: { phase: 'lobby', title: s.name, lops: s.lops, n: s.qs.length, lim: s.lim, at: store.SERVER_TIME, hb: store.SERVER_TIME } };
   for (const lk of room.lopKeys) paths[`quiz_lop/${lk}`] = code;
   try { await write(paths); } catch (e) { status('Chưa mở được phòng: ' + (e instanceof Error ? e.message : ''), 'error'); room = null; return; }
-  writeLS(liveKey(), { room: code, key, setId: s.id, lopKeys: room.lopKeys });
+  writeLS(liveKey(), { room: code, key, setId: s.id, lopKeys: room.lopKeys, hbAt: Date.now() });
+  beat(code);
   room.stops.push(store.listen(`quiz/${code}/ds`, d => { if (!room) return; room.players = d || {}; for (const [k, v] of Object.entries(room.players)) if (!room.score[k]) room.score[k] = blankScore(String(/** @type {any} */ (v)?.ten || k)); if (room.phase === 'lobby') drawLobby(); else if (room.phase === 'q') drawQ(); }, undefined, { prio: 2 }));
   main.dataset.n = '0'; openHost(); drawLobby();
 }
@@ -598,3 +610,4 @@ async function closeRoom() {
 $('qz-h-close').addEventListener('click', () => void closeRoom());
 $('nav-tools').addEventListener('click', () => { renderSets(); status(''); void syncSets().then(renderSets); void closeOrphan(); });
 document.getElementById('teacher-logout')?.addEventListener('click', () => { if (room) { room.stops.forEach(f => f()); room.ansStop?.(); clearInterval(room.timer); room = null; host.hidden = true; document.body.classList.remove('qz-hosting'); } synced = false; });
+void closeOrphan();   // mở trang giáo viên: đóng phòng treo từ lần trước (máy tắt giữa buổi) nếu đã ngừng nhịp
