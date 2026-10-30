@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Sửa phòng Luyện tập/Thảo luận treo khi giáo viên tắt máy chưa bấm Kết thúc (nhịp pub/hb, live-room.js); gỡ 2 endpoint Worker không xác thực Antigravity tự thêm; lập kế hoạch quản lý nhiều bộ + Bảng thi đua cộng điểm (docs/ke-hoach/quan-ly-luyen-tap-thi-dua.md, chờ thầy chốt 4 câu). Antigravity deploy + thử thật theo docs/handoff/claude-antigravity-phong-treo-30-10.md.
+- Yêu cầu mới nhất: Antigravity đã deploy Worker mới (ee65ba4d), xác nhận 2 endpoint rủi ro trả về 404, Pages đã live live-room.js (200 OK); chuẩn bị script đón phòng treo watch_real_phong_treo.cjs (docs/handoff/antigravity-claude-phong-treo-xong.md). Thầy phối hợp mở phòng thật trên aihoctap.online và trả lời 4 câu hỏi Bảng thi đua.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4384,4 +4384,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Sửa: giáo viên tắt máy chưa Kết thúc → học sinh kẹt thông báo/phòng. Thêm live-room.js (nhịp pub/hb 1 phút, quá 5 phút coi là đóng; phòng cũ không nhịp hết hạn sau 3 giờ), teacher-tl/quiz ghi nhịp + đóng phòng treo khi mở trang nếu đã ngừng nhịp.
 - Tệp: frontend/hoc/{live-room.js,tl-play.js,quiz-play.js,teacher-tl.js,teacher-quiz.js,sw.js,…?v=20261030b}, worker/index.js, tests/{test_live_room.mjs,test_tl_live.cjs,test_quiz_live.cjs}, docs/ke-hoach/quan-ly-luyen-tap-thi-dua.md.
 - Kiểm thử PASS (đã chạy): live_room 9, tl_live 61, quiz_live 55, UI học sinh/giáo viên 0 vi phạm, PWA P1–P7, worker gate/tutor/scope/contract/thi_ip/tutor_fast.
+
+### 30/10/2026 13:50 — Antigravity: deploy Worker (gỡ 2 endpoint), xác nhận Pages live và chuẩn bị kiểm tra phòng treo bản thật
+- Đã làm: Deploy Worker aihoctap-gate bản mới (ee65ba4d), curl kiểm tra 2 endpoint /sim/cleanup-9th và /sim/export-attempts-9th trả về 404; kiểm tra live-room.js trên aihoctap.online trả về 200 OK; chạy toàn bộ test tự động (test_live_room 9, test_tl_live 61, test_quiz_live 55, PWA stamp PASS); viết script đón phòng treo tests/sim/watch_real_phong_treo.cjs; lập báo cáo docs/handoff/antigravity-claude-phong-treo-xong.md.
+- Tệp: tests/sim/watch_real_phong_treo.cjs, docs/handoff/antigravity-claude-phong-treo-xong.md, aisgk.md.
+- Kiểm thực tế: curl cleanup-9th -> 404; curl export-attempts-9th -> 404; curl live-room.js -> 200 OK; wrangler deploy Version ee65ba4d.
+- Việc tiếp: Thầy mở phòng thật trên aihoctap.online rồi tắt máy kiểm chứng 6 phút; Thầy trả lời 4 câu hỏi Bảng thi đua cho Claude.
+
 
