@@ -14,7 +14,14 @@ import './netbar.js';
 import * as mastery from './mastery.js';
 import * as quiz from './quiz-play.js';
 import * as tl from './tl-play.js';
-quiz.setOnChange(() => { if (currentView === 'practice') renderPractice(); });
+import * as thidua from './thidua-play.js';
+let quizWasActive = false;
+quiz.setOnChange(() => {
+  const on = quiz.active(); if (quizWasActive && !on) setTimeout(() => thidua.invalidate(), 4000);   // buổi vừa kết thúc: máy giáo viên lưu kết quả xong thì bảng thi đua cập nhật
+  quizWasActive = on;
+  if (currentView === 'practice') renderPractice();
+});
+thidua.setOnChange(() => { if (currentView === 'practice') renderPractice(); });
 tl.setOnChange(() => { if (currentView === 'practice') renderPractice(); });
 /** Mục Thi sáng lên + số bài đang mở khi thầy cô mở bài (nghe Firebase ngay sau đăng nhập). @param {number} n */
 function thiBadge(n) {
@@ -29,7 +36,7 @@ function thiBadge(n) {
   else if (!ids) autoExamIds = '';
 }
 let autoExamIds = '';
-const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); tl.start(session.identity); } };
+const startThiBadge = () => { if (session && thiStore.enabled()) { thiApp.watchBadge(session.identity, thiBadge); quiz.start(session.identity); tl.start(session.identity); thidua.start(session.identity); } };
 import { el, button, notify, renderMarkdown, withBusy, setFieldError, mapErrorMessage, confirmBox, icon, withIcon} from './dom.js';
 
 /** @typedef {import('./contracts').Lesson} Lesson */
@@ -376,9 +383,9 @@ function renderCatalog() {
 }
 /** Mục Luyện tập: các buổi luyện tập thầy cô đang mở trên lớp (quiz-play.js). Luyện tập theo bài vẫn ở trong từng bài học. */
 function renderPractice() {
-  const a = document.createElement('div'), b = document.createElement('div'); a.className = 'tl-slot'; b.className = 'lt-slot';
-  tl.renderPanel(a); quiz.renderPanel(b, tl.active());
-  node('practice-list').replaceChildren(...[a, b].filter(x => x.childElementCount));
+  const a = document.createElement('div'), b = document.createElement('div'), c = document.createElement('div'); a.className = 'tl-slot'; b.className = 'lt-slot'; c.className = 'td-slot';
+  tl.renderPanel(a); quiz.renderPanel(b, tl.active()); thidua.renderPanel(c);
+  node('practice-list').replaceChildren(...[a, b, c].filter(x => x.childElementCount));
 }
 /** @param {string} detail */
 function catalogUnavailable(detail) {
@@ -932,7 +939,7 @@ on('logout', async () => {
   }
   await saveDraft(); session = null; active = null; draft = null; locked = false;
   try { sessionStorage.removeItem('thi-cred'); } catch { /* bỏ qua */ }
-  await presence.stopStudent(); thiApp.stopAll(); quiz.stop(); tl.stop();
+  await presence.stopStudent(); thiApp.stopAll(); quiz.stop(); tl.stop(); thidua.stop();
   await db.remove('meta', 'session'); fb.clear(); identityUI(); renderCatalog(); show('catalog');
   /** @type {HTMLDialogElement} */ (node('login-dialog')).close();
   // Nút đồng bộ nằm trong bảng tổng quan → đưa về chỗ cũ trước khi xóa, nếu không lần đăng nhập sau (máy dùng chung) báo lỗi.

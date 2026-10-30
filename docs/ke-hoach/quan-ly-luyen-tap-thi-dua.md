@@ -1,6 +1,12 @@
 # Kế hoạch: quản lý nhiều bộ Luyện tập / Thảo luận và Bảng thi đua cộng điểm (30/10/2026)
 
-Người lập: Claude. Trạng thái: **ĐỀ XUẤT, chờ thầy chốt các câu hỏi ở mục 4 rồi mới code.**
+Người lập: Claude. Trạng thái: **Bảng thi đua ĐÃ CODE (30/10/2026 chiều)** theo quyết định của thầy:
+- Kỳ thi đua theo **tháng**.
+- Điểm tháng là **trung bình các buổi cao nhất**: N = 60% số buổi, làm tròn lên.
+- Học sinh thấy **top 10 và hạng của mình**.
+- **Thảo luận không tính.**
+
+Phần quản lý nhiều bộ (thanh lọc, ghim, tab "Kết quả các buổi") làm ở đợt sau.
 
 ## 1. Hiện trạng
 - Trang "Tiện ích" có 2 tab, Luyện tập và Thảo luận. Mỗi bộ là một thẻ (tên, số câu, giây/câu, lớp, nút Mở / Sửa / Xóa), xếp theo thứ tự tạo.

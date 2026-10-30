@@ -388,7 +388,7 @@
 </section>
 <section id="view-tools" hidden>
 <section id="list-tools" class="t-list" aria-labelledby="qz-title">
-<div class="t-tabs tools-tabs" role="tablist" aria-label="Tiện ích trên lớp"><button type="button" role="tab" id="tab-tools-quiz" class="t-button" aria-selected="true" aria-controls="tools-p-quiz" tabindex="0">Luyện tập</button><button type="button" role="tab" id="tab-tools-tl" class="t-button" aria-selected="false" aria-controls="tools-p-tl" tabindex="-1">Thảo luận</button></div>
+<div class="t-tabs tools-tabs" role="tablist" aria-label="Tiện ích trên lớp"><button type="button" role="tab" id="tab-tools-quiz" class="t-button" aria-selected="true" aria-controls="tools-p-quiz" tabindex="0">Luyện tập</button><button type="button" role="tab" id="tab-tools-tl" class="t-button" aria-selected="false" aria-controls="tools-p-tl" tabindex="-1">Thảo luận</button><button type="button" role="tab" id="tab-tools-td" class="t-button" aria-selected="false" aria-controls="tools-p-td" tabindex="-1">Thi đua</button></div>
 <div id="tools-p-quiz" role="tabpanel" aria-labelledby="tab-tools-quiz">
 <div class="t-heading"><div><h2 id="qz-title">Luyện tập trên lớp</h2><p class="t-muted">Tạo bộ câu hỏi, đến tiết bấm Mở luyện tập. Học sinh vào phòng ở mục Luyện tập, trả lời trên điện thoại, xếp hạng và vinh danh.</p></div><button type="button" id="qz-new" class="t-button t-primary">Tạo bộ câu hỏi</button></div>
 <div class="notice status thi-alert" id="qz-alert" role="status" hidden><span id="qz-status"></span></div>
@@ -402,6 +402,18 @@
 <ul class="t-list-items qz-sets" id="tl-sets"></ul>
 <p class="t-muted qz-sync" id="tl-sync" role="status"></p>
 <section class="t-card qz-history-card" aria-labelledby="tl-hist-title"><h3 id="tl-hist-title">Các buổi thảo luận gần đây</h3><ul class="qz-history" id="tl-history"></ul></section>
+</div>
+<div id="tools-p-td" role="tabpanel" aria-labelledby="tab-tools-td" hidden>
+<div class="t-heading"><div><h2 id="td-h-title">Bảng thi đua Luyện tập</h2><p class="t-muted">Xếp hạng theo tháng từ các buổi Luyện tập trên lớp. Điểm tháng = trung bình các buổi điểm cao nhất. Học sinh thấy top 10 và hạng của mình.</p></div></div>
+<div class="notice status thi-alert" id="td-alert" role="status" hidden><span id="td-status"></span></div>
+<div class="td-filter"><div class="t-field"><label for="td-lop">Lớp</label><select id="td-lop"></select></div><div class="t-field"><label for="td-thang">Tháng</label><select id="td-thang"></select></div><div class="td-filter-actions"><button type="button" id="td-reload" class="t-button">Tải lại</button><button type="button" id="td-csv" class="t-button">Tải Excel (CSV)</button><button type="button" id="td-chot" class="t-button t-primary">Chốt tháng</button></div></div>
+<p class="t-muted td-chot-info" id="td-chot-info" role="status"></p>
+<dl class="t-metrics td-metrics" id="td-metrics" aria-live="polite"></dl>
+<div class="td-t-awards" id="td-awards"></div>
+<table class="t-table td-table" id="td-table"><caption>Bảng xếp hạng</caption><thead><tr><th scope="col" class="t-number">Hạng</th><th scope="col">Học sinh</th><th scope="col" class="t-number">Điểm tháng</th><th scope="col" class="t-number">Buổi tham gia</th><th scope="col" class="t-number">Câu đúng</th><th scope="col">Điểm từng buổi (✓ được tính)</th></tr></thead><tbody id="td-body"><tr><td colspan="6" class="t-muted">Chọn lớp.</td></tr></tbody></table>
+<p class="t-muted td-rule" id="td-rule"></p>
+<section class="t-card td-sub-card" id="td-chua-card" aria-labelledby="td-chua-title" hidden><h3 id="td-chua-title">Chưa đủ buổi để xếp hạng</h3><ul class="td-chua" id="td-chua"></ul></section>
+<section class="t-card td-sub-card" id="td-buoi-card" aria-labelledby="td-buoi-title" hidden><h3 id="td-buoi-title">Các buổi trong tháng</h3><ul class="td-buoi" id="td-buoi"></ul></section>
 </div>
 </section>
 <section id="detail-tl" class="t-detail" aria-labelledby="tl-ed-title" hidden>
@@ -650,7 +662,7 @@
 <div class="t-dialog-actions"><button id="msg-cancel" type="button" class="t-button" autofocus>Hủy</button><button id="msg-ok" type="submit" class="t-button t-primary">Xác nhận</button>
 </div>
 </form></dialog>
-<script type="module" src="./teacher.js?v=20261030b"></script>
+<script type="module" src="./teacher.js?v=20261030c"></script>
 <dialog id="ai-q-dialog" class="t-dialog" aria-labelledby="ai-q-title"><form id="ai-q-form" class="t-form" method="dialog" novalidate>
 <h2 id="ai-q-title">AI soạn đề theo ma trận</h2>
 <p class="t-muted" id="ai-q-sub">AI soạn câu trắc nghiệm bám nội dung bài học. Thầy cô đọc, sửa và đánh dấu <strong>Đã duyệt</strong> từng câu trước khi lưu.</p>

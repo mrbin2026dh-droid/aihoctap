@@ -1,12 +1,11 @@
 {
-  "title": "Phiên bản 30/10/2026 (trưa)",
+  "title": "Phiên bản 30/10/2026 (chiều)",
   "items": [
+    "Bảng thi đua Luyện tập: mục Luyện tập có bảng xếp hạng của lớp theo tháng, em thấy hạng của mình và top 10.",
+    "Điểm thi đua tính theo số câu đúng, không tính bấm nhanh hay chậm; điểm tháng là trung bình các buổi cao nhất.",
+    "Thầy cô tắt máy mà chưa kết thúc buổi Luyện tập/Thảo luận: thông báo tự ẩn sau 5 phút, em không bị kẹt trong phòng.",
     "Thảo luận: gửi ý kiến xong (bấm Enter hoặc chạm nút Gửi trên iPhone, iPad) màn báo \"Em đã gửi\" ngay, không cần tải lại trang.",
     "Thảo luận, phần hỏi đáp: đang gõ câu hỏi mà bạn khác gửi câu mới thì chữ em gõ không bị mất.",
-    "Luyện tập trực tiếp: tải lại trang giữa câu vẫn thấy đáp án em đã chọn; mạng chậm chưa ghi được thì em được chọn lại.",
-    "Thi thật: thầy cô mở thi cho lớp mình thì em mới thấy nút Vào thi. Không đếm giờ, em cứ làm xong rồi nộp.",
-    "Mỗi em có thứ tự câu và thứ tự đáp án riêng.",
-    "Đề Trắc nghiệm + Thực hành: em nộp file thực hành (.docx, .xlsx, .pptx, .pdf) ở Phần 1, rồi làm trắc nghiệm ở Phần 2. Phải đủ cả hai mới nộp được.",
-    "Nộp xong em thấy \"Em đã nộp bài thành công\" và giờ nộp. Điểm do thầy cô chấm, không hiện cho học sinh."
+    "Luyện tập trực tiếp: tải lại trang giữa câu vẫn thấy đáp án em đã chọn; mạng chậm chưa ghi được thì em được chọn lại."
   ]
 }

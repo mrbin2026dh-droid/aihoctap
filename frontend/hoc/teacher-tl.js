@@ -9,7 +9,7 @@
 // Chỉ máy có khóa phòng (tl_key) ghi được trạng thái phòng (luật tl_proof), như phòng luyện tập.
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261030b';
+import * as ui from './teacher-ui.js?v=20261030c';
 import { confirmBox } from './dom.js';
 import * as fx from './quiz-fx.js';
 import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible } from './tl-core.js';
@@ -32,12 +32,13 @@ function btn(/** @type {string} */ text, /** @type {string} */ cls, /** @type {(
 function status(msg, kind = '') { const b = $('tl-alert'); $('tl-status').textContent = msg; b.hidden = !msg; b.className = 'notice status thi-alert ' + (kind === 'error' ? 'error' : 'success'); }
 
 /* ---------- Tab Luyện tập | Thảo luận ---------- */
-const tabs = [['tab-tools-quiz', 'tools-p-quiz'], ['tab-tools-tl', 'tools-p-tl']];
+const tabs = [['tab-tools-quiz', 'tools-p-quiz'], ['tab-tools-tl', 'tools-p-tl'], ['tab-tools-td', 'tools-p-td']];
 function pickTab(/** @type {string} */ id, focus = false) {
   for (const [t, p] of tabs) { const on = t === id; $(t).setAttribute('aria-selected', String(on)); $(t).tabIndex = on ? 0 : -1; $(p).hidden = !on; }
   try { sessionStorage.setItem('tools-tab', id); } catch { /* bỏ qua */ }
   if (focus) $(id).focus();
   if (id === 'tab-tools-tl') { renderSets(); void syncSets().then(renderSets); void closeOrphan(); }
+  document.dispatchEvent(new CustomEvent('tools-tab', { detail: id }));   // tab Thi đua (teacher-thidua.js) tự tải
 }
 for (const [t] of tabs) {
   $(t).addEventListener('click', () => pickTab(t));
@@ -530,6 +531,6 @@ async function closeRoom() {
   host.hidden = true; document.body.classList.remove('qz-hosting'); renderSets(); /** @type {HTMLElement|null} */ (document.querySelector('.tl-open'))?.focus();
 }
 $('tl-h-close').addEventListener('click', () => void closeRoom());
-$('nav-tools').addEventListener('click', () => { let t = 'tab-tools-quiz'; try { t = sessionStorage.getItem('tools-tab') || t; } catch { /* bỏ qua */ } pickTab(t === 'tab-tools-tl' ? t : 'tab-tools-quiz'); status(''); });
+$('nav-tools').addEventListener('click', () => { let t = 'tab-tools-quiz'; try { t = sessionStorage.getItem('tools-tab') || t; } catch { /* bỏ qua */ } pickTab(tabs.some(x => x[0] === t) ? t : 'tab-tools-quiz'); status(''); });
 document.getElementById('teacher-logout')?.addEventListener('click', () => { if (room) { room.stops.forEach(f => f()); room.yStop?.(); room.vStop?.(); room = null; host.hidden = true; document.body.classList.remove('qz-hosting'); } synced = false; });
 void closeOrphan();   // mở trang giáo viên: đóng phòng treo từ lần trước (máy tắt giữa buổi) nếu đã ngừng nhịp

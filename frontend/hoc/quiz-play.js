@@ -117,7 +117,7 @@ async function join() {
   if (playing === room) { lastKey = ''; draw(); return; }
   playing = room;
   /** @type {HTMLElement} */ (o.querySelector('.lt-main')).replaceChildren(t('p', 'lt-wait', 'Đang vào phòng…'));
-  await store.put(`quiz/${playing}/ds/${store.keyOf(me.ma)}`, { ten: me.ten, at: store.SERVER_TIME }).catch(() => { /* đã vào trước đó */ });
+  await store.put(`quiz/${playing}/ds/${store.keyOf(me.ma)}`, { ten: me.ten, lop: me.lop, at: store.SERVER_TIME }).catch(() => { /* đã vào trước đó */ });
   stops.forEach(f => f()); stops = [];
   pub = info;
   stops.push(store.listen(`quiz/${playing}/pub`, d => { pub = d; draw(); }, undefined, { prio: 3 }));

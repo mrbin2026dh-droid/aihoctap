@@ -409,6 +409,35 @@
     "thi_ip": {
       ".read": true,
       ".write": false
+    },
+    "quiz_kq_lop": {
+      ".read": true,
+      "$lop": {
+        "$thang": {
+          "$room": {
+            ".write": "$lop.length <= 40 && $thang.matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])$/) && root.child('quiz_key').child($room).exists() && newData.parent().parent().parent().parent().child('quiz_proof').child($room).val() !== root.child('quiz_proof').child($room).val() && newData.parent().parent().parent().parent().child('quiz_proof').child($room).val().beginsWith(root.child('quiz_key').child($room).val() + '|') && (!data.exists() || !newData.exists())",
+            ".validate": "newData.hasChildren(['at','so_cau','kq']) && newData.child('at').isNumber() && newData.child('at').val() <= now + 60000 && newData.child('so_cau').isNumber() && newData.child('so_cau').val() >= 1 && newData.child('so_cau').val() <= 200 && (!newData.child('bo').exists() || (newData.child('bo').isString() && newData.child('bo').val().length <= 120))",
+            "kq": {
+              "$ma": {
+                ".validate": "$ma.length <= 64 && newData.hasChildren(['c','ten']) && newData.child('c').isNumber() && newData.child('c').val() >= 0 && newData.child('c').val() <= newData.parent().parent().child('so_cau').val() && newData.child('ten').isString() && newData.child('ten').val().length <= 100"
+              }
+            },
+            "$other": {
+              ".validate": "$other === 'bo' || $other === 'at' || $other === 'so_cau'"
+            }
+          }
+        }
+      }
+    },
+    "quiz_ls": {
+      ".read": false,
+      "$owner": {
+        ".read": "$owner.length === 64 && $owner.matches(/^[0-9a-f]+$/)",
+        ".write": "$owner.length === 64 && $owner.matches(/^[0-9a-f]+$/)",
+        "$id": {
+          ".validate": "$id.length <= 40 && (!newData.exists() || newData.hasChildren(['at']))"
+        }
+      }
     }
   }
 }

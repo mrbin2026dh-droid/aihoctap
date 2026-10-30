@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã deploy Worker mới (ee65ba4d), xác nhận 2 endpoint rủi ro trả về 404, Pages đã live live-room.js (200 OK); chuẩn bị script đón phòng treo watch_real_phong_treo.cjs (docs/handoff/antigravity-claude-phong-treo-xong.md). Thầy phối hợp mở phòng thật trên aihoctap.online và trả lời 4 câu hỏi Bảng thi đua.
+- Yêu cầu mới nhất: Bảng thi đua Luyện tập theo tháng (trung bình các buổi cao nhất, 60% số buổi; học sinh thấy top 10 + hạng mình; Thảo luận không tính) đã code; Antigravity chạy emulator luật rules-thidua, đăng luật, deploy, thử thật lớp 9TH theo docs/handoff/claude-antigravity-thi-dua-30-10.md. Chờ trước đó: phòng treo (claude-antigravity-phong-treo-30-10.md).
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4391,4 +4391,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: curl cleanup-9th -> 404; curl export-attempts-9th -> 404; curl live-room.js -> 200 OK; wrangler deploy Version ee65ba4d.
 - Việc tiếp: Thầy mở phòng thật trên aihoctap.online rồi tắt máy kiểm chứng 6 phút; Thầy trả lời 4 câu hỏi Bảng thi đua cho Claude.
 
+### 30/10/2026 15:30 — Claude: Bảng thi đua Luyện tập theo tháng
+- Đã làm: thidua-core.js (phân số BigInt, N=60% làm tròn lên, bằng điểm xét buổi rồi câu đúng, tháng giờ VN), teacher-quiz saveThiDua (quiz_kq_lop theo lớp/tháng, quiz_ls kèm khóa phòng), tab Thi đua giáo viên (CSV, chốt tháng, bỏ buổi), thẻ thi đua học sinh (top 10 + hạng em), luật quiz_kq_lop/quiz_ls + test emulator.
+- Tệp: frontend/hoc/{thidua-core.js,thidua-play.js,teacher-thidua.js,teacher-quiz.js,quiz-play.js,app.js,teacher-tl.js,teacher.js,teacher.html,teacher.css,styles.css,sw.js,whats-new.json}, spike/step0/{database.rules.ai-sgk-final.json,emulator/rules-thidua.test.mjs}, tests/{test_thidua_core.mjs,test_thidua_ui.cjs,test_quiz_live.cjs}.
+- Kiểm thử PASS (đã chạy): thidua_core 20, thidua_ui 26, quiz_live 67, tl_live 61, teacher_thi_ui 120, overview, UI 0 vi phạm, PWA P1–P7. Chưa chạy: emulator luật.
 

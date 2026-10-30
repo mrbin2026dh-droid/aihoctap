@@ -10,12 +10,13 @@
 // Chỉ máy có "khóa phòng" (quiz_key, không ai đọc được) mới ghi được trạng thái phòng (luật Firebase quiz_proof).
 import * as store from './thi-store.js';
 import { api } from './api.js';
-import * as ui from './teacher-ui.js?v=20261030b';
+import * as ui from './teacher-ui.js?v=20261030c';
 import { confirmBox } from './dom.js';
 import { SHEET_API } from './sheet-config.js';
 import { L, MAX_Q, QUIZ_COLUMNS, awards, blankScore, classSummary, parseQuizRows, ranked as rankScore, scoreQuestion, setClasses } from './quiz-core.js';
 import * as fx from './quiz-fx.js';
 import { HB_MS, STALE_MS } from './live-room.js';
+import { monthVN } from './thidua-core.js';
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const inp = (/** @type {string} */ id) => /** @type {HTMLInputElement} */ ($(id));
@@ -501,6 +502,30 @@ async function endGame() {
   try { localStorage.removeItem(liveKey()); } catch { /* bỏ qua */ }
   const hist = /** @type {any[]} */ (readLS(histKey(), [])); hist.unshift({ name: room.set.name, lops: room.set.lops, at: Date.now(), players, avg }); writeLS(histKey(), hist.slice(0, 20));
   void drawPodium();
+  void saveThiDua(room, rk, stats.length, players, avg);
+}
+/** Bảng thi đua: lưu kết quả buổi theo LỚP và THÁNG (quiz_kq_lop/{lớp}/{tháng}/{phòng}) + lịch sử buổi trên mạng (quiz_ls, kèm khóa phòng
+ * để sau này giáo viên bỏ được buổi khỏi thi đua). Ghi riêng sau khi đã kết thúc phòng: lỗi ở đây không làm kẹt học sinh.
+ * Chỉ lưu số câu đúng (c) và số câu đã công bố đáp án (so_cau), không lưu điểm tốc độ.
+ * @param {NonNullable<typeof room>} r @param {ReturnType<typeof ranked>} rk @param {number} soCau @param {number} players @param {number} avg */
+async function saveThiDua(r, rk, soCau, players, avg) {
+  if (!soCau || !rk.length) return;
+  const thang = monthVN(), one = r.lopKeys.length === 1 ? r.lopKeys[0] : '';
+  /** @type {Record<string, Record<string, {c:number, ten:string}>>} */ const byLop = {};
+  for (const x of rk) {
+    let lk = one || store.keyOf(String(r.players[x.k]?.lop || ''));
+    if (!r.lopKeys.includes(lk)) { const l = await store.get(`thi_hs/${x.k}/lop`).catch(() => null); lk = l ? store.keyOf(String(l)) : ''; }
+    if (!r.lopKeys.includes(lk)) continue;   // em không thuộc lớp nào của buổi này: không tính thi đua
+    (byLop[lk] ||= {})[x.k] = { c: Math.max(0, Math.min(soCau, Number(x.c) || 0)), ten: String(x.ten || x.k).slice(0, 100) };
+  }
+  /** @type {Record<string, unknown>} */ const paths = { [`quiz_proof/${r.room}`]: `${r.key}|${Date.now().toString(36)}t` };
+  for (const [lk, kq] of Object.entries(byLop)) paths[`quiz_kq_lop/${lk}/${thang}/${r.room}`] = { at: store.SERVER_TIME, bo: r.set.name.slice(0, 120), so_cau: soCau, kq };
+  let ok = false;
+  for (let t = 0; t < 3 && !ok; t++) { try { await store.patch('', paths); ok = true; } catch { await new Promise(res => setTimeout(res, 1500 * (t + 1))); } }
+  if (!ok) { status('Chưa lưu được kết quả buổi này vào Bảng thi đua (mạng chậm). Kết quả trên màn chiếu vẫn đúng.', 'error'); return; }
+  const owner = ownerKey();
+  if (owner) void store.put(`quiz_ls/${owner}/${r.room}`, { at: store.SERVER_TIME, bo: r.set.name.slice(0, 120), lops: r.set.lops, lopKeys: Object.keys(byLop), thang, so_cau: soCau, n: players, avg, key: r.key }).catch(() => {});
+  document.dispatchEvent(new CustomEvent('thidua-saved', { detail: { thang, lops: Object.keys(byLop) } }));
 }
 /** Bục vinh danh: hạng 3 → hạng 2 → (trống dồn) → quán quân, pháo giấy. */
 async function drawPodium() {

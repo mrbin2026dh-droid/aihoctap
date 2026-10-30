@@ -18,13 +18,17 @@ async function fbRoute(r){const u=new URL(r.request().url());const p=u.pathname.
  if(m==='GET'){if(p.startsWith('quiz_key')||p.startsWith('quiz_proof')||p===''||p.startsWith('quiz_proof'))return deny('read '+p);return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(at(p)??null)});}
  const v=stamp(JSON.parse(r.request().postData()||'null'));
  if(m==='PATCH'&&p===''){const proofs={};for(const [k,val] of Object.entries(v))if(k.startsWith('quiz_proof/'))proofs[k.split('/')[1]]=val;
-  for(const k of Object.keys(v)){let R=null;if(/^quiz\/\d{6}\/(pub|kq)/.test(k))R=k.split('/')[1];else if(k.startsWith('quiz_lop/'))R=v[k]||at(k);else if(k.startsWith('quiz_proof/'))R=k.split('/')[1];else return deny('path '+k);
+  for(const k of Object.keys(v)){let R=null;if(/^quiz\/\d{6}\/(pub|kq)/.test(k))R=k.split('/')[1];else if(k.startsWith('quiz_lop/'))R=v[k]||at(k);else if(k.startsWith('quiz_proof/'))R=k.split('/')[1];
+   else if(/^quiz_kq_lop\/[a-z0-9]{1,40}\/20\d\d-(0[1-9]|1[0-2])\/\d{6}$/.test(k)){R=k.split('/')[3];const val=v[k];if(at(k)&&val!==null)return deny('kq exists');if(val!==null){if(!(val.so_cau>=1&&val.so_cau<=200)||typeof val.at!=='object'&&typeof val.at!=='number')return deny('kq bad');for(const e of Object.values(val.kq||{}))if(!(Number.isInteger(e.c)&&e.c>=0&&e.c<=val.so_cau&&typeof e.ten==='string'))return deny('kq c');if(Object.keys(val).some(x=>!['at','bo','so_cau','kq'].includes(x)))return deny('kq field');}}
+   else return deny('path '+k);
    const key=R&&at('quiz_key/'+R);if(!key||typeof proofs[R]!=='string'||!proofs[R].startsWith(key+'|')||proofs[R]===at('quiz_proof/'+R))return deny('proof '+k);}
   for(const [k,val] of Object.entries(v))setAt(k,val);return r.fulfill({status:200,contentType:'application/json',body:'{}'});}
  if(m==='PUT'){if(p.startsWith('quiz_key/')&&at(p))return deny('key exists');
   if(/^quiz\/\d{6}\/ds\//.test(p)&&at(p))return deny('joined');
   const mm=p.match(/^quiz\/(\d{6})\/ans\/([^/]+)\/[^/]+$/);if(mm){const pub=at(`quiz/${mm[1]}/pub`);if(at(p)||!pub||pub.phase!=='q'||pub.q?.k!==mm[2])return deny('ans');}
   if(/^quiz\/\d{6}\/(pub|kq)/.test(p))return deny('direct pub');
+  if(p.startsWith('quiz_kq_lop'))return deny('direct kq_lop');
+  if(p.startsWith('quiz_ls/')&&!/^quiz_ls\/[0-9a-f]{64}\//.test(p))return deny('ls owner');
   setAt(p,v);return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(v)});}
  return deny('method');}
 (async()=>{const b=await chromium.launch({args:['--host-resolver-rules=MAP thi.test 127.0.0.1','--unsafely-treat-insecure-origin-as-secure=http://thi.test:8207']});let n=0;const ok=(c,m)=>{assert(c,m);n++;console.log('ok  ',m)};
@@ -137,5 +141,27 @@ await tp.click('.qz-reveal');await sp2.waitForFunction(()=>document.querySelecto
  await sp.click('.lt-done');await sp.waitForSelector('#lt-play[hidden]',{state:'attached'});await sp.waitForSelector('#practice-list .lt-empty');ok(true,'học sinh đóng màn hình kết quả → mục Luyện tập trở lại trống');
  // Xóa bộ câu hỏi
  await tp.click('.qz-set .t-icon-btn >> nth=1');await ack();await tp.waitForSelector('#qz-sets .qz-empty');ok(!Object.keys(db.quiz_bo[owner]||{}).length,'xóa bộ câu hỏi (có xác nhận), xóa cả trên mạng');
+ // ===== Bảng thi đua: kết quả buổi vào quiz_kq_lop theo lớp + tháng (giờ VN), tab Thi đua giáo viên, thẻ thi đua học sinh =====
+ const thang=new Date(Date.now()+7*3600e3).toISOString().slice(0,7);
+ for(let i=0;i<40&&!db.quiz_kq_lop?.['9b'];i++)await tp.waitForTimeout(150);
+ const k9a=db.quiz_kq_lop?.['9a']?.[thang]?.[code],k9b=db.quiz_kq_lop?.['9b']?.[thang]?.[code],nsc=db.quiz[code].pub.so_cau;
+ ok(k9a&&k9b&&k9a.so_cau===nsc&&k9a.kq.hs01.c===db.quiz[code].kq.hs01.c&&!k9a.kq.hs02&&k9b.kq.hs02.c===db.quiz[code].kq.hs02.c&&!('p' in k9a.kq.hs01),'kết thúc buổi: lưu số câu đúng từng em theo đúng lớp (9A, 9B) và tháng, không lưu điểm tốc độ');
+ ok(Object.values(db.quiz_ls||{}).some(o=>o[code]?.key&&o[code].so_cau===nsc),'lịch sử buổi lưu trên mạng (đường dẫn riêng của giáo viên) kèm khóa phòng');
+ const c1=k9a.kq.hs01.c,exp=(x=>`${Math.floor(x/100)},${String(x%100).padStart(2,'0')}`)(Math.floor((2000*c1+nsc)/(2*nsc)));
+ await tp.click('#tab-tools-td');await tp.waitForSelector('#tools-p-td:not([hidden])');await tp.waitForFunction(()=>document.querySelectorAll('#td-lop option').length>=2);
+ await tp.selectOption('#td-lop','9A');await tp.waitForFunction(()=>document.querySelector('#td-body tr td[data-label="Học sinh"]'),null,{timeout:8000});
+ const row=await tp.textContent('#td-body tr');ok(row.includes('Nguyễn Văn An')&&row.includes(exp)&&row.includes('1/1')&&(await tp.textContent('#td-metrics')).includes('1/1'),`tab Thi đua: lớp 9A, An hạng 1, điểm ${exp} (= ${c1}/${nsc} câu × 10), 1/1 buổi`);
+ ok(!(await tp.textContent('#td-body')).includes('Trần Thị Bình'),'bảng lớp 9A không lẫn em lớp 9B');
+ const [dl2]=await Promise.all([tp.waitForEvent('download'),tp.click('#td-csv')]);const csv2=fs.readFileSync(await dl2.path(),'utf8');
+ ok(csv2.includes('Bảng thi đua Luyện tập – Lớp 9A')&&csv2.includes('HS01')&&csv2.includes(exp)&&csv2.includes(`${c1}/${nsc} (tính)`)&&csv2.includes('Cách tính'),'tải Excel (CSV): tiêu đề, cách tính, mã, điểm, từng buổi');
+ await tp.click('#td-chot');await ack();await tp.waitForFunction(()=>/Đã chốt lúc/.test(document.getElementById('td-chot-info').textContent),null,{timeout:8000});
+ ok(Object.values(db.quiz_ls||{}).some(o=>Object.keys(o).some(k=>k.startsWith('chot_9a_'+thang))&&Object.entries(o).find(([k])=>k.startsWith('chot_9a_'))[1].rows[0].ma==='hs01'),'Chốt tháng: lưu bản chốt xếp hạng kèm thời điểm');
+ await tp.click('#td-buoi .td-bo');await tp.waitForSelector('#msg-dialog[open]');ok((await tp.textContent('#msg-dialog')).includes('Không hoàn tác'),'bỏ buổi khỏi thi đua: hỏi xác nhận, nêu hậu quả');await tp.click('#msg-dialog button:has-text("Hủy")');await tp.waitForTimeout(200);ok(!!db.quiz_kq_lop['9a'][thang][code],'Hủy → không bỏ');
+ await sp.click('button[data-tab="practice"]');await sp.waitForSelector('#practice-list .td-card',{timeout:8000});await sp.waitForFunction(()=>document.querySelector('.td-you-rank strong')?.textContent==='1',null,{timeout:8000});
+ const card=await sp.textContent('.td-card');ok(card.includes('Lớp 9A')&&card.includes(exp)&&card.includes('Top 10 của lớp')&&card.includes('Nguyễn V. An (em)')&&!card.includes('Trần Thị Bình'),'học sinh: thẻ Bảng thi đua lớp 9A, hạng 1, điểm, tên rút gọn, không có bạn lớp khác');
+ await sp.click('.td-seg-btn:has-text("Tháng trước")');await sp.waitForFunction(()=>document.querySelector('.td-empty')?.textContent.includes('Tháng trước'),null,{timeout:8000});ok(true,'chọn Tháng trước: báo không có buổi nào');
+ ok(await sp.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'thẻ thi đua không tràn ngang 390 px');
+ await tp.click('#td-buoi .td-bo');await ack();await tp.waitForFunction(()=>/Đã bỏ buổi/.test(document.getElementById('td-status').textContent),null,{timeout:8000});
+ ok(!db.quiz_kq_lop['9a']?.[thang]?.[code]&&(await tp.textContent('#td-body')).includes('chưa có buổi'),'xác nhận → bỏ buổi, bảng tính lại (lớp chưa có buổi)');
  ok(errs.length===0,'không có lỗi JS '+errs.join('|'));
  console.log('QUIZ LIVE OK',n)}finally{await b.close();srv.close()}})().catch(e=>{console.error('FAIL',e.message);process.exit(1)});
