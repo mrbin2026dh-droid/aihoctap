@@ -1473,9 +1473,12 @@ export function isAnswerBegging(t) {
   return false;
 }
 /** Trả lời mẫu khi em xin đáp án: không đưa đáp án, chỉ 3 bước tự tìm + phần bài nên đọc lại. @param {string} title @param {string[]} outline */
-export function answerBeggingReply(title, outline) {
+/** Em đang làm một câu mà hỏi "em nghĩ là … đúng không?" (đánh giá bản thật 30/10: 4/52 câu Gia sư đáp "Chính xác!" = xác nhận đáp án).
+ * Khi có câu hỏi đang làm, mọi câu hỏi xác nhận đúng/sai đi đường trả lời mẫu, không qua AI. @param {string} t */
+export const isConfirmRequest = t => /(đúng|phải|chính xác|chuẩn|được)\s*(không|ko|k|hông|chưa|hả|hở|nhỉ)\s*(ạ|à|ha|thầy|cô|gia sư)?\s*[?.!]*\s*$/i.test(String(t || '').trim()) || /^(có\s+)?(đúng|phải)\s+(là|không)(?=\s|$)/i.test(String(t || '').trim()) || /^có\s+(đúng|phải)\s.*\s(không|ko|k)\s*[?.!]*$/i.test(String(t || '').trim());
+export function answerBeggingReply(title, outline, confirm = false) {
   const items = outline.slice(0, 3);
-  const lines = ['Gia sư không đưa đáp án, nhưng sẽ giúp em tự tìm ra. Em làm theo 3 bước:', '1. Đọc kĩ câu hỏi, tìm từ khóa chính.',
+  const lines = [confirm ? 'Gia sư không xác nhận đúng hay sai khi em chưa nộp bài, nhưng sẽ giúp em tự kiểm tra. Em làm theo 3 bước:' : 'Gia sư không đưa đáp án, nhưng sẽ giúp em tự tìm ra. Em làm theo 3 bước:', '1. Đọc kĩ câu hỏi, tìm từ khóa chính.',
     `2. Đọc lại phần liên quan trong bài **${title}**${items.length ? ':' : '.'}`];
   for (const h of items) lines.push(`   - **${h}**`);
   lines.push('3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.');
@@ -5681,8 +5684,9 @@ export default {
       }
 
       // Xin đáp án / hỏi "có phải B không" / giả giáo viên đòi đáp án: trả lời mẫu ngay, không gọi AI, không trừ lượt.
-      if (lessonForTutor && !isExamReview && isAnswerBegging(message)) {
-        const r = answerBeggingReply(String(lessonForTutor.title || 'này').slice(0, 120), lessonOutline(lessonForTutor.content_markdown));
+      const askConfirm = Boolean(questionId) && isConfirmRequest(message);
+      if (lessonForTutor && !isExamReview && (isAnswerBegging(message) || askConfirm)) {
+        const r = answerBeggingReply(String(lessonForTutor.title || 'này').slice(0, 120), lessonOutline(lessonForTutor.content_markdown), askConfirm && !isAnswerBegging(message));
         return new Response(JSON.stringify({ ...r, answer_request: true, ...(routedLesson ? { routed_lesson: routedLesson } : {}) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
@@ -6036,6 +6040,8 @@ export default {
             driver: driverLabel,
             student: studentUid,
             ms: tm,
+            // Cho kiểm thử bản thật biết lớp chặn lộ nào đang chạy (không chứa đáp án): có câu hỏi, có đáp án ở kho riêng, có AI kiểm duyệt
+            guard: { cau: Boolean(tutorQ), dap_an: Boolean(correctLetter), kiem_duyet: judgeOn },
             ...(routedLesson ? { lesson: routedLesson } : {}),
             ...(otherLesson && (!tutorJson || parsed.scope === 'bai_khac') ? { other_lesson: { course_id: otherLesson.course_id, lesson_id: otherLesson.lesson_id, title: otherLesson.title } } : {})
           }), {

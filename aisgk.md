@@ -4512,3 +4512,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: test_tutor_all_lessons 19 PASS; 117 lượt đánh giá bản thật sinh eval_tutor_all_lessons_2026-10-30-14-35.json (104 câu, 13 khái niệm đúng); 2 ảnh mới trên web thật (203KB, 215KB).
 - Việc dở: Chuyển Claude xem báo cáo, xử lý 4 ca xác nhận dạng "em nghĩ là ... đúng không" và quyết định các bước tiếp theo.
 
+
+### 30/10/2026 22:00 — Claude — Kiểm định đánh giá 13 bài (CHƯA ĐẠT: lo 16, xác nhận 4), sửa hỏi xác nhận, làm rõ hạn mức Gia sư theo ngày
+- Phán quyết: CHƯA ĐẠT. 16 ca lộ đều do máy chủ không tra được đáp án đúng (packages_private), Antigravity bỏ qua bước kiểm tra kho đáp án; lại ghi cứng PIN TH9025 (đã sửa sang SIM_PIN; người dùng cần đổi PIN TH9001, TH9025).
+- Đã làm: isConfirmRequest (đang làm câu mà hỏi "… đúng không?" → trả lời mẫu, không qua AI); trả `guard {cau, dap_an, kiem_duyet}`; teacher.html giải thích hạn mức. Hạn mức xác nhận từ mã: theo NGÀY giờ VN, cộng dồn mọi bài, về 0 lúc 00:00.
+- Kiểm thử: MỚI tests/test_tutor_quota.mjs 15 PASS; test_tutor_all_lessons 20 PASS; các bộ Gia sư/Worker khác và teacher_ui_standard PASS (sandbox).
+- Việc tiếp: Antigravity deploy, kiểm kho đáp án 13 bài, đánh giá lại, thử hạn mức 20 câu H1–H6 theo docs/handoff/claude-antigravity-gia-su-han-muc-30-10.md.

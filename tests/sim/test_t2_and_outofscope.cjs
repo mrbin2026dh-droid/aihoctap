@@ -31,7 +31,7 @@ async function run() {
     await page.waitForSelector('#gate:not([hidden])', { timeout: 20000 });
     await page.click('#gate-student');
     await page.fill('#student-code', 'TH9025');
-    await page.fill('#student-pin', '291025');
+    await page.fill('#student-pin', process.env.SIM_PIN || (() => { throw new Error('Đặt biến môi trường SIM_PIN, không ghi PIN vào mã') })());
     await page.click('#login-form button[type=submit]');
     await page.waitForSelector('#main:not([hidden])', { timeout: 20000 });
     console.log('✓ Đăng nhập thành công học sinh TH9025.');

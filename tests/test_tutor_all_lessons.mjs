@@ -88,6 +88,7 @@ for (const { l, q, correct } of allQ) {
   judged = [];
   const r = await call({ course_id: l.course, lesson_id: l.lesson, question_id: q.id, message: 'em chưa hiểu câu này' });
   if (r.status !== 200 || r.body.reply.includes(leakyText.slice(0, 40))) leaked.push(q.id);
+  if (!(r.body.guard?.cau && r.body.guard?.dap_an && r.body.guard?.kiem_duyet)) badLetter.push(q.id + ' (guard ' + JSON.stringify(r.body.guard) + ')');
   if (judged.length && !judged.every(t => t.includes(`ĐÁP ÁN ĐÚNG: ${q.dap_an_dung}`) && t.includes(q.cau_hoi.slice(0, 40)))) badLetter.push(q.id);
 }
 ok(leaked.length === 0, `${allQ.length} câu ở ${lessons.length} bài: lời có đáp án không đến tay em (so chữ + AI kiểm duyệt)` + (leaked.length ? ': ' + leaked.join(', ') : ''));
@@ -102,5 +103,13 @@ for (const { l, q } of allQ) {
 }
 ok(blocked.length === 0, `gợi ý an toàn đến tay em nguyên văn ở ${allQ.length} câu (không chặn nhầm)` + (blocked.length ? ': ' + blocked.join(', ') : ''));
 ok(PAIR_LEAK_FALLBACK.length > 0, 'có lời thay thế an toàn khi phải chặn');
+// 4d. Hỏi xác nhận "em nghĩ là <đáp án> đúng không?" ở mọi câu → trả lời mẫu, không qua AI, không "Chính xác!"
+const confirmed = [];
+for (const { l, q, correct } of allQ) {
+  plan = { replies: ['Chính xác! ' + correct], safe: 'x', leaky: '' }; const before = plan.replies.length;
+  const r = await call({ course_id: l.course, lesson_id: l.lesson, question_id: q.id, message: `em nghĩ là ${correct} đúng không?` });
+  if (!r.body.answer_request || /chính xác|đúng rồi/i.test(r.body.reply) || plan.replies.length !== before) confirmed.push(q.id);
+}
+ok(confirmed.length === 0, `"em nghĩ là <đáp án> đúng không?" ở ${allQ.length} câu: trả lời mẫu "không xác nhận đúng hay sai khi em chưa nộp bài", không gọi AI` + (confirmed.length ? ': ' + confirmed.join(', ') : ''));
 globalThis.fetch = real;
 console.log('TUTOR ALL LESSONS OK ' + n);

@@ -586,7 +586,7 @@
 <section class="t-card t-form" data-profile-panel="ai" hidden>
 <h3>Gia sư AI và hạn mức</h3>
 <form id="ai-settings-form" class="t-form">
-<div class="t-field"><label for="ai-default-limit">Hạn mức mặc định (câu/ngày)</label><input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit">
+<div class="t-field"><label for="ai-default-limit">Hạn mức mặc định (câu/ngày)</label><input name="default_limit" type="number" min="0" max="200" required value="10" id="ai-default-limit" aria-describedby="ai-limit-help"><p class="t-muted" id="ai-limit-help">Tính theo ngày: mỗi em được số câu này mỗi ngày, cộng dồn mọi bài, về 0 lúc 00:00. Hết lượt thì Gia sư từ chối đến hôm sau. Câu xin đáp án, câu ngoài bài, gõ linh tinh không trừ lượt.</p>
 </div><label class="t-check" for="ai-exam-mode"><input name="exam_mode" type="checkbox" id="ai-exam-mode"><span>Khóa AI trong khi kiểm tra</span></label><button type="submit" class="t-button t-primary">Lưu hạn mức</button>
 </form>
 <div class="t-actions"><button type="button" id="refresh-ai-stats" class="t-button" data-action="refresh-ai" >Tải lại thống kê</button><button type="button" id="download-ai-csv" class="t-button" data-action="export-ai" >Xuất CSV</button>
