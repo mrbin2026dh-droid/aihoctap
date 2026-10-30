@@ -5,18 +5,18 @@
 // lời lộ đáp án (lời giải thích sau khi chấm của chính câu đó) không bao giờ đến tay em.
 // Chạy: node tests/test_tutor_all_lessons.mjs
 import assert from 'node:assert/strict';
-import fs from 'node:fs'; import path from 'node:path';
+import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import worker, { MockDONamespace, registerStudentCredential, answerLeak, optionPairLeak, sanitizeWorkerOutput, PAIR_LEAK_FALLBACK } from '../worker/index.js';
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; console.log('ok  ', m); };
 
 // 1. Không còn luật viết riêng cho một bài/câu trong Worker
 const src = fs.readFileSync(new URL('../worker/index.js', import.meta.url), 'utf8');
-const code = src.split('\n').filter(l => !/^\s*(\/\/|\*|\/\*\*)/.test(l)).map(l => l.replace(/\s\/\/\s.*$/, '')).join('\n').replace(/Bộ não AI/g, '');
+const code = src.split('\n').filter(l => !/^\s*(\/\/|\*|\/\*\*)/.test(l)).map(l => l.replace(/\s*\/\/.*$/, '')).join('\n').replace(/Bộ não AI/g, '');
 for (const bad of ['ánh sáng màu đỏ', 'tiếp thu nhanh', 'ghi nhớ bền vững', 'nhanh\\s*chóng\\s+hay', 'thu\\s*nhận["\'»]?\\s*,', 'bộ não', '[\'"]cpu[\'"]', 'tin9_b', 'tin6_b'])
   ok(!new RegExp(bad, 'i').test(code), 'Worker không có luật riêng chứa: ' + bad);
 
 // 2. Nạp mọi bài có câu hỏi
-const base = new URL('../data/curriculum_v2_simple/', import.meta.url).pathname;
+const base = fileURLToPath(new URL('../data/curriculum_v2_simple/', import.meta.url));
 const lessons = [];
 for (const g of fs.readdirSync(base)) for (const f of fs.readdirSync(path.join(base, g))) {
   const d = JSON.parse(fs.readFileSync(path.join(base, g, f), 'utf8'));

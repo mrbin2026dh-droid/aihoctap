@@ -5643,7 +5643,7 @@ export default {
           const pick = loaded[r.index];
           lessonForTutor = pick.l; courseId = String(pick.c.course_id); lessonId = String(pick.c.lesson_id);
           routedLesson = { course_id: courseId, lesson_id: lessonId, title: String(pick.l.title || '').slice(0, 120) };
-          effectiveContext.course_id = courseId; effectiveContext.lesson_id = lessonId;   // nhật ký Bộ não ghi đúng bài
+          effectiveContext.course_id = courseId; effectiveContext.lesson_id = lessonId;   // nhật ký Bộ não AI ghi đúng bài
         } else {
           return new Response(JSON.stringify({ reply: 'Gia sư chưa tìm thấy bài học nào nói về điều em hỏi. Em chọn một bài trong danh sách bên dưới, hoặc hỏi lại bằng từ khóa trong sách (ví dụ "mã nhị phân", "thông tin số").', no_match: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

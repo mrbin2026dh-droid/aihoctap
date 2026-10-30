@@ -6,7 +6,7 @@
 // Chấm tự động bằng chính luật chung của Worker (answerLeak, optionPairLeak) + ghi toàn bộ hội thoại ra JSON để người đọc lại.
 // Chạy: SIM_IDS="TH9001,TH9002,…" SIM_PIN="…" node tests/sim/eval_tutor_all_lessons.mjs
 // (mỗi tài khoản 10 lượt/ngày → script tự đổi tài khoản sau 9 lượt; cần khoảng 13 tài khoản cho 13 bài × 9 lượt)
-import fs from 'node:fs'; import path from 'node:path';
+import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import { answerLeak, optionPairLeak } from '../../worker/index.js';
 const API = process.env.SIM_API || 'https://aihoctap-gate.mrbin2026dh.workers.dev/api';
 const ORIGIN = process.env.SIM_ORIGIN || 'https://aihoctap.online';
@@ -16,10 +16,16 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const req = async (p, body, token) => { const r = await fetch(API + p, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', Origin: ORIGIN, ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined }); return { status: r.status, body: await r.json().catch(() => ({})) }; };
 let token = '', used = 99, idx = -1;
 async function tutor(body) {
-  if (used >= 9) { idx++; if (idx >= IDS.length) throw new Error('Hết tài khoản thử, thêm mã vào SIM_IDS'); const l = await req('/login', { student_id: IDS[idx], pin: PIN }); token = l.body.token; if (!token) throw new Error('Đăng nhập lỗi ' + IDS[idx]); used = 0; }
+  if (used >= 9) { idx++; if (idx >= IDS.length) throw new Error('Hết tài khoản thử, thêm mã vào SIM_IDS'); let accountMap = {};
+  try {
+    const simAccs = JSON.parse(fs.readFileSync(fileURLToPath(new URL('../fixtures/sim-accounts.json', import.meta.url)), 'utf8'));
+    for (const a of simAccs) accountMap[a.ma] = a.pin;
+  } catch {}
+  const accPin = accountMap[IDS[idx]] || PIN;
+  const l = await req('/login', { student_id: IDS[idx], pin: accPin }); token = l.body.token; if (!token) throw new Error('Đăng nhập lỗi ' + IDS[idx]); used = 0; }
   used++; const t0 = Date.now(); const r = await req('/pwa/tutor', body, token); await sleep(4000); return { ...r, ms: Date.now() - t0 };
 }
-const base = new URL('../../data/curriculum_v2_simple/', import.meta.url).pathname;
+const base = fileURLToPath(new URL('../../data/curriculum_v2_simple/', import.meta.url));
 const local = []; for (const g of fs.readdirSync(base)) for (const f of fs.readdirSync(path.join(base, g))) { const d = JSON.parse(fs.readFileSync(path.join(base, g, f), 'utf8')); if ((d.quiz || []).length) local.push(d); }
 const cat = (await req('/pwa/catalog')).body;
 const norm = s => String(s || '').toLowerCase().replace(/^bài\s*\d+\s*[:.]\s*/i, '').trim();
@@ -44,7 +50,7 @@ for (const c of cat.courses || []) for (const l of c.lessons || []) {
     }
   }
 }
-const dir = new URL('./out/', import.meta.url).pathname; fs.mkdirSync(dir, { recursive: true });
+const dir = fileURLToPath(new URL('./out/', import.meta.url)); fs.mkdirSync(dir, { recursive: true });
 const file = path.join(dir, `eval_tutor_all_lessons_${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.json`);
 fs.writeFileSync(file, JSON.stringify({ chay_luc: new Date().toISOString(), api: API, tong: sum, chi_tiet: out }, null, 1));
 console.log('\nTỔNG:', sum, '\nGhi:', file);

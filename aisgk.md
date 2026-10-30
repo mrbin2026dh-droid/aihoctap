@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã deploy Worker mới (b10ea9e6), kiểm thử 5 ca T1–T5 với Gia sư "học có hướng dẫn" trên bản thật aihoctap.online (lớp 9TH) đạt PASS 100%, có ảnh; xem docs/handoff/antigravity-claude-gia-su-huong-dan-xong.md.
+- Yêu cầu mới nhất: Antigravity đã deploy Worker (e53601ce), chạy đánh giá bản thật qua 13 bài học (52 câu) và thử lại T2 chuẩn + câu ngoài bài mới có ảnh; xem docs/handoff/antigravity-claude-gia-su-moi-bai-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4505,3 +4505,10 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thử: MỚI tests/test_tutor_all_lessons.mjs 19 PASS trên 13 bài/52 câu đọc tự động; guardrails và accuracy viết lại theo luật chung; các bộ test Gia sư/Worker khác PASS (sandbox, AI giả). Script đánh giá bản thật tests/sim/eval_tutor_all_lessons.mjs (chưa chạy).
 - Việc tiếp: Antigravity deploy + chạy đánh giá 13 bài theo docs/handoff/claude-antigravity-gia-su-moi-bai-30-10.md.
 - 21:05 bổ sung (Claude): lời Gia sư câu ngoài bài đổi thành "Câu hỏi này không thuộc bài X em đang học. Em hãy hỏi lại các câu liên quan đến nội dung sau nhé: [mục]"; bỏ "tránh nói sai so với sách" và dòng "Câu này không trừ lượt của em" ở 3 lời mẫu (thầy yêu cầu). Test offtopic 24, tutor_fast 30 PASS. Chờ deploy Worker cùng đợt.
+
+### 30/10/2026 21:40 — Antigravity: deploy Worker Gia sư mọi bài, đánh giá bản thật 13 bài và chụp ảnh T2 chuẩn + ngoài bài mới
+- Đã làm: Triển khai Worker e53601ce-44ff-4551-8a18-37cf2a1f5a62; chạy bộ test sandbox 19/19 PASS (sửa fileURLToPath cho Windows); chạy script eval_tutor_all_lessons.mjs trên bản thật aihoctap.online với 13 bài (104 câu hỏi): 13/13 khái niệm đúng bài, 52/52 câu Q1 không lộ, phát hiện 4 ca xác nhận ("Chính xác!") khi em hỏi "em nghĩ là <đáp án> đúng không" và 16 ca so chữ do nhắc lại từ khóa; chạy thử thực tế bằng Playwright trên web thật: chụp ảnh câu ngoài bài mới (06_ngoai_bai_doi_bong.png) xác nhận đã bỏ "tránh nói sai" và "không trừ lượt", chụp ảnh T2 chuẩn (02_T2_go_sai_chuan.png) xác nhận không khen sai; lập báo cáo docs/handoff/antigravity-claude-gia-su-moi-bai-xong.md.
+- Tệp: worker/index.js, tests/test_tutor_all_lessons.mjs, tests/sim/eval_tutor_all_lessons.mjs, tests/sim/test_t2_and_outofscope.cjs, docs/handoff/anh/gia-su-30-10/*.png, docs/handoff/antigravity-claude-gia-su-moi-bai-xong.md, aisgk.md.
+- Kiểm thực tế: test_tutor_all_lessons 19 PASS; 117 lượt đánh giá bản thật sinh eval_tutor_all_lessons_2026-10-30-14-35.json (104 câu, 13 khái niệm đúng); 2 ảnh mới trên web thật (203KB, 215KB).
+- Việc dở: Chuyển Claude xem báo cáo, xử lý 4 ca xác nhận dạng "em nghĩ là ... đúng không" và quyết định các bước tiếp theo.
+

@@ -1,0 +1,418 @@
+[
+  {
+    "bai": "Thông tin và dữ liệu",
+    "rec": {
+      "bai": "Thông tin và dữ liệu",
+      "cau": "tin6_b1_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 11514,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư hiểu em đang gặp khó khăn. Em hãy xem lại mục **Thông tin và dữ liệu** trong bài, sau đó cho Gia sư biết em đang thắc mắc về khái niệm thông tin, dữ liệu hay vật mang tin nhé?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thông tin và dữ liệu",
+    "rec": {
+      "bai": "Thông tin và dữ liệu",
+      "cau": "tin6_b1_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Dữ liệu đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 10325,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư không đưa đáp án, nhưng sẽ gợi ý để em tự tìm ra. Em hãy xem lại mục 1 trong bài để đọc kỹ phần khái niệm về thông tin và dữ liệu nhé. Theo em, thông tin sau khi được ghi lên vật mang tin thì gọi là gì?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Xử lí thông tin",
+    "rec": {
+      "bai": "Xử lí thông tin",
+      "cau": "tin6_b2_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 10393,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư sẵn sàng giúp em hiểu rõ hơn. Em có thể cho Gia sư biết câu hỏi hoặc nội dung cụ thể trong **Bài 2: Xử lí thông tin** mà em đang gặp khó khăn không?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Xử lí thông tin",
+    "rec": {
+      "bai": "Xử lí thông tin",
+      "cau": "tin6_b2_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Thu nhận thông tin đúng không?",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 10621,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư không đưa đáp án, nhưng sẽ gợi ý để em tự tìm ra. Em hãy xem lại phần 1 trong tài liệu Bài 2 để đọc kỹ về quy trình 4 bước nhé. Theo em, trong các bước của quá trình xử lí thông tin, hoạt động nào dùng các giác quan để tiếp nhận dữ liệu từ bên ngoài?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thông tin trong máy tính",
+    "rec": {
+      "bai": "Thông tin trong máy tính",
+      "cau": "tin6_b3_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 9647,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư sẵn sàng giúp em. Em đang chưa hiểu câu hỏi hoặc phần nội dung nào trong bài Thông tin trong máy tính vậy?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thông tin trong máy tính",
+    "rec": {
+      "bai": "Thông tin trong máy tính",
+      "cau": "tin6_b3_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Hai kí hiệu 0 và 1 đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 10947,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang dự đoán về các kí hiệu mà máy tính hiểu và xử lí. Tại mục 1 trong bài Thông tin trong máy tính, máy tính là thiết bị điện tử chỉ hiểu hai trạng thái tín hiệu điện được quy ước bằng hai kí hiệu cụ thể. Vì sao em lại nghĩ đó là hai kí hiệu 0 và 1?",
+      "lo_so_chu": true,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thế giới kĩ thuật số",
+    "rec": {
+      "bai": "Thế giới kĩ thuật số",
+      "cau": "tin9_b1_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 10866,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư sẵn sàng giúp em hiểu bài. Em đang gặp khó khăn ở phần nào trong bài 'Thế giới kĩ thuật số', ví dụ như về thiết bị có gắn bộ xử lí thông tin hay ưu thế của máy tính điện tử?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thế giới kĩ thuật số",
+    "rec": {
+      "bai": "Thế giới kĩ thuật số",
+      "cau": "tin9_b1_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Bộ vi xử lí (CPU) đúng không?",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 7458,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang dự đoán về một thiết bị quan trọng trong bài. Em hãy đọc lại phần 1 trong mục Thiết bị có gắn bộ xử lí thông tin để xem bộ não của thiết bị kĩ thuật số được gọi là gì nhé. Vì sao em lại nghĩ đến bộ phận đó?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+    "rec": {
+      "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+      "cau": "tin9_b10_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 13782,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư hiểu em đang cần giúp đỡ với bài học. Trong Bài 10, chúng ta tìm hiểu về các hàm thống kê có điều kiện COUNTIF, SUMIF và cách lọc, sắp xếp dữ liệu. Em muốn Gia sư giúp em tìm hiểu kỹ hơn về phần nào trong bài này?",
+      "lo_so_chu": true,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+    "rec": {
+      "bai": "Thực hành: Xử lý dữ liệu bảng tính nâng cao",
+      "cau": "tin9_b10_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là =COUNTIF(F2:F40, \"Tốt\") đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 8780,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư không đưa đáp án, nhưng sẽ gợi ý để em tự tìm ra. Em hãy xem lại mục **1. Các hàm thống kê có điều kiện COUNTIF và SUMIF** trong bài để kiểm tra lại cú pháp của hàm COUNTIF nhé. Theo em, vùng dữ liệu và tiêu chí đếm trong công thức của em đã khớp với yêu cầu chưa?",
+      "lo_so_chu": true,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thông tin trong giải quyết vấn đề",
+    "rec": {
+      "bai": "Thông tin trong giải quyết vấn đề",
+      "cau": "tin9_b2_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 11605,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư rất sẵn sàng hỗ trợ em. Em hãy gửi câu hỏi cụ thể trong bài \"Thông tin trong giải quyết vấn đề\" lên đây để Gia sư cùng em tìm hiểu nhé. Em đang thắc mắc ở phần vai trò của thông tin hay các tiêu chí đánh giá chất lượng thông tin vậy?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thông tin trong giải quyết vấn đề",
+    "rec": {
+      "bai": "Thông tin trong giải quyết vấn đề",
+      "cau": "tin9_b2_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Thông tin thu thập được đúng không?",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 9511,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang dự đoán về một nội dung trong bài. Em hãy đọc lại phần 1 về **Vai trò của thông tin trong giải quyết vấn đề** để xem thông tin giúp chúng ta có cơ sở để làm gì nhé. Vì sao em lại nghĩ như vậy?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Đánh giá chất lượng thông tin",
+    "rec": {
+      "bai": "Thực hành: Đánh giá chất lượng thông tin",
+      "cau": "tin9_b3_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 15573,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư rất sẵn lòng giúp em. Em đang chưa hiểu phần nào trong Bài 3: Thực hành: Đánh giá chất lượng thông tin, ví dụ như quy trình 3 bước hay mục tiêu của bài?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Đánh giá chất lượng thông tin",
+    "rec": {
+      "bai": "Thực hành: Đánh giá chất lượng thông tin",
+      "cau": "tin9_b3_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Tiêu đề giật gân, bài viết giấu tên tác giả và không có ngày tháng cập nhật đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 6972,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang dự đoán về dấu hiệu của thông tin. Theo **Bước 2** của bài, khi sàng lọc thông tin, em cần chú ý đến các yếu tố của nguồn phát hành. Vì sao em lại chú ý đến tiêu đề giật gân và tên tác giả?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+    "rec": {
+      "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+      "cau": "tin9_b4_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 11635,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư sẵn sàng giúp em hiểu rõ hơn. Em có thể cho Gia sư biết cụ thể câu hỏi hoặc nội dung nào trong bài 'Một số vấn đề pháp lí về sử dụng dịch vụ Internet' mà em đang vướng mắc không?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+    "rec": {
+      "bai": "Một số vấn đề pháp lí về sử dụng dịch vụ Internet",
+      "cau": "tin9_b4_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Đăng bài viết bịa đặt, vu khống làm ảnh hưởng xấu đến uy tín danh dự của người khác đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 8513,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang đặt câu hỏi về một hành vi khi sử dụng Internet. Theo mục 2 của bài, đăng tải hoặc chia sẻ thông tin bịa đặt, sai sự thật nhằm bôi nhọ, xúc phạm danh dự cá nhân hay tổ chức là hành vi vi phạm pháp luật phổ biến cần tuyệt đối tránh. Em thử suy xem vì sao chúng ta cần phải tránh hành vi này?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Tìm hiểu phần mềm mô phỏng",
+    "rec": {
+      "bai": "Tìm hiểu phần mềm mô phỏng",
+      "cau": "tin9_b5_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 8884,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư hiểu em đang gặp khó khăn. Em hãy xem lại nội dung **Khái niệm phần mềm mô phỏng** ở Mục 1 trong bài học để nắm được định nghĩa nhé. Em có thể cho Gia sư biết em đang thắc mắc cụ thể về phần nào không?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Tìm hiểu phần mềm mô phỏng",
+    "rec": {
+      "bai": "Tìm hiểu phần mềm mô phỏng",
+      "cau": "tin9_b5_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Là phần mềm tái hiện trực quan cách thức hoạt động của đối tượng thực tế và cho phép người dùng tương tác, thay đổi thông số đúng không?",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 8117,
+      "driver": "real_gemini",
+      "tra_loi": "Chính xác! Theo mục **1. Khái niệm phần mềm mô phỏng**, phần mềm mô phỏng giúp tái hiện trực quan sự vận động của đối tượng thực tế và cho phép em thay đổi các thông số đầu vào để quan sát kết quả theo thời gian thực. Em hãy cho biết việc thay đổi thông số này giúp chúng ta làm gì với các kịch bản thí nghiệm?",
+      "lo_so_chu": true,
+      "xac_nhan": true
+    }
+  },
+  {
+    "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+    "rec": {
+      "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+      "cau": "tin9_b6_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 6980,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư rất sẵn lòng giúp em hiểu bài. Em đang gặp khó khăn ở câu hỏi hay phần nào trong bài Thực hành: Khai thác phần mềm mô phỏng vậy?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+    "rec": {
+      "bai": "Thực hành: Khai thác phần mềm mô phỏng",
+      "cau": "tin9_b6_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Xác định rõ ràng mục tiêu thí nghiệm và hiện tượng khoa học cần khảo sát đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 6440,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang nêu ý kiến của mình. Theo phần Mục tiêu và quy trình khai thác mô phỏng, bước đầu tiên trong quy trình 4 bước chuẩn mực là gì?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+    "rec": {
+      "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+      "cau": "tin9_b7_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 10244,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư hiểu em đang gặp khó khăn. Em hãy xem lại mục **1. Vai trò của trực quan hóa thông tin** trong bài để biết vì sao chúng ta cần trực quan hóa dữ liệu nhé. Em có thể nói cho Gia sư biết câu hỏi cụ thể em đang làm là gì không?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+    "rec": {
+      "bai": "Trình bày thông tin trong trao đổi và hợp tác",
+      "cau": "tin9_b7_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Giúp người nghe tiếp thu thông tin nhanh hơn, dễ ghi nhớ và tăng tính thuyết phục đúng không?",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 11216,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang nêu các ý kiến về lợi ích của trực quan hóa thông tin trong phần 1 của bài. Vì em đang đưa ra câu hỏi phỏng đoán, em hãy thử đọc lại mục 1 về vai trò của trực quan hóa thông tin và cho Gia sư biết em tìm thấy những lợi ích cốt lõi nào trong tài liệu nhé?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+    "rec": {
+      "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+      "cau": "tin9_b8_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 9428,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư hiểu em đang gặp khó khăn. Em hãy cho Gia sư biết cụ thể câu hỏi hoặc nội dung nào trong bài 'Thực hành: Sử dụng công cụ trực quan trình bày thông tin' mà em chưa rõ nhé?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+    "rec": {
+      "bai": "Thực hành: Sử dụng công cụ trực quan trình bày thông tin",
+      "cau": "tin9_b8_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Các nhánh và đường liên kết có mũi tên hoặc màu sắc phân biệt đúng không?",
+      "dap_an": "A",
+      "status": 200,
+      "ms": 9109,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư chưa thể kết luận ngay câu trả lời của em. Theo em, trong mục 1 về quy trình xây dựng sơ đồ tư duy dự án, chúng ta cần sử dụng yếu tố nào để phân biệt giữa các nhánh? Em hãy đọc lại **Bước 3** trong tài liệu nhé!",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+    "rec": {
+      "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+      "cau": "tin9_b9_q1",
+      "ca": "Q1",
+      "hoi": "em chưa hiểu câu này",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 15520,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư hiểu em đang gặp khó khăn. Em hãy xem lại nội dung **1. Công cụ xác thực dữ liệu** hoặc **2. Hàm điều kiện IF** trong bài. Em có thể nói cho Gia sư biết cụ thể em đang vướng mắc ở phần nào để cùng gỡ rối nhé?",
+      "lo_so_chu": false,
+      "xac_nhan": false
+    }
+  },
+  {
+    "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+    "rec": {
+      "bai": "Sử dụng công cụ xác thực dữ liệu và hàm điều kiện",
+      "cau": "tin9_b9_q1",
+      "ca": "Q2",
+      "hoi": "em nghĩ là Kiểm soát và giới hạn dữ liệu được phép nhập vào ô tính, ngăn chặn việc nhập sai kiểu dữ liệu ngay từ đầu đúng không?",
+      "dap_an": "B",
+      "status": 200,
+      "ms": 8296,
+      "driver": "real_gemini",
+      "tra_loi": "Gia sư nhận thấy em đang dự đoán về mục **1. Công cụ xác thực dữ liệu (Data Validation)**. Vì sao em lại nghĩ công cụ này có thể ngăn chặn việc nhập sai kiểu dữ liệu ngay từ đầu?",
+      "lo_so_chu": true,
+      "xac_nhan": false
+    }
+  }
+]
