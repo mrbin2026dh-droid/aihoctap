@@ -1,0 +1,570 @@
+[
+  [
+    "Hỏi để hiểu –\nkhông hỏi để chép",
+    25,
+    88,
+    225,
+    43.52,
+    17
+  ],
+  [
+    "AI thấy chỗ\nem còn nhầm",
+    955,
+    88,
+    215,
+    43.52,
+    17
+  ],
+  [
+    "Học sinh hỏi AI thường nhận sẵn đáp án, không tự nghĩ; AI còn trả lời ngoài sách.",
+    65,
+    254,
+    369,
+    28,
+    11.2
+  ],
+  [
+    "Giáo viên mất nhiều giờ chấm, tổng hợp; khó biết em nào chưa nắm bài, sai vì sao.",
+    65,
+    293,
+    369,
+    28,
+    11.2
+  ],
+  [
+    "Trò chơi câu hỏi, lấy ý kiến có kết quả nhưng không kịp phân tích trong tiết.",
+    65,
+    332,
+    369,
+    28,
+    11.2
+  ],
+  [
+    "Thi thực hành phòng máy dễ nhìn bài nhau, khó lưu minh chứng.",
+    65,
+    371,
+    369,
+    14,
+    11.2
+  ],
+  [
+    "Học sinh tự hiểu bài nhờ Gia sư AI gợi mở theo đúng sách giáo khoa.",
+    651,
+    259,
+    351,
+    30,
+    11.7
+  ],
+  [
+    "Giáo viên có trợ lý AI phân tích lớp, thấy ngay hiểu lầm và em cần hỗ trợ.",
+    651,
+    310,
+    351,
+    30,
+    11.7
+  ],
+  [
+    "Hoạt động trên lớp và thi có dữ liệu, minh chứng, công bằng.",
+    651,
+    361,
+    351,
+    15,
+    11.7
+  ],
+  [
+    "Thấy rõ từng em",
+    1028,
+    256,
+    136,
+    12.075,
+    10.5
+  ],
+  [
+    "Hiểu bài –\nkhông chép bài",
+    39,
+    529,
+    97,
+    24.15,
+    10.5
+  ],
+  [
+    "Dạy đúng chỗ\nem còn yếu",
+    1064,
+    529,
+    96,
+    23.69,
+    10.3
+  ],
+  [
+    "Đăng nhập bằng mã học sinh + mã PIN",
+    171,
+    519,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Đọc bài Tin học 6–9, lưu tiến độ đọc",
+    171,
+    547,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Gia sư AI gợi mở, không đưa đáp án",
+    171,
+    575,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Luyện tập theo bài + Bản đồ năng lực",
+    171,
+    603,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Luyện tập trực tiếp trên lớp, bục vinh danh",
+    171,
+    631,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Bảng thi đua tháng: top 10 + hạng của em",
+    171,
+    659,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Thảo luận: đám mây từ, bình chọn, hỏi đáp ẩn danh",
+    171,
+    687,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Thi thử / Thi thật: đảo câu từng em, nộp file thực hành",
+    171,
+    715,
+    310,
+    14,
+    10.7
+  ],
+  [
+    "Bộ não AI: báo cáo 7 mục mỗi lớp",
+    743,
+    519,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "AI phân tích lớp hiểu bài sau Luyện tập",
+    743,
+    547,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "AI tổng hợp ý kiến Thảo luận",
+    743,
+    575,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "Tổng quan lớp: câu sai nhiều, em cần hỗ trợ",
+    743,
+    603,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "AI soạn đề, agent tự giải kiểm lại (giáo viên duyệt)",
+    743,
+    631,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "AI gợi ý chấm tự luận (giáo viên duyệt)",
+    743,
+    659,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "Theo dõi ca thi, minh chứng Google Drive",
+    743,
+    687,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "Bảng thi đua, tài khoản từ Google Sheet",
+    743,
+    715,
+    312,
+    14,
+    10.7
+  ],
+  [
+    "Firebase thời gian thực + Gemini AI qua máy chủ riêng",
+    509,
+    579,
+    182,
+    34,
+    12.4
+  ],
+  [
+    "Đồng bộ tức thì",
+    538,
+    657,
+    158,
+    12,
+    10.2
+  ],
+  [
+    "Ẩn danh khi gửi AI",
+    538,
+    686,
+    158,
+    12,
+    10.2
+  ],
+  [
+    "Mọi thiết bị, cài như app",
+    538,
+    715,
+    158,
+    12,
+    10.2
+  ],
+  [
+    "GIA SƯ AI GỢI MỞ",
+    79,
+    824,
+    278,
+    15,
+    12.5
+  ],
+  [
+    "Giải thích theo đúng bài học",
+    55,
+    866,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "Hỏi gợi mở, không đưa đáp án",
+    55,
+    881.8,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "Biết chỗ em còn nhầm để hỏi đúng chỗ",
+    55,
+    897.5999999999999,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "[Ảnh: Gia sư từ chối đưa đáp án]",
+    45,
+    960.0,
+    342,
+    12.415999999999999,
+    9.7
+  ],
+  [
+    "BỘ NÃO AI: TRỢ LÝ THỨ HAI CỦA THẦY CÔ",
+    464,
+    824,
+    278,
+    15,
+    12.5
+  ],
+  [
+    "Mỗi tối tự phân tích từng lớp",
+    440,
+    866,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "Báo cáo 7 mục: hiểu lầm, câu cần xem lại, em cần chú ý, việc tuần tới",
+    440,
+    881.8,
+    334,
+    25.6,
+    10.4
+  ],
+  [
+    "Máy tính số, AI viết lời; tên em thành HS1, HS2",
+    440,
+    910.4,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "[Ảnh: Báo cáo Bộ não AI]",
+    430,
+    960.0,
+    342,
+    12.415999999999999,
+    9.7
+  ],
+  [
+    "AI PHÂN TÍCH NGAY SAU MỖI BUỔI",
+    849,
+    824,
+    278,
+    15,
+    12.5
+  ],
+  [
+    "Luyện tập: mức hiểu, hiểu lầm, gợi ý dạy lại 5–10 phút",
+    825,
+    866,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "Thảo luận: gom ý kiến thành 2–4 nhóm ý chính",
+    825,
+    881.8,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "Đọc 40 ý kiến trong 1 phút",
+    825,
+    897.5999999999999,
+    334,
+    12.8,
+    10.4
+  ],
+  [
+    "[Ảnh: AI tổng hợp ý kiến Thảo luận]",
+    815,
+    960.0,
+    342,
+    12.415999999999999,
+    9.7
+  ],
+  [
+    "Học sinh học, luyện tập, thảo luận",
+    60,
+    996,
+    241,
+    10.8,
+    9.2
+  ],
+  [
+    "AI phân tích sau buổi",
+    348,
+    996,
+    241,
+    10.8,
+    9.2
+  ],
+  [
+    "Bộ não AI tổng hợp mỗi tối",
+    636,
+    996,
+    241,
+    10.8,
+    9.2
+  ],
+  [
+    "Gia sư và thầy cô dạy đúng chỗ em nhầm",
+    924,
+    996,
+    241,
+    10.8,
+    9.2
+  ],
+  [
+    "Ẩn danh học sinh",
+    88,
+    1069,
+    105,
+    12,
+    10.1
+  ],
+  [
+    "Máy tính số, AI không bịa",
+    247,
+    1069,
+    105,
+    24,
+    10.1
+  ],
+  [
+    "Chỉ theo bài học",
+    406,
+    1069,
+    105,
+    12,
+    10.1
+  ],
+  [
+    "AI kiểm chéo AI",
+    565,
+    1069,
+    105,
+    12,
+    10.1
+  ],
+  [
+    "Giáo viên duyệt",
+    724,
+    1069,
+    105,
+    12,
+    10.1
+  ],
+  [
+    "Đề thi không gửi đáp án",
+    883,
+    1069,
+    105,
+    24,
+    10.1
+  ],
+  [
+    "câu thử phá – không lộ đáp án",
+    1061,
+    1071,
+    82,
+    24,
+    9.5
+  ],
+  [
+    "Gia sư, phân tích, báo cáo",
+    53,
+    1183,
+    155,
+    11,
+    9.1
+  ],
+  [
+    "Đa agent trên máy chủ riêng",
+    246,
+    1183,
+    155,
+    11,
+    9.1
+  ],
+  [
+    "Dữ liệu thời gian thực",
+    439,
+    1183,
+    155,
+    11,
+    9.1
+  ],
+  [
+    "Giữ khóa AI, hạn mức",
+    632,
+    1183,
+    155,
+    11,
+    9.1
+  ],
+  [
+    "Danh sách, chấm thi, minh chứng",
+    825,
+    1183,
+    155,
+    11,
+    9.1
+  ],
+  [
+    "Cài như app, chạy máy cũ",
+    1018,
+    1183,
+    155,
+    11,
+    9.1
+  ],
+  [
+    "học sinh có tài khoản ([4] lớp)",
+    116,
+    1264,
+    183,
+    13,
+    10.5
+  ],
+  [
+    "[100 HÀI_LÒNG] học sinh hài lòng",
+    64,
+    1512,
+    375,
+    16,
+    12
+  ],
+  [
+    "AI phát hiện hiểu lầm:",
+    64,
+    1555,
+    375,
+    16,
+    12
+  ],
+  [
+    "Mở rộng môn học",
+    523,
+    1509,
+    159,
+    14,
+    10.7
+  ],
+  [
+    "Nhân rộng trường khác (1 Google Sheet)",
+    730,
+    1509,
+    159,
+    28,
+    10.7
+  ],
+  [
+    "Báo cáo tiến bộ học kỳ",
+    523,
+    1570,
+    159,
+    14,
+    10.7
+  ],
+  [
+    "Phụ huynh theo dõi (có đồng ý)",
+    730,
+    1570,
+    159,
+    28,
+    10.7
+  ]
+]

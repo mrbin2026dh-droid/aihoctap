@@ -1,0 +1,129 @@
+?
+AI HỌC TẬP
+Hỏi để hiểu –
+không hỏi để chép
+AI thấy chỗ
+em còn nhầm
+Gia sư AI và lớp học số môn Tin học THCS – gợi mở, không chép đáp án
+Giáo viên thực hiện: [HỌTÊN] | Đơn vị: [TRƯỜNG] | Lĩnh vực: Tin học 6–9 – Bảng B (THCS)
+?
+BỐI CẢNH & VẤN ĐỀ
+MỤC TIÊU
+01
+Học sinh hỏi AI thường nhận sẵn đáp án, không tự nghĩ; AI còn trả lời
+ngoài sách.
+02
+Giáo viên mất nhiều giờ chấm, tổng hợp; khó biết em nào chưa nắm
+bài, sai vì sao.
+03
+Trò chơi câu hỏi, lấy ý kiến có kết quả nhưng không kịp phân tích
+trong tiết.
+04
+Thi thực hành phòng máy dễ nhìn bài nhau, khó lưu minh chứng.
+Hỏi AI?
+Chép đáp án?
+Tự nghĩ?
+01
+Học sinh tự hiểu bài nhờ Gia sư AI gợi mở theo đúng sách giáo
+khoa.
+02
+Giáo viên có trợ lý AI phân tích lớp, thấy ngay hiểu lầm và em
+cần hỗ trợ.
+03
+Hoạt động trên lớp và thi có dữ liệu, minh chứng, công bằng.
+Thấy rõ từng em
+GIẢI PHÁP: MỘT ỨNG DỤNG, HAI PHÂN HỆ
+PHÂN HỆ HỌC SINH
+PHÂN HỆ GIÁO VIÊN
+Hiểu bài –
+không chép bài
+Dạy đúng chỗ
+em còn yếu
+Đăng nhập bằng mã học sinh + mã PIN
+Đọc bài Tin học 6–9, lưu tiến độ đọc
+Gia sư AI gợi mở, không đưa đáp án
+Luyện tập theo bài + Bản đồ năng lực
+Luyện tập trực tiếp trên lớp, bục vinh danh
+Bảng thi đua tháng: top 10 + hạng của em
+Thảo luận: đám mây từ, bình chọn, hỏi đáp ẩn danh
+Thi thử / Thi thật: đảo câu từng em, nộp file thực hành
+Bộ não AI: báo cáo 7 mục mỗi lớp
+AI phân tích lớp hiểu bài sau Luyện tập
+AI tổng hợp ý kiến Thảo luận
+Tổng quan lớp: câu sai nhiều, em cần hỗ trợ
+AI soạn đề, agent tự giải kiểm lại (giáo viên duyệt)
+AI gợi ý chấm tự luận (giáo viên duyệt)
+Theo dõi ca thi, minh chứng Google Drive
+Bảng thi đua, tài khoản từ Google Sheet
+Firebase thời gian thực +
+Gemini AI qua máy chủ riêng
+Đồng bộ tức thì
+Ẩn danh khi gửi AI
+Mọi thiết bị, cài như app
+BA ĐIỂM NHẤN AI
+1
+?
+GIA SƯ AI GỢI MỞ
+– Giải thích theo đúng bài học
+– Hỏi gợi mở, không đưa đáp án
+– Biết chỗ em còn nhầm để hỏi đúng chỗ
+[Ảnh: Gia sư từ chối đưa đáp án]
+2
+BỘ NÃO AI: TRỢ LÝ THỨ HAI CỦA THẦY CÔ
+– Mỗi tối tự phân tích từng lớp
+– Báo cáo 7 mục: hiểu lầm, câu cần xem lại, em cần chú ý, việc tuần
+tới
+– Máy tính số, AI viết lời; tên em thành HS1, HS2
+[Ảnh: Báo cáo Bộ não AI]
+3
+AI PHÂN TÍCH NGAY SAU MỖI BUỔI
+– Luyện tập: mức hiểu, hiểu lầm, gợi ý dạy lại 5–10 phút
+– Thảo luận: gom ý kiến thành 2–4 nhóm ý chính
+– Đọc 40 ý kiến trong 1 phút
+[Ảnh: AI tổng hợp ý kiến Thảo luận]
+Học sinh học, luyện tập, thảo luận
+AI phân tích sau buổi
+Bộ não AI tổng hợp mỗi tối
+?
+Gia sư và thầy cô dạy đúng chỗ em nhầm
+AI CÓ TRÁCH NHIỆM
+Ẩn danh học sinh
+Máy tính số, AI
+không bịa
+Chỉ theo bài học
+AI kiểm chéo AI
+Giáo viên duyệt
+Đề thi không gửi đáp
+án
+24/24
+câu thử phá –
+không lộ đáp án
+CÔNG NGHỆ SỬ DỤNG
+?
+Gemini AI
+Gia sư, phân tích, báo cáo
+Bộ não AI (Python)
+Đa agent trên máy chủ riêng
+Firebase
+Dữ liệu thời gian thực
+Cloudflare Worker
+Giữ khóa AI, hạn mức
+Google Sheets + Drive
+Danh sách, chấm thi, minh chứng
+Ứng dụng web (PWA)
+Cài như app, chạy máy cũ
+TRIỂN KHAI THỰC TẾ
+[135] học sinh có tài khoản ([4] lớp)
+KẾT QUẢ & TÁC ĐỘNG
+ĐỊNH HƯỚNG PHÁT TRIỂN
+SẢN PHẨM
+[100 HÀI_LÒNG] học sinh hài lòng
+AI phát hiện hiểu lầm:
+Mở rộng môn học
+Nhân rộng trường khác (1
+Google Sheet)
+Báo cáo tiến bộ học kỳ
+Phụ huynh theo dõi (có đồng
+ý)
+https://aihoctap.online
+AI gợi mở – Em tự hiểu – Thầy cô thấy rõ

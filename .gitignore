@@ -46,3 +46,4 @@ agent/.env
 
 # PIN tài khoản thử của kiểm thử mô phỏng (không commit)
 tests/fixtures/sim*
+docs/design/poster-10-khoi/.verify/

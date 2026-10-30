@@ -1,0 +1,14 @@
+{
+  "width": 1024,
+  "height": 1536,
+  "changed_pixels_outside_qr": 0,
+  "embedded_qr_exact_match": true,
+  "qr_source": "qr-camera-v2.png",
+  "qr_bounds": {
+    "left": 880,
+    "top": 1334,
+    "width": 116,
+    "height": 116
+  },
+  "out": "docs/design/poster-chinh-anh-qr/POSTER-CHINH-XAC-QR-DA-CHEN.png"
+}

@@ -1,0 +1,25 @@
+{
+  "page_mm": [
+    594.000177001953,
+    841.0000013563367
+  ],
+  "preview_size": [
+    1024,
+    1536
+  ],
+  "print_png_size": [
+    3508,
+    4967
+  ],
+  "text_items": 118,
+  "missing_text": [],
+  "qr_decoded": "https://aihoctap.online",
+  "fonts": [
+    "Helvetica",
+    "AAAAAA+BeVietnamPro-Bold",
+    "AAAAAA+BeVietnamPro-ExtraBold",
+    "AAAAAA+BeVietnamPro-Italic",
+    "AAAAAA+BeVietnamPro-SemiBold",
+    "AAAAAA+BeVietnamPro-Regular"
+  ]
+}

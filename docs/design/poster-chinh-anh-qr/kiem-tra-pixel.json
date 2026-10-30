@@ -1,0 +1,35 @@
+{
+  "source": "C:/Users/HPZBook/Downloads/AI Học Tập_ Gợi Mở, Tự Hiểu (1).png",
+  "output": "C:\\Users\\HPZBook\\Desktop\\AI AGENT SGK\\docs\\design\\poster-chinh-anh-qr\\AI-HOC-TAP-thay-anh-sua-QR.png",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "changed_pixels_inside": 107172,
+  "changed_pixels_outside": 0,
+  "regions": [
+    {
+      "left": 306,
+      "top": 1168,
+      "width": 320,
+      "height": 144
+    },
+    {
+      "left": 639,
+      "top": 1168,
+      "width": 354,
+      "height": 144
+    },
+    {
+      "left": 880,
+      "top": 1344,
+      "width": 104,
+      "height": 104
+    }
+  ],
+  "candidate_dimensions": [
+    1024,
+    1536
+  ],
+  "url": "https://aihoctap.online"
+}

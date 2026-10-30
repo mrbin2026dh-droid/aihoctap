@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã kiểm tra Trợ giúp nhanh trên bản thật (32/32 PASS), chụp ảnh nhóm Phát triển trên mobile 390px (01_tro_giup_nhanh_phat_trien_mobile.png); lập báo cáo và hướng dẫn Thầy Publish luật, cập nhật Apps Script và chạy thử Bảng thi đua (docs/handoff/antigravity-claude-ho-so-du-thi-xong.md).
+- Yêu cầu mới nhất: Antigravity đã deploy Worker mới (b10ea9e6), kiểm thử 5 ca T1–T5 với Gia sư "học có hướng dẫn" trên bản thật aihoctap.online (lớp 9TH) đạt PASS 100%, có ảnh; xem docs/handoff/antigravity-claude-gia-su-huong-dan-xong.md.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4423,3 +4423,78 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Đã làm: phân tích 4 ảnh hội thoại thật (khen "Đúng rồi" khi em trả lời sai; "(CPU) … bộ não" lộ phương án; trôi khỏi câu hỏi chính; "đáp án đó chĩnh xác" đi qua AI). Sửa worker/index.js: trường `danh_gia` bắt buộc trong JSON, `fixPraise`, `isHedgedAnswer`, `optionPairLeak` + `PAIR_LEAK_FALLBACK`, 3 quy tắc học có hướng dẫn + mục tiêu quay lại câu hỏi chính, `isAnswerBegging` bắt thêm mẫu câu.
 - Kiểm thử: MỚI tests/test_tutor_guided.mjs 29 PASS; các bộ test Gia sư/Worker cũ PASS (sandbox, AI giả). CHƯA thử với Gemini thật.
 - Việc tiếp: Antigravity deploy Worker, thử T1–T5 theo docs/handoff/claude-antigravity-gia-su-huong-dan-30-10.md.
+### 30/10/2026 — ChatGPT: đề xuất bố cục poster AI HỌC TẬP
+- Kế hoạch: duyệt bố cục trước, sau đó imagegen và đối chiếu từng chữ; giữ nguyên nội dung người dùng.
+- Đã làm: phân bổ 9 khối, ghi khác biệt tỷ lệ A1 và ảnh xem trước; chưa tạo ảnh.
+- Tệp: docs/design/poster-ai-hoc-tap-2026-layout.md; docs/handoff/chatgpt-nguoidung-duyet-poster.md; aisgk.md.
+- Kiểm thực tế: chưa vẽ/chưa kiểm chữ; việc dở: chờ duyệt bố cục theo yêu cầu.
+
+### 30/10/2026 — ChatGPT: kế hoạch tạo poster sau duyệt
+- Người dùng đã duyệt bố cục; bắt đầu tạo ảnh bằng imagegen và đối chiếu nội dung từng khối.
+- Nếu nhiều lỗi chữ: tạo nền và minh họa không chữ để đặt chữ trong Canva.
+- Không sửa mã nguồn, không xác minh lại số liệu; kế hoạch tại docs/design/poster-ai-hoc-tap-2026-layout.md.
+
+### 30/10/2026 — ChatGPT: tạo poster và sửa tiêu đề
+- Đã làm: imagegen tạo v1, phát hiện bóng đèn thay chữ Ọ, sửa thành v2; đọc đối chiếu 9 khối, ghi giới hạn trong báo cáo.
+- Tệp: docs/design/poster-ai-hoc-tap-2026/ (2 PNG, prompt.md, doi-chieu-chu.md); docs/design/poster-ai-hoc-tap-2026-layout.md; docs/handoff/chatgpt-nguoidung-poster-ai-hoc-tap.md; aisgk.md.
+- Kiểm thực tế: đã xem ảnh và kiểm kích thước bằng Pillow: 1054 × 1492; chưa xác minh font, không chứng nhận bản in A1 hoặc khớp Unicode tuyệt đối.
+- Việc dở: preview chưa đúng 1024 × 1536, cần dàn chữ/vector trước in A1 chất lượng cao; người dùng điền logo/ảnh/QR/số liệu.
+
+### 30/10/2026 — ChatGPT: đề xuất poster mới 10 khối
+- Đã làm: lập bố cục theo tỷ lệ người dùng, nhấn khối 5, chọn ba ảnh thực tế từ tệp đính kèm.
+- Tệp: docs/design/poster-ai-hoc-tap-2026-layout-10-khoi.md; docs/handoff/chatgpt-nguoidung-duyet-poster-10-khoi.md; aisgk.md.
+- Kiểm thực tế: đã xem 10 ảnh đính kèm; chưa vẽ/chưa tạo QR/chưa kiểm số liệu.
+- Việc dở: chờ duyệt bố cục và chốt hàng 4 số liệu thiếu 3, chuỗi hài lòng, dòng hiểu lầm còn trống.
+
+### 30/10/2026 — ChatGPT: thực hiện poster 10 khối theo lệnh mới
+- Kế hoạch: tạo minh họa bằng imagegen, dàn chữ xác định với Be Vietnam Pro, chèn ảnh thật và QR tạo từ URL; xuất A1 PDF và preview đúng kích thước.
+- Giữ nguyên [135], [4], [100 HÀI_LÒNG] và câu thiếu; ba ô số chưa có dữ liệu để trống, không tự bịa.
+- Đọc thêm skill PDF, tìm font và kiểm thư viện là bắt buộc để xuất bản in đúng chữ; không đọc thêm mã ứng dụng.
+- Chưa tạo hoặc kiểm bản mới; không sửa mã nguồn, không commit/push.
+
+### 30/10/2026 — ChatGPT: hoàn thành poster 10 khối và bản in A1
+- Đã làm: tạo hai minh họa 3D bằng imagegen, dàn chữ vector Be Vietnam Pro, chèn ba ảnh thật, tạo QR thật; xuất PDF A1, PNG 150 dpi và preview 1024 × 1536.
+- Tệp: docs/design/poster-10-khoi/ (ảnh, font, PDF, PNG, nguồn dàn trang, báo cáo/prompt); docs/handoff/chatgpt-nguoidung-poster-10-khoi-xong.md; aisgk.md.
+- Kiểm thực tế: verify_export.py PASS: đúng khổ A1, 118 cụm chữ có trong PDF, font đã nhúng; QR giải mã đúng URL từ QR riêng/preview/PNG lớn; đã xem toàn trang và chi tiết sau sửa.
+- Việc dở: người dùng điền logo, ba ảnh chức năng và ba ô thống kê chưa cho số; dòng hiểu lầm giữ trống; chưa thử QR bằng điện thoại. Không sửa mã nguồn/commit/push.
+
+### 30/10/2026 — ChatGPT: kế hoạch sửa đúng ba vùng poster người dùng gửi
+- Kế hoạch: thay hai ảnh thực tế bằng H2/H3 và QR đúng URL; giữ kích thước 1024 × 1536 và mọi pixel ngoài ba vùng sửa.
+- Dùng imagegen cho bản chỉnh ảnh, sau đó ghép chính xác/khóa vùng chữ bằng công cụ ảnh cục bộ, kiểm khác biệt pixel và giải mã QR.
+- Chỉ đọc ảnh đầu vào và thư viện/nguồn công cụ cần thiết cho ghép ảnh; không đọc/sửa mã ứng dụng.
+- Chưa hoàn thành, chưa kiểm ảnh đầu ra.
+
+### 30/10/2026 — ChatGPT: thay hai ảnh thật và sửa QR trên poster gốc
+- Đã làm: imagegen chỉnh cục bộ; khóa vùng gốc, ghép ảnh thật H2 trái/H3 phải và QR sinh đúng URL; PNG lossless đúng 1024 × 1536.
+- Tệp: docs/design/poster-chinh-anh-qr/ (PNG cuối/nháp, QR, prompt, nguồn ghép, kết quả kiểm và báo cáo); docs/handoff/chatgpt-nguoidung-thay-anh-sua-qr.md; aisgk.md.
+- Kiểm thực tế: so sánh pixel PASS, ngoài ba vùng sửa có 0 pixel thay đổi; QR nguồn không đọc được, QR ảnh cuối giải mã đúng https://aihoctap.online; đã xem toàn ảnh.
+- Việc dở: chưa thử camera điện thoại; ảnh gốc chỉ 1024 × 1536, không chứng nhận A1 300 dpi. Không sửa mã ứng dụng/commit/push.
+
+### 30/10/2026 — ChatGPT: kế hoạch sửa QR theo phản hồi không quét được
+- Người dùng báo QR không quét được trên điện thoại; lần trước chỉ có kiểm bộ giải mã phần mềm, chưa đủ xác nhận thực tế.
+- Kế hoạch: QR version 1 với URL HTTPS viết hoa (cùng địa chỉ), ô 4px và viền trắng 4 ô, lớn 116px; giữ nguyên mọi vùng khác; cung cấp QR riêng cỡ lớn.
+- Kiểm ảnh toàn poster ở nhiều kích thước và nén JPEG; không tự nhận đã thử camera thật.
+
+### 30/10/2026 — ChatGPT: QR camera v2 sau phản hồi người dùng
+- Đã làm: đổi QR sang version 1 ô 4px, viền trắng 4 ô, lớn 116px; có QR riêng 580px; giữ nguyên chữ và ảnh ngoài QR.
+- Tệp: docs/design/poster-chinh-anh-qr/ (poster v2, QR riêng, ảnh kiểm và báo cáo v2); docs/handoff/chatgpt-nguoidung-qr-camera-v2.md; aisgk.md.
+- Kiểm thực tế: bộ giải mã đọc đúng URL từ PNG và JPEG rộng 1024/768/512px; 0 pixel thay đổi ngoài vùng QR; đã xem khung sau sửa.
+- Việc dở: chưa xác nhận trên camera điện thoại thật, chưa kiểm trạng thái truy cập website; không được coi kiểm giải mã phần mềm là kiểm điện thoại.
+
+### 30/10/2026 — ChatGPT: kế hoạch chèn chính xác QR đã gửi
+- Người dùng yêu cầu chèn đúng QR vừa gửi vào hình, giữ đúng kích thước và hình gốc.
+- Kế hoạch: ghép xác định QR từ qr-camera-v2.png vào poster đã thay H2/H3, không sinh lại ảnh; kiểm mã pixel và 0 thay đổi ngoài vùng QR; xuất PNG cuối riêng.
+- Chưa hoàn thành kiểm cuối; không sửa mã ứng dụng.
+
+### 30/10/2026 — ChatGPT: chèn đúng mã đã gửi vào poster cuối
+- Đã làm: chèn xác định qr-camera-v2.png vào poster giữ ảnh H2/H3, xuất PNG cuối riêng, không vẽ lại chữ hay phóng toàn ảnh.
+- Tệp: docs/design/poster-chinh-anh-qr/POSTER-CHINH-XAC-QR-DA-CHEN.png; kiem-tra-chen-qr-cuoi.json; docs/handoff/chatgpt-nguoidung-qr-da-chen-chinh-xac.md; aisgk.md.
+- Kiểm thực tế: 1024 × 1536 PASS; 0 pixel ngoài vùng QR thay đổi; QR nhúng khớp pixel mã riêng sau resize nearest PASS; giải mã từ toàn ảnh đúng URL; đã xem toàn poster.
+- Việc dở: chưa thử camera điện thoại thật. Không sửa mã ứng dụng/commit/push.
+
+### 30/10/2026 20:00 — Antigravity: deploy Worker Gia sư học có hướng dẫn và kiểm thử 5 ca thật T1–T5 đạt 100%
+- Đã làm: Giải quyết merge conflict aisgk.md; deploy Cloudflare Worker mới Version ID b10ea9e6-65df-4e92-9316-4267df894331 (lưu bản rollback ee65ba4d); kiểm thử tự động 83 test Gia sư PASS 100%; chạy script Playwright trên bản thật aihoctap.online với tài khoản [THỬ] lớp 9TH TH9001 câu "bộ não" (Tin 9 Bài 1): T1 không lộ phương án CPU-bộ não, T2 không khen sai khi em đáp "không", T3 nhận diện câu trả lời đoán "không?", T4 bắt xin đáp án phản hồi mẫu sau 1426ms không trừ lượt, T5 định hướng em quay lại câu hỏi chính sau 4–5 lượt; chụp đủ 5 ảnh minh chứng; lập báo cáo docs/handoff/antigravity-claude-gia-su-huong-dan-xong.md.
+- Tệp: worker/index.js, tests/sim/test_real_tutor_guided.cjs, docs/handoff/anh/gia-su-30-10/*.png, docs/handoff/antigravity-claude-gia-su-huong-dan-xong.md, aisgk.md.
+- Kiểm thực tế: test_tutor_guided 29 PASS, test_tutor_offtopic 24 PASS, test_worker_tutor_fast 30 PASS; Playwright bản thật 5/5 PASS, 5 ảnh chụp từ 185KB–212KB có watermark thời gian thực.
+- Việc dở: Chuyển Claude kiểm định báo cáo nghiệm thu và chuẩn bị các nội dung tiếp theo.
+
