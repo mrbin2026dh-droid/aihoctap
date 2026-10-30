@@ -4413,3 +4413,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc tiếp: Thầy Publish luật Firebase, cập nhật Apps Script New version và thử 2 buổi Bảng thi đua.
 
 
+
+### 30/10/2026 15:40 — Claude — Hồ sơ dự thi: thêm Ba điểm nhấn AI vào bộ prompt
+- Đã làm: đối chiếu mã (brain/analyze.py, brain/report.py, agent/grading.py, agent/verify.py, worker /api/teacher/ai-quiz, ai-tl) rồi viết lại trong tài liệu Docs "Hồ sơ dự thi AI Học Tập – phân tích và bộ prompt": mục mới "Ba điểm nhấn AI" (Bộ não AI báo cáo 7 mục + hiểu lầm riêng gửi Gia sư, AI phân tích buổi Luyện tập, AI tổng hợp Thảo luận); viết lại Khối thông tin sản phẩm, Prompt slide (slide 7–9 cho 3 điểm nhấn), Prompt poster (10 khối, khối 5 Ba điểm nhấn), Prompt video (9 cảnh, 10 câu giám khảo); checklist số liệu đổi [SỐ_EM_ĐÃ_HỌC] → [SỐ_EM_ĐÃ_LÀM_BÀI], thêm [HIỂU_LẦM_VÍ_DỤ], [SỐ_NHÓM_Ý], [SỐ_GIỜ].
+- Tệp đổi: chỉ aisgk.md (nội dung nằm trong tài liệu Docs). Không đổi mã.
+- Việc dở: kiểm Bộ não AI trên VPS đã bật lại chưa (tạm dừng 28/10) trước khi chụp ảnh báo cáo; file docs/du-thi/Kich-ban-video-AI-Hoc-Tap.docx chưa cập nhật theo kịch bản 9 cảnh mới.
