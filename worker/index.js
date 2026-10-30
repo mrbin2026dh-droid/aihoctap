@@ -1482,7 +1482,8 @@ export function answerBeggingReply(title, outline, confirm = false) {
     `2. Đọc lại phần liên quan trong bài **${title}**${items.length ? ':' : '.'}`];
   for (const h of items) lines.push(`   - **${h}**`);
   lines.push('3. Loại dần các phương án chắc chắn sai, rồi chọn phương án còn lại.');
-  lines.push(items.length ? `Chưa hiểu từ nào, em hỏi Gia sư, ví dụ: "${items[0]} là gì?"` : 'Chưa hiểu từ nào trong câu hỏi, em hỏi Gia sư nhé.');
+  const ex = items.find(h => !/^Mục \d+$/.test(h));
+  lines.push(ex ? `Chưa hiểu từ nào, em hỏi Gia sư, ví dụ: "${ex} là gì?"` : 'Chưa hiểu từ nào trong câu hỏi, em hỏi Gia sư nhé.');
   return { reply: lines.join('\n'), suggest: items.map(h => `${h} là gì?`) };
 }
 /** Trả lời cho tin nhắn linh tinh / lạc bài: nói rõ em đang học bài nào, gợi ý nội dung trong bài để hỏi. @param {string} title @param {string[]} outline */
@@ -1601,6 +1602,19 @@ export function buildLeakJudgePrompt(q, correctLetter, reply) {
     'KHÔNG LỘ nếu: chỉ giải thích khái niệm chung của bài mà không gắn với lựa chọn nào, chỉ mục cần đọc lại, hỏi gợi mở, từ chối đưa đáp án.',
     'Trả DUY NHẤT JSON {"lo": true|false}.', '',
     `CÂU HỎI: ${String(q?.prompt || '').slice(0, 600)}`, `CÁC LỰA CHỌN:\n${opts}`, `ĐÁP ÁN ĐÚNG: ${correctLetter}`, '', `LỜI GIA SƯ:\n${String(reply || '').slice(0, 1500)}`].join('\n');
+}
+/** Câu trả lời có chạm nội dung lựa chọn nào không (từ phân biệt của một lựa chọn, hoặc thuật ngữ Latin của nó). Không chạm → khỏi gọi AI kiểm duyệt
+ * (tiết kiệm 2–4 giây; đo bản thật 30/10: kiểm duyệt làm câu hỏi khi đang làm bài chậm hơn khoảng 3,5 giây). @param {string} reply @param {any} q */
+export function touchesOptions(reply, q) {
+  if (!q?.prompt || !q.options) return false;
+  const pw = new Set(leakWords(q.prompt)), rw = new Set(leakWords(reply));
+  return Object.values(q.options).some(o => leakWords(o).some(w => !pw.has(w) && rw.has(w)));
+}
+/** Tìm câu hỏi trong gói bài công khai theo mã: khớp đúng mã, hoặc cùng số thứ tự ("q1" ↔ "tin9_b1_q1"). @param {any} lesson @param {string} questionId */
+export function findLessonQuestion(lesson, questionId) {
+  if (!questionId || !Array.isArray(lesson?.questions)) return null;
+  const num = (String(questionId).match(/(?:_|^)q(\d+)$/i) || [])[1];
+  return lesson.questions.find(q => q?.id === questionId) || (num ? lesson.questions.find(q => q?.id === `q${num}` || String(q?.id).endsWith(`_q${num}`)) : null) || null;
 }
 export const PAIR_LEAK_FALLBACK = 'Gia sư không nói thẳng lựa chọn nào đúng để em tự chọn. Em đọc lại phần liên quan trong bài, rồi đối chiếu từng lựa chọn với điều câu hỏi mô tả. Em loại được lựa chọn nào trước, và vì sao?';
 /** Đọc câu trả lời JSON của Gia sư; mô hình cũ trả chữ thường → coi là "bai_nay". @param {string} text @returns {{scope:string, reply:string}} */
@@ -5715,7 +5729,11 @@ export default {
       // Xin đáp án / hỏi "có phải B không" / giả giáo viên đòi đáp án: trả lời mẫu ngay, không gọi AI, không trừ lượt.
       const askConfirm = Boolean(questionId) && isConfirmRequest(message);
       if (lessonForTutor && !isExamReview && (isAnswerBegging(message) || askConfirm)) {
-        const r = answerBeggingReply(String(lessonForTutor.title || 'này').slice(0, 120), lessonOutline(lessonForTutor.content_markdown), askConfirm && !isAnswerBegging(message));
+        // Đang làm một câu: tên mục nào chứa nội dung đáp án (vd mục "Hàm COUNTIF…" khi đáp án là COUNTIF) thì chỉ ghi "Mục N", không nêu tên mục
+        const fq = findLessonQuestion(lessonForTutor, questionId);
+        const outline = lessonOutline(lessonForTutor.content_markdown).map((h, i) => fq && (optionPairLeak(h, fq) || answerLeak(h, fq, resolvedAnswerText)) ? `Mục ${i + 1}` : h);
+        const r = answerBeggingReply(String(lessonForTutor.title || 'này').slice(0, 120), outline, askConfirm && !isAnswerBegging(message));
+        r.suggest = r.suggest.filter(x => !/^Mục \d+ là gì\?$/.test(x));
         return new Response(JSON.stringify({ ...r, answer_request: true, ...(routedLesson ? { routed_lesson: routedLesson } : {}) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
@@ -5822,8 +5840,7 @@ export default {
             const tutorTitle = String(lessonForTutor.title || '').slice(0, 120), tutorOutline = lessonOutline(lessonForTutor.content_markdown);
             if (otherLesson) systemText += `\n\nTÀI LIỆU BÀI KHÁC: "${otherLesson.title}" (em hỏi có thể thuộc bài này):\n\"\"\"\n${otherLesson.content}\n\"\"\"`;
             systemText += '\n\n' + tutorScopeRules(tutorTitle, tutorOutline, Boolean(otherLesson));
-            const qNumForTutor = (String(questionId).match(/(?:_|^)q(\d+)$/i) || [])[1];
-            const publicQuestion = questionId ? (lessonForTutor.questions || []).find(q => q?.id === questionId || (qNumForTutor && (q?.id === `q${qNumForTutor}` || String(q?.id).endsWith(`_q${qNumForTutor}`)))) : null;
+            const publicQuestion = findLessonQuestion(lessonForTutor, questionId);
             if (publicQuestion?.prompt) {
               systemText += `\n\nCÂU HỎI HỌC SINH ĐANG LÀM:\n"""\n${String(publicQuestion.prompt).slice(0, 1000)}\n"""`;
               if (publicQuestion.topic) systemText += `\nChủ đề kiến thức của câu hỏi: ${String(publicQuestion.topic).slice(0, 60)}`;
@@ -6013,9 +6030,9 @@ export default {
           const correctLetter = tutorQ && resolvedAnswerText ? (Object.entries(tutorQ.options || {}).find(([, v]) => String(v).trim() === resolvedAnswerText) || [])[0] : undefined;
           const judgeOn = Boolean(correctLetter) && String(env.TUTOR_JUDGE ?? '1') !== '0';
           const judgeLeak = async (/** @type {string} */ t) => {
-            if (!judgeOn) return false;
+            if (!judgeOn || !touchesOptions(t, tutorQ)) return false;
             try {
-              const jr = await fetch(geminiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': currentKey }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: buildLeakJudgePrompt(tutorQ, correctLetter, t) }] }], generationConfig: { temperature: 0, maxOutputTokens: 64, responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { lo: { type: 'BOOLEAN' } }, required: ['lo'] }, ...(thinkLevel && THINKING_OK[modelName] !== false ? { thinkingConfig: { thinkingLevel: thinkLevel } } : {}) } }) });
+              const jr = await fetch(geminiUrl, { method: 'POST', signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(Number(env.TUTOR_JUDGE_MS) || 3000) : undefined, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': currentKey }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: buildLeakJudgePrompt(tutorQ, correctLetter, t) }] }], generationConfig: { temperature: 0, maxOutputTokens: 64, responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { lo: { type: 'BOOLEAN' } }, required: ['lo'] }, ...(thinkLevel && THINKING_OK[modelName] !== false ? { thinkingConfig: { thinkingLevel: thinkLevel } } : {}) } }) });
               if (!jr.ok) return false;   // kiểm duyệt lỗi → vẫn còn lớp so chữ, không chặn em
               return parseJsonLoose(geminiText(await jr.json()))?.lo === true;
             } catch { return false; }

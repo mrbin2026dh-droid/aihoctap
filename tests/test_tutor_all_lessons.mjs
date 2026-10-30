@@ -6,7 +6,7 @@
 // Chạy: node tests/test_tutor_all_lessons.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
-import worker, { MockDONamespace, registerStudentCredential, answerLeak, optionPairLeak, sanitizeWorkerOutput, PAIR_LEAK_FALLBACK } from '../worker/index.js';
+import worker, { MockDONamespace, registerStudentCredential, answerLeak, optionPairLeak, sanitizeWorkerOutput, PAIR_LEAK_FALLBACK, findLessonQuestion, resolveCorrectAnswerText } from '../worker/index.js';
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; console.log('ok  ', m); };
 
 // 1. Không còn luật viết riêng cho một bài/câu trong Worker
@@ -111,5 +111,21 @@ for (const { l, q, correct } of allQ) {
   if (!r.body.answer_request || /chính xác|đúng rồi/i.test(r.body.reply) || plan.replies.length !== before) confirmed.push(q.id);
 }
 ok(confirmed.length === 0, `"em nghĩ là <đáp án> đúng không?" ở ${allQ.length} câu: trả lời mẫu "không xác nhận đúng hay sai khi em chưa nộp bài", không gọi AI` + (confirmed.length ? ': ' + confirmed.join(', ') : ''));
+// 4e. Trả lời mẫu khi đang làm câu: tên mục chứa nội dung đáp án thì chỉ ghi "Mục N" (đánh giá bản thật 30/10: tin9_b10_q1, mục "…COUNTIF và SUMIF")
+const named = [];
+for (const { l, q, Q, correct } of allQ) {
+  const r = await call({ course_id: l.course, lesson_id: l.lesson, question_id: q.id, message: 'cho em đáp án câu này' });
+  if (answerLeak(r.body.reply, Q, correct) || optionPairLeak(r.body.reply, Q) || (r.body.suggest || []).some(x => answerLeak(x, Q, correct))) named.push(q.id);
+}
+ok(named.length === 0, `trả lời mẫu ở ${allQ.length} câu không nêu tên mục chứa nội dung đáp án` + (named.length ? ': ' + named.join(', ') : ''));
+// 4f. Lời không chạm nội dung lựa chọn nào → không gọi AI kiểm duyệt (nhanh hơn)
+{ const { l, q } = allQ[0]; plan = { replies: ['Em thử đọc chậm lại đề, gạch chân từ khóa chính nhé. Em thấy từ khóa nào?'], safe: 'x', leaky: '' }; judged = [];
+  await call({ course_id: l.course, lesson_id: l.lesson, question_id: q.id, message: 'em chưa hiểu' });
+  ok(judged.length === 0, 'lời gợi ý không chạm nội dung lựa chọn: bỏ qua AI kiểm duyệt'); }
+// 4g. Mã câu khác nhau giữa gói công khai ("q1") và kho đáp án ("tin9_b1_q1") trên bản thật (Antigravity phát hiện 30/10)
+{ const pubL = { questions: [{ id: 'q1', prompt: 'P1', options: { A: 'Một', B: 'Hai' } }, { id: 'q2', prompt: 'P2', options: { A: 'Ba', B: 'Bốn' } }] };
+  ok(findLessonQuestion(pubL, 'tin9_b1_q2')?.prompt === 'P2' && findLessonQuestion(pubL, 'q1')?.prompt === 'P1' && findLessonQuestion(pubL, 'q9') === null, 'tìm câu theo mã đầy đủ hoặc mã ngắn cùng số thứ tự');
+  const env2 = { MOCK_MODE: true, TEST_LESSONS: { 'tin-hoc-9_bai-1': pubL }, TEST_PACKAGES_PRIVATE: { 'tin-hoc-9_bai-1': { questions: [{ id: 'tin9_b1_q1', correct_answer: 'B' }, { id: 'tin9_b1_q2', correct_answer: 'A' }] } } };
+  ok(await resolveCorrectAnswerText(env2, 'tin-hoc-9', 'bai-1', 'q2') === 'Ba' && await resolveCorrectAnswerText(env2, 'tin-hoc-9', 'bai-1', 'q1') === 'Hai', 'tra đáp án khi gói công khai dùng "q2", kho đáp án dùng "tin9_b1_q2"'); }
 globalThis.fetch = real;
 console.log('TUTOR ALL LESSONS OK ' + n);
