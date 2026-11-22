@@ -2009,3 +2009,14 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .phieu-choice.is-nut .option input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
 .student-app .phieu-choice.is-nut .option:has(input:checked){border-color:var(--blue);font-weight:700}
 .phieu-choice.is-nut .option:has(input:checked)::before{content:"✓";margin-right:6px}
+/* Thảo luận – dạng mới (học sinh) */
+.tl-cot-row{border:0;margin:0 0 10px;padding:0}.tl-cot-row legend{font-weight:800;color:#fff;padding:0;margin-bottom:6px}
+.tl-cot-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tl-cot-opt{position:relative}.tl-cot-opt input,.tl-loi-opt input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.tl-cot-key{flex:0 0 30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:2px solid currentColor;font-weight:900}
+.tl-choice:has(input:focus-visible),.tl-loi-opt:has(input:focus-visible){outline:3px solid #fff;outline-offset:2px}
+.tl-loi-pick{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}.tl-loi-pick legend{flex-basis:100%;font-weight:800;color:#fff;margin-bottom:6px}
+.tl-loi-opt{position:relative;display:inline-flex;align-items:center;min-height:48px;padding:8px 14px;border-radius:12px;background:#ffffff14;color:#fff;font-weight:700;cursor:pointer}
+.tl-loi-opt:has(input:checked){background:#ffd166;color:#2a1d00}
+.tl-loi-dap{margin:12px 0 0;padding:12px 14px;border-radius:12px;background:#22c3a633;color:#fff;font-weight:800}
+.tl-xh-row select{width:100%;min-height:48px;font-size:16px}.tl-mine-ly{margin:6px 0;color:#fff;overflow-wrap:anywhere}

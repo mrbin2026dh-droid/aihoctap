@@ -12,7 +12,7 @@ import { api } from './api.js';
 import * as ui from './teacher-ui.js?v=20261122b';
 import { confirmBox } from './dom.js';
 import * as fx from './quiz-fx.js';
-import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible } from './tl-core.js';
+import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible, isQa, isPoll, cotStats, tranhParse, loiCounts, rankStats, pubSlide } from './tl-core.js?v=20261122g';
 import { setClasses } from './quiz-core.js';
 import { HB_MS, STALE_MS } from './live-room.js';
 
@@ -110,7 +110,7 @@ async function classes() {
   if (hs === undefined) return null;
   return [...new Set(Object.values(hs || {}).map((/** @type {any} */ s) => String(s?.lop || '')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
 }
-const TYPE_HINT = /** @type {Record<string,string>} */ ({ cloud: 'Mỗi em gửi 1–3 từ khóa ngắn (≤ 25 ký tự). Từ được gửi nhiều hiện to hơn.', open: 'Mỗi em gửi một ý kiến (≤ 200 ký tự).', poll: 'Mỗi em chọn một ý. Không có đáp án đúng sai.', scale: 'Mỗi em chấm 1–5 cho từng tiêu chí.', qa: 'Học sinh đặt câu hỏi, các bạn bấm "Cùng thắc mắc" để đẩy câu hỏi lên.' });
+const TYPE_HINT = /** @type {Record<string,string>} */ ({ cot: 'Mỗi dòng là một việc; học sinh chọn cột A hoặc cột B cho từng dòng. Màn chiếu hiện tỉ lệ từng dòng.', tranh: 'Học sinh chọn một phía và ghi một lí do. Bấm "Rút lí do" để chiếu ngẫu nhiên lí do mỗi phía.', loi: 'Nhập đoạn văn thành từng cụm theo thứ tự, đánh dấu cụm sai. Học sinh bấm vào cụm em cho là sai; bấm "Công bố chỗ sai" khi muốn hiện đáp án.', xh: 'Học sinh xếp thứ tự từ quan trọng nhất (1). Màn chiếu hiện thứ tự chung của lớp.', tuong: 'Học sinh gửi ý tưởng và thả tim cho ý của bạn. Ý nhiều tim lên đầu.', lai: 'Hỏi lại một câu Bình chọn đã hỏi trước đó (ví dụ đầu giờ) để so sánh lớp đã đổi suy nghĩ chưa.', cloud: 'Mỗi em gửi 1–3 từ khóa ngắn (≤ 25 ký tự). Từ được gửi nhiều hiện to hơn.', open: 'Mỗi em gửi một ý kiến (≤ 200 ký tự).', poll: 'Mỗi em chọn một ý. Không có đáp án đúng sai.', scale: 'Mỗi em chấm 1–5 cho từng tiêu chí.', qa: 'Học sinh đặt câu hỏi, các bạn bấm "Cùng thắc mắc" để đẩy câu hỏi lên.' });
 /** Một trang trong trình soạn. @param {Partial<Slide>} [s] */
 function slideRow(s = { type: 'open' }) {
   const type = /** @type {keyof typeof TYPES} */ (s.type && s.type in TYPES ? s.type : 'open');
@@ -131,20 +131,66 @@ function slideRow(s = { type: 'open' }) {
     for (let i = 0; i < 6; i++) { const o = /** @type {HTMLInputElement} */ (el('input', 'tl-opt')); o.maxLength = 80; o.value = list[i] || ''; grid.append(field(`${type === 'poll' ? 'Lựa chọn' : 'Tiêu chí'} ${i + 1}`, o, 'f-o' + i)); }
     fs.append(el('p', 't-hint tl-opts-hint', type === 'poll' ? 'Điền ít nhất 2 lựa chọn; các ô còn lại để trống nếu không dùng.' : 'Điền ít nhất 1 tiêu chí; học sinh chấm 1–5 cho từng tiêu chí.'), grid);
   }
-  if (type === 'cloud' || type === 'qa') {
-    const mx = /** @type {HTMLSelectElement} */ (el('select', 'tl-max')); for (const v of [1, 2, 3]) mx.append(new Option(`${v} ${type === 'cloud' ? 'từ khóa' : 'câu hỏi'}`, String(v))); mx.value = String(s.max || (type === 'cloud' ? 3 : 2));
+  if (type === 'cot' || type === 'tranh') {
+    const cols = s.opts?.length ? s.opts : type === 'tranh' ? ['Đồng ý', 'Không đồng ý'] : ['Máy, AI làm tốt', 'Người vẫn phải làm'];
+    const g = el('div', 'thi-qe-opts tl-opts');
+    for (let i = 0; i < 2; i++) { const o = /** @type {HTMLInputElement} */ (el('input', 'tl-col')); o.maxLength = 40; o.value = cols[i] || ''; g.append(field(type === 'tranh' ? `Phía ${i + 1}` : `Cột ${'AB'[i]}`, o, 'f-c' + i)); }
+    fs.append(g);
+  }
+  if (type === 'cot' || type === 'loi' || type === 'xh') {
+    const list = s.items || [], max = type === 'xh' ? 6 : type === 'loi' ? 8 : 10;
+    const g = el('div', 'thi-qe-opts tl-opts');
+    for (let i = 0; i < max; i++) {
+      const o = /** @type {HTMLInputElement} */ (el('input', 'tl-item')); o.maxLength = 120; o.value = list[i] || '';
+      const w = field(type === 'loi' ? `Cụm ${i + 1}` : type === 'xh' ? `Mục ${i + 1}` : `Dòng ${i + 1}`, o, 'f-i' + i);
+      if (type === 'loi') { const r = /** @type {HTMLInputElement} */ (el('input', 'tl-dung')); r.type = 'radio'; r.name = `tl-dung-${uid}`; r.value = String(i); r.checked = s.dung === i; r.setAttribute('aria-label', `Cụm ${i + 1} là cụm sai`); const l = el('label', 'tl-dung-lab'); l.append(r, document.createTextNode(' Cụm sai')); w.append(l); }
+      g.append(w);
+    }
+    fs.append(el('p', 't-hint tl-opts-hint', type === 'loi' ? 'Chia đoạn văn thành các cụm theo thứ tự, chọn đúng một cụm sai; các ô thừa để trống.' : type === 'xh' ? 'Điền 3 đến 6 mục; các ô thừa để trống.' : 'Điền ít nhất 2 dòng; các ô thừa để trống.'), g);
+  }
+  if (type === 'lai') {
+    const r = /** @type {HTMLSelectElement} */ (el('select', 'tl-ref')); r.dataset.ref = String(s.ref ?? '');
+    r.addEventListener('focus', () => fillRef(fs, r));
+    fs.append(field('Hỏi lại câu Bình chọn số', r, 'f-ref'), el('p', 't-hint', 'Các lựa chọn lấy từ câu đó. Màn chiếu đặt hai kết quả cạnh nhau.'));
+    queueMicrotask(() => fillRef(fs, r));
+  }
+  if (type === 'cloud' || isQa(type)) {
+    const mx = /** @type {HTMLSelectElement} */ (el('select', 'tl-max')); for (const v of [1, 2, 3]) mx.append(new Option(`${v} ${type === 'cloud' ? 'từ khóa' : type === 'tuong' ? 'ý tưởng' : 'câu hỏi'}`, String(v))); mx.value = String(s.max || (type === 'cloud' ? 3 : 2));
     fs.append(field('Mỗi em gửi tối đa', mx, 'f-max'));
   }
-  if (type === 'open' || type === 'qa') {
+  if (type === 'open' || isQa(type)) {
     const lab = el('label', 'thi-qe-ok tl-mod'); const c = /** @type {HTMLInputElement} */ (el('input', 'tl-mod-in')); c.type = 'checkbox'; c.checked = s.mod !== false;
     lab.append(c, document.createTextNode(' Duyệt trước khi hiện lên màn chiếu (nên bật với học sinh THCS)')); fs.append(lab);
   }
   return fs;
 }
+/** Danh sách câu Bình chọn nằm trước câu Hỏi lại. @param {Element} fs @param {HTMLSelectElement} r */
+function fillRef(fs, r) {
+  const all = [...$('tl-list').querySelectorAll('.tl-slide-ed')], me = all.indexOf(/** @type {HTMLElement} */ (fs));
+  const cur = r.value || r.dataset.ref || '';
+  r.replaceChildren(new Option('Chọn câu', ''));
+  all.slice(0, me < 0 ? all.length : me).forEach((f, i) => { if (/** @type {HTMLSelectElement} */ (f.querySelector('.tl-type')).value === 'poll') r.append(new Option(`Câu ${i + 1}: ${/** @type {HTMLTextAreaElement} */ (f.querySelector('.tl-text')).value.slice(0, 60)}`, String(i))); });
+  r.value = [...r.options].some(o => o.value === cur) ? cur : '';
+}
 /** @param {Element} fs @returns {Slide} */
 function readSlide(fs) {
   const type = /** @type {any} */ (/** @type {HTMLSelectElement} */ (fs.querySelector('.tl-type')).value);
   const list = [...fs.querySelectorAll('.tl-opt')].map(x => /** @type {HTMLInputElement} */ (x).value);
+  const text = /** @type {HTMLTextAreaElement} */ (fs.querySelector('.tl-text')).value;
+  const cols = [...fs.querySelectorAll('.tl-col')].map(x => /** @type {HTMLInputElement} */ (x).value);
+  const rows = [...fs.querySelectorAll('.tl-item')].map(x => /** @type {HTMLInputElement} */ (x).value);
+  if (type === 'cot' || type === 'tranh') return cleanSlide({ type, text, opts: cols, items: rows });
+  if (type === 'xh') return cleanSlide({ type, text, items: rows });
+  if (type === 'loi') {
+    const pick = /** @type {HTMLInputElement|null} */ (fs.querySelector('.tl-dung:checked'));
+    const filled = rows.map((v, i) => [v.trim(), i]).filter(([v]) => v);
+    return cleanSlide({ type, text, items: filled.map(([v]) => v), dung: pick ? filled.findIndex(([, i]) => String(i) === pick.value) : -1 });
+  }
+  if (type === 'lai') {
+    const ref = /** @type {HTMLSelectElement} */ (fs.querySelector('.tl-ref')).value || /** @type {HTMLSelectElement} */ (fs.querySelector('.tl-ref')).dataset.ref || '';
+    const src = ref === '' ? null : $('tl-list').querySelectorAll('.tl-slide-ed')[Number(ref)];
+    return cleanSlide({ type, text, ref: ref === '' ? -1 : Number(ref), opts: src ? [...src.querySelectorAll('.tl-opt')].map(x => /** @type {HTMLInputElement} */ (x).value) : [] });
+  }
   return cleanSlide({ type, text: /** @type {HTMLTextAreaElement} */ (fs.querySelector('.tl-text')).value, opts: list, items: list, max: /** @type {HTMLSelectElement|null} */ (fs.querySelector('.tl-max'))?.value, mod: /** @type {HTMLInputElement|null} */ (fs.querySelector('.tl-mod-in'))?.checked });
 }
 function slideNumber() { const fs = $('tl-list').querySelectorAll('.tl-slide-ed'); fs.forEach((f, i) => { const lg = f.querySelector('legend'); if (lg) lg.textContent = `Câu ${i + 1}`; }); $('tl-count').textContent = fs.length ? `${fs.length} câu hỏi` : ''; }
@@ -334,9 +380,11 @@ async function goSlide(i) {
   room.i = i; room.phase = 'open'; room.hide = false;
   const s = room.set.slides[i], k = K(i), st = stOf(i);
   room.y = {}; room.votes = {}; room.yStop?.(); room.vStop?.(); room.vStop = undefined;
-  await write({ [P('phase')]: 'open', [P('i')]: i, [P('slide')]: { k, ...s }, [P('hide')]: false, [P('ok')]: st.ok, [P('an')]: st.an, [P('anw')]: st.anw, [P('done')]: st.done, [P('ready')]: null }).catch(() => {});
+  room.pick = null; room.lo = false; room.yRef = null;
+  await write({ [P('phase')]: 'open', [P('i')]: i, [P('slide')]: { k, ...pubSlide(s) }, [P('lo')]: null, [P('hide')]: false, [P('ok')]: st.ok, [P('an')]: st.an, [P('anw')]: st.anw, [P('done')]: st.done, [P('ready')]: null }).catch(() => {});
   room.yStop = store.listen(`tl/${room.room}/y/${k}`, d => { if (!room || room.i !== i) return; room.y = d || {}; noteNew(); schedule(); }, undefined, { prio: 3 });
-  if (s.type === 'qa') room.vStop = store.listen(`tl/${room.room}/vote/${k}`, d => { if (!room || room.i !== i) return; room.votes = d || {}; schedule(); }, undefined, { prio: 2 });
+  if (s.type === 'lai' && Number(s.ref) >= 0) { store.get(`tl/${room.room}/y/${K(Number(s.ref))}`).then(d => { if (room && room.i === i) { room.yRef = d || {}; schedule(); } }).catch(() => {}); }
+  if (isQa(s.type)) room.vStop = store.listen(`tl/${room.room}/vote/${k}`, d => { if (!room || room.i !== i) return; room.votes = d || {}; schedule(); }, undefined, { prio: 2 });
   drawSlide();
 }
 /** Tiếng "tách" nhẹ khi có ý mới. */
@@ -366,11 +414,58 @@ function renderResult(s, list, st, votes, live) {
     });
     box.append(wrap); return box;
   }
-  if (s.type === 'poll') {
-    const c = pollCounts(list.map(e => e.v), (s.opts || []).length), tot = c.reduce((a, b) => a + b, 0), max = Math.max(1, ...c);
-    const ul = el('ul', 'tl-bars');
-    (s.opts || []).forEach((o, j) => { const li = el('li', 'tl-bar tl-c' + (j % 6)); const fill = el('span', 'tl-bar-fill'); fill.style.setProperty('--w', Math.round(100 * c[j] / max) + '%'); li.append(el('span', 'tl-bar-label', o), fill, el('strong', 'tl-bar-n', `${c[j]} · ${tot ? Math.round(100 * c[j] / tot) : 0}%`)); ul.append(li); });
+  /** Thanh số liệu dùng chung. @param {string[]} labels @param {number[]} c */
+  const bars = (labels, c) => {
+    const tot = c.reduce((a, b) => a + b, 0), max = Math.max(1, ...c), ul = el('ul', 'tl-bars');
+    labels.forEach((o, j) => { const li = el('li', 'tl-bar tl-c' + (j % 6)); const fill = el('span', 'tl-bar-fill'); fill.style.setProperty('--w', Math.round(100 * c[j] / max) + '%'); li.append(el('span', 'tl-bar-label', o), fill, el('strong', 'tl-bar-n', `${c[j]} · ${tot ? Math.round(100 * c[j] / tot) : 0}%`)); ul.append(li); });
+    return ul;
+  };
+  if (s.type === 'poll') { box.append(bars(s.opts || [], pollCounts(list.map(e => e.v), (s.opts || []).length))); return box; }
+  if (s.type === 'lai') {
+    const ref = live ? room?.yRef : result?.lists[Number(s.ref)] ? null : null;
+    const before = live ? entriesOf(ref || {}) : (result?.lists[Number(s.ref)] || []);
+    const g = el('div', 'tl-lai');
+    const a = el('section', 'tl-lai-col'); a.append(el('h4', '', `Trước (câu ${Number(s.ref) + 1})`), bars(s.opts || [], pollCounts(before.map(e => e.v), (s.opts || []).length)));
+    const b = el('section', 'tl-lai-col'); b.append(el('h4', '', 'Bây giờ'), bars(s.opts || [], pollCounts(list.map(e => e.v), (s.opts || []).length)));
+    g.append(a, b); box.append(g); return box;
+  }
+  if (s.type === 'cot') {
+    const c = cotStats(list.map(e => e.v), (s.items || []).length), A = (s.opts || [])[0] || 'A', B = (s.opts || [])[1] || 'B';
+    const head = el('div', 'tl-cot-head'); head.append(el('span', 'tl-cot-a', `A · ${A}`), el('span', 'tl-cot-b', `B · ${B}`)); box.append(head);
+    const ul = el('ul', 'tl-cot');
+    (s.items || []).forEach((it, j) => {
+      const tot = c[j].a + c[j].b, pa = tot ? Math.round(100 * c[j].a / tot) : 0, split = tot >= 4 && pa >= 35 && pa <= 65;
+      const li = el('li', 'tl-cot-row' + (split ? ' is-split' : '')); const bar = el('span', 'tl-cot-bar'); bar.style.setProperty('--a', pa + '%'); bar.setAttribute('aria-hidden', 'true');
+      li.append(el('span', 'tl-cot-label', it), bar, el('strong', 'tl-cot-n', `A ${c[j].a} · B ${c[j].b}`), ...(split ? [el('small', 'tl-cot-flag', 'Lớp chia đôi ý kiến')] : []));
+      ul.append(li);
+    });
     box.append(ul); return box;
+  }
+  if (s.type === 'tranh') {
+    const shownT = visible(list, st.an).filter(e => !badWord(e.v.replace(/^[01]\|/, ''), cam));
+    const t = tranhParse(shownT.map(e => e.v));
+    box.append(bars(s.opts || [], t.sides));
+    const pick = live ? room?.pick : null;
+    if (pick) { const g = el('div', 'tl-lai'); [0, 1].forEach(i => { const sec = el('section', 'tl-lai-col tl-ly'); sec.append(el('h4', '', (s.opts || [])[i] || ''), el('p', 'tl-ly-text', pick[i] || 'Chưa có lí do.')); g.append(sec); }); box.append(g); }
+    else if (!live) { const g = el('div', 'tl-lai'); [0, 1].forEach(i => { const sec = el('section', 'tl-lai-col'); sec.append(el('h4', '', `${(s.opts || [])[i] || ''}: ${t.ly[i].length} lí do`)); const ul = el('ul'); for (const r of t.ly[i].slice(0, 8)) ul.append(el('li', '', r)); sec.append(ul); g.append(sec); }); box.append(g); }
+    return box;
+  }
+  if (s.type === 'loi') {
+    const c = loiCounts(list.map(e => e.v), (s.items || []).length), max = Math.max(1, ...c), show = !live || room?.lo;
+    const p = el('p', 'tl-loi');
+    (s.items || []).forEach((it, j) => {
+      const sp = el('span', 'tl-loi-cum' + (show && j === s.dung ? ' is-sai' : '')); sp.style.setProperty('--h', String(Math.round(100 * c[j] / max) / 100));
+      sp.append(document.createTextNode(it), el('sup', 'tl-loi-n', String(c[j]))); p.append(sp, document.createTextNode(' '));
+    });
+    box.append(p);
+    if (show) box.append(el('p', 'tl-loi-dap', `Chỗ sai: "${(s.items || [])[Number(s.dung)] || ''}" · ${c[Number(s.dung)] || 0}/${list.length} em bấm đúng.`));
+    return box;
+  }
+  if (s.type === 'xh') {
+    const r = rankStats(list.map(e => e.v), (s.items || []).length);
+    const ol = el('ol', 'tl-xh');
+    for (const j of r.order) { const li = el('li', 'tl-xh-row'); li.append(el('span', 'tl-xh-label', (s.items || [])[j]), el('small', 'tl-xh-avg', r.n ? `hạng trung bình ${String(r.avg[j]).replace('.', ',')}` : '–')); ol.append(li); }
+    box.append(el('p', 'tl-scale-ends', `${r.n} em đã xếp · trên cùng là quan trọng nhất`), ol); return box;
   }
   if (s.type === 'scale') {
     const sc = scaleStats(list.map(e => e.v), (s.items || []).length);
@@ -384,13 +479,14 @@ function renderResult(s, list, st, votes, live) {
   }
   const shown = visible(list, st.an).filter(e => !badWord(e.v, cam));
   const wall = s.mod ? shown.filter(e => st.ok[e.id]) : shown;
-  if (s.type === 'qa') {
-    const ranked = qaRank(wall, votes || {}, st.done);
-    if (!ranked.length) { box.append(el('p', 'tl-empty-res', s.mod ? 'Chưa có câu hỏi nào được duyệt.' : 'Chưa có câu hỏi nào.')); return box; }
+  if (isQa(s.type)) {
+    const ranked = qaRank(wall, votes || {}, st.done), wallT = s.type === 'tuong';
+    if (!ranked.length) { box.append(el('p', 'tl-empty-res', wallT ? (s.mod ? 'Chưa có ý tưởng nào được duyệt.' : 'Chưa có ý tưởng nào.') : s.mod ? 'Chưa có câu hỏi nào được duyệt.' : 'Chưa có câu hỏi nào.')); return box; }
     const ul = el('ol', 'tl-qa-wall');
     for (const q of ranked) {
-      const li = el('li', q.done ? 'is-done' : ''); li.append(el('span', 'tl-qa-votes', `▲ ${q.votes}`), el('span', 'tl-qa-q', q.v));
-      if (live) li.append(btn(q.done ? 'Bỏ đánh dấu' : 'Đã trả lời', 'tl-done-btn', () => void setSt({ done: { ...stOf(room?.i || 0).done, [q.id]: !q.done } })), ui.iconButton({ icon: 'trash', label: `Ẩn câu hỏi: ${q.v}`, danger: true, onClick: () => void setSt({ an: { ...stOf(room?.i || 0).an, [q.id]: true } }) }));
+      const li = el('li', q.done ? 'is-done' : ''); li.append(el('span', 'tl-qa-votes', `${wallT ? '♥' : '▲'} ${q.votes}`), el('span', 'tl-qa-q', q.v));
+      if (live && !wallT) li.append(btn(q.done ? 'Bỏ đánh dấu' : 'Đã trả lời', 'tl-done-btn', () => void setSt({ done: { ...stOf(room?.i || 0).done, [q.id]: !q.done } })), ui.iconButton({ icon: 'trash', label: `Ẩn câu hỏi: ${q.v}`, danger: true, onClick: () => void setSt({ an: { ...stOf(room?.i || 0).an, [q.id]: true } }) }));
+      if (live && wallT) li.append(ui.iconButton({ icon: 'trash', label: `Ẩn ý tưởng: ${q.v}`, danger: true, onClick: () => void setSt({ an: { ...stOf(room?.i || 0).an, [q.id]: true } }) }));
       ul.append(li);
     }
     box.append(ul); return box;
@@ -409,7 +505,7 @@ async function hideWord(w) {
 /** Hàng chờ duyệt (câu mở / hỏi đáp có bật duyệt): chỉ hiện chữ, tên chỉ hiện khi thầy cô bật "Hiện tên". */
 function queue() {
   if (!room) return null;
-  const s = room.set.slides[room.i]; if (!(s.type === 'open' || s.type === 'qa') || !s.mod) return null;
+  const s = room.set.slides[room.i]; if (!(s.type === 'open' || isQa(s.type)) || !s.mod) return null;
   const st = stOf(room.i), list = entriesOf(room.y).filter(e => !st.ok[e.id] && !st.an[e.id]);
   const box = el('section', 'tl-queue'); box.setAttribute('aria-label', 'Ý kiến chờ duyệt');
   const head = el('div', 'tl-queue-head'); head.append(el('h3', '', `Chờ duyệt (${list.length})`));
@@ -445,7 +541,13 @@ function drawSlide() {
   const toggle = btn(room.phase === 'closed' ? 'Mở lại nhận ý kiến' : 'Dừng nhận ý kiến', 'tl-toggle', () => void toggleOpen());
   const hideB = btn(room.hide ? 'Hiện kết quả' : 'Ẩn kết quả', 'tl-hide-res', () => void toggleHide()); hideB.setAttribute('aria-pressed', String(room.hide));
   const next = btn(last ? 'Kết thúc' : 'Câu tiếp theo', 't-primary qz-big tl-next', () => void (last ? endTalk() : goSlide((room?.i || 0) + 1)));
-  foot.replaceChildren(prev, toggle, hideB, next, ...(last ? [] : [btn('Kết thúc', 'qz-stop tl-stop', () => void endTalk())]));
+  const extra = [];
+  if (s.type === 'tranh') extra.push(btn(room.pick ? 'Rút lí do khác' : 'Rút lí do', 'tl-pick', () => {
+    if (!room) return; const t = tranhParse(visible(entriesOf(room.y), stOf(room.i).an).map(e => e.v)).ly.map(l => l.filter(x => !badWord(x, room?.set.cam || [])));
+    room.pick = [0, 1].map(i => t[i].length ? t[i][Math.floor(Math.random() * t[i].length)] : ''); drawSlide();
+  }));
+  if (s.type === 'loi') { const lo = btn(room.lo ? 'Ẩn chỗ sai' : 'Công bố chỗ sai', 'tl-lo', async () => { if (!room) return; room.lo = !room.lo; await write({ [P('lo')]: room.lo ? s.dung : null }).catch(() => {}); drawSlide(); }); lo.setAttribute('aria-pressed', String(!!room.lo)); extra.push(lo); }
+  foot.replaceChildren(prev, toggle, hideB, ...extra, next, ...(last ? [] : [btn('Kết thúc', 'qz-stop tl-stop', () => void endTalk())]));
 }
 async function toggleOpen() { if (!room) return; room.phase = room.phase === 'closed' ? 'open' : 'closed'; await write({ [P('phase')]: room.phase }).catch(() => {}); drawSlide(); }
 async function toggleHide() { if (!room) return; room.hide = !room.hide; await write({ [P('hide')]: room.hide }).catch(() => {}); drawSlide(); }
@@ -513,8 +615,8 @@ function exportCsv() {
   const rows = [['Câu', 'Loại', 'Câu hỏi', 'Học sinh', 'Nội dung gửi', 'Trạng thái']];
   result.slides.forEach((s, i) => {
     for (const e of result?.lists[i] || []) {
-      const st = result?.sts[i]; const v = s.type === 'poll' ? (s.opts || [])[Number(e.v)] || e.v : s.type === 'scale' ? (s.items || []).map((it, j) => `${it}: ${e.v.split('|')[j] || ''}`).join('; ') : e.v;
-      rows.push([String(i + 1), TYPES[s.type], s.text, nameOf(e.ma), v, st?.an[e.id] ? 'Đã ẩn' : (s.mod && (s.type === 'open' || s.type === 'qa')) ? (st?.ok[e.id] ? 'Đã duyệt' : 'Chưa duyệt') : '']);
+      const st = result?.sts[i]; const v = isPoll(s.type) ? (s.opts || [])[Number(e.v)] || e.v : s.type === 'loi' ? (s.items || [])[Number(e.v)] || e.v : s.type === 'tranh' ? `${(s.opts || [])[Number(e.v[0])] || ''}: ${e.v.slice(2)}` : s.type === 'cot' ? (s.items || []).map((it, j) => `${it}: ${(s.opts || [])[e.v[j] === 'A' ? 0 : 1] || ''}`).join('; ') : s.type === 'xh' ? (s.items || []).map((it, j) => `${it}: ${e.v.split('|')[j] || ''}`).join('; ') : s.type === 'scale' ? (s.items || []).map((it, j) => `${it}: ${e.v.split('|')[j] || ''}`).join('; ') : e.v;
+      rows.push([String(i + 1), TYPES[s.type], s.text, nameOf(e.ma), v, st?.an[e.id] ? 'Đã ẩn' : (s.mod && (s.type === 'open' || isQa(s.type))) ? (st?.ok[e.id] ? 'Đã duyệt' : 'Chưa duyệt') : '']);
     }
   });
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' })); a.download = `thao-luan-${room.set.lops.join('-')}-${new Date().toISOString().slice(0, 10)}.csv`; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);

@@ -4687,3 +4687,24 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế:
   - soan_ui 49, ui 78, b2_ui 42 đều PASS.
   - Các test sau đều PASS: core, worker, soan, teacher_ui, role_isolation, fonts, student_ui_standard; `package_student_pwa.py --check` PASS. Không sửa Worker.
+
+### 22/11/2026 — Claude: Tiện ích → Thảo luận: thêm 6 dạng câu hỏi (không dùng AI) và bộ câu Bài 2
+- Giáo viên yêu cầu thêm các dạng thảo luận cho lớp sôi nổi, chỉ cần câu hỏi, không dùng AI phân tích.
+- Đã làm:
+  - `tl-core.js`: thêm 6 dạng.
+    - Xếp hai cột `cot`: chuỗi "ABBA…".
+    - Tranh luận hai phía `tranh`: "0|lí do".
+    - Bắt lỗi `loi`: chỉ số cụm; đáp án `dung` không phát cho học sinh, chỉ hiện khi giáo viên bấm "Công bố chỗ sai".
+    - Xếp hạng `xh`: "2|1|3".
+    - Bức tường ý tưởng `tuong`: chạy như Hỏi đáp, thả tim.
+    - Hỏi lại trước – sau `lai`: bình chọn lặp lại một câu trước.
+    - Thêm hàm tổng hợp, kiểm khi soạn và đọc Excel cho các dạng này.
+  - `teacher-tl.js`: ô soạn cho từng dạng; màn chiếu có tỉ lệ A/B, nút "Rút lí do", nút "Công bố chỗ sai", thứ tự chung, hai biểu đồ trước – sau; CSV.
+  - `tl-play.js`: biểu mẫu học sinh cho 6 dạng.
+  - `teacher.html` có 6 nút mới; CSS; đổi mã `?v=` thành 20261122g.
+- Không sửa luật Firebase: câu trả lời vẫn là chuỗi ≤200 kí tự; phần thả tim dùng chung nhánh `vote`.
+- Bộ câu Bài 2 (12 câu): `data/phieu/ai9_b2.thao-luan.xlsx`, bị .gitignore chặn vì có đánh dấu cụm sai. Giáo viên nạp bằng "Tải từ Excel".
+- Kiểm thực tế:
+  - test_tl_core 40, test_tl_dang_moi 25 (DOM, đủ 6 dạng) đều PASS.
+  - Các test sau đều PASS: tl_ai, teacher_mobile_nav, thi_ui, role_isolation, fonts, phieu_teacher_ui, phieu_soan_ui, student/teacher_ui_standard.
+  - test_tl_live FAIL ở bước câu trả lời mở (giả lập requestSubmit). Bản mã trước thay đổi cũng FAIL giống hệt và đôi lúc PASS, nên đây là lỗi có từ trước, cần xử lí riêng.

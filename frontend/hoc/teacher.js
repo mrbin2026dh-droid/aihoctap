@@ -12,7 +12,7 @@ import './teacher-docs.js?v=20261122b';
 import './teacher-phieu.js?v=20261122f';
 import './teacher-effect.js?v=20261122b';
 import './teacher-quiz.js?v=20261122b';
-import './teacher-tl.js?v=20261122b';
+import './teacher-tl.js?v=20261122g';
 import './teacher-thidua.js?v=20261122b';
 import * as thiStore from './thi-store.js';
 import {parseStudentRows, templateRows as studentTemplateRows} from './student-import.js';

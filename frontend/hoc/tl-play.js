@@ -4,7 +4,7 @@
 // thầy cô duyệt trước khi hiện. Từ ngữ không phù hợp bị chặn ngay trên máy em.
 import * as store from './thi-store.js';
 import * as fx from './quiz-fx.js';
-import { MAX_LEN, badWord, entriesOf, qaRank, scaleValue, visible } from './tl-core.js';
+import { MAX_LEN, badWord, entriesOf, qaRank, scaleValue, visible, isQa, isPoll, cotValue, rankValue, MAX_REASON } from './tl-core.js';
 import { alive } from './live-room.js';
 
 /** @type {{ma:string,ten:string,lop:string,key:string}|null} */ let me = null;
@@ -131,12 +131,12 @@ function draw(force = false) {
   const main = /** @type {HTMLElement} */ (o.querySelector('.tl-main'));
   const s = pub.slide || {}, k = String(s.k || '');
   const dead = pub.phase !== 'end' && !alive(playing, pub);
-  const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, s.type === 'qa' ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0, dead]);
+  const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, isQa(s.type) ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0, pub.lo ?? null, dead]);
   if (key === lastKey) return;
   if (dead) { lastKey = key; unwatchQa(); main.replaceChildren(t('span', 'lt-res-ic tl-end-ic', '✓'), t('h2', 'lt-big', 'Phòng thảo luận đã đóng'), t('p', 'lt-wait', 'Thầy cô đã rời phòng. Ý kiến em gửi đã được lưu.'), b('Đóng', 'primary lt-done', () => close())); return; }
   // đang gõ dở: không vẽ lại đè lên ô nhập (chỉ vẽ khi đổi trang / đổi trạng thái)
   const typing = document.activeElement && main.contains(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).matches('input,textarea') && /** @type {HTMLElement} */ (main.querySelector('[data-k]'))?.dataset.k === k && pub.phase === 'open';
-  if (typing && !force && s.type !== 'qa') return;
+  if (typing && !force && !isQa(s.type)) return;
   lastKey = key;
   // Hỏi đáp: danh sách câu hỏi đổi liên tục khi bạn khác gửi/bình chọn → giữ nguyên chữ em đang gõ dở và vị trí con trỏ khi vẽ lại.
   /** @type {Record<string,string>} */ const keep = {}; let focusId = '', selA = 0, selB = 0;
@@ -144,7 +144,7 @@ function draw(force = false) {
     if (el.value) keep[el.id] = el.value;
     if (el === document.activeElement) { focusId = el.id; selA = el.selectionStart ?? el.value.length; selB = el.selectionEnd ?? selA; }
   }
-  if (pub.phase !== 'open' && pub.phase !== 'closed' || s.type !== 'qa') unwatchQa();
+  if (pub.phase !== 'open' && pub.phase !== 'closed' || !isQa(s.type)) unwatchQa();
   if (pub.phase === 'lobby') { main.replaceChildren(t('span', 'lt-avatar', String(me?.ten || '?').trim().split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase()), t('p', 'lt-name', me?.ten || ''), t('h2', 'lt-big', 'Em đã vào phòng thảo luận'), t('p', 'lt-wait', 'Ý kiến của em hiện ẩn danh trên màn chiếu. Chờ thầy cô bắt đầu.'), t('span', 'lt-pulse', '')); return; }
   if (pub.phase === 'ready') { main.replaceChildren(t('h2', 'lt-big', 'Chuẩn bị!')); if (readySeen !== String(pub.ready)) { readySeen = String(pub.ready); void fx.countdown(o, { title: String(pub.title || 'Chuẩn bị!') }); } return; }
   if (pub.phase === 'end') { main.replaceChildren(t('span', 'lt-res-ic tl-end-ic', '✓'), t('h2', 'lt-big', 'Buổi thảo luận kết thúc'), t('p', 'lt-wait', 'Cảm ơn em đã chia sẻ ý kiến!'), b('Đóng', 'primary lt-done', () => close())); return; }
@@ -152,20 +152,33 @@ function draw(force = false) {
   if (!mine[k]) { void restore(k); main.replaceChildren(t('p', 'lt-wait', 'Đang tải…')); return; }
   const box = t('div', 'tl-slide'); box.dataset.k = k;
   box.append(t('span', 'lt-idx', `Câu ${Number(pub.i) + 1}/${pub.n}`), t('p', 'lt-q tl-q', String(s.text || '')));
-  if (s.type === 'qa') watchQa(k);
-  if (pub.phase === 'closed' && s.type !== 'qa') { box.append(t('p', 'tl-note', 'Thầy cô đã dừng nhận ý kiến cho câu này. Nhìn lên màn chiếu nhé.')); main.replaceChildren(box); return; }
+  if (isQa(s.type)) watchQa(k);
+  if (pub.phase === 'closed' && !isQa(s.type)) { box.append(t('p', 'tl-note', 'Thầy cô đã dừng nhận ý kiến cho câu này. Nhìn lên màn chiếu nhé.')); main.replaceChildren(box); return; }
   const sent = mine[k], max = Number(s.max) || 1;
-  if (s.type === 'cloud' || s.type === 'open' || s.type === 'qa') {
-    if (sent.length) { const ul = t('ul', 'tl-mine'); ul.setAttribute('aria-label', 'Ý em đã gửi'); for (const v of sent) ul.append(t('li', '', v)); box.append(t('p', 'tl-ok', s.type === 'qa' ? 'Câu hỏi em đã gửi:' : 'Em đã gửi:'), ul); }
+  if (s.type === 'cloud' || s.type === 'open' || isQa(s.type)) {
+    if (sent.length) { const ul = t('ul', 'tl-mine'); ul.setAttribute('aria-label', 'Ý em đã gửi'); for (const v of sent) ul.append(t('li', '', v)); box.append(t('p', 'tl-ok', s.type === 'qa' ? 'Câu hỏi em đã gửi:' : s.type === 'tuong' ? 'Ý tưởng em đã gửi:' : 'Em đã gửi:'), ul); }
     if (pub.phase === 'open' && sent.length < (s.type === 'open' ? 1 : max)) box.append(textForm(s, k, sent.length));
-    else if (s.type !== 'qa') box.append(t('p', 'lt-wait', s.mod && s.type === 'open' ? 'Cảm ơn em! Thầy cô duyệt rồi mới hiện lên màn chiếu.' : 'Cảm ơn em! Nhìn lên màn chiếu nhé.'));
-    if (s.type === 'qa') box.append(qaList(k, pub.phase === 'open'));
-  } else if (s.type === 'poll') {
+    else if (!isQa(s.type)) box.append(t('p', 'lt-wait', s.mod && s.type === 'open' ? 'Cảm ơn em! Thầy cô duyệt rồi mới hiện lên màn chiếu.' : 'Cảm ơn em! Nhìn lên màn chiếu nhé.'));
+    if (isQa(s.type)) box.append(qaList(k, pub.phase === 'open'));
+  } else if (isPoll(s.type)) {
     if (sent.length) box.append(t('p', 'tl-ok', `Em đã chọn: ${(s.opts || [])[Number(sent[0])] || ''}`), t('p', 'lt-wait', 'Cảm ơn em! Nhìn lên màn chiếu nhé.'));
     else box.append(pollForm(s, k));
   } else if (s.type === 'scale') {
     if (sent.length) box.append(t('p', 'tl-ok', 'Em đã chấm điểm. Cảm ơn em!'));
     else box.append(scaleForm(s, k));
+  } else if (s.type === 'cot') {
+    if (sent.length) box.append(t('p', 'tl-ok', 'Em đã xếp xong. Nhìn lên màn chiếu xem cả lớp chọn thế nào nhé.'));
+    else box.append(cotForm(s, k));
+  } else if (s.type === 'tranh') {
+    if (sent.length) { const m = /^([01])\|(.*)$/.exec(sent[0]) || []; box.append(t('p', 'tl-ok', `Em chọn: ${(s.opts || [])[Number(m[1])] || ''}`), t('p', 'tl-mine-ly', m[2] || ''), t('p', 'lt-wait', 'Cảm ơn em! Thầy cô có thể rút lí do của em để cả lớp bàn.')); }
+    else box.append(tranhForm(s, k));
+  } else if (s.type === 'loi') {
+    if (sent.length) box.append(t('p', 'tl-ok', `Em đã chọn: "${(s.items || [])[Number(sent[0])] || ''}"`));
+    else box.append(loiForm(s, k));
+    if (pub.lo !== undefined && pub.lo !== null) box.append(t('p', 'tl-loi-dap', `Chỗ sai là: "${(s.items || [])[Number(pub.lo)] || ''}"${sent.length ? (Number(sent[0]) === Number(pub.lo) ? ' · Em đã tìm đúng!' : ' · Lần sau em đọc kĩ hơn nhé.') : ''}`));
+  } else if (s.type === 'xh') {
+    if (sent.length) box.append(t('p', 'tl-ok', 'Em đã xếp hạng. Nhìn lên màn chiếu xem thứ tự chung của lớp nhé.'));
+    else box.append(xhForm(s, k));
   }
   main.replaceChildren(box);
   for (const [id, v] of Object.entries(keep)) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if (el && main.contains(el)) el.value = v; }
@@ -189,7 +202,7 @@ function textForm(s, k, n) {
   for (let j = 0; j < left; j++) {
     const idx = n + j + 1, id = `tl-in-${k}-${idx}`;
     const wrap = t('div', 'tl-field');
-    const lab = /** @type {HTMLLabelElement} */ (t('label', 'tl-label', s.type === 'cloud' ? `Từ khóa ${idx}${total > 1 ? `/${total}` : ''}` : s.type === 'qa' ? `Câu hỏi ${idx}${total > 1 ? `/${total}` : ''}` : 'Ý kiến của em')); lab.htmlFor = id;
+    const lab = /** @type {HTMLLabelElement} */ (t('label', 'tl-label', s.type === 'cloud' ? `Từ khóa ${idx}${total > 1 ? `/${total}` : ''}` : s.type === 'qa' ? `Câu hỏi ${idx}${total > 1 ? `/${total}` : ''}` : s.type === 'tuong' ? `Ý tưởng ${idx}${total > 1 ? `/${total}` : ''}` : 'Ý kiến của em')); lab.htmlFor = id;
     const inp = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (t(multi ? 'textarea' : 'input', 'tl-input')); inp.id = id; inp.maxLength = lim; inp.setAttribute('aria-describedby', id + '-err');
     if (multi) /** @type {HTMLTextAreaElement} */ (inp).rows = 2; else { inp.setAttribute('autocomplete', 'off'); inp.setAttribute('enterkeyhint', j === left - 1 ? 'send' : 'next'); }
     inp.placeholder = s.type === 'cloud' ? 'Một từ hoặc cụm từ ngắn' : '';
@@ -199,7 +212,7 @@ function textForm(s, k, n) {
   }
   const hint = t('p', 'tl-hint', s.type === 'cloud' ? `Mỗi ô tối đa ${lim} ký tự. Không bắt buộc điền hết các ô.` : `Tối đa ${lim} ký tự.`);
   const status = t('p', 'tl-err', ''); status.setAttribute('role', 'alert');
-  const btn = /** @type {HTMLButtonElement} */ (t('button', 'primary tl-send', s.type === 'qa' ? 'Gửi câu hỏi' : 'Gửi')); btn.type = 'submit';
+  const btn = /** @type {HTMLButtonElement} */ (t('button', 'primary tl-send', s.type === 'qa' ? 'Gửi câu hỏi' : s.type === 'tuong' ? 'Gửi ý tưởng' : 'Gửi')); btn.type = 'submit';
   f.addEventListener('submit', async ev => {
     ev.preventDefault(); status.textContent = '';
     /** @type {string[]} */ const vals = []; let bad = -1;
@@ -256,20 +269,99 @@ function scaleForm(s, k) {
   });
   f.append(err, btn); return f;
 }
+/** Nút gửi + chỗ báo lỗi dùng chung. @param {string} label */
+function sendBar(label) { const err = t('p', 'tl-err', ''); err.setAttribute('role', 'alert'); const btn = /** @type {HTMLButtonElement} */ (t('button', 'primary tl-send', label)); btn.type = 'submit'; return { err, btn }; }
+/** Xếp hai cột: mỗi dòng chọn A hoặc B. @param {any} s @param {string} k */
+function cotForm(s, k) {
+  const f = t('form', 'tl-form tl-cot-form'); f.noValidate = true;
+  const A = (s.opts || [])[0] || 'A', B = (s.opts || [])[1] || 'B';
+  f.append(t('p', 'tl-hint', `Mỗi dòng chọn: A · ${A} hoặc B · ${B}.`));
+  (s.items || []).forEach((/** @type {string} */ it, /** @type {number} */ i) => {
+    const fs = t('fieldset', 'tl-cot-row'); fs.append(t('legend', '', it));
+    const row = t('div', 'tl-cot-pick');
+    for (const [v, lab] of [['A', A], ['B', B]]) { const l = t('label', 'tl-choice tl-cot-opt'); const r = /** @type {HTMLInputElement} */ (t('input', '')); r.type = 'radio'; r.name = `tl-cot-${k}-${i}`; r.value = v; l.append(r, t('span', 'tl-cot-key', v), t('span', '', lab)); row.append(l); }
+    fs.append(row); f.append(fs);
+  });
+  const { err, btn } = sendBar('Gửi');
+  f.addEventListener('change', () => { err.textContent = ''; });
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const picks = (s.items || []).map((/** @type {string} */ _, /** @type {number} */ i) => /** @type {HTMLInputElement|null} */ (f.querySelector(`input[name="tl-cot-${k}-${i}"]:checked`))?.value || '');
+    const miss = picks.findIndex((/** @type {string} */ x) => !x);
+    if (miss >= 0) { err.textContent = `Em chưa chọn cột cho dòng ${miss + 1}.`; /** @type {HTMLInputElement|null} */ (f.querySelector(`input[name="tl-cot-${k}-${miss}"]`))?.focus(); return; }
+    void send(k, 0, cotValue(/** @type {any} */ (picks)), err, btn);
+  });
+  f.append(err, btn); return f;
+}
+/** Tranh luận hai phía: chọn phía + một lí do. @param {any} s @param {string} k */
+function tranhForm(s, k) {
+  const f = t('form', 'tl-form'); f.noValidate = true;
+  const fs = t('fieldset', 'tl-poll'); fs.append(t('legend', 'vh', 'Em chọn phía nào'));
+  (s.opts || []).forEach((/** @type {string} */ o, /** @type {number} */ i) => { const lab = t('label', 'tl-choice'); const r = /** @type {HTMLInputElement} */ (t('input', '')); r.type = 'radio'; r.name = 'tl-tr-' + k; r.value = String(i); lab.append(r, t('span', '', o)); fs.append(lab); });
+  const id = `tl-ly-${k}`; const lab = /** @type {HTMLLabelElement} */ (t('label', 'tl-label', 'Lí do của em')); lab.htmlFor = id;
+  const ta = /** @type {HTMLTextAreaElement} */ (t('textarea', 'tl-input')); ta.id = id; ta.rows = 2; ta.maxLength = MAX_REASON; ta.setAttribute('aria-describedby', id + '-err');
+  const fe = t('p', 'tl-err', ''); fe.id = id + '-err';
+  const { err, btn } = sendBar('Gửi');
+  f.addEventListener('input', () => { err.textContent = ''; fe.textContent = ''; ta.removeAttribute('aria-invalid'); });
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const c = /** @type {HTMLInputElement|null} */ (f.querySelector(`input[name="tl-tr-${k}"]:checked`));
+    if (!c) { err.textContent = 'Chọn một phía trước khi gửi.'; return; }
+    const v = ta.value.replace(/\s+/g, ' ').trim();
+    if (!v) { fe.textContent = 'Ghi một lí do ngắn.'; ta.setAttribute('aria-invalid', 'true'); ta.focus(); return; }
+    if (badWord(v, pub?.cam || [])) { fe.textContent = 'Có từ ngữ không phù hợp. Em sửa lại nhé.'; ta.setAttribute('aria-invalid', 'true'); ta.focus(); return; }
+    void send(k, 0, `${c.value}|${v}`, err, btn);
+  });
+  f.append(fs, lab, ta, fe, t('p', 'tl-hint', `Tối đa ${MAX_REASON} ký tự.`), err, btn); return f;
+}
+/** Bắt lỗi: bấm vào cụm em cho là sai. @param {any} s @param {string} k */
+function loiForm(s, k) {
+  const f = t('form', 'tl-form'); f.noValidate = true;
+  const fs = t('fieldset', 'tl-loi-pick'); fs.append(t('legend', '', 'Bấm vào cụm từ em cho là sai'));
+  (s.items || []).forEach((/** @type {string} */ it, /** @type {number} */ i) => { const lab = t('label', 'tl-loi-opt'); const r = /** @type {HTMLInputElement} */ (t('input', '')); r.type = 'radio'; r.name = 'tl-loi-' + k; r.value = String(i); lab.append(r, t('span', '', it)); fs.append(lab); });
+  const { err, btn } = sendBar('Gửi');
+  f.addEventListener('change', () => { err.textContent = ''; });
+  f.addEventListener('submit', ev => { ev.preventDefault(); const c = /** @type {HTMLInputElement|null} */ (f.querySelector('input:checked')); if (!c) { err.textContent = 'Bấm chọn một cụm từ trước khi gửi.'; return; } void send(k, 0, c.value, err, btn); });
+  f.append(fs, err, btn); return f;
+}
+/** Xếp hạng: mỗi mục một thứ hạng, không trùng. @param {any} s @param {string} k */
+function xhForm(s, k) {
+  const f = t('form', 'tl-form'); f.noValidate = true; const n = (s.items || []).length;
+  f.append(t('p', 'tl-hint', `Chọn thứ hạng cho từng mục: 1 là quan trọng nhất, ${n} là ít quan trọng nhất. Không chọn trùng hạng.`));
+  /** @type {HTMLSelectElement[]} */ const sels = [];
+  (s.items || []).forEach((/** @type {string} */ it, /** @type {number} */ i) => {
+    const w = t('div', 'tl-field tl-xh-row'); const id = `tl-xh-${k}-${i}`;
+    const lab = /** @type {HTMLLabelElement} */ (t('label', 'tl-label', it)); lab.htmlFor = id;
+    const sel = /** @type {HTMLSelectElement} */ (t('select', 'tl-xh-sel')); sel.id = id; sel.append(new Option('Hạng…', ''));
+    for (let x = 1; x <= n; x++) sel.append(new Option(`Hạng ${x}`, String(x)));
+    w.append(lab, sel); f.append(w); sels.push(sel);
+  });
+  const { err, btn } = sendBar('Gửi xếp hạng');
+  f.addEventListener('change', () => { err.textContent = ''; });
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const ranks = sels.map(x => Number(x.value) || 0);
+    const miss = ranks.findIndex(x => !x); if (miss >= 0) { err.textContent = `Chọn hạng cho "${(s.items || [])[miss]}".`; sels[miss].focus(); return; }
+    const v = rankValue(ranks); if (!v) { err.textContent = 'Hai mục đang trùng hạng. Mỗi hạng chỉ dùng một lần.'; return; }
+    void send(k, 0, v, err, btn);
+  });
+  f.append(err, btn); return f;
+}
 /** Danh sách câu hỏi các bạn (đã được duyệt), bấm "Cùng thắc mắc". @param {string} k @param {boolean} open */
 function qaList(k, open) {
-  const wrap = t('section', 'tl-qa'); wrap.append(t('h3', 'lt-sub', 'Câu hỏi của cả lớp'));
+  const wallT = pub?.slide?.type === 'tuong';
+  const wrap = t('section', 'tl-qa'); wrap.append(t('h3', 'lt-sub', wallT ? 'Ý tưởng của cả lớp' : 'Câu hỏi của cả lớp'));
   const list = visible(entriesOf(qaY), pub?.an || {}).filter(e => (!pub?.slide?.mod || pub?.ok?.[e.id]) && !badWord(e.v, pub?.cam || []));
   const ranked = qaRank(list, qaVotes || {}, pub?.done || {});
-  if (!ranked.length) { wrap.append(t('p', 'lt-wait', 'Chưa có câu hỏi nào hiện lên. Em đặt câu hỏi ở trên nhé.')); return wrap; }
+  if (!ranked.length) { wrap.append(t('p', 'lt-wait', wallT ? 'Chưa có ý tưởng nào hiện lên. Em gửi ý tưởng ở trên nhé.' : 'Chưa có câu hỏi nào hiện lên. Em đặt câu hỏi ở trên nhé.')); return wrap; }
   const ul = t('ul', 'tl-qa-list');
   for (const q of ranked) {
     const li = t('li', q.done ? 'is-done' : ''), mineVote = !!qaVotes?.[q.id]?.[me?.key || ''];
-    const v = /** @type {HTMLButtonElement} */ (b(`▲ ${q.votes}`, 'tl-vote' + (mineVote ? ' is-on' : ''), async () => {
+    const v = /** @type {HTMLButtonElement} */ (b(`${wallT ? '♥' : '▲'} ${q.votes}`, 'tl-vote' + (mineVote ? ' is-on' : ''), async () => {
       if (!me || !open) return; v.disabled = true;
       await store.put(`tl/${playing}/vote/${k}/${q.id}/${me.key}`, mineVote ? null : true).catch(() => {}); v.disabled = false;
     }));
-    v.setAttribute('aria-pressed', String(mineVote)); v.setAttribute('aria-label', `Cùng thắc mắc: ${q.v} (${q.votes} phiếu)`); v.disabled = !open || q.ma === me?.key;
+    v.setAttribute('aria-pressed', String(mineVote)); v.setAttribute('aria-label', `${wallT ? 'Thích ý tưởng' : 'Cùng thắc mắc'}: ${q.v} (${q.votes} ${wallT ? 'tim' : 'phiếu'})`); v.disabled = !open || q.ma === me?.key;
     li.append(v, t('span', 'tl-qa-text', q.v), ...(q.done ? [t('small', 'tl-qa-done', 'Đã trả lời')] : []));
     ul.append(li);
   }

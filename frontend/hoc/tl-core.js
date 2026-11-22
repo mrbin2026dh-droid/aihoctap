@@ -3,11 +3,17 @@
 // Theo tài liệu công khai của Mentimeter: đám mây từ khóa gộp chữ thường, từ gửi nhiều thì to hơn, nên ≤ 25 ký tự, tối đa 400 từ;
 // giáo viên gỡ được ý kiến (gỡ một ý thì gỡ mọi ý giống hệt); có bộ lọc từ ngữ nhưng không bắt được hết nên vẫn cần duyệt tay.
 
-export const TYPES = /** @type {const} */ ({ cloud: 'Đám mây từ khóa', open: 'Câu trả lời mở', poll: 'Bình chọn', scale: 'Thang điểm 1–5', qa: 'Hỏi đáp' });
+export const TYPES = /** @type {const} */ ({ cloud: 'Đám mây từ khóa', open: 'Câu trả lời mở', poll: 'Bình chọn', scale: 'Thang điểm 1–5', qa: 'Hỏi đáp',
+  cot: 'Xếp hai cột', tranh: 'Tranh luận hai phía', loi: 'Bắt lỗi', xh: 'Xếp hạng', tuong: 'Bức tường ý tưởng', lai: 'Hỏi lại (trước – sau)' });
+/** Bức tường ý tưởng chạy như Hỏi đáp (gửi ý, thả tim), chỉ khác nhãn. @param {unknown} t */
+export const isQa = t => t === 'qa' || t === 'tuong';
+/** Dạng trả lời bằng một lựa chọn như Bình chọn (Hỏi lại dùng lại lựa chọn của câu trước). @param {unknown} t */
+export const isPoll = t => t === 'poll' || t === 'lai';
+export const MAX_REASON = 150;
 /** @typedef {keyof typeof TYPES} TlType */
-/** @typedef {{type:TlType,text:string,opts?:string[],items?:string[],max?:number,mod?:boolean}} Slide */
+/** @typedef {{type:TlType,text:string,opts?:string[],items?:string[],max?:number,mod?:boolean,dung?:number,ref?:number}} Slide */
 export const MAX_SLIDES = 20;
-export const MAX_LEN = /** @type {Record<string, number>} */ ({ cloud: 25, open: 200, qa: 200 });
+export const MAX_LEN = /** @type {Record<string, number>} */ ({ cloud: 25, open: 200, qa: 200, tuong: 200 });
 export const CLOUD_TOP = 100;
 
 const sp = (/** @type {unknown} */ v) => v === null || v === undefined ? '' : String(v).replace(/\s+/g, ' ').trim();
@@ -70,6 +76,37 @@ export function scaleStats(values, nItems) {
 /** Chuỗi gửi lên của thang điểm (kiểm hợp lệ). @param {number[]} scores */
 export const scaleValue = scores => scores.every(x => Number.isInteger(x) && x >= 1 && x <= 5) ? scores.join('|') : '';
 
+/** Xếp hai cột: mỗi bài gửi là chuỗi "ABBA…" (một chữ cho mỗi dòng). @param {string[]} values @param {number} nItems */
+export function cotStats(values, nItems) {
+  const out = Array.from({ length: nItems }, () => ({ a: 0, b: 0 }));
+  for (const v of values) { const s = String(v); if (s.length !== nItems || !/^[AB]+$/.test(s)) continue; [...s].forEach((c, i) => { if (c === 'A') out[i].a++; else out[i].b++; }); }
+  return out;
+}
+/** Chuỗi gửi lên của xếp hai cột. @param {('A'|'B'|'')[]} picks */
+export const cotValue = picks => picks.length && picks.every(x => x === 'A' || x === 'B') ? picks.join('') : '';
+/** Tranh luận hai phía: bài gửi "0|lí do" hoặc "1|lí do". @param {string[]} values */
+export function tranhParse(values) {
+  const sides = [0, 0]; /** @type {string[][]} */ const ly = [[], []];
+  for (const v of values) { const m = /^([01])\|([\s\S]+)$/.exec(String(v)); if (!m) continue; const i = Number(m[1]); sides[i]++; const r = sp(m[2]).slice(0, MAX_REASON); if (r) ly[i].push(r); }
+  return { sides, ly };
+}
+/** Bắt lỗi: đếm số em bấm từng cụm. @param {string[]} values @param {number} n */
+export const loiCounts = (values, n) => pollCounts(values.filter(v => /^\d$/.test(String(v))), n);
+/** Xếp hạng: bài gửi "2|1|3" (thứ hạng của từng mục). Trả thứ hạng trung bình, mục nào trung bình nhỏ hơn thì quan trọng hơn. @param {string[]} values @param {number} n */
+export function rankStats(values, n) {
+  const sum = Array.from({ length: n }, () => 0); let cnt = 0;
+  for (const v of values) {
+    const r = String(v).split('|').map(Number);
+    if (r.length !== n || r.some(x => !Number.isInteger(x) || x < 1 || x > n) || new Set(r).size !== n) continue;
+    r.forEach((x, i) => { sum[i] += x; }); cnt++;
+  }
+  return { n: cnt, avg: sum.map(x => (cnt ? Math.round((x / cnt) * 10) / 10 : 0)), order: sum.map((x, i) => i).sort((a, b) => sum[a] - sum[b] || a - b) };
+}
+/** Chuỗi gửi lên của xếp hạng (mỗi mục một thứ hạng, không trùng). @param {number[]} ranks */
+export const rankValue = ranks => ranks.length && ranks.every(x => Number.isInteger(x) && x >= 1 && x <= ranks.length) && new Set(ranks).size === ranks.length ? ranks.join('|') : '';
+/** Trang phát cho học sinh: bỏ đáp án của câu Bắt lỗi (chỉ công bố khi thầy cô bấm). @param {Slide} s */
+export function pubSlide(s) { const { dung, ...rest } = s; return rest; }
+
 /**
  * Gom mọi ý đã gửi của một trang: y = {mã: {0:{v,t},1:{v,t}}}. Trả danh sách có id = "mã~số".
  * @param {Record<string, Record<string, {v:string,t:number}>>|null|undefined} y @returns {{id:string,ma:string,v:string,t:number}[]}
@@ -97,6 +134,13 @@ export function slideError(s) {
   if (sp(s.text).length > 300) return 'Câu hỏi tối đa 300 ký tự.';
   if (s.type === 'poll') { const o = (s.opts || []).map(sp).filter(Boolean); if (o.length < 2) return 'Bình chọn cần ít nhất 2 lựa chọn.'; if (o.length > 6) return 'Tối đa 6 lựa chọn.'; }
   if (s.type === 'scale') { const it = (s.items || []).map(sp).filter(Boolean); if (!it.length) return 'Thang điểm cần ít nhất 1 tiêu chí.'; if (it.length > 6) return 'Tối đa 6 tiêu chí.'; }
+  const it = (s.items || []).map(sp).filter(Boolean), op = (s.opts || []).map(sp).filter(Boolean);
+  if (s.type === 'cot') { if (op.length !== 2) return 'Đặt tên đủ 2 cột.'; if (it.length < 2) return 'Xếp hai cột cần ít nhất 2 dòng.'; if (it.length > 10) return 'Tối đa 10 dòng.'; }
+  if (s.type === 'tranh' && op.length !== 2) return 'Đặt tên đủ 2 phía (ví dụ Đồng ý, Không đồng ý).';
+  if (s.type === 'loi') { if (it.length < 2) return 'Bắt lỗi cần ít nhất 2 cụm từ.'; if (it.length > 10) return 'Tối đa 10 cụm từ.'; if (!Number.isInteger(s.dung) || Number(s.dung) < 0 || Number(s.dung) >= it.length) return 'Chọn cụm từ sai.'; }
+  if (s.type === 'xh') { if (it.length < 3) return 'Xếp hạng cần ít nhất 3 mục.'; if (it.length > 6) return 'Tối đa 6 mục.'; }
+  if (s.type === 'lai' && (op.length < 2 || !Number.isInteger(s.ref))) return 'Chọn câu Bình chọn cần hỏi lại.';
+  if ((s.type === 'cot' || s.type === 'loi' || s.type === 'xh') && new Set(it).size !== it.length) return 'Có hai dòng trùng nhau.';
   return '';
 }
 /** Chuẩn hóa một trang để lưu / phát. @param {any} s @returns {Slide} */
@@ -105,14 +149,21 @@ export function cleanSlide(s) {
   /** @type {Slide} */ const out = { type, text: sp(s?.text).slice(0, 300) };
   if (type === 'poll') out.opts = (Array.isArray(s.opts) ? s.opts : Object.values(s.opts || {})).map(sp).filter(Boolean).slice(0, 6).map(x => x.slice(0, 80));
   if (type === 'scale') out.items = (Array.isArray(s.items) ? s.items : Object.values(s.items || {})).map(sp).filter(Boolean).slice(0, 6).map(x => x.slice(0, 80));
-  if (type === 'cloud' || type === 'qa') out.max = Math.max(1, Math.min(3, Number(s.max) || (type === 'cloud' ? 3 : 2)));
-  if (type === 'open' || type === 'qa') out.mod = s.mod !== false;
+  const arr = (/** @type {any} */ v) => (Array.isArray(v) ? v : Object.values(v || {})).map(sp).filter(Boolean);
+  if (type === 'cot' || type === 'tranh') out.opts = arr(s.opts).slice(0, 2).map(x => x.slice(0, 40));
+  if (type === 'tranh' && !out.opts?.length) out.opts = ['Đồng ý', 'Không đồng ý'];
+  if (type === 'cot' || type === 'loi') out.items = arr(s.items).slice(0, 10).map(x => x.slice(0, 120));
+  if (type === 'xh') out.items = arr(s.items).slice(0, 6).map(x => x.slice(0, 80));
+  if (type === 'loi') out.dung = Number.isInteger(Number(s.dung)) && s.dung !== '' && s.dung !== null && s.dung !== undefined ? Number(s.dung) : -1;
+  if (type === 'lai') { out.ref = Number.isInteger(Number(s.ref)) && s.ref !== '' && s.ref !== null && s.ref !== undefined ? Number(s.ref) : -1; out.opts = arr(s.opts).slice(0, 6).map(x => x.slice(0, 80)); }
+  if (type === 'cloud' || isQa(type)) out.max = Math.max(1, Math.min(3, Number(s.max) || (type === 'cloud' ? 3 : 2)));
+  if (type === 'open' || isQa(type) || type === 'tranh') out.mod = s.mod !== false;
   return out;
 }
 
 /** Cột file Excel mẫu cho bộ thảo luận. */
-export const TL_COLUMNS = ['STT', 'Loại', 'Câu hỏi', 'Lựa chọn / tiêu chí 1', 'Lựa chọn / tiêu chí 2', 'Lựa chọn / tiêu chí 3', 'Lựa chọn / tiêu chí 4', 'Lựa chọn / tiêu chí 5', 'Lựa chọn / tiêu chí 6', 'Số ý mỗi em'];
-const TYPE_ALIASES = /** @type {Record<string, TlType>} */ ({ 'đám mây': 'cloud', 'đám mây từ khóa': 'cloud', 'tu khoa': 'cloud', cloud: 'cloud', 'trả lời mở': 'open', 'câu trả lời mở': 'open', mở: 'open', open: 'open', 'bình chọn': 'poll', poll: 'poll', 'thang điểm': 'scale', 'thang điểm 1–5': 'scale', 'thang điểm 1-5': 'scale', scale: 'scale', 'hỏi đáp': 'qa', qa: 'qa' });
+export const TL_COLUMNS = ['STT', 'Loại', 'Câu hỏi', 'Lựa chọn / tiêu chí 1', 'Lựa chọn / tiêu chí 2', 'Lựa chọn / tiêu chí 3', 'Lựa chọn / tiêu chí 4', 'Lựa chọn / tiêu chí 5', 'Lựa chọn / tiêu chí 6', 'Số ý mỗi em', 'Dòng thêm (Xếp hai cột, ngăn bởi ;)'];
+const TYPE_ALIASES = /** @type {Record<string, TlType>} */ ({ 'xếp hai cột': 'cot', 'hai cột': 'cot', cot: 'cot', 'tranh luận': 'tranh', 'tranh luận hai phía': 'tranh', tranh: 'tranh', 'bắt lỗi': 'loi', loi: 'loi', 'xếp hạng': 'xh', xh: 'xh', 'bức tường': 'tuong', 'bức tường ý tưởng': 'tuong', tuong: 'tuong', 'hỏi lại': 'lai', 'hỏi lại (trước – sau)': 'lai', 'trước – sau': 'lai', 'trước - sau': 'lai', lai: 'lai', 'đám mây': 'cloud', 'đám mây từ khóa': 'cloud', 'tu khoa': 'cloud', cloud: 'cloud', 'trả lời mở': 'open', 'câu trả lời mở': 'open', mở: 'open', open: 'open', 'bình chọn': 'poll', poll: 'poll', 'thang điểm': 'scale', 'thang điểm 1–5': 'scale', 'thang điểm 1-5': 'scale', scale: 'scale', 'hỏi đáp': 'qa', qa: 'qa' });
 /** Đọc dòng Excel → các trang thảo luận. @param {unknown[][]} rows */
 export function parseTlRows(rows) {
   /** @type {Slide[]} */ const slides = []; /** @type {string[]} */ const errors = [];
@@ -123,9 +174,16 @@ export function parseTlRows(rows) {
     const r = /** @type {unknown[]} */ (row || []), line = i + 2;
     if (!sp(r[1]) && !sp(r[2])) return;
     const type = TYPE_ALIASES[sp(r[1]).toLowerCase()];
-    if (!type) { errors.push(`Dòng ${line}: loại "${sp(r[1])}" chưa đúng (Đám mây, Trả lời mở, Bình chọn, Thang điểm, Hỏi đáp).`); return; }
+    if (!type) { errors.push(`Dòng ${line}: loại "${sp(r[1])}" chưa đúng (Đám mây, Trả lời mở, Bình chọn, Thang điểm, Hỏi đáp, Xếp hai cột, Tranh luận, Bắt lỗi, Xếp hạng, Bức tường, Hỏi lại).`); return; }
     const list = r.slice(3, 9).map(sp).filter(Boolean);
-    const s = cleanSlide({ type, text: r[2], opts: list, items: list, max: r[9] });
+    // Xếp hai cột / Tranh luận: ô 1–2 là tên cột (phía); Xếp hai cột: các dòng ở ô 3–6 và cột thêm ("Dòng thêm", ngăn bởi ;)
+    // Bắt lỗi: các cụm ở ô 1–6, cụm sai đánh dấu * ở đầu. Hỏi lại: ô 1 là số câu Bình chọn cần hỏi lại.
+    let s;
+    if (type === 'cot') s = cleanSlide({ type, text: r[2], opts: list.slice(0, 2), items: [...list.slice(2), ...sp(r[10]).split(';').map(sp).filter(Boolean)] });
+    else if (type === 'tranh') s = cleanSlide({ type, text: r[2], opts: list.slice(0, 2) });
+    else if (type === 'loi') { const star = list.findIndex(x => x.startsWith('*')); s = cleanSlide({ type, text: r[2], items: list.map(x => x.replace(/^\*\s*/, '')), dung: star }); }
+    else if (type === 'lai') { const ref = Number(list[0]) - 1, src = slides[ref]; s = cleanSlide({ type, text: r[2], ref: src && isPoll(src.type) ? ref : -1, opts: src?.opts || [] }); }
+    else s = cleanSlide({ type, text: r[2], opts: list, items: list, max: r[9] });
     const err = slideError(s); if (err) { errors.push(`Dòng ${line}: ${err}`); return; }
     slides.push(s);
   });
@@ -140,12 +198,16 @@ export function parseTlRows(rows) {
  */
 export function summarize(s, list, st = {}) {
   const shown = visible(list, st.an || {}).filter(e => !badWord(e.v, st.cam || []));
-  const approved = (s.type === 'open' || s.type === 'qa') && s.mod ? shown.filter(e => st.ok?.[e.id]) : shown;
+  const approved = (s.type === 'open' || isQa(s.type)) && s.mod ? shown.filter(e => st.ok?.[e.id]) : shown;
   const people = new Set(list.map(e => e.ma)).size;
   if (s.type === 'cloud') return { type: s.type, people, cloud: cloud(list.map(e => e.v), st.anw || [], st.cam || []) };
-  if (s.type === 'poll') return { type: s.type, people, counts: pollCounts(list.map(e => e.v), (s.opts || []).length) };
+  if (isPoll(s.type)) return { type: s.type, people, counts: pollCounts(list.map(e => e.v), (s.opts || []).length) };
+  if (s.type === 'cot') return { type: s.type, people, cot: cotStats(list.map(e => e.v), (s.items || []).length) };
+  if (s.type === 'tranh') { const t = tranhParse(shown.map(e => e.v)); return { type: s.type, people, sides: t.sides, ly: t.ly }; }
+  if (s.type === 'loi') return { type: s.type, people, counts: loiCounts(list.map(e => e.v), (s.items || []).length) };
+  if (s.type === 'xh') return { type: s.type, people, rank: rankStats(list.map(e => e.v), (s.items || []).length) };
   if (s.type === 'scale') return { type: s.type, people, scale: scaleStats(list.map(e => e.v), (s.items || []).length) };
-  if (s.type === 'qa') return { type: s.type, people, qa: qaRank(approved, st.votes || {}, st.done || {}) };
+  if (isQa(s.type)) return { type: s.type, people, qa: qaRank(approved, st.votes || {}, st.done || {}) };
   return { type: s.type, people, open: approved };
 }
 /** Nhận xét tính sẵn (khi AI chưa trả lời được). @param {Slide[]} slides @param {ReturnType<typeof summarize>[]} sums */
@@ -153,9 +215,13 @@ export function localNotes(slides, sums) {
   return slides.map((s, i) => {
     const r = /** @type {any} */ (sums[i] || {}); const head = `Trang ${i + 1} (${TYPES[s.type]}): ${r.people || 0} em tham gia.`;
     if (s.type === 'cloud') return `${head} Từ nhiều nhất: ${(r.cloud || []).slice(0, 5).map((/** @type {any} */ x) => `"${x.w}" (${x.n})`).join(', ') || 'chưa có'}.`;
-    if (s.type === 'poll') { const c = r.counts || [], tot = c.reduce((a, b) => a + b, 0) || 1, top = c.indexOf(Math.max(...c, 0)); return `${head} Nhiều nhất: "${(s.opts || [])[top] || ''}" ${Math.round(100 * (c[top] || 0) / tot)}%.`; }
+    if (isPoll(s.type)) { const c = r.counts || [], tot = c.reduce((a, b) => a + b, 0) || 1, top = c.indexOf(Math.max(...c, 0)); return `${head} Nhiều nhất: "${(s.opts || [])[top] || ''}" ${Math.round(100 * (c[top] || 0) / tot)}%.`; }
     if (s.type === 'scale') return `${head} ${(s.items || []).map((it, j) => `${it}: ${r.scale?.[j]?.avg || 0}/5`).join('; ')}.`;
-    if (s.type === 'qa') return `${head} Câu hỏi được quan tâm nhất: ${(r.qa || []).slice(0, 3).map((/** @type {any} */ q) => `"${q.v}" (${q.votes} phiếu)`).join('; ') || 'chưa có'}.`;
+    if (s.type === 'cot') return `${head} ${(s.items || []).map((it, j) => `${it}: ${r.cot?.[j]?.a || 0} – ${r.cot?.[j]?.b || 0}`).join('; ')}.`;
+    if (s.type === 'tranh') return `${head} ${(s.opts || [])[0]}: ${r.sides?.[0] || 0}; ${(s.opts || [])[1]}: ${r.sides?.[1] || 0}.`;
+    if (s.type === 'loi') { const c = r.counts || []; return `${head} Cụm sai "${(s.items || [])[Number(s.dung)] || ''}" có ${c[Number(s.dung)] || 0} em bấm đúng.`; }
+    if (s.type === 'xh') return `${head} Thứ tự chung: ${(r.rank?.order || []).map((/** @type {number} */ j) => (s.items || [])[j]).join(' > ')}.`;
+    if (isQa(s.type)) return `${head} Ý được quan tâm nhất: ${(r.qa || []).slice(0, 3).map((/** @type {any} */ q) => `"${q.v}" (${q.votes} phiếu)`).join('; ') || 'chưa có'}.`;
     return `${head} ${(r.open || []).length} ý kiến đã duyệt.`;
   });
 }
