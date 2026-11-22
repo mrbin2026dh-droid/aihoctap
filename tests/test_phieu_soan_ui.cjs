@@ -15,7 +15,8 @@ const LESSON = { id: 'bthu', title: 'Bài thử 8 dạng', grade: 9, activities:
   { id: 'cghep', type: 'ghep', prompt: 'Ghép tình huống với năng lực', items: [{ text: 'AI viết sai', dap: 'Tư duy phản biện' }, { text: 'App mới', dap: 'Học cách học' }], giai_thich: 'x' },
   { id: 'ctt', type: 'thu_tu', prompt: 'Sắp xếp các bước', items: [{ text: 'Hỏi AI' }, { text: 'Kiểm tra bằng sách' }, { text: 'Ghi vào vở' }], giai_thich: 'x' },
   { id: 'cdien', type: 'dien', prompt: 'Ai thắng trận Bạch Đằng năm 938?', chap_nhan: ['Ngô Quyền'], giai_thich: 'x' },
-  { id: 'ctl', type: 'tu_luan', prompt: 'Năng lực em thấy cần nhất là gì, vì sao?' }]}] };
+  { id: 'ctl', type: 'tu_luan', prompt: 'Năng lực em thấy cần nhất là gì, vì sao?' }]},
+  { id: 'hhai', title: 'Hoạt động 2', questions: [{ id: 'chai', type: 'mot', prompt: 'Câu ở hoạt động 2', options: ['Có', 'Không'], dung: [0], giai_thich: 'x' }] }] };
 (async () => {
   const { lessonToPack } = await import('../worker/soan-core.js');
   const { pack } = lessonToPack(LESSON);
@@ -25,13 +26,14 @@ const LESSON = { id: 'bthu', title: 'Bài thử 8 dạng', grade: 9, activities:
       const tag = vp.width < 500 ? '[mobile] ' : '';
       const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block' }); const pg = await ctx.newPage();
       pg.on('dialog', d => { throw new Error('Không được dùng alert/confirm/prompt: ' + d.message()); });
-      const calls = []; let bai = { answers: {}, locked: {}, status: 'draft', rev: 0, uid: 'hs01' };
+      let xoa = false; const calls = []; let bai = { answers: {}, locked: {}, status: 'draft', rev: 0, uid: 'hs01' };
       await pg.route('**/api/**', async r => {
         const u = new URL(r.request().url()).pathname; const body = r.request().postDataJSON?.() || null; calls.push({ u, body });
         let res = { courses: [] };
         if (u.endsWith('/login')) res = { token: 't', must_change_pin: false };
         else if (u.endsWith('/pwa/me')) res = { uid: 'hs01', student_name: 'Nam', class_code: '9A', grade: 9 };
         else if (u === '/api/pwa/phieu') res = { packs: [{ id: 'bthu', title: pack.title, grade: 9 }] };
+        else if (u === '/api/pwa/phieu/bthu' && xoa) { r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'PACK_NOT_FOUND', detail: 'Không tìm thấy bài.' }) }); return; }
         else if (u === '/api/pwa/phieu/bthu') res = { pack: { ...pack, locked_blocks: [] }, bai, nhom: null, gopy: {}, gv: null };
         else if (u.endsWith('/draft')) { bai = { ...bai, answers: { ...bai.answers, ...body.answers }, rev: bai.rev + 1 }; res = { rev: bai.rev }; }
         else if (u.endsWith('/kiem')) res = { the: body.the, rev: bai.rev, ket_qua: [{ field: pack.activities[0].buoc[0].the.find(t => t.kiem === body.the).fields[0], dung: true, giai_thich: '' }], ten: '', chot: 'GIAI_THICH_GV' };
@@ -41,13 +43,21 @@ const LESSON = { id: 'bthu', title: 'Bài thử 8 dạng', grade: 9, activities:
       await pg.click('#gate-student'); await pg.fill('#student-code', 'hs01'); await pg.fill('#student-pin', '123456'); await pg.click('#login-form button[type=submit]'); await pg.waitForTimeout(900);
       await pg.click('.bottom-nav [data-tab=hocai]'); await pg.waitForSelector('.phieu-card'); await pg.click('.phieu-card button'); await pg.waitForSelector('.phieu-the');
       ok(await pg.locator('.phieu-buoc').count() === 0, tag + 'một hoạt động không cần thanh bước');
+      ok(await pg.locator('.phieu-steps .phieu-step').count() === 2 && (await pg.textContent('.phieu-act-so')).includes('Hoạt động 1/2'), tag + 'thanh hoạt động gọn, có số thứ tự');
+      ok(await pg.locator('.phieu-steps button:nth-child(2)[aria-disabled=true]').count() === 1, tag + 'hoạt động 2 khóa khi chưa xong hoạt động 1');
+      await pg.click('.phieu-foot button:has-text("Hoạt động tiếp theo")');
+      ok((await pg.textContent('.phieu-status')).includes('trả lời hết các câu') && (await pg.textContent('.phieu-act-so')).includes('Hoạt động 1/2'), tag + 'chưa xong thì không sang hoạt động sau');
+      ok((await pg.textContent('.phieu-opt-key >> nth=0')) === 'A' && await pg.locator('.phieu-opt-key').count() === 3, tag + 'lựa chọn có chữ cái A, B, C');
+      ok(await pg.locator('.phieu-the legend.visually-hidden').count() === 1, tag + 'bỏ dòng "Chọn một đáp án" thừa');
+      ok(await pg.evaluate(() => { const i = document.querySelector('.phieu-opt input'); return i && i.getBoundingClientRect().width <= 1; }), tag + 'ô chọn gốc ẩn, bấm cả dòng');
+      ok((await pg.textContent('.phieu-the-so')).includes('Câu 1/8') && await pg.locator('.phieu-tien-do progress').count() === 1, tag + 'thanh tiến độ câu');
       ok((await pg.textContent('.phieu-hd')).includes('Làm từng câu rồi bấm Kiểm tra.'), tag + 'hướng dẫn của giáo viên');
       const next = async () => { await pg.click('.phieu-the-tiep'); await pg.waitForTimeout(150); };
       const shot = async name => { if (SHOT && vp.width < 500) await pg.screenshot({ path: path.join(SHOT, `hs-${name}.png`), fullPage: true }); };
       // 1. Trắc nghiệm 1 đáp án
       ok(await pg.locator('.phieu-the input[type=radio]').count() === 3 && (await pg.textContent('.phieu-the legend')).includes('Chọn một đáp án') && await pg.locator('.phieu-goi-y').count() === 0, tag + 'trắc nghiệm: 3 nút chọn');
       await pg.locator('.phieu-the label.option').nth(1).click(); await pg.click('.phieu-kiem'); await pg.waitForSelector('.phieu-chot');
-      ok((await pg.textContent('.phieu-fb')).includes('GIAI_THICH_GV'), tag + 'giải thích sau khi kiểm tra'); await shot('1-trac-nghiem'); await next();
+      ok((await pg.textContent('.phieu-fb')).includes('GIAI_THICH_GV') && await pg.locator('[data-field=cmot].is-dung').count() === 1, tag + 'giải thích sau khi kiểm tra, tô màu ô đúng'); await shot('1-trac-nghiem'); await next();
       // 2. Nhiều đáp án
       ok(await pg.locator('.phieu-the input[type=checkbox]').count() === 3, tag + 'nhiều đáp án: ô tích'); await shot('2-nhieu-dap-an');
       await pg.locator('.phieu-the label.option').nth(2).click(); await pg.locator('.phieu-the label.option').nth(0).click();
@@ -70,6 +80,9 @@ const LESSON = { id: 'bthu', title: 'Bài thử 8 dạng', grade: 9, activities:
       // 8. Tự luận: không có nút Kiểm tra
       ok(await pg.locator('.phieu-the textarea').count() === 1 && await pg.locator('.phieu-kiem').count() === 0, tag + 'tự luận: ô viết, không chấm'); await shot('8-tu-luan');
       ok(await pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), tag + 'không tràn ngang');
+      // Thầy cô xóa bài: chuyển hoạt động thì tải lại, gặp 404 thì về danh sách bài
+      xoa = true; await pg.click('.phieu-steps button:nth-child(1)'); await pg.waitForFunction(() => !document.querySelector('.phieu-act'), null, { timeout: 8000 });
+      ok(await pg.locator('.phieu-act').count() === 0, tag + 'bài đã xóa thì quay về danh sách');
       ok(await pg.evaluate(() => !document.querySelector('#hocai [style]:not([style=""])')), tag + 'không style nội tuyến: ' + await pg.evaluate(() => document.querySelector('#hocai [style]:not([style=""])')?.outerHTML.slice(0, 200)));
       await ctx.close();
     }

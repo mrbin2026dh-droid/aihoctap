@@ -5,6 +5,7 @@ const pack = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'fixtures/phieu_
 const srv = http.createServer((q, r) => { let p = q.url.split('?')[0]; if (p === '/') p = '/index.html'; const f = path.join(root, p); if (!fs.existsSync(f)) { r.statusCode = 404; return r.end(); }
   r.setHeader('content-type', { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.json': 'application/json' }[path.extname(f)] || 'x'); r.end(fs.readFileSync(f)); }).listen(8131);
 const B = 'http://localhost:8131';
+const goAct = async (pg, k) => { await pg.click(`.phieu-steps button:nth-child(${k})`); await pg.waitForFunction(k => (document.querySelector('.phieu-act-so')?.textContent || '').startsWith('Hoạt động ' + k + '/'), k, { timeout: 5000 }); };
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
 (async () => { const b = await chromium.launch(); try {
   for (const vp of [{ width: 1200, height: 850 }, { width: 375, height: 812 }]) {
@@ -74,7 +75,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('#msg-ok');
     ok(!calls.some(c => c.u.endsWith('/submit')), tag + 'không nộp khi thiếu');
     // HĐ 2.1: làm theo máy, chia bước, thẻ tình huống có Kiểm tra
-    await pg.click('.phieu-steps button:nth-child(2)');
+    await goAct(pg, 2);
     ok(await pg.locator('.phieu-buoc button').count() === 3, tag + 'HĐ 2.1 có 3 bước');
     ok(!(await pg.textContent('.phieu-act')).includes('Phiếu nhóm'), tag + 'không còn phần nhóm, thư kí');
     await pg.click('.phieu-buoc button:nth-child(2)');
@@ -96,8 +97,9 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('.phieu-the-tiep');
     ok((await pg.textContent('.phieu-the-so')).includes('Tình huống 2'), tag + 'sang tình huống 2');
     // Bảng mục tiêu mẫu chưa mở
-    await pg.click('.phieu-steps button:nth-child(3)');
-    ok((await pg.textContent('.phieu-act')).includes('thầy cô sẽ mở'), tag + 'học liệu chưa mở chỉ báo, không lộ');
+    await pg.click('.phieu-steps button:nth-child(3)', { force: true });
+    ok((await pg.textContent('.phieu-status')).includes('làm xong hoạt động 2 trước'), tag + 'chưa xong hoạt động 2 thì chưa mở hoạt động 3');
+    ok(await pg.locator('.phieu-steps button:nth-child(3)[aria-disabled=true]').count() === 1, tag + 'hoạt động sau đang khóa');
     // Không tràn ngang, không style nội tuyến trong phần Học AI
     ok(await pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), tag + 'không tràn ngang');
     ok(await pg.evaluate(() => !document.querySelector('#hocai [style]')), tag + 'không style nội tuyến');

@@ -4677,3 +4677,13 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - soan 109, teacher_ui 85 đều PASS.
   - Các test sau đều PASS: core, worker, b2, soan_ui, mobile_nav, thi_ui, role_isolation, worker_gate.
 - 22/11/2026 Claude: deploy Worker `6a6eac7f-df33-4dc0-b54b-501e0e766278` (quay lui về `5009bfbc-fe5c-4fa5-9ad4-ab4ba05cf777`); kiểm thật health/catalog 200, phieu 401.
+
+### 22/11/2026 — Claude: màn học sinh Học AI kiểu ứng dụng trắc nghiệm, mở hoạt động lần lượt
+- Giáo viên góp ý: chữ dính vào ô chọn, cần giao diện giống ứng dụng trắc nghiệm; thanh hoạt động rối; xóa bài mà học sinh vẫn thấy; học sinh phải xong mục này mới sang mục khác.
+- Đã làm (`frontend/hoc/phieu.js`, `styles.css`, `sw.js`):
+  - Lựa chọn thành ô lớn có chữ cái A, B, C, bấm cả ô; ẩn ô chọn gốc và dòng "Chọn một đáp án". Thẻ câu có thanh tiến độ "Câu i/n". Sau khi Kiểm tra, ô đã chọn tô xanh nếu đúng, đỏ nếu sai.
+  - Thanh hoạt động thu gọn thành vòng số, có ✓ khi xong. Học sinh phải trả lời hết câu bắt buộc mới mở hoạt động sau; nút "Hoạt động tiếp theo" chỉ ra câu còn thiếu.
+  - Mỗi lần chuyển hoạt động, máy tải lại bài mới nhất. Nếu máy chủ trả 404 (bài đã bị xóa hoặc ẩn) thì quay về danh sách bài.
+- Kiểm thực tế:
+  - soan_ui 49, ui 78, b2_ui 42 đều PASS.
+  - Các test sau đều PASS: core, worker, soan, teacher_ui, role_isolation, fonts, student_ui_standard; `package_student_pwa.py --check` PASS. Không sửa Worker.

@@ -90,12 +90,21 @@ class PackView {
     const acts = this.pack.activities || [];
     this.actId = actId && acts.some((/** @type {any} */ a) => a.id === actId) ? actId : acts[0]?.id;
     const head = el('div', '', 'phieu-head');
-    const back = button('Về danh sách bài', async () => { await this.flush(); renderHocAi(this.box, this.ctx); }, 'back-button');
+    const back = button('Về danh sách bài', async () => { await this.flush(); await renderHocAi(this.box, this.ctx); }, 'back-button');
     const h = el('h2', this.pack.title, 'phieu-title'); h.tabIndex = -1;
     head.append(back, h, el('p', `Trạng thái: ${STATUS[this.st.bai.status] || 'Đang làm'}`, 'meta'), this.status);
     const nav = el('nav', '', 'phieu-steps'); nav.setAttribute('aria-label', 'Các hoạt động');
+    const cur = acts.findIndex((/** @type {any} */ a) => a.id === this.actId);
     acts.forEach((/** @type {any} */ a, /** @type {number} */ i) => {
-      const b = button(`${i + 1}. ${a.title}`, async () => { await this.flush(); this.render(a.id); });
+      const done = this.actDone(a), open = this.canOpen(acts, i);
+      const b = button('', async () => {
+        if (!open) { this.setStatus(`Em làm xong hoạt động ${this.firstUndone(acts) + 1} trước rồi mới sang hoạt động này.`); return; }
+        await this.go(a.id);
+      }, 'phieu-step' + (done ? ' is-done' : '') + (open ? '' : ' is-locked'));
+      b.append(el('span', done && i !== cur ? '✓' : String(i + 1), 'phieu-step-so'));
+      b.setAttribute('aria-label', `Hoạt động ${i + 1}: ${a.title}${done ? ', đã xong' : ''}${open ? '' : ', chưa mở'}`);
+      b.title = a.title;
+      if (!open) b.setAttribute('aria-disabled', 'true');
       if (a.id === this.actId) b.setAttribute('aria-current', 'step');
       nav.append(b);
     });
@@ -115,8 +124,9 @@ class PackView {
   /** @param {any} a */
   activity(a) {
     const sec = el('section', '', 'phieu-act');
+    const all = this.pack.activities || [];
     const h = el('h3', a.title, 'phieu-act-title'); h.tabIndex = -1;
-    sec.append(h);
+    sec.append(el('p', `Hoạt động ${all.indexOf(a) + 1}/${all.length}`, 'phieu-act-so'), h);
     if (Array.isArray(a.buoc) && a.buoc.length) { this.steps(a, sec); return sec; }
     if (a.nhiem_vu) sec.append(el('p', a.nhiem_vu, 'phieu-task'));
     for (const b of a.blocks || []) sec.append(this.blockOrNote(b));
@@ -189,7 +199,9 @@ class PackView {
     const i = Math.min(pos[a.id] || 0, the.length - 1);
     const t = the[i];
     const card = el('article', '', 'phieu-the');
-    card.append(el('p', `${t.ten} · ${i + 1}/${the.length}`, 'phieu-the-so'));
+    const td = el('div', '', 'phieu-tien-do');
+    const bar = /** @type {HTMLProgressElement} */ (el('progress')); bar.max = the.length; bar.value = i + 1; bar.setAttribute('aria-label', `Câu ${i + 1} trên ${the.length}`);
+    td.append(el('span', /^Câu /.test(t.ten || 'Câu') ? `Câu ${i + 1}/${the.length}` : `${t.ten} · ${i + 1}/${the.length}`, 'phieu-the-so'), bar); card.append(td);
     if (t.noi_dung) card.append(el('p', t.noi_dung, 'phieu-the-nd'));
     if (t.goi_y) card.append(el('p', t.goi_y, 'meta phieu-goi-y'));
     const done = !!this.st.bai.kiem?.[t.kiem] || !!this.fb?.[t.kiem];
@@ -201,7 +213,7 @@ class PackView {
       if ((t.sau_kiem || []).includes(id) && !done) continue;
       const node = this.field({ ...f, label: String(f.label).replace(/^Tình huống \d+: /, '') }, this.answers, false);
       const kq = fb?.ket_qua?.find((/** @type {any} */ x) => x.field === id);
-      if (kq) node.append(el('p', (kq.dung ? 'Đúng. ' : 'Chưa đúng. ') + kq.giai_thich, kq.dung ? 'phieu-ok' : 'phieu-chua'));
+      if (kq) { node.classList.add(kq.dung ? 'is-dung' : 'is-sai'); node.append(el('p', (kq.dung ? 'Đúng. ' : 'Chưa đúng. ') + kq.giai_thich, kq.dung ? 'phieu-ok' : 'phieu-chua')); }
       if (!node.hidden) shown++;
       form.append(node);
     }
@@ -294,16 +306,18 @@ class PackView {
       sel.addEventListener('change', () => onChange(sel.value));
       wrap.append(lab, sel);
     } else {
-      const fs = el('fieldset', '', f.kieu === 'nut' ? 'phieu-choice is-nut' : 'phieu-choice');
-      const lg = el('legend', f.label); fs.append(lg);
+      const quiz = f.kieu !== 'nut' && (f.type === 'choice' || f.type === 'multi');
+      const fs = el('fieldset', '', f.kieu === 'nut' ? 'phieu-choice is-nut' : quiz ? 'phieu-choice is-quiz' : 'phieu-choice');
+      const lg = el('legend', f.label, quiz && /^Chọn (một|tất cả) đáp án/.test(f.label) ? 'visually-hidden' : ''); fs.append(lg);
+      if (quiz && f.type === 'multi') fs.append(el('p', 'Chọn tất cả đáp án đúng (có thể nhiều hơn một).', 'meta phieu-goi-y'));
       fs.setAttribute('aria-describedby', err.id);
       const multi = f.type === 'multi' || f.type === 'members';
       const opts = f.type === 'members' ? Object.entries(this.st.nhom?.members || {}).map(([u, n]) => ({ v: u, t: String(n) })) : optionsOf(this.pack, f).map(o => ({ v: o, t: o }));
       if (f.type === 'members' && !opts.length) fs.append(el('p', 'Vào nhóm để chọn bạn.', 'meta'));
       const cur = ans[f.id];
       const checked = (/** @type {string} */ v) => (multi ? Array.isArray(cur) && cur.includes(v) : cur === v);
-      for (const o of opts) {
-        const lab = el('label', '', 'option');
+      for (const [oi, o] of opts.entries()) {
+        const lab = el('label', '', quiz ? 'option phieu-opt' : 'option');
         const inp = /** @type {HTMLInputElement} */ (el('input'));
         inp.type = multi ? 'checkbox' : 'radio'; inp.name = `${id}-${isGroup ? 'g' : 'c'}`; inp.value = o.v; inp.checked = checked(o.v); inp.disabled = off;
         inp.addEventListener('change', () => {
@@ -313,7 +327,9 @@ class PackView {
           if (vals.length > max) { inp.checked = false; err.textContent = `Chỉ chọn tối đa ${max}.`; err.hidden = false; return; }
           onChange(vals);
         });
-        lab.append(inp, el('span', o.t)); fs.append(lab);
+        if (quiz) lab.append(inp, el('span', String.fromCharCode(65 + oi), 'phieu-opt-key'), el('span', o.t, 'phieu-opt-text'));
+        else lab.append(inp, el('span', o.t));
+        fs.append(lab);
       }
       if (f.allow_custom) {
         const lab = el('label', 'Hoặc tự ghi'); const inp = /** @type {HTMLInputElement} */ (el('input'));
@@ -390,14 +406,39 @@ class PackView {
     return null;
   }
   /** Tải lại từ máy chủ, giữ phần chưa gửi. @param {string} [msg] */
-  async reload(msg) {
+  async reload(msg, actId = this.actId) {
     try {
       const st = await api(`/pwa/phieu/${this.goi}`, { token: await this.ctx.token() });
       const keep = { ...this.pending };
       const v = new PackView(this.box, this.ctx, this.goi, st, keep, false);
-      v.render(this.actId);
+      v.stepOf = this.stepOf; v.cardPos = this.cardPos;
+      v.render(actId);
       if (msg) v.setStatus(msg);
-    } catch (e) { this.setStatus(errText(e)); }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) { renderHocAi(this.box, this.ctx); return; }   // thầy cô đã xóa hoặc ẩn bài
+      this.setStatus(errText(e)); this.render(actId);
+    }
+  }
+  /** Chuyển hoạt động: lưu, tải lại bài mới nhất (thầy cô có thể vừa sửa), rồi mở. @param {string} id */
+  async go(id) {
+    await this.flush();
+    if (this.offline) { this.render(id); return; }
+    await this.reload('', id);
+  }
+  /** Hoạt động đã trả lời đủ các câu bắt buộc. @param {any} a */
+  actDone(a) { return missingForSubmit({ ...this.pack, activities: [a] }, this.answers).length === 0; }
+  /** @param {any[]} acts */
+  firstUndone(acts) { const k = acts.findIndex(a => !this.actDone(a)); return k < 0 ? acts.length : k; }
+  /** Mở lần lượt: chỉ mở khi các hoạt động trước đã xong (bài đã nộp thì mở hết để xem). @param {any[]} acts @param {number} i */
+  canOpen(acts, i) { return !this.editable() || i <= this.firstUndone(acts) || acts[i].id === this.actId; }
+  /** Báo các câu còn thiếu của một hoạt động. @param {any} a */
+  markMissing(a) {
+    const miss = missingForSubmit({ ...this.pack, activities: [a] }, this.answers);
+    for (const id of miss) this.showErr([id], 'Câu này cần trả lời.');
+    (a.buoc || []).forEach((/** @type {any} */ b, /** @type {number} */ k) => (b.the || []).forEach((/** @type {any} */ t, /** @type {number} */ j) => {
+      if ((t.fields || []).includes(miss[0])) { (this.stepOf ||= {})[a.id] = k; (this.cardPos ||= {})[a.id] = j; }
+    }));
+    if (miss.length && !this.box.querySelector(`[data-field="${miss[0]}"]`)) { this.render(a.id); for (const id of miss) this.showErr([id], 'Câu này cần trả lời.'); }
   }
 
   /** @param {string} name @param {string[]} ids @param {HTMLButtonElement} btn */
@@ -520,7 +561,11 @@ class PackView {
   footer(acts) {
     const bar = el('div', '', 'submit-bar phieu-foot');
     const i = acts.findIndex(a => a.id === this.actId);
-    if (i < acts.length - 1) bar.append(button('Hoạt động tiếp theo', async () => { await this.flush(); this.render(acts[i + 1].id); }));
+    if (i < acts.length - 1) bar.append(button('Hoạt động tiếp theo', async () => {
+      await this.flush();
+      if (!this.actDone(acts[i])) { this.setStatus('Em trả lời hết các câu của hoạt động này rồi mới sang hoạt động tiếp theo.'); this.markMissing(acts[i]); return; }
+      await this.go(acts[i + 1].id);
+    }));
     if (this.editable()) {
       const sb = button('Nộp bài', () => this.submit(sb), 'primary');
       bar.append(sb);

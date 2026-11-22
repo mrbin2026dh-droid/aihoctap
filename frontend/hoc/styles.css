@@ -1986,3 +1986,26 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .phieu-ten{font-weight:700;margin:8px 0 0}.phieu-chot{background:var(--paper);border-left:3px solid var(--blue);padding:8px 12px;margin:8px 0}
 .phieu-field .phieu-ok,.phieu-field .phieu-chua{margin-top:6px;font-size:14px}
 .phieu-field select{width:100%;min-height:48px;font-size:16px}.phieu-goi-y{margin:0 0 8px}
+/* Học AI – kiểu ứng dụng trắc nghiệm, thanh hoạt động gọn */
+.phieu-steps{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}
+.phieu-steps .phieu-step{flex:0 0 48px;width:48px;height:48px;min-height:48px;padding:0;border-radius:50%;text-align:center;font-size:16px;font-weight:700}
+.phieu-steps .phieu-step.is-done{border-color:#2f7d4f;color:#2f7d4f}
+.phieu-steps .phieu-step.is-locked{border-style:dashed;color:var(--muted);cursor:not-allowed}
+.phieu-steps .phieu-step[aria-current=step]{background:var(--blue);border-color:var(--blue);color:#fff}
+.phieu-act-so{margin:0;font-size:13px;color:var(--muted)}
+.phieu-tien-do{display:flex;align-items:center;gap:12px}.phieu-tien-do progress{flex:1;height:8px;accent-color:var(--blue)}
+.phieu-choice.is-quiz{border:0;padding:0;margin:0;display:grid;gap:10px}
+.student-app .phieu-opt{position:relative;display:flex;align-items:center;gap:14px;margin:0;padding:12px 16px;min-height:56px;border:2px solid var(--line);border-radius:12px;cursor:pointer;font-weight:500;line-height:1.5}
+.phieu-opt input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.phieu-opt-key{flex:0 0 34px;height:34px;border-radius:50%;border:2px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.phieu-choice.is-quiz input[type=checkbox]+.phieu-opt-key{border-radius:8px}
+.phieu-opt-text{flex:1;min-width:0;overflow-wrap:anywhere}
+.student-app .phieu-opt:has(input:checked){border-color:var(--blue)}
+.phieu-opt:has(input:checked) .phieu-opt-key{background:var(--blue);border-color:var(--blue);color:#fff}
+.phieu-opt:has(input:focus-visible),.phieu-choice.is-nut .option:has(input:focus-visible){outline:3px solid var(--blue);outline-offset:2px}
+.is-dung .phieu-opt:has(input:checked){border-color:#2f7d4f}.is-dung .phieu-opt:has(input:checked) .phieu-opt-key{background:#2f7d4f;border-color:#2f7d4f}
+.is-sai .phieu-opt:has(input:checked){border-color:#b54a2c}.is-sai .phieu-opt:has(input:checked) .phieu-opt-key{background:#b54a2c;border-color:#b54a2c}
+.phieu-choice.is-nut .option{position:relative;justify-content:center;text-align:center;border-width:2px;border-radius:12px}
+.phieu-choice.is-nut .option input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.student-app .phieu-choice.is-nut .option:has(input:checked){border-color:var(--blue);font-weight:700}
+.phieu-choice.is-nut .option:has(input:checked)::before{content:"✓";margin-right:6px}

@@ -6,13 +6,14 @@ const pack = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/phieu/a
 const srv = http.createServer((q, r) => { let p = q.url.split('?')[0]; if (p === '/') p = '/index.html'; const f = path.join(root, p); if (!fs.existsSync(f)) { r.statusCode = 404; return r.end(); }
   r.setHeader('content-type', { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2' }[path.extname(f)] || 'x'); r.end(fs.readFileSync(f)); }).listen(8133);
 const B = 'http://localhost:8133';
+const goAct = async (pg, k) => { await pg.click(`.phieu-steps button:nth-child(${k})`); await pg.waitForFunction(k => (document.querySelector('.phieu-act-so')?.textContent || '').startsWith('Hoạt động ' + k + '/'), k, { timeout: 5000 }); };
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
 (async () => { const b = await chromium.launch(); try {
   for (const vp of [{ width: 1200, height: 850 }, { width: 375, height: 812 }]) {
     const tag = vp.width < 500 ? '[mobile] ' : '';
     const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block' }); const pg = await ctx.newPage();
     pg.on('dialog', d => { throw new Error('Không được dùng alert/confirm/prompt: ' + d.message()); });
-    const calls = []; let bai = { answers: {}, locked: {}, status: 'draft', rev: 0, uid: 'hs01' };
+    const calls = []; let bai = { answers: { p2_nl: 'Hợp tác', p2_vi: 'Làm nhóm cùng AI', p2_viec: 'Chia việc nhóm' }, locked: {}, status: 'draft', rev: 0, uid: 'hs01' };
     await pg.route('**/api/**', async r => {
       const u = new URL(r.request().url()).pathname; const body = r.request().postDataJSON?.() || null; calls.push({ u, body });
       let res = { courses: [] };
@@ -40,12 +41,12 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     ok((await pg.textContent('[data-field=p1_v1]')).includes('GT_DUNG') && (await pg.textContent('[data-field=p1_v5]')).includes('GT_SAI'), tag + 'giải thích dưới từng câu');
     ok((await pg.textContent('.phieu-fb')).includes('Em đúng 1/2'), tag + 'tóm tắt số câu đúng');
     // Phần 2: tình huống A/B/C
-    await pg.click('.phieu-steps button:nth-child(2)');
+    await goAct(pg, 2);
     ok((await pg.textContent('.phieu-the-so')).includes('Tình huống 1 · 1/6'), tag + 'thẻ tình huống 1');
     ok(await pg.locator('[data-field=p2_t1] input[type=radio]').count() === 3, tag + '3 cách xử lí');
     ok(!(await pg.textContent('.phieu-act')).includes('Năng lực cần dùng'), tag + 'không bắt đoán tên năng lực');
     // Phần 3: ô ngày, dấu ✓, lưu bản đầu
-    await pg.click('.phieu-steps button:nth-child(3)'); await pg.click('.phieu-buoc button:nth-child(2)');
+    await goAct(pg, 3); await pg.click('.phieu-buoc button:nth-child(2)');
     ok(await pg.locator('#pf-p3_ngay[type=date]').count() === 1, tag + 'ô chọn ngày');
     await pg.fill('#pf-p3_lam', 'Đọc sách tiếng Anh');
     ok(await pg.locator('[data-field=p3_lam].is-filled').count() === 1 && await pg.locator('[data-field=p3_cach].is-filled').count() === 0, tag + 'dấu ✓ ở ô đã viết');
@@ -56,7 +57,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('.phieu-kiem'); await pg.waitForSelector('text=Đã lưu bản đầu');
     ok(calls.some(c => c.u.endsWith('/kiem') && c.body.the === 'p3_ban_dau'), tag + 'gửi lưu bản đầu');
     // Phần 4: chưa chọn nghề thì nhắc; chọn rồi mới hiện 4 việc
-    await pg.click('.phieu-steps button:nth-child(4)'); await pg.click('.phieu-buoc button:nth-child(2)');
+    await goAct(pg, 4); await pg.click('.phieu-buoc button:nth-child(2)');
     ok((await pg.textContent('.phieu-the')).includes('Em làm bước trước'), tag + 'nhắc chọn nghề trước');
     await pg.click('.phieu-buoc button:nth-child(1)'); await pg.locator('[data-field=p4_nghe] label.option').nth(0).click();
     ok(await pg.locator('[data-field=p4_nghe] input:checked').count() === 1, tag + 'đã chọn nghề ' + await pg.locator('[data-field=p4_nghe]').count());
