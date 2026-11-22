@@ -130,14 +130,34 @@ try {
   eq((await call('POST', '/pwa/phieu/ai9_bai2/gopy', { uid: 'hsA', goal: 1, checks: [true, false, true], text: 'Thêm hạn cụ thể' }, tb)).status, 200);
   eq((await call('GET', '/pwa/phieu/ai9_bai2', null, ta)).body.gopy.hsB.g1.text, 'Thêm hạn cụ thể', 'chủ phiếu thấy góp ý của bạn');
 
+  // Kiểm tra thẻ tình huống: chỉ sau khi trả lời; không đọc nhánh đáp án khác; ghi lần đầu
+  { const g = await call('GET', '/pwa/phieu/ai9_bai2', null, ta);
+    eq((await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta)).body.error, 'MISSING', 'chưa trả lời thì chưa cho kiểm tra');
+    eq((await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'khong_co' }, ta)).status, 404);
+    eq((await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: '__proto__' }, ta)).status, 404);
+    const d1 = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: g.body.bai.rev, answers: { a_t1_nl: 'Học cách học', a_t1_lam: 'Hỏi bạn', a_t1_loi: 'Năm 938' } }, ta); eq(d1.status, 200);
+    reads.length = 0;
+    eq((await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta)).body.error, 'NO_KEY', 'chưa nạp giải thích');
+    setAt('phieu_dapan/ai9_bai2/kiem', { a_t1: { nl: 'Tư duy phản biện', giai_thich: 'Đối chiếu sách', loi: 'Lý Thường Kiệt', loi_giai: 'GIAI_LOI' } });
+    reads.length = 0;
+    const k1 = await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta);
+    eq(k1.status, 200, JSON.stringify(k1.body)); eq(k1.body.dung, false); eq(k1.body.nl_chinh, 'Tư duy phản biện'); eq(k1.body.loi.dung, false);
+    ok(!JSON.stringify(k1.body).includes('GIAI_LOI'), 'chọn sai chỗ lỗi thì chưa lộ lời giải chỗ lỗi');
+    ok(reads.filter(p => p.startsWith('phieu_dapan')).every(p => p === 'phieu_dapan/ai9_bai2/kiem/a_t1'), 'chỉ đọc đúng mục kiểm tra của thẻ');
+    eq(k1.body.rev, d1.body.rev + 1, 'trả rev mới');
+    const d2 = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: k1.body.rev, answers: { a_t1_nl: 'Tư duy phản biện', a_t1_loi: 'Lý Thường Kiệt' } }, ta); eq(d2.status, 200, 'sửa sau kiểm tra được');
+    const k2 = await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta);
+    eq(k2.body.dung, true); eq(k2.body.loi.giai_thich, 'GIAI_LOI');
+    eq(getAt('phieu_bai/ai9_bai2/9a/hsA').kiem.a_t1.a_t1_nl, 'Học cách học', 'giữ câu trả lời lần đầu'); }
   // Nộp
-  eq((await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: 4 }, ta)).body.error, 'MISSING', 'thiếu bắt buộc');
+  const r0 = getAt('phieu_bai/ai9_bai2/9a/hsA').rev, LS1 = String(r0 + 2);
+  eq((await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: r0 }, ta)).body.error, 'MISSING', 'thiếu bắt buộc');
   const full = fillRequired(); delete full.hd1_chon; delete full.hd1_vi;
-  const d6 = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: 4, answers: full }, ta); eq(d6.status, 200, JSON.stringify(d6.body));
-  const sub = await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: 5 }, ta); eq(sub.status, 200, JSON.stringify(sub.body));
-  ok(getAt('phieu_ls/ai9_bai2/hsA/6')?.status === 'submitted', 'có bản chụp khi nộp');
-  eq((await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: 6 }, ta)).body.error, 'NOT_EDITABLE', 'nộp rồi không nộp lại');
-  eq((await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: 6, answers: { a_t1_lam: 'x' } }, ta)).status, 409, 'nộp rồi không sửa');
+  const d6 = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: r0, answers: full }, ta); eq(d6.status, 200, JSON.stringify(d6.body));
+  const sub = await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: r0 + 1 }, ta); eq(sub.status, 200, JSON.stringify(sub.body));
+  ok(getAt('phieu_ls/ai9_bai2/hsA/' + LS1)?.status === 'submitted', 'có bản chụp khi nộp');
+  eq((await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: r0 + 2 }, ta)).body.error, 'NOT_EDITABLE', 'nộp rồi không nộp lại');
+  eq((await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: r0 + 2, answers: { a_t1_lam: 'x' } }, ta)).status, 409, 'nộp rồi không sửa');
 
   // Giáo viên: quyền lớp
   eq((await T({ op: 'lop', goi: 'ai9_bai2', lop: '9A' })).status, 401, 'không đăng nhập');
@@ -150,7 +170,7 @@ try {
   eq((await T({ op: 'cac_lop', goi: 'ai9_bai2' }, gv9a)).body.classes, ['9a'], 'GV lớp chỉ thấy lớp mình');
   eq((await T({ op: 'cac_lop', goi: 'ai9_bai2' }, admin)).body.classes.sort(), ['9a', '9b']);
   eq((await T({ op: 'lich_su', goi: 'ai9_bai2', lop: '9A', uid: 'hsC' }, gv9a)).status, 403, 'lịch sử HS lớp khác');
-  ok(Object.keys((await T({ op: 'lich_su', goi: 'ai9_bai2', lop: '9A', uid: 'hsA' }, gv9a)).body.ls).includes('6'));
+  ok(Object.keys((await T({ op: 'lich_su', goi: 'ai9_bai2', lop: '9A', uid: 'hsA' }, gv9a)).body.ls).includes(LS1));
 
   // Mở học liệu cho lớp
   eq((await T({ op: 'mo', goi: 'ai9_bai2', lop: '9A', block: 'khong_co' }, gv9a)).status, 400);
@@ -182,7 +202,7 @@ try {
   eq(back.body.bai.status, 'returned'); eq(back.body.gv.nhan_xet, 'Mục tiêu 2 cần hạn rõ hơn.'); ok(!JSON.stringify(back.body).includes('"muc"'), 'HS không thấy mức');
   eq((await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: back.body.bai.rev, answers: { b2_truoc_ngay: '15/1' } }, ta)).status, 200, 'trả bài thì sửa được');
   const sub2 = await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: back.body.bai.rev + 1 }, ta); eq(sub2.status, 200);
-  ok(getAt('phieu_ls/ai9_bai2/hsA/6') && getAt(`phieu_ls/ai9_bai2/hsA/${sub2.body.rev}`), 'giữ cả bản trước và bản sau');
+  ok(getAt('phieu_ls/ai9_bai2/hsA/' + LS1) && getAt(`phieu_ls/ai9_bai2/hsA/${sub2.body.rev}`), 'giữ cả bản trước và bản sau');
 
   // Sửa gói (giai đoạn 7)
   const ed = JSON.parse(JSON.stringify(pack)); ed.activities[0].fields[0].label = 'Lúc đầu em chọn ba thẻ';

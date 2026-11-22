@@ -121,6 +121,44 @@ function renderClass() {
     }
     parts.push(sec);
   }
+  // Hoạt động 1: cả lớp chọn thẻ nào (thay giơ tay; chiếu lên bảng)
+  const hs = studentsOf(d);
+  const the = optionsOf(pack, fieldMap(pack).get('hd1_chon') || {});
+  if (the.length) {
+    const dem = the.map(t => hs.filter(s => s.locked?.hd1_chon && Array.isArray(s.answers?.hd1_chon) && s.answers.hd1_chon.includes(t)).length);
+    const daChot = hs.filter(s => s.locked?.hd1_chon).length;
+    const top = [...dem].sort((a, b) => b - a)[2] || 0;
+    const sec1 = el('section', '', 'phieu-gv-sec');
+    sec1.append(el('h3', `Hoạt động 1: cả lớp chọn thẻ nào (${daChot} bài đã chốt)`));
+    const ul = el('ul', '', 'phieu-gv-chart');
+    the.forEach((t, i) => {
+      const li = el('li'); const lab = el('span', `${dem[i] && dem[i] >= top ? '★ ' : ''}${t}`);
+      const bar = /** @type {HTMLProgressElement} */ (el('progress')); bar.max = Math.max(1, daChot); bar.value = dem[i]; bar.setAttribute('aria-label', `${t}: ${dem[i]}`);
+      li.append(lab, bar, el('span', String(dem[i]), 'phieu-gv-num')); ul.append(li);
+    });
+    sec1.append(ul, el('p', '★ là 3 thẻ nhiều bài chọn nhất. Chưa nói đúng sai, cuối bài cả lớp xem lại.', 't-muted'));
+    parts.push(sec1);
+  }
+  // Hoạt động 2.1: lần đầu (trước khi xem giải thích) các máy chọn năng lực nào
+  const nl = pack.options?.nang_luc || [];
+  const ths = (pack.activities || []).flatMap((/** @type {any} */ a) => (a.buoc || []).flatMap((/** @type {any} */ b) => b.the || []));
+  if (ths.length && nl.length) {
+    const sec2 = el('section', '', 'phieu-gv-sec');
+    sec2.append(el('h3', 'Hoạt động 2.1: lần đầu các máy chọn năng lực nào'));
+    const wrap = el('div', '', 't-table-wrap'); const tb = el('table', '', 't-table');
+    tb.append(el('caption', 'Lấy câu trả lời trước khi học sinh xem giải thích. Dùng để chọn tình huống cần giảng thêm.'));
+    const tr = el('tr'); for (const h of ['Tình huống', ...nl, 'Năng lực chính']) { const th = el('th', h); th.setAttribute('scope', 'col'); tr.append(th); }
+    const thead = el('thead'); thead.append(tr); tb.append(thead);
+    const body = el('tbody');
+    for (const t of ths) {
+      const nlId = (t.fields || []).find((/** @type {string} */ x) => x.endsWith('_nl')); if (!nlId) continue;
+      const row = el('tr'); const th = el('th', t.ten); th.setAttribute('scope', 'row'); row.append(th);
+      for (const n of nl) row.append(el('td', String(hs.filter(s => (s.kiem?.[t.kiem]?.[nlId] ?? s.answers?.[nlId]) === n).length)));
+      row.append(el('td', String(d.dapan?.kiem?.[t.kiem]?.nl || '')));
+      body.append(row);
+    }
+    tb.append(body); wrap.append(tb); sec2.append(wrap); parts.push(sec2);
+  }
   // Bảng lớp
   const list = studentsOf(d);
   const sec = el('section', '', 'phieu-gv-sec');
@@ -204,6 +242,8 @@ async function openStudent(uid) {
         const first = ls[revs[0]]?.answers?.[f.id];
         if (JSON.stringify(first) !== JSON.stringify(v) && first !== undefined) td.append(el('p', `Bản nộp lần đầu: ${valText(pack, f, first)}`, 't-muted phieu-truoc'));
       }
+      const k0 = Object.values(s.kiem || {}).find((/** @type {any} */ x) => x && f.id in x);
+      if (k0 && JSON.stringify(/** @type {any} */ (k0)[f.id]) !== JSON.stringify(v)) td.append(el('p', `Lần đầu (trước khi xem giải thích): ${valText(pack, f, /** @type {any} */ (k0)[f.id])}`, 't-muted phieu-truoc'));
       tr.append(th, td, el('td', tags, 't-muted')); tbody.append(tr);
     }
     tb.append(tbody); det.append(tb);
@@ -338,6 +378,14 @@ class Editor {
       const x1 = textField('Tên hoạt động', a.title || '', `ed-a${ai}-title`, false, a.title !== ga.title, ro); x1.inp.addEventListener('input', () => { a.title = x1.inp.value; }); det.append(x1.fld);
       const x2 = textField('Nhiệm vụ', a.nhiem_vu || '', `ed-a${ai}-nv`, true, a.nhiem_vu !== ga.nhiem_vu, ro); x2.inp.addEventListener('input', () => { a.nhiem_vu = x2.inp.value; }); det.append(x2.fld);
       const x3 = textField('Câu hỏi gợi mở (mỗi dòng một câu)', (a.cau_hoi || []).join('\n'), `ed-a${ai}-ch`, true, JSON.stringify(a.cau_hoi) !== JSON.stringify(ga.cau_hoi), ro); x3.inp.addEventListener('input', () => { a.cau_hoi = x3.inp.value.split('\n').map(s => s.trim()).filter(Boolean); }); det.append(x3.fld);
+      (a.buoc || []).forEach((/** @type {any} */ b, /** @type {number} */ bi) => {
+        const gb = ga.buoc?.[bi] || {};
+        const xb = textField(`Bước ${bi + 1}: tên bước`, b.tieu_de || '', `ed-a${ai}-b${bi}-t`, false, b.tieu_de !== gb.tieu_de, ro); xb.inp.addEventListener('input', () => { b.tieu_de = xb.inp.value; }); det.append(xb.fld);
+        if (b.mo_dau !== undefined) { const xm = textField(`Bước ${bi + 1}: đoạn mở đầu`, b.mo_dau, `ed-a${ai}-b${bi}-m`, true, b.mo_dau !== gb.mo_dau, ro); xm.inp.addEventListener('input', () => { b.mo_dau = xm.inp.value; }); det.append(xm.fld); }
+        const xh = textField(`Bước ${bi + 1}: hướng dẫn học sinh (mỗi dòng một việc)`, (b.huong_dan || []).join(String.fromCharCode(10)), `ed-a${ai}-b${bi}-h`, true, JSON.stringify(b.huong_dan) !== JSON.stringify(gb.huong_dan), ro); xh.inp.addEventListener('input', () => { b.huong_dan = xh.inp.value.split(String.fromCharCode(10)).map(x => x.trim()).filter(Boolean); }); det.append(xh.fld);
+        if (b.luu_y !== undefined) { const xl = textField(`Bước ${bi + 1}: lưu ý`, b.luu_y, `ed-a${ai}-b${bi}-l`, false, b.luu_y !== gb.luu_y, ro); xl.inp.addEventListener('input', () => { b.luu_y = xl.inp.value; }); det.append(xl.fld); }
+        (b.the || []).forEach((/** @type {any} */ t, /** @type {number} */ ti) => { const xt = textField(`${t.ten}: nội dung`, t.noi_dung || '', `ed-a${ai}-b${bi}-t${ti}`, true, t.noi_dung !== gb.the?.[ti]?.noi_dung, ro); xt.inp.addEventListener('input', () => { t.noi_dung = xt.inp.value; }); det.append(xt.fld); });
+      });
       det.append(this.hideBox(`ed-a${ai}-hien`, 'Hiện hoạt động này cho học sinh', !a.an, v => { if (v) delete a.an; else a.an = true; }, ro));
       for (const f of a.fields || []) {
         const gf = this.gocF.get(f.id) || {};

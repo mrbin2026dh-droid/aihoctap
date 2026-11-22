@@ -22,6 +22,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
       else if (u === '/api/pwa/phieu') res = { packs: [{ id: 'ai9_bai2', title: pack.title, grade: 9, so_tiet: 2, thu_tu: 2 }] };
       else if (u === '/api/pwa/phieu/ai9_bai2') res = { pack: view(), bai, nhom: null, gopy: {}, gv: null };
       else if (u.endsWith('/draft')) { if (body.rev !== bai.rev) { st = 409; res = { error: 'REV_CONFLICT', detail: 'x' }; } else { bai = { ...bai, answers: { ...bai.answers, ...body.answers }, rev: bai.rev + 1 }; res = { rev: bai.rev }; } }
+      else if (u.endsWith('/kiem')) res = { the: body.the, rev: bai.rev, nl_chinh: 'Tư duy phản biện', dung: false, giai_thich: 'GIAI_THICH_THU', loi: null };
       else if (u.endsWith('/lock')) { bai = { ...bai, locked: { hd1_chon: 1, hd1_vi: 1 }, rev: bai.rev + 1 }; res = { rev: bai.rev, locked: bai.locked }; }
       r.fulfill({ status: st, contentType: 'application/json', body: JSON.stringify(res) });
     });
@@ -41,7 +42,9 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('.phieu-card button');
     await pg.waitForSelector('.phieu-act');
     ok((await pg.textContent('.phieu-act-title')).includes('Tuyển dụng'), tag + 'mở hoạt động 1');
-    ok(await pg.locator('.phieu-block .phieu-item').count() >= 6, tag + 'hiện thẻ tuyển dụng');
+    ok(await pg.locator('[data-field=hd1_chon] input[type=checkbox]').count() === 9, tag + 'chọn ngay trên 9 thẻ');
+    ok(await pg.locator('.phieu-hd li').count() === 3, tag + 'có hướng dẫn 3 bước');
+    ok(!(await pg.textContent('#hocai')).includes('Bằng chứng nào'), tag + 'không hiện câu hỏi thảo luận của GV');
     // Chốt khi chưa trả lời: báo lỗi dưới trường
     await pg.click('.phieu-lock');
     ok(await pg.locator('[data-field=hd1_chon] .field-error:not([hidden])').count() === 1, tag + 'lỗi hiện dưới trường');
@@ -62,7 +65,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('.phieu-lock'); await pg.waitForSelector('#msg-dialog[open]');
     ok((await pg.textContent('#msg-ok')) === 'Chốt lựa chọn', tag + 'nút mang tên hành động');
     await pg.click('#msg-ok');
-    await pg.waitForSelector('.phieu-act .inline-note');
+    await pg.waitForSelector('text=Đã chốt.');
     ok(calls.some(c => c.u.endsWith('/lock')), tag + 'chốt sau xác nhận');
     ok(await pg.locator('#pf-hd1_vi').isDisabled(), tag + 'đã chốt thì khóa ô');
     // Nộp khi còn thiếu: hộp thoại, không gửi nộp
@@ -70,6 +73,27 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     ok((await pg.textContent('#msg-title')).includes('Còn mục chưa trả lời'), tag + 'báo thiếu khi nộp');
     await pg.click('#msg-ok');
     ok(!calls.some(c => c.u.endsWith('/submit')), tag + 'không nộp khi thiếu');
+    // HĐ 2.1: làm theo máy, chia bước, thẻ tình huống có Kiểm tra
+    await pg.click('.phieu-steps button:nth-child(2)');
+    ok(await pg.locator('.phieu-buoc button').count() === 3, tag + 'HĐ 2.1 có 3 bước');
+    ok(!(await pg.textContent('.phieu-act')).includes('Phiếu nhóm'), tag + 'không còn phần nhóm, thư kí');
+    await pg.click('.phieu-buoc button:nth-child(2)');
+    ok((await pg.textContent('.phieu-the-so')).includes('Tình huống 1 · 1/6'), tag + 'thẻ tình huống 1');
+    ok((await pg.textContent('.phieu-the-nd')).includes('Lý Thường Kiệt'), tag + 'đề nằm ngay trên ô trả lời');
+    ok(await pg.locator('[data-field=a_t1_em]').count() === 0, tag + 'tự chấm chỉ hiện sau khi kiểm tra');
+    await pg.click('.phieu-kiem');
+    ok(await pg.locator('[data-field=a_t1_lam] [aria-invalid=true]').count() === 1, tag + 'chưa trả lời thì báo dưới ô');
+    ok(!calls.some(c => c.u.endsWith('/kiem')), tag + 'chưa gửi kiểm tra khi thiếu');
+    await pg.locator('[data-field=a_t1_nl] label.option').nth(0).click();
+    ok(await pg.locator('[data-field=a_t1_nl] input:checked').count() === 1, tag + 'chọn được năng lực');
+    await pg.fill('#pf-a_t1_lam', 'Hỏi bạn');
+    await pg.click('.phieu-kiem');
+    await pg.waitForSelector('.phieu-chua');
+    ok((await pg.textContent('.phieu-fb')).includes('GIAI_THICH_THU'), tag + 'hiện giải thích sau khi kiểm tra');
+    ok(calls.some(c => c.u.endsWith('/kiem') && c.body.the === 'a_t1'), tag + 'gửi đúng mã thẻ');
+    ok(await pg.locator('[data-field=a_t1_em]').count() === 1, tag + 'hiện ô tự chấm');
+    await pg.click('.phieu-the-tiep');
+    ok((await pg.textContent('.phieu-the-so')).includes('Tình huống 2'), tag + 'sang tình huống 2');
     // Bảng mục tiêu mẫu chưa mở
     await pg.click('.phieu-steps button:nth-child(3)');
     ok((await pg.textContent('.phieu-act')).includes('thầy cô sẽ mở'), tag + 'học liệu chưa mở chỉ báo, không lộ');

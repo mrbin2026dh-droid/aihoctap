@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude đã deploy Worker có Học AI (bản 96397ac9-92e3-4dac-a5dd-0e67672295ec; quay lui về 657469ee-79ef-4051-b5a3-9808767a2d3d) và gộp Học AI vào main (81672ec) theo yêu cầu người dùng; giáo viên cần nhập gói ai9_bai2 + đáp án qua trang giáo viên, thử với dữ liệu [THỬ].
+- Yêu cầu mới nhất: Claude làm lại HĐ 1 và HĐ 2.1 Học AI theo thực tế 2–3 em/máy (bước, thẻ tình huống có Kiểm tra, bỏ câu hỏi GV khỏi màn HS, biểu đồ/thống kê cho GV); thầy cần nhập lại gói + đáp án; HĐ 2.2 trở đi chưa làm (xem docs/integration-ai-grade9-lesson2/09_THIET_KE_TUONG_TAC.md).
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4612,3 +4612,16 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - Đã đổi thành `?v=20261122b` trong 8 tệp giáo viên và thêm `?v` cho `teacher.css` (commit f2e1e1e). Test giao diện giáo viên PASS; Pages deploy success.
   - Bản thật đã kiểm: teacher.js có nạp teacher-phieu, teacher-ui có mục hocai.
   - Lưu ý cho AI sau: mỗi lần sửa mã trang giáo viên phải đổi mã `?v=`.
+
+### 22/11/2026 — Claude: làm lại HĐ 1 và HĐ 2.1 Học AI theo thực tế lớp (2–3 em/máy)
+- Giáo viên chốt: mỗi máy một em đăng nhập, các bạn cùng máy về nhà làm bổ sung; HĐ 2.1 làm theo máy, không nhóm, không thư kí. Ghi ở 09_THIET_KE_TUONG_TAC.md.
+- Đã làm:
+  - Gói: `buoc` (hướng dẫn đánh số), `the` (thẻ tình huống); trường `a_t1_loi`; bỏ `mode: nhom` ở `tnl_*`; câu hỏi thảo luận chuyển sang gói đáp án; gói đáp án có thêm `kiem`.
+  - Máy chủ: route `POST /api/pwa/phieu/{goi}/kiem`. Chỉ trả giải thích sau khi học sinh đã lưu câu trả lời, chỉ đọc `phieu_dapan/{goi}/kiem/{the}`, và ghi câu trả lời lần đầu.
+  - Màn học sinh: thanh bước, thẻ có Kiểm tra, bỏ chữ thừa.
+  - Trang giáo viên: biểu đồ HĐ 1, thống kê HĐ 2.1, câu trả lời lần đầu, sửa hướng dẫn và thẻ trong trình soạn.
+- Kiểm thực tế:
+  - Test Học AI: core 70, worker 119, ui 74, teacher_ui 49 đều PASS.
+  - Các test sau đều PASS: teacher_mobile_nav, teacher_thi_ui, role_isolation, fonts, worker_gate, tutor_all_lessons, gate_g1_g6; `package_student_pwa.py --check` PASS.
+- Việc dở: deploy Worker cho route kiem; thầy nhập lại 2 tệp; phân tích tiếp HĐ 2.2, 2.3, 3, 4 cùng giáo viên.
+

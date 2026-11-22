@@ -30,6 +30,14 @@ for (const s of ['Ngô Quyền', 'cố gắng học tốt hơn', '92 triệu', '
   ok(!C.missingForSubmit(p, {}).includes('hd1_chon'), 'ẩn hoạt động thì không bắt nộp');
   eq(C.checkDraft(p, { hd1_vi: 'x' }).error, 'FIELD_UNKNOWN', 'không ghi vào hoạt động ẩn'); }
 
+// Bước và thẻ kiểm tra (HĐ 1, HĐ 2.1 làm theo máy)
+ok(C.cardOf(pack, 'a_t1')?.fields.includes('a_t1_nl'), 'tìm được thẻ tình huống 1');
+eq(C.cardOf(pack, 'khong_co'), null); eq(C.cardOf(pack, '__proto__'), null);
+ok(!pack.activities.some(a => a.cau_hoi), 'màn học sinh không còn câu hỏi thảo luận của GV');
+ok(pack.activities.find(a => a.id === 'hd21').fields.every(f => f.mode !== 'nhom'), 'HĐ 2.1 làm theo máy, không có trường nhóm');
+{ const p = clone(pack); p.activities[1].buoc[0].fields.push('khong_co'); ok(C.validatePack(p).some(e => e.includes('khong_co')), 'bước dùng ô lạ'); }
+{ const p = clone(pack); p.activities[1].buoc[1].the[0].kiem = 'a/b'; ok(C.validatePack(p).some(e => e.includes('Mã kiểm tra')), 'mã kiểm tra lạ'); }
+
 // C3 kiểm nháp
 eq(C.checkDraft(pack, { a_t1_lam: 'Đối chiếu sách' }), { ok: true, clean: { a_t1_lam: 'Đối chiếu sách' } });
 eq(C.checkDraft(pack, { khong_co: 'x' }).error, 'FIELD_UNKNOWN');

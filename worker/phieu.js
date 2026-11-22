@@ -7,7 +7,7 @@
 //   phieu_bai/{goi}/{lop}/{uid}   bài cá nhân        phieu_ls/{goi}/{uid}/{rev}   bản chụp khi nộp (không ghi đè)
 //   phieu_nhom/{goi}/{lop}/{nX}   phiếu nhóm         phieu_gopy/{goi}/{lop}/{uid nhận}/{uid góp}  góp ý của bạn
 //   phieu_gv/{goi}/{lop}/{uid}    đánh giá của GV
-import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, validatePack, fieldMap, activeFieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
+import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, cardOf, validatePack, fieldMap, activeFieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
 
 const GOI_RE = /^[a-z0-9_]{3,40}$/;
 
@@ -59,7 +59,7 @@ export async function handlePhieu(request, env, keys, cors, deps) {
   const url = new URL(request.url);
   const p = url.pathname;
   const isTeacher = p === '/api/pwa/teacher/phieu';
-  const sm = p.match(/^\/api\/pwa\/phieu(?:\/([a-z0-9_]{3,40})(?:\/(draft|lock|submit|nhom|gopy))?)?\/?$/);
+  const sm = p.match(/^\/api\/pwa\/phieu(?:\/([a-z0-9_]{3,40})(?:\/(draft|lock|submit|nhom|gopy|kiem))?)?\/?$/);
   if (!isTeacher && !sm) return null;
   const J = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
   if (env.PHIEU_ENABLED === '0') return J({ error: 'PHIEU_OFF', detail: 'Chức năng Học AI đang tắt.' }, 404);
@@ -120,6 +120,7 @@ async function studentRoute(request, keys, db, J, deps, goi, act) {
 
   if (act === 'nhom' && m === 'PUT') return saveGroup(db, J, pack, goi, me, bai, path, etag, body);
   if (act === 'gopy') return peerReview(db, J, pack, goi, me, bai, m, body, new URL(request.url));
+  if (act === 'kiem' && m === 'POST') return checkCard(db, J, pack, goi, me, bai, path, etag, body);
 
   if (Number(body.rev) !== Number(bai.rev)) return J({ error: 'REV_CONFLICT', detail: 'Bài đã được lưu từ máy khác. Tải lại để xem bản mới.', rev: bai.rev }, 409);
   if (!['draft', 'returned'].includes(bai.status)) return J({ error: 'NOT_EDITABLE', detail: 'Bài đã nộp. Chờ thầy cô trả bài để sửa.' }, 409);
@@ -188,6 +189,37 @@ async function saveGroup(db, J, pack, goi, me, bai, path, etag, body) {
     await db.put(path, { ...bai, nhom: nk, name: me.name, class_code: me.lop }, etag || undefined);
   }
   return J({ so: Number(nk.slice(1)), rev, members, answers, by });
+}
+
+/**
+ * Kiểm tra một thẻ (ví dụ tình huống 1–6): chỉ trả giải thích SAU khi học sinh đã lưu câu trả lời của thẻ đó.
+ * Ghi lại câu trả lời lần đầu (không ghi đè) để giáo viên thấy học sinh nghĩ gì trước khi xem giải thích.
+ */
+async function checkCard(db, J, pack, goi, me, bai, path, etag, body) {
+  const key = String(body.the || '');
+  if (!/^[a-z0-9_]{2,40}$/.test(key)) return J({ error: 'THE_SAI', detail: 'Không có phần kiểm tra này.' }, 400);
+  const card = cardOf(pack, key);
+  if (!card) return J({ error: 'THE_SAI', detail: 'Không có phần kiểm tra này.' }, 404);
+  const ans = bai.answers || {};
+  const need = (card.fields || []).filter(id => !(card.sau_kiem || []).includes(id) && !id.endsWith('_loi'));
+  const miss = need.filter(id => !String(ans[id] ?? '').trim());
+  if (miss.length) return J({ error: 'MISSING', fields: miss, detail: 'Em hãy trả lời trước rồi mới kiểm tra.' }, 400);
+  const k = await db.get(`phieu_dapan/${goi}/kiem/${key}`);
+  if (!k || typeof k !== 'object') return J({ error: 'NO_KEY', detail: 'Thầy cô chưa nạp phần giải thích.' }, 404);
+  const nlId = (card.fields || []).find(id => id.endsWith('_nl'));
+  const loiId = (card.fields || []).find(id => id.endsWith('_loi'));
+  let rev = bai.rev;
+  if (!bai.kiem?.[key] && ['draft', 'returned'].includes(bai.status)) {
+    const first = { at: Date.now() };
+    for (const id of card.fields || []) if (ans[id] !== undefined) first[id] = ans[id];
+    if (await db.put(path, { ...bai, kiem: { ...(bai.kiem || {}), [key]: first }, rev: bai.rev + 1 }, etag || undefined)) rev = bai.rev + 1;
+  }
+  const out = { the: key, rev, nl_chinh: String(k.nl || ''), dung: nlId ? ans[nlId] === k.nl : null, giai_thich: String(k.giai_thich || '') };
+  if (loiId && k.loi) {
+    const chon = ans[loiId];
+    out.loi = chon ? { dung: chon === k.loi, giai_thich: chon === k.loi ? String(k.loi_giai || '') : 'Cụm này khớp với sách. Em mở sách Lịch sử kiểm tra lại người chỉ huy trận Bạch Đằng năm 938.' } : null;
+  }
+  return J(out);
 }
 
 /** Góp ý của bạn cùng nhóm cho mục tiêu (phần B). GET ?uid= xem mục tiêu của bạn; POST lưu góp ý. */

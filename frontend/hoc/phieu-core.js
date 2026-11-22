@@ -64,6 +64,18 @@ export function validatePack(pack) {
     }
   }
   for (const r of pack?.reveal || []) if (!pack.blocks?.[r.block]) e.push(`Mở học liệu không có: ${r.block}`);
+  for (const a of pack?.activities || []) {
+    const own = new Set((a.fields || []).map(f => f.id));
+    for (const [i, b] of (a.buoc || []).entries()) {
+      if (!b || typeof b.tieu_de !== 'string' || !b.tieu_de.trim()) e.push(`Hoạt động ${a.id}, bước ${i + 1} thiếu tên bước.`);
+      for (const id of b?.fields || []) if (!own.has(id)) e.push(`Bước ${i + 1} của ${a.id} dùng ô không có: ${id}`);
+      for (const k of b?.blocks || []) if (!pack.blocks?.[k]) e.push(`Bước ${i + 1} của ${a.id} dùng học liệu không có: ${k}`);
+      for (const t of b?.the || []) {
+        if (t.kiem !== undefined && !/^[a-z0-9_]{2,40}$/.test(t.kiem)) e.push(`Mã kiểm tra không hợp lệ: ${t.kiem}`);
+        for (const id of [...(t.fields || []), ...(t.sau_kiem || [])]) if (!own.has(id)) e.push(`Thẻ ${t.ten} dùng ô không có: ${id}`);
+      }
+    }
+  }
   const fm = activeFieldMap(pack);
   for (const y of pack?.yccd || []) {
     const ok = [...fm.values()].some(f => f.mode !== 'nhom' && f.evidence?.code === y.code && f.evidence.kind === 'toi_thieu');
@@ -182,6 +194,12 @@ export function checkEdit(oldPack, next) {
     else if (g.type !== f.type) e.push(`Không được đổi kiểu trường ${f.id}.`);
   }
   return e;
+}
+
+/** Tìm thẻ có nút Kiểm tra theo mã. @param {any} pack @param {string} key @returns {any|null} */
+export function cardOf(pack, key) {
+  for (const a of pack?.activities || []) if (!a.an) for (const b of a.buoc || []) for (const t of b.the || []) if (t.kiem === key) return t;
+  return null;
 }
 
 /** Chặn chèn công thức khi mở CSV bằng Excel. @param {unknown} v */

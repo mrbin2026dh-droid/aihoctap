@@ -310,20 +310,12 @@
    "tiet": 1,
    "minutes": 5,
    "source": "KHBD HĐ 1; PL9.2.1; PL9.2.2 dòng đầu",
-   "nhiem_vu": "Tin tuyển dụng chỉ được ghi ba yêu cầu: chọn ba thẻ và ghi lí do. Không có lựa chọn đúng sai.",
-   "cau_hoi": [
-    "Tin tuyển dụng chỉ được ghi ba yêu cầu: em chọn ba thẻ nào, vì sao?",
-    "Câu hỏi lớn của bài: Khi AI làm được nhiều việc thay người, phần nào là của riêng em? Em cần chuẩn bị gì cho việc học, cho nghề sau này?",
-    "Bằng chứng nào khiến em tin ba thẻ ấy quan trọng? Điều gì có thể làm em đổi lựa chọn?"
-   ],
-   "blocks": [
-    "pl921"
-   ],
+   "blocks": [],
    "fields": [
     {
      "id": "hd1_chon",
      "type": "multi",
-     "label": "Lúc đầu em chọn thẻ số",
+     "label": "Chọn 3 thẻ",
      "options_ref": "the_tuyen_dung",
      "exact": 3,
      "lock": "chot_dau_gio",
@@ -335,7 +327,7 @@
     {
      "id": "hd1_vi",
      "type": "textarea",
-     "label": "vì",
+     "label": "Vì sao các em chọn 3 thẻ này?",
      "max": 600,
      "lock": "chot_dau_gio",
      "required": true,
@@ -344,7 +336,23 @@
      }
     }
    ],
-   "lock_button": "Chốt lựa chọn đầu giờ"
+   "lock_button": "Chốt lựa chọn đầu giờ",
+   "buoc": [
+    {
+     "tieu_de": "Chọn 3 thẻ",
+     "mo_dau": "Một cửa hàng ở quê em cần tuyển nhân viên làm việc cùng các công cụ AI. Tin tuyển dụng chỉ được ghi ba yêu cầu. (Tình huống giả định)",
+     "huong_dan": [
+      "Đọc 9 thẻ bên dưới.",
+      "Các em cùng máy bàn nhau, chọn đúng 3 thẻ.",
+      "Ghi lí do, rồi bấm Chốt. Đã chốt thì không sửa được."
+     ],
+     "luu_y": "Không có lựa chọn đúng hay sai. Cuối bài các em sẽ xem lại lựa chọn này.",
+     "fields": [
+      "hd1_chon",
+      "hd1_vi"
+     ]
+    }
+   ]
   },
   {
    "id": "hd21",
@@ -352,21 +360,12 @@
    "tiet": 1,
    "minutes": 16,
    "source": "KHBD HĐ 2.1; PL9.2.2 phần A; PL9.2.3; PL9.2.4",
-   "nhiem_vu": "Nhóm viết thẻ năng lực. Mỗi em làm phần A: với mỗi tình huống, ghi năng lực cần dùng và việc em sẽ làm, rồi tự chấm.",
-   "cau_hoi": [
-    "Vì sao khi có AI, năng lực ghi trên thẻ lại càng cần?",
-    "Bằng chứng nào cho thấy câu tóm tắt ở tình huống 1 sai? Điều gì có thể làm em đổi năng lực đã chọn cho một tình huống?"
-   ],
-   "blocks": [
-    "pl923",
-    "pl924"
-   ],
+   "blocks": [],
    "fields": [
     {
      "id": "tnl_nang_luc",
      "type": "choice",
-     "label": "Thẻ năng lực của nhóm",
-     "mode": "nhom",
+     "label": "Máy em chọn năng lực",
      "options_ref": "nang_luc",
      "evidence": {
       "code": "9.A3.1",
@@ -376,8 +375,7 @@
     {
      "id": "tnl_vi",
      "type": "textarea",
-     "label": "Cần hơn khi có AI vì",
-     "mode": "nhom",
+     "label": "Năng lực này cần hơn khi có AI vì",
      "max": 600,
      "evidence": {
       "code": "9.A3.1",
@@ -388,7 +386,6 @@
      "id": "tnl_voi_nguoi",
      "type": "textarea",
      "label": "Với người",
-     "mode": "nhom",
      "max": 400,
      "show_if": {
       "tnl_nang_luc": [
@@ -405,7 +402,6 @@
      "id": "tnl_voi_ai",
      "type": "textarea",
      "label": "Với AI",
-     "mode": "nhom",
      "max": 400,
      "show_if": {
       "tnl_nang_luc": [
@@ -421,12 +417,27 @@
     {
      "id": "tnl_vi_du",
      "type": "textarea",
-     "label": "Ví dụ",
-     "mode": "nhom",
+     "label": "Ví dụ ở trường hoặc ở nhà",
      "max": 400,
      "evidence": {
       "code": "9.A3.1",
       "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "a_t1_loi",
+     "type": "choice",
+     "label": "Tình huống 1: Bấm vào cụm từ AI viết sai",
+     "options": [
+      "Năm 938",
+      "Lý Thường Kiệt",
+      "chỉ huy quân ta",
+      "đánh tan quân Nam Hán",
+      "trên sông Bạch Đằng"
+     ],
+     "kieu": "cum",
+     "evidence": {
+      "kind": "khong_cham"
      }
     },
     {
@@ -703,6 +714,132 @@
       "kind": "toi_thieu"
      }
     }
+   ],
+   "buoc": [
+    {
+     "tieu_de": "Thẻ năng lực",
+     "huong_dan": [
+      "Đọc 6 năng lực bên dưới.",
+      "Máy em chọn một năng lực.",
+      "Viết vì sao năng lực này cần hơn khi có AI. Lí do phải nhắc tới AI.",
+      "Viết một ví dụ ở trường hoặc ở nhà."
+     ],
+     "blocks": [
+      "pl923"
+     ],
+     "fields": [
+      "tnl_nang_luc",
+      "tnl_vi",
+      "tnl_voi_nguoi",
+      "tnl_voi_ai",
+      "tnl_vi_du"
+     ]
+    },
+    {
+     "tieu_de": "Sáu tình huống",
+     "huong_dan": [
+      "Đọc tình huống.",
+      "Chọn năng lực cần dùng, ghi em sẽ làm gì.",
+      "Bấm Kiểm tra để xem giải thích, rồi tự chấm."
+     ],
+     "the": [
+      {
+       "ten": "Tình huống 1",
+       "noi_dung": "AI tóm tắt bài Lịch sử: “Năm 938, Lý Thường Kiệt chỉ huy quân ta đánh tan quân Nam Hán trên sông Bạch Đằng.”",
+       "fields": [
+        "a_t1_loi",
+        "a_t1_nl",
+        "a_t1_lam",
+        "a_t1_em"
+       ],
+       "kiem": "a_t1",
+       "sau_kiem": [
+        "a_t1_em"
+       ]
+      },
+      {
+       "ten": "Tình huống 2",
+       "noi_dung": "Nhà trường vừa cho dùng một công cụ AI vẽ sơ đồ. Cô giao tìm hiểu cách dùng công cụ này, mà chưa ai trong lớp biết dùng.",
+       "fields": [
+        "a_t2_nl",
+        "a_t2_lam",
+        "a_t2_em"
+       ],
+       "kiem": "a_t2",
+       "sau_kiem": [
+        "a_t2_em"
+       ]
+      },
+      {
+       "ten": "Tình huống 3",
+       "noi_dung": "Nhóm làm bài thuyết trình: một bạn muốn để AI viết hết, ba bạn muốn chia việc.",
+       "fields": [
+        "a_t3_nl",
+        "a_t3_lam",
+        "a_t3_em"
+       ],
+       "kiem": "a_t3",
+       "sau_kiem": [
+        "a_t3_em"
+       ]
+      },
+      {
+       "ten": "Tình huống 4",
+       "noi_dung": "Em gõ cho AI “viết giúp bài hay”, nhận về một bài dài, sai đề.",
+       "fields": [
+        "a_t4_nl",
+        "a_t4_lam",
+        "a_t4_em"
+       ],
+       "kiem": "a_t4",
+       "sau_kiem": [
+        "a_t4_em"
+       ]
+      },
+      {
+       "ten": "Tình huống 5",
+       "noi_dung": "Em viết bài văn kể về ông. AI gợi ý một đoạn rất trôi chảy về “người ông hiền hậu” nhưng không có chi tiết nào về ông của em.",
+       "fields": [
+        "a_t5_nl",
+        "a_t5_lam",
+        "a_t5_em"
+       ],
+       "kiem": "a_t5",
+       "sau_kiem": [
+        "a_t5_em"
+       ]
+      },
+      {
+       "ten": "Tình huống 6",
+       "noi_dung": "Lớp cần đặt tên đội bóng. AI đưa 10 cái tên, cái nào cũng giống tên các đội khác.",
+       "fields": [
+        "a_t6_nl",
+        "a_t6_lam",
+        "a_t6_em"
+       ],
+       "kiem": "a_t6",
+       "sau_kiem": [
+        "a_t6_em"
+       ]
+      }
+     ]
+    },
+    {
+     "tieu_de": "Mạnh nhất, yếu nhất",
+     "huong_dan": [
+      "Chọn năng lực em làm tốt nhất và năng lực em làm chưa tốt nhất.",
+      "Ghi một việc em đã làm để chứng minh.",
+      "Ghi vì sao năng lực đó quan trọng khi có AI."
+     ],
+     "fields": [
+      "a_manh_nl",
+      "a_manh_mc",
+      "a_manh_vi",
+      "a_yeu_nl",
+      "a_yeu_mc",
+      "a_yeu_vi"
+     ]
+    }
    ]
   },
   {
@@ -712,10 +849,6 @@
    "minutes": 24,
    "source": "KHBD HĐ 2.2; PL9.2.2 phần B; PL9.2.5",
    "nhiem_vu": "B. Hai mục tiêu học tập. Hạn: khoảng tám tuần sau buổi học.",
-   "cau_hoi": [
-    "Với câu “Em muốn giỏi tiếng Anh hơn”, tám tuần nữa sao biết đã đạt?",
-    "Tới hạn, bằng chứng nào cho thấy mục tiêu đã đạt? Điều gì có thể làm em phải sửa mục tiêu?"
-   ],
    "blocks": [
     "pl925"
    ],
@@ -961,9 +1094,6 @@
    "minutes": 20,
    "source": "KHBD HĐ 2.3; PL9.2.6; PL9.2.7",
    "nhiem_vu": "Em cùng nhóm đọc thẻ nghề rồi điền bảng. Mỗi kĩ năng ở cột 4 có chữ “vì” nối với cột 2 hoặc cột 3.",
-   "cau_hoi": [
-    "Thẻ là tình huống giả định: bằng chứng nào khiến em tin nghề này đang thay đổi như vậy? Em cần hỏi người làm nghề thật điều gì?"
-   ],
    "luu_y_hs": {
     "text": "Khi kể về nghề của người thân, em chỉ kể công việc, không ghi tên, nơi làm việc, thu nhập.",
     "nguon": "de_xuat",
@@ -1151,9 +1281,6 @@
    "minutes": 6,
    "source": "KHBD HĐ 3; PL9.2.2 phần C",
    "nhiem_vu": "Hai kĩ năng gắn với nghề này, ít nhất một kĩ năng để làm việc cùng AI (mỗi kĩ năng nêu lí do, nối với thay đổi ở trên)",
-   "cau_hoi": [
-    "Bằng chứng nào khiến em tin nghề ấy sẽ thay đổi như em viết? Điều gì có thể làm thay đổi đó không xảy ra?"
-   ],
    "blocks": [],
    "fields": [
     {
@@ -1242,11 +1369,6 @@
    "minutes": 19,
    "source": "KHBD HĐ 4; PL9.2.2 phần D; PL9.2.8",
    "nhiem_vu": "Đọc các ví dụ mẫu, viết bốn dòng phần D, nhìn lại lựa chọn đầu giờ, tự đánh giá và đánh dấu mức dùng AI.",
-   "cau_hoi": [
-    "Ở ví dụ 2, chỗ nào trong gợi ý của AI cần hỏi lại?",
-    "Nếu hôm nay em được viết tin tuyển dụng ấy, em có đổi lựa chọn không?",
-    "Bằng chứng nào cho thấy gợi ý của AI đúng, sai? Điều gì có thể làm em đổi phần giao cho AI?"
-   ],
    "blocks": [
     "pl928_1",
     "pl928_2"

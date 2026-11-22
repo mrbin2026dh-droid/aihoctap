@@ -879,3 +879,5 @@ body.qz-hosting{overflow:hidden}
 .teacher-app .phieu-ed-prev{margin:4px 0 12px}.teacher-app .phieu-item{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0}
 .teacher-app .phieu-cards{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))}
 .teacher-app .phieu-gv-form .t-field{margin:8px 0}
+.teacher-app .phieu-gv-chart{list-style:none;padding:0;margin:8px 0;display:grid;gap:6px}.teacher-app .phieu-gv-chart li{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,40%) 3ch;gap:8px;align-items:center}
+.teacher-app .phieu-gv-chart progress{width:100%;height:14px}.teacher-app .phieu-gv-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}

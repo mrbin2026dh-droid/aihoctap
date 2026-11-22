@@ -77,6 +77,9 @@ class PackView {
     this.saving = false;
     this.status = el('p', '', 'phieu-status meta'); this.status.setAttribute('role', 'status');
     this.actId = '';
+    /** @type {Record<string, number>|undefined} */ this.stepOf = undefined;
+    /** @type {Record<string, number>|undefined} */ this.cardPos = undefined;
+    /** @type {Record<string, any>|undefined} */ this.fb = undefined;
   }
   editable() { return ['draft', 'returned'].includes(this.st.bai.status); }
   locked(/** @type {string} */ id) { return !!this.st.bai.locked?.[id]; }
@@ -111,13 +114,11 @@ class PackView {
   /** @param {any} a */
   activity(a) {
     const sec = el('section', '', 'phieu-act');
-    sec.append(el('h3', a.title, 'phieu-act-title'), el('p', [a.tiet ? `Tiết ${a.tiet}` : '', a.minutes ? `${a.minutes} phút` : ''].filter(Boolean).join(' · '), 'meta'));
+    const h = el('h3', a.title, 'phieu-act-title'); h.tabIndex = -1;
+    sec.append(h);
+    if (Array.isArray(a.buoc) && a.buoc.length) { this.steps(a, sec); return sec; }
     if (a.nhiem_vu) sec.append(el('p', a.nhiem_vu, 'phieu-task'));
-    if (a.cau_hoi?.length) { const ul = el('ul', '', 'phieu-q'); for (const q of a.cau_hoi) ul.append(el('li', q)); sec.append(ul); }
-    for (const b of a.blocks || []) {
-      if (this.pack.blocks?.[b]) sec.append(renderBlock(this.pack.blocks[b]));
-      else if ((this.pack.locked_blocks || []).includes(b)) sec.append(el('p', 'Có học liệu thầy cô sẽ mở trong giờ học.', 'inline-note'));
-    }
+    for (const b of a.blocks || []) sec.append(this.blockOrNote(b));
     const own = (a.fields || []).filter((/** @type {any} */ f) => f.mode !== 'nhom');
     const grp = (a.fields || []).filter((/** @type {any} */ f) => f.mode === 'nhom');
     if (grp.length) sec.append(this.groupPart(grp));
@@ -125,17 +126,119 @@ class PackView {
       const form = el('div', '', 'phieu-form');
       for (const f of own) form.append(this.field(f, this.answers, false));
       sec.append(form);
-      const lockName = own.find((/** @type {any} */ f) => f.lock)?.lock;
-      if (lockName && this.editable()) {
-        const ids = own.filter((/** @type {any} */ f) => f.lock === lockName).map((/** @type {any} */ f) => f.id);
-        if (ids.some((/** @type {string} */ id) => !this.locked(id))) {
-          const lb = button('Chốt lựa chọn đầu giờ', () => this.lock(lockName, ids, lb), 'primary phieu-lock');
-          sec.append(lb);
-        } else sec.append(el('p', 'Đã chốt lựa chọn đầu giờ. Cuối giờ em sẽ nhìn lại lựa chọn này.', 'inline-note'));
-      }
+      this.lockButton(own, sec);
     }
     if (a.peer_review) sec.append(this.peerPart(a.peer_review));
     return sec;
+  }
+  /** @param {string} b */
+  blockOrNote(b) {
+    if (this.pack.blocks?.[b]) return renderBlock(this.pack.blocks[b]);
+    return el('p', 'Phần này thầy cô sẽ mở trong giờ học.', 'inline-note');
+  }
+  /** Nút chốt cho các ô có `lock`. @param {any[]} fields @param {HTMLElement} sec */
+  lockButton(fields, sec) {
+    const lockName = fields.find(f => f.lock)?.lock;
+    if (!lockName || !this.editable()) return;
+    const ids = fields.filter(f => f.lock === lockName).map(f => f.id);
+    if (ids.some(id => !this.locked(id))) {
+      const lb = button('Chốt', () => this.lock(lockName, ids, lb), 'primary phieu-lock');
+      sec.append(lb);
+    } else sec.append(el('p', 'Đã chốt. Cuối bài em sẽ xem lại lựa chọn này.', 'inline-note'));
+  }
+
+  /** Hoạt động chia bước: thanh bước, hướng dẫn đánh số, học liệu, ô hoặc thẻ. @param {any} a @param {HTMLElement} sec */
+  steps(a, sec) {
+    const list = a.buoc;
+    /** @type {Record<string, number>} */ const pos = (this.stepOf ||= {});
+    const i = Math.min(pos[a.id] || 0, list.length - 1);
+    const go = async (/** @type {number} */ k) => { await this.flush(); pos[a.id] = k; this.render(a.id); };
+    if (list.length > 1) {
+      const nav = el('nav', '', 'phieu-buoc'); nav.setAttribute('aria-label', 'Các bước');
+      list.forEach((/** @type {any} */ b, /** @type {number} */ k) => {
+        const btn = button(`Bước ${k + 1}. ${b.tieu_de}`, () => go(k));
+        if (k === i) btn.setAttribute('aria-current', 'step');
+        nav.append(btn);
+      });
+      sec.append(nav);
+    }
+    const b = list[i];
+    if (b.mo_dau) sec.append(el('p', b.mo_dau, 'phieu-mo-dau'));
+    if (b.huong_dan?.length) {
+      const box = el('div', '', 'phieu-hd'); box.append(el('p', 'Em làm:', 'phieu-hd-title'));
+      const ol = el('ol'); for (const t of b.huong_dan) ol.append(el('li', t)); box.append(ol); sec.append(box);
+    }
+    if (b.luu_y) sec.append(el('p', b.luu_y, 'inline-note'));
+    for (const k of b.blocks || []) sec.append(this.blockOrNote(k));
+    const fields = (b.fields || []).map((/** @type {string} */ id) => this.fm.get(id)).filter(Boolean);
+    if (fields.length) {
+      const form = el('div', '', 'phieu-form');
+      for (const f of fields) form.append(this.field(f, this.answers, false));
+      sec.append(form);
+      this.lockButton(fields, sec);
+    }
+    if (b.the?.length) sec.append(this.cards(a, b.the));
+    if (i < list.length - 1) sec.append(button(`Sang bước ${i + 2}: ${list[i + 1].tieu_de}`, () => go(i + 1), 'phieu-next'));
+  }
+
+  /** Thẻ làm lần lượt (ví dụ sáu tình huống), có nút Kiểm tra. @param {any} a @param {any[]} the */
+  cards(a, the) {
+    /** @type {Record<string, number>} */ const pos = (this.cardPos ||= {});
+    const i = Math.min(pos[a.id] || 0, the.length - 1);
+    const t = the[i];
+    const card = el('article', '', 'phieu-the');
+    card.append(el('p', `${t.ten} · ${i + 1}/${the.length}`, 'phieu-the-so'));
+    if (t.noi_dung) card.append(el('p', t.noi_dung, 'phieu-the-nd'));
+    const done = !!this.st.bai.kiem?.[t.kiem] || !!this.fb?.[t.kiem];
+    const form = el('div', '', 'phieu-form');
+    for (const id of t.fields || []) {
+      const f = this.fm.get(id); if (!f) continue;
+      if ((t.sau_kiem || []).includes(id) && !done) continue;
+      form.append(this.field({ ...f, label: String(f.label).replace(/^Tình huống \d+: /, '') }, this.answers, false));
+    }
+    card.append(form);
+    const out = el('div', '', 'phieu-fb'); out.setAttribute('role', 'status');
+    if (this.fb?.[t.kiem]) this.showFeedback(out, this.fb[t.kiem]);
+    if (t.kiem && this.editable()) {
+      const kt = button(done ? 'Kiểm tra lại' : 'Kiểm tra', () => this.check(a, t, kt), 'primary phieu-kiem');
+      card.append(kt);
+    }
+    card.append(out);
+    const row = el('div', '', 'phieu-the-nav');
+    const go = async (/** @type {number} */ k) => { await this.flush(); pos[a.id] = k; this.render(a.id); };
+    if (i > 0) row.append(button(`‹ ${the[i - 1].ten}`, () => go(i - 1)));
+    if (i < the.length - 1) row.append(button(`${the[i + 1].ten} ›`, () => go(i + 1), 'phieu-the-tiep'));
+    card.append(row);
+    return card;
+  }
+  /** Gửi kiểm tra một thẻ. @param {any} a @param {any} t @param {HTMLButtonElement} btn */
+  async check(a, t, btn) {
+    const need = (t.fields || []).filter((/** @type {string} */ id) => this.fm.has(id) && !(t.sau_kiem || []).includes(id) && !id.endsWith('_loi'));
+    const miss = need.filter((/** @type {string} */ id) => !String(this.answers[id] ?? '').trim());
+    if (miss.length) { for (const id of miss) this.showErr([id], 'Em hãy trả lời ô này trước.'); /** @type {HTMLElement|null} */ (this.box.querySelector('[aria-invalid="true"]'))?.focus(); return; }
+    let got = null;
+    await withBusy(btn, 'Đang kiểm tra…', async () => {
+      await this.flush();
+      if (Object.keys(this.pending).length) { this.setStatus('Chưa gửi được bài. Kiểm tra mạng rồi thử lại.'); return; }
+      try {
+        got = await api(`/pwa/phieu/${this.goi}/kiem`, { method: 'POST', token: await this.ctx.token(), body: { the: t.kiem } });
+      } catch (e) { this.setStatus(errText(e)); }
+    });
+    if (!got) return;
+    const r = /** @type {any} */ (got);
+    if (r.rev) this.st.bai.rev = r.rev;
+    this.st.bai.kiem = { ...(this.st.bai.kiem || {}), [t.kiem]: this.st.bai.kiem?.[t.kiem] || { at: Date.now() } };
+    (this.fb ||= {})[t.kiem] = r;
+    this.render(a.id);
+    /** @type {HTMLElement|null} */ (this.box.querySelector('.phieu-fb'))?.focus();
+  }
+  /** @param {HTMLElement} out @param {any} r */
+  showFeedback(out, r) {
+    out.tabIndex = -1;
+    if (r.loi) out.append(el('p', (r.loi.dung ? 'Đúng chỗ sai. ' : 'Chưa đúng chỗ sai. ') + r.loi.giai_thich, r.loi.dung ? 'phieu-ok' : 'phieu-chua'));
+    if (r.dung === true) out.append(el('p', `Đúng: ${r.nl_chinh}. ${r.giai_thich}`, 'phieu-ok'));
+    else if (r.dung === false) out.append(el('p', `Năng lực chính ở đây là ${r.nl_chinh}. ${r.giai_thich}`, 'phieu-chua'));
+    out.append(el('p', 'Em có thể sửa câu trả lời, rồi tự chấm ở ô bên trên.', 'meta'));
   }
 
   /**
@@ -151,7 +254,6 @@ class PackView {
     const off = !this.editable() || (!isGroup && this.locked(f.id)) || (isGroup && !this.st.nhom);
     const err = el('p', '', 'field-error'); err.id = `${id}-err`; err.hidden = true;
     const note = [];
-    if (f.required && !isGroup) note.push('bắt buộc');
     if (!isGroup && this.locked(f.id)) note.push('đã chốt');
     if (f.type === 'multi' && f.exact) note.push(`chọn đúng ${f.exact}`);
     const onChange = (/** @type {any} */ v) => { if (isGroup) this.setGroup(f.id, v); else this.set(f.id, v); err.hidden = true; err.textContent = ''; wrap.querySelectorAll('[aria-invalid]').forEach(x => x.setAttribute('aria-invalid', 'false')); };
@@ -404,8 +506,15 @@ class PackView {
     if (miss.length) {
       const f0 = this.fm.get(miss[0]);
       const act = (this.pack.activities || []).find((/** @type {any} */ a) => (a.fields || []).some((/** @type {any} */ f) => f.id === miss[0]));
-      await noticeBox({ title: 'Còn mục chưa trả lời', body: `Còn ${miss.length} mục bắt buộc. Mục đầu tiên: "${f0?.label || miss[0]}" ở hoạt động "${act?.title || ''}".`, okText: 'Đến mục đó' });
-      if (act) this.render(act.id);
+      await noticeBox({ title: 'Còn mục chưa trả lời', body: `Còn ${miss.length} mục cần trả lời. Mục đầu tiên: "${f0?.label || miss[0]}" ở hoạt động "${act?.title || ''}".`, okText: 'Đến mục đó' });
+      if (act) {
+        // Đưa tới đúng bước và đúng thẻ chứa mục còn thiếu
+        (act.buoc || []).forEach((/** @type {any} */ b, /** @type {number} */ k) => {
+          if ((b.fields || []).includes(miss[0])) (this.stepOf ||= {})[act.id] = k;
+          (b.the || []).forEach((/** @type {any} */ t, /** @type {number} */ j) => { if ((t.fields || []).includes(miss[0])) { (this.stepOf ||= {})[act.id] = k; (this.cardPos ||= {})[act.id] = j; } });
+        });
+        this.render(act.id);
+      }
       for (const id of miss) this.showErr([id], 'Mục này cần trả lời.');
       /** @type {HTMLElement|null} */ (this.box.querySelector('[aria-invalid="true"]'))?.focus();
       return;
