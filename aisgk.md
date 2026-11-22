@@ -4625,3 +4625,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - Các test sau đều PASS: teacher_mobile_nav, teacher_thi_ui, role_isolation, fonts, worker_gate, tutor_all_lessons, gate_g1_g6; `package_student_pwa.py --check` PASS.
 - Việc dở: deploy Worker cho route kiem; thầy nhập lại 2 tệp; phân tích tiếp HĐ 2.2, 2.3, 3, 4 cùng giáo viên.
 
+- 22/11/2026 Claude (người dùng cho phép deploy):
+  - `wrangler deploy` → Worker `58e1d465-fcbd-41e6-90c0-d13ddbaae814` (quay lui về `96397ac9-92e3-4dac-a5dd-0e67672295ec`).
+  - Kiểm thật: health 200, catalog 200, `/api/pwa/phieu` 401, `/kiem` 401 khi chưa đăng nhập (route đã có).
+  - Còn lại: thầy đăng nhập trang giáo viên và nhập lại `ai9_bai2.json` và `ai9_bai2.dapan.json`.
