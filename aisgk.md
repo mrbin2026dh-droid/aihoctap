@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude sửa C1–C3 của phán quyết Học AI ngay trong phiên (người dùng yêu cầu); ACCEPT (MOCK, tự kiểm) cho deploy thử dữ liệu [THỬ]; chưa push; cần smoke test RTDB thật và kiểm độc lập trước khi dùng với học sinh thật.
+- Yêu cầu mới nhất: Claude đã deploy Worker có Học AI (bản 96397ac9-92e3-4dac-a5dd-0e67672295ec; quay lui về 657469ee-79ef-4051-b5a3-9808767a2d3d) và gộp Học AI vào main (81672ec) theo yêu cầu người dùng; giáo viên cần nhập gói ai9_bai2 + đáp án qua trang giáo viên, thử với dữ liệu [THỬ].
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4593,4 +4593,17 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - Các test sau đều PASS: test_phieu_ui, test_phieu_teacher_ui, teacher_mobile_nav, teacher_thi_ui, role_isolation, fonts_vietnamese, worker_gate, và `package_student_pwa.py --check`.
 - Phán quyết: ACCEPT (MOCK), tự kiểm.
 - Việc dở: người dùng push và deploy thử; smoke test RTDB thật; kiểm độc lập trước khi dùng với học sinh thật.
+
+### 22/11/2026 — Claude: đưa Học AI lên bản thật (theo yêu cầu "đưa lên cho tôi")
+- Đã làm:
+  - Người dùng đăng nhập Cloudflare (OAuth) trong tab terminal.
+  - Ghi ID bản Worker cũ `657469ee-79ef-4051-b5a3-9808767a2d3d`, rồi `wrangler deploy` → bản mới `96397ac9-92e3-4dac-a5dd-0e67672295ec`.
+  - Gộp nhánh `hoc-ai-phieu` với `origin/main`: có thêm commit 7a205ab về Gia sư, xung đột `aisgk.md` đã giữ cả hai mục; merge `81672ec`. Push `main` để GitHub Pages tự deploy.
+- Lưu ý:
+  - Worker đang chạy được dựng từ nhánh trước khi gộp, nên CHƯA có phần sửa Gia sư của 7a205ab. Phần đó trước nay cũng chưa từng chạy thật, nên không bị lùi bản.
+  - Muốn đưa 7a205ab lên: chạy lại `wrangler deploy` từ `main`, theo handoff gia-su-toc-do-30-10.
+- Kiểm thực tế trên bản thật: `/api/health` 200; `/api/pwa/catalog` 200; `/api/pwa/phieu` 401 khi chưa đăng nhập; route giáo viên 401; CORS đúng aihoctap.online.
+- Sau khi gộp: test_phieu_core 63, test_phieu_worker, tutor_all_lessons, worker_gate, gate_g1_g6, ai_usage_limits đều PASS. Test so sánh hai bản phieu-core đã sửa để bỏ qua khác biệt CRLF.
+- Quay lui: `npx wrangler rollback 657469ee-79ef-4051-b5a3-9808767a2d3d`, hoặc tắt nhanh bằng `PHIEU_ENABLED="0"`.
+- Việc dở: giáo viên nhập gói và đáp án; smoke test học sinh [THỬ] trên RTDB thật (ETag, hai máy); kiểm độc lập trước khi dùng với học sinh thật.
 
