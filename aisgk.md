@@ -4676,3 +4676,4 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế:
   - soan 109, teacher_ui 85 đều PASS.
   - Các test sau đều PASS: core, worker, b2, soan_ui, mobile_nav, thi_ui, role_isolation, worker_gate.
+- 22/11/2026 Claude: deploy Worker `6a6eac7f-df33-4dc0-b54b-501e0e766278` (quay lui về `5009bfbc-fe5c-4fa5-9ad4-ab4ba05cf777`); kiểm thật health/catalog 200, phieu 401.
