@@ -19,6 +19,12 @@ export function fieldMap(pack) {
   for (const a of pack?.activities || []) for (const f of a.fields || []) m.set(f.id, f);
   return m;
 }
+/** Trường đang dùng: bỏ trường bị ẩn và trường thuộc hoạt động bị ẩn. @param {any} pack @returns {Map<string, any>} */
+export function activeFieldMap(pack) {
+  const m = new Map();
+  for (const a of pack?.activities || []) if (!a.an) for (const f of a.fields || []) if (!f.an) m.set(f.id, f);
+  return m;
+}
 /** @param {any} pack @param {any} f @returns {string[]} */
 export function optionsOf(pack, f) {
   const o = Array.isArray(f?.options) ? f.options : pack?.options?.[f?.options_ref];
@@ -58,9 +64,9 @@ export function validatePack(pack) {
     }
   }
   for (const r of pack?.reveal || []) if (!pack.blocks?.[r.block]) e.push(`Mở học liệu không có: ${r.block}`);
-  const fm = fieldMap(pack);
+  const fm = activeFieldMap(pack);
   for (const y of pack?.yccd || []) {
-    const ok = [...fm.values()].some(f => !f.an && f.mode !== 'nhom' && f.evidence?.code === y.code && f.evidence.kind === 'toi_thieu');
+    const ok = [...fm.values()].some(f => f.mode !== 'nhom' && f.evidence?.code === y.code && f.evidence.kind === 'toi_thieu');
     if (!ok) e.push(`Yêu cầu ${y.code} chưa có trường minh chứng tối thiểu cá nhân.`);
   }
   if (pack?.ai_tutor !== false) e.push('Phiếu Học AI phải tắt Gia sư AI.');
@@ -98,7 +104,7 @@ export function checkValue(pack, f, v) {
  */
 export function checkDraft(pack, answers, locked = {}) {
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return { ok: false, error: 'FIELD_TYPE' };
-  const fm = fieldMap(pack); const clean = {}; let total = 0;
+  const fm = activeFieldMap(pack); const clean = {}; let total = 0;
   for (const [id, v] of Object.entries(answers)) {
     const f = fm.get(id);
     if (!f || f.type === 'heading' || f.an) return { ok: false, error: 'FIELD_UNKNOWN', field: id };
@@ -115,7 +121,7 @@ export function checkDraft(pack, answers, locked = {}) {
 /** Kiểm phần nhóm gửi lên (chỉ trường mode nhom). */
 export function checkGroup(pack, answers) {
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return { ok: false, error: 'FIELD_TYPE' };
-  const fm = fieldMap(pack); const clean = {}; let total = 0;
+  const fm = activeFieldMap(pack); const clean = {}; let total = 0;
   for (const [id, v] of Object.entries(answers)) {
     const f = fm.get(id);
     if (!f || f.type === 'heading' || f.an || f.mode !== 'nhom') return { ok: false, error: 'FIELD_UNKNOWN', field: id };
@@ -130,8 +136,8 @@ export function checkGroup(pack, answers) {
 /** Trường cá nhân còn thiếu khi nộp (bắt buộc, đang hiện, chưa ẩn). @returns {string[]} */
 export function missingForSubmit(pack, answers) {
   const miss = [];
-  for (const f of fieldMap(pack).values()) {
-    if (f.type === 'heading' || f.an || f.mode === 'nhom' || !f.required || !isShown(f, answers)) continue;
+  for (const f of activeFieldMap(pack).values()) {
+    if (f.type === 'heading' || f.mode === 'nhom' || !f.required || !isShown(f, answers)) continue;
     const v = answers?.[f.id];
     if (isEmpty(v) || (f.type === 'multi' && f.exact && v.length !== f.exact)) miss.push(f.id);
   }

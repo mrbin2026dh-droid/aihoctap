@@ -158,13 +158,25 @@ try {
   ok((await call('GET', '/pwa/phieu/ai9_bai2', null, tb)).body.pack.blocks.pl925, 'HS 9A thấy sau khi mở');
   ok(!(await call('GET', '/pwa/phieu/ai9_bai2', null, tc)).body.pack.blocks.pl925, 'lớp 9B chưa mở');
 
+  // C3 (phán quyết): khóa có sẵn của đối tượng không phải học liệu
+  eq((await T({ op: 'mo', goi: 'ai9_bai2', lop: '9A', block: 'constructor' }, gv9a)).status, 400, 'block constructor bị chặn');
+  eq((await T({ op: 'mo', goi: 'ai9_bai2', lop: '9A', block: '__proto__' }, gv9a)).status, 400, 'block __proto__ bị chặn');
+  // C2 (phán quyết): nộp khi chưa chốt thì máy chủ tự khóa lựa chọn đầu giờ
+  { const g = await call('GET', '/pwa/phieu/ai9_bai2', null, tb);
+    const fb = fillRequired();
+    const d = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: g.body.bai.rev, answers: fb }, tb); eq(d.status, 200, JSON.stringify(d.body));
+    eq((await call('POST', '/pwa/phieu/ai9_bai2/submit', { rev: d.body.rev }, tb)).status, 200);
+    ok(getAt('phieu_bai/ai9_bai2/9a/hsB').locked?.hd1_chon, 'nộp thì tự khóa lựa chọn đầu giờ');
+    eq((await T({ op: 'tra_bai', goi: 'ai9_bai2', lop: '9A', uid: 'hsB' }, gv9a)).status, 200);
+    const rb = getAt('phieu_bai/ai9_bai2/9a/hsB').rev;
+    eq((await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: rb, answers: { hd1_vi: 'đổi' } }, tb)).body.error, 'FIELD_LOCKED', 'trả bài vẫn không sửa lựa chọn đầu giờ'); }
   // Đánh giá, trả bài
+  eq((await T({ op: 'tra_bai', goi: 'ai9_bai2', lop: '9B', uid: 'hsC' }, admin)).status, 409, 'bài chưa nộp không trả');
   eq((await T({ op: 'danh_gia', goi: 'ai9_bai2', lop: '9A', uid: 'hsA', muc: { '9.A3.1': 'xuat_sac' } }, gv9a)).status, 400, 'mức lạ');
   eq((await T({ op: 'danh_gia', goi: 'ai9_bai2', lop: '9A', uid: 'hsA', muc: { '9.A9.9': 'dat' } }, gv9a)).status, 400, 'mã YCCĐ lạ');
   eq((await T({ op: 'danh_gia', goi: 'ai9_bai2', lop: '9A', uid: 'hsA', muc: { '9.A3.1': 'dat', '9.A3.2': 'kha' }, nhan_xet: 'Mục tiêu 2 cần hạn rõ hơn.' }, gv9a)).status, 200);
   eq((await T({ op: 'danh_gia', goi: 'ai9_bai2', lop: '9A', uid: 'hsC', muc: {} }, gv9a)).status, 403, 'không đánh giá HS lớp khác');
   ok(!(await call('GET', '/pwa/phieu/ai9_bai2', null, ta)).body.gv, 'chưa trả bài thì HS chưa thấy nhận xét');
-  eq((await T({ op: 'tra_bai', goi: 'ai9_bai2', lop: '9A', uid: 'hsB' }, gv9a)).status, 409, 'bài chưa nộp không trả');
   eq((await T({ op: 'tra_bai', goi: 'ai9_bai2', lop: '9A', uid: 'hsA' }, gv9a)).status, 200);
   const back = await call('GET', '/pwa/phieu/ai9_bai2', null, ta);
   eq(back.body.bai.status, 'returned'); eq(back.body.gv.nhan_xet, 'Mục tiêu 2 cần hạn rõ hơn.'); ok(!JSON.stringify(back.body).includes('"muc"'), 'HS không thấy mức');

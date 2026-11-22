@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Người dùng yêu cầu Claude "làm hết" Học AI: Claude đã viết mã giai đoạn 2–5 và 7 (máy chủ, màn học sinh, màn giáo viên, trình soạn gói), chưa commit, chưa deploy; cần kiểm độc lập theo docs/handoff/claude-claude-kiem-doc-lap-hoc-ai.md trước khi push.
+- Yêu cầu mới nhất: Claude sửa C1–C3 của phán quyết Học AI ngay trong phiên (người dùng yêu cầu); ACCEPT (MOCK, tự kiểm) cho deploy thử dữ liệu [THỬ]; chưa push; cần smoke test RTDB thật và kiểm độc lập trước khi dùng với học sinh thật.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4566,4 +4566,25 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Việc dở:
   - Kiểm độc lập (phiên Claude mới) → người dùng commit/deploy, nạp gói qua trang giáo viên.
   - Chưa làm: khóa nhóm, tự xóa dữ liệu cuối năm.
+
+### 22/11/2026 — Claude: kiểm mã Học AI (tự kiểm, theo yêu cầu người dùng làm ngay trong phiên này)
+- Đã làm: đọc lại route máy chủ và lõi theo mô hình đe dọa; chạy thử script riêng. Phán quyết: CHƯA ACCEPT.
+- Lỗi xác nhận bằng chạy thử:
+  - C1: ẩn hoạt động thì học sinh vẫn bị bắt trả lời trường trong đó, không nộp được.
+  - C2: nộp bài không tự khóa lựa chọn đầu giờ.
+  - C3: tham số `block` khớp cả khóa có sẵn của đối tượng JavaScript (`constructor`).
+- Tệp: `docs/handoff/claude-nguoidung-phan-quyet-hoc-ai.md`, `aisgk.md`. Không sửa mã.
+- Việc dở: sửa C1–C3 (có mã mẫu và test FAIL-first trong tệp phán quyết), kiểm lại rồi mới push.
+
+### 22/11/2026 — Claude: sửa C1–C3 Học AI theo phán quyết
+- Đã làm:
+  - C1: thêm `activeFieldMap`, nên hoạt động hoặc trường đang ẩn không còn bị bắt trả lời và không ghi được.
+  - C2: nộp bài thì máy chủ tự khóa mục cần chốt.
+  - C3: chặn khóa có sẵn của đối tượng JavaScript ở tham số `block`.
+- Tệp: `worker/phieu-core.js`, `frontend/hoc/phieu-core.js`, `worker/phieu.js`, `frontend/hoc/sw.js` (đóng dấu lại), `tests/test_phieu_core.mjs`, `tests/test_phieu_worker.mjs`, tệp phán quyết.
+- Kiểm thực tế:
+  - Test mới FAIL trước khi sửa, PASS sau khi sửa: core 63, worker 103.
+  - Các test sau đều PASS: test_phieu_ui, test_phieu_teacher_ui, teacher_mobile_nav, teacher_thi_ui, role_isolation, fonts_vietnamese, worker_gate, và `package_student_pwa.py --check`.
+- Phán quyết: ACCEPT (MOCK), tự kiểm.
+- Việc dở: người dùng push và deploy thử; smoke test RTDB thật; kiểm độc lập trước khi dùng với học sinh thật.
 

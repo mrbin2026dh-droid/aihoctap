@@ -24,6 +24,11 @@ for (const s of ['Ngô Quyền', 'cố gắng học tốt hơn', '92 triệu', '
 { const p = clone(pack); p.blocks['a/b'] = p.blocks.pl921; ok(C.validatePack(p).some(e => e.includes('Mã học liệu')), 'mã học liệu an toàn cho đường dẫn'); }
 { const p = clone(pack); p.blocks.pl921 = { ...p.blocks.pl921, text: ['x'.repeat(400001)] }; ok(C.validatePack(p).some(e => e.includes('quá lớn')), 'chặn gói quá lớn'); }
 
+// C1 (phán quyết): ẩn cả hoạt động thì không bắt nộp, không cho ghi
+{ const p = clone(pack); p.activities[0].an = true;
+  ok(!C.missingForSubmit(p, {}).includes('hd1_chon'), 'ẩn hoạt động thì không bắt nộp');
+  eq(C.checkDraft(p, { hd1_vi: 'x' }).error, 'FIELD_UNKNOWN', 'không ghi vào hoạt động ẩn'); }
+
 // C3 kiểm nháp
 eq(C.checkDraft(pack, { a_t1_lam: 'Đối chiếu sách' }), { ok: true, clean: { a_t1_lam: 'Đối chiếu sách' } });
 eq(C.checkDraft(pack, { khong_co: 'x' }).error, 'FIELD_UNKNOWN');

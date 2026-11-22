@@ -7,7 +7,7 @@
 //   phieu_bai/{goi}/{lop}/{uid}   bài cá nhân        phieu_ls/{goi}/{uid}/{rev}   bản chụp khi nộp (không ghi đè)
 //   phieu_nhom/{goi}/{lop}/{nX}   phiếu nhóm         phieu_gopy/{goi}/{lop}/{uid nhận}/{uid góp}  góp ý của bạn
 //   phieu_gv/{goi}/{lop}/{uid}    đánh giá của GV
-import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, validatePack, fieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
+import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, validatePack, fieldMap, activeFieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
 
 const GOI_RE = /^[a-z0-9_]{3,40}$/;
 
@@ -133,7 +133,7 @@ async function studentRoute(request, keys, db, J, deps, goi, act) {
     return (await write(next)) || J({ rev: next.rev });
   }
   if (act === 'lock' && m === 'POST') {
-    const ids = [...fieldMap(pack).values()].filter(f => f.lock && f.lock === body.lock).map(f => f.id);
+    const ids = [...activeFieldMap(pack).values()].filter(f => f.lock && f.lock === body.lock).map(f => f.id);
     if (!ids.length) return J({ error: 'LOCK_UNKNOWN', detail: 'Không có mục cần chốt.' }, 400);
     const miss = missingForSubmit(pack, bai.answers || {}).filter(id => ids.includes(id));
     if (miss.length) return J({ error: 'MISSING', fields: miss, detail: 'Hãy trả lời đủ trước khi chốt.' }, 400);
@@ -148,7 +148,9 @@ async function studentRoute(request, keys, db, J, deps, goi, act) {
     const ex = await db.getE(lsPath);
     if (ex.val !== null) return J({ error: 'REV_CONFLICT', detail: 'Thử lại.' }, 409);
     if (!(await db.put(lsPath, { answers: bai.answers || {}, pack_rev: pack.rev || 1, status: 'submitted', at: Date.now(), by: 'hs' }, ex.etag || undefined))) return J({ error: 'REV_CONFLICT', detail: 'Thử lại.' }, 409);
-    const next = { ...bai, ...meta, status: 'submitted', submitted_at: Date.now(), rev };
+    const locked = { ...(bai.locked || {}) };   // nộp thì khóa luôn mọi mục cần chốt (giữ bằng chứng trước/sau)
+    for (const f of fieldMap(pack).values()) if (f.lock && !locked[f.id]) locked[f.id] = Date.now();
+    const next = { ...bai, ...meta, locked, status: 'submitted', submitted_at: Date.now(), rev };
     return (await write(next)) || J({ rev, status: 'submitted' });
   }
   return J({ error: 'METHOD', detail: 'Phương thức không được hỗ trợ.' }, 405);
@@ -168,7 +170,7 @@ async function saveGroup(db, J, pack, goi, me, bai, path, etag, body) {
     if (Number(body.rev) !== Number(rev)) return J({ error: 'REV_CONFLICT', detail: 'Bạn trong nhóm vừa lưu. Tải lại để xem bản mới.', rev }, 409);
     const r = checkGroup(pack, body.answers);
     if (!r.ok) return J({ error: r.error, field: r.field, detail: MSG[r.error] || 'Dữ liệu chưa hợp lệ.' }, 400);
-    const fm = fieldMap(pack);
+    const fm = activeFieldMap(pack);
     for (const [id, v] of Object.entries(r.clean)) if (fm.get(id).type === 'members' && v.some(u => !members[u])) return J({ error: 'NOT_MEMBER', field: id, detail: 'Chỉ chọn bạn trong nhóm.' }, 400);
     answers = { ...answers, ...r.clean };
     by = { ...by }; for (const id of Object.keys(r.clean)) by[id] = me.uid;
@@ -274,7 +276,7 @@ async function teacherRoute(request, env, keys, db, J, deps) {
   if (op === 'mo') {
     const e = needGoi() || lopOk(); if (e) return e;
     const pack = await db.get('phieu_bo/' + goi);
-    if (!pack?.blocks?.[body.block]) return J({ error: 'BLOCK_SAI', detail: 'Không có học liệu này.' }, 400);
+    if (typeof body.block !== 'string' || !/^[a-z0-9_]{2,40}$/.test(body.block) || !Object.hasOwn(pack?.blocks || {}, body.block)) return J({ error: 'BLOCK_SAI', detail: 'Không có học liệu này.' }, 400);
     const pth = `phieu_mo/${goi}/${lk}/${body.block}`;
     if (body.open === false) await db.del(pth); else await db.put(pth, Date.now());
     return J({ ok: true });
