@@ -4607,3 +4607,8 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Quay lui: `npx wrangler rollback 657469ee-79ef-4051-b5a3-9808767a2d3d`, hoặc tắt nhanh bằng `PHIEU_ENABLED="0"`.
 - Việc dở: giáo viên nhập gói và đáp án; smoke test học sinh [THỬ] trên RTDB thật (ETag, hai máy); kiểm độc lập trước khi dùng với học sinh thật.
 
+- 22/11/2026 Claude:
+  - Lỗi người dùng báo: bấm "Học AI" ở trang giáo viên không vào được. Nguyên nhân: `teacher.js` và `teacher-ui.js` giữ nguyên `?v=20261030c`, nên trình duyệt dùng bản cũ đã lưu, chưa có mục hocai.
+  - Đã đổi thành `?v=20261122b` trong 8 tệp giáo viên và thêm `?v` cho `teacher.css` (commit f2e1e1e). Test giao diện giáo viên PASS; Pages deploy success.
+  - Bản thật đã kiểm: teacher.js có nạp teacher-phieu, teacher-ui có mục hocai.
+  - Lưu ý cho AI sau: mỗi lần sửa mã trang giáo viên phải đổi mã `?v=`.
