@@ -7,6 +7,7 @@
 //   phieu_bai/{goi}/{lop}/{uid}   bài cá nhân        phieu_ls/{goi}/{uid}/{rev}   bản chụp khi nộp (không ghi đè)
 //   phieu_nhom/{goi}/{lop}/{nX}   phiếu nhóm         phieu_gopy/{goi}/{lop}/{uid nhận}/{uid góp}  góp ý của bạn
 //   phieu_gv/{goi}/{lop}/{uid}    đánh giá của GV
+import { QTYPES, newId, checkQuestion, cleanQuestion, checkLesson, lessonToPack, keepRemoved, normAns } from './soan-core.js';
 import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, cardOf, isShown, validatePack, fieldMap, activeFieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
 
 const GOI_RE = /^[a-z0-9_]{3,40}$/;
@@ -222,13 +223,20 @@ async function checkCard(db, J, pack, goi, me, bai, path, etag, body) {
   const ket_qua = [];
   for (const id of shown) {
     if (!Object.hasOwn(k.dap_an, id) || ans[id] === undefined || ans[id] === '') continue;
-    const dung = JSON.stringify(ans[id]) === JSON.stringify(k.dap_an[id]);
+    const dung = sameAnswer(ans[id], k.dap_an[id]);
     const gt = k.giai_thich && Object.hasOwn(k.giai_thich, id) ? k.giai_thich[id] : '';
     const sai = k.goi_y_sai && Object.hasOwn(k.goi_y_sai, id) ? k.goi_y_sai[id] : '';
     ket_qua.push({ field: id, dung, giai_thich: String(dung || !sai ? gt : sai) });
   }
   const tatCa = ket_qua.length > 0 && ket_qua.every(x => x.dung);
   return J({ the: key, rev, ket_qua, ten: String(k.ten || ''), chot: tatCa || k.chot_luon ? String(k.chot || '') : '' });
+}
+
+/** So câu trả lời với đáp án: tập hợp (không theo thứ tự), danh sách chấp nhận (câu điền), hoặc bằng nhau. @param {any} a @param {any} key */
+export function sameAnswer(a, key) {
+  if (key && typeof key === 'object' && !Array.isArray(key) && Array.isArray(key.chap_nhan)) return key.chap_nhan.some((/** @type {any} */ x) => normAns(x) === normAns(a));
+  if (Array.isArray(key)) return Array.isArray(a) && a.length === key.length && key.every(x => a.includes(x));
+  return a === key;
 }
 
 /** Góp ý của bạn cùng nhóm cho mục tiêu (phần B). GET ?uid= xem mục tiêu của bạn; POST lưu góp ý. */
@@ -380,6 +388,14 @@ async function teacherRoute(request, env, keys, db, J, deps) {
     await db.put('phieu_ds/' + goi, { title: saved.title, grade: saved.grade, thu_tu: saved.thu_tu || 0, so_tiet: saved.so_tiet || 0, an: !!saved.an, rev: saved.rev });
     return J({ ok: true, rev: saved.rev });
   }
+  if (op === 'soan_doc') {
+    const e = needGoi(); if (e) return e;
+    return J({ soan: await db.get('phieu_soan/' + goi), admin: t.admin, loai: QTYPES });
+  }
+  if (op === 'soan') {
+    const e = adminOnly(); if (e) return e;
+    return soanWrite(db, J, body);
+  }
   if (op === 'goi_an') {
     const e = adminOnly() || needGoi(); if (e) return e;
     const { val: cur, etag } = await db.getE('phieu_bo/' + goi);
@@ -397,4 +413,92 @@ async function teacherRoute(request, env, keys, db, J, deps) {
     return J({ ok: true });
   }
   return J({ error: 'OP_SAI', detail: 'Thao tác không hợp lệ.' }, 400);
+}
+
+/* ---------------- Trình soạn bài (chỉ giáo viên quản trị ghi) ---------------- */
+const txt = (/** @type {unknown} */ v, max = 300) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+
+/** Mọi thay đổi trình soạn: sửa bài soạn → dựng lại gói học sinh + đáp án → ghi có điều kiện. */
+async function soanWrite(db, J, body) {
+  const viec = String(body.viec || '');
+  const bad = (/** @type {string} */ msg, field = '') => J({ error: 'SOAN_SAI', field, detail: msg }, 400);
+  let m, etag = '';
+  if (viec === 'tao_bai' || viec === 'nhap') {
+    if (viec === 'tao_bai') {
+      const grade = Number(body.grade);
+      if (!txt(body.title)) return bad('Nhập tên bài.', 'title');
+      if (!Number.isInteger(grade) || grade < 1 || grade > 12) return bad('Chọn khối lớp.', 'grade');
+      m = { id: newId('b'), title: txt(body.title), grade, thu_tu: Number(body.thu_tu) || 0, activities: [], rev: 0 };
+    } else {
+      m = body.soan;
+      if (!m || typeof m !== 'object' || JSON.stringify(m).length > 400000) return bad('Tệp bài không đúng định dạng.');
+      const cur = await db.getE('phieu_soan/' + String(m.id || '').replace(/[^a-z0-9_]/g, ''));
+      etag = cur.etag; m = { ...m, rev: cur.val?.rev || 0 };
+      for (const a of m.activities || []) a.questions = (a.questions || []).map((/** @type {any} */ q) => (checkQuestion(q) ? q : cleanQuestion(q)));
+    }
+  } else {
+    const goi = String(body.goi || '');
+    if (!/^[a-z][a-z0-9_]{2,30}$/.test(goi)) return bad('Mã bài không hợp lệ.');
+    const cur = await db.getE('phieu_soan/' + goi);
+    if (!cur.val) return J({ error: 'PACK_NOT_FOUND', detail: 'Không tìm thấy bài soạn.' }, 404);
+    m = cur.val; etag = cur.etag; m.activities = m.activities || [];
+    for (const a of m.activities) a.questions = a.questions || [];
+    const hd = m.activities.find((/** @type {any} */ a) => a.id === body.hd);
+    const where = (/** @type {string} */ id) => { for (const a of m.activities) { const i = a.questions.findIndex((/** @type {any} */ q) => q.id === id); if (i >= 0) return { a, i }; } return null; };
+    const move = (/** @type {any[]} */ arr, /** @type {number} */ i, /** @type {number} */ d) => { const j = i + (d < 0 ? -1 : 1); if (i < 0 || j < 0 || j >= arr.length) return false; [arr[i], arr[j]] = [arr[j], arr[i]]; return true; };
+    if (viec === 'sua_bai') {
+      const grade = Number(body.grade);
+      if (!txt(body.title)) return bad('Nhập tên bài.', 'title');
+      if (!Number.isInteger(grade) || grade < 1 || grade > 12) return bad('Chọn khối lớp.', 'grade');
+      m.title = txt(body.title); m.grade = grade;
+    } else if (viec === 'them_hd' || viec === 'sua_hd') {
+      if (!txt(body.title)) return bad('Nhập tên hoạt động.', 'title');
+      if (viec === 'them_hd') m.activities.push({ id: newId('h'), title: txt(body.title), huong_dan: txt(body.huong_dan, 500), questions: [] });
+      else { if (!hd) return bad('Không có hoạt động này.'); hd.title = txt(body.title); hd.huong_dan = txt(body.huong_dan, 500); }
+    } else if (viec === 'xoa_hd') {
+      if (!hd) return bad('Không có hoạt động này.');
+      m.activities = m.activities.filter((/** @type {any} */ a) => a !== hd);
+    } else if (viec === 'chuyen_hd') {
+      if (!hd || !move(m.activities, m.activities.indexOf(hd), Number(body.huong))) return bad('Không chuyển được hoạt động.');
+    } else if (viec === 'luu_cau') {
+      const q = body.cau && typeof body.cau === 'object' ? { ...body.cau } : null;
+      if (!q) return bad('Thiếu câu hỏi.');
+      const er = checkQuestion(q); if (er) return bad(er.msg, er.field);
+      if (q.id) {
+        const w = where(String(q.id));
+        if (!w) return bad('Không tìm thấy câu hỏi.');
+        if (w.a.questions[w.i].type !== q.type) return bad('Không đổi được dạng câu đã có. Hãy xóa câu này và thêm câu mới.', 'type');
+        w.a.questions[w.i] = cleanQuestion(q);
+      } else {
+        if (!hd) return bad('Chọn hoạt động cho câu hỏi.');
+        q.id = newId('c'); hd.questions.push(cleanQuestion(q));
+      }
+    } else if (viec === 'xoa_cau') {
+      const w = where(String(body.cau_id || '')); if (!w) return bad('Không tìm thấy câu hỏi.');
+      w.a.questions.splice(w.i, 1);
+    } else if (viec === 'chuyen_cau') {
+      const w = where(String(body.cau_id || '')); if (!w || !move(w.a.questions, w.i, Number(body.huong))) return bad('Không chuyển được câu hỏi.');
+    } else if (viec === 'dem') {
+      const id = String(body.cau_id || ''); if (!/^[a-z][a-z0-9_]{2,30}$/.test(id)) return bad('Mã câu không hợp lệ.');
+      const all = (await db.get('phieu_bai/' + goi)) || {};
+      let so = 0;
+      for (const lop of Object.values(all)) for (const b of Object.values(/** @type {any} */ (lop) || {})) if (Object.keys(/** @type {any} */ (b)?.answers || {}).some(k => k === id || k.startsWith(id + '_'))) so++;
+      return J({ so });
+    } else return bad('Thao tác không hợp lệ.');
+  }
+  const errs = checkLesson(m);
+  if (errs.length) return J({ error: 'SOAN_SAI', errors: errs.slice(0, 10), detail: errs[0] }, 400);
+  const { pack, dapan } = lessonToPack(m);
+  const old = await db.getE('phieu_bo/' + m.id);
+  keepRemoved(old.val, pack);
+  pack.rev = (old.val?.rev || 0) + 1; pack.an = !!old.val?.an;
+  const pe = old.val ? checkEdit(old.val, pack) : validatePack(pack);
+  if (pe.length) return J({ error: 'SOAN_SAI', errors: pe.slice(0, 10), detail: pe[0] }, 400);
+  m.rev = (m.rev || 0) + 1;
+  if (!(await db.put('phieu_soan/' + m.id, m, etag || undefined))) return J({ error: 'REV_CONFLICT', detail: 'Bài vừa được sửa ở máy khác. Tải lại.' }, 409);
+  if (!(await db.put('phieu_bo/' + m.id, pack, old.etag || undefined))) return J({ error: 'REV_CONFLICT', detail: 'Thử lại.' }, 409);
+  await db.put('phieu_dapan/' + m.id, dapan);
+  await db.put('phieu_ds/' + m.id, { title: pack.title, grade: pack.grade, thu_tu: pack.thu_tu, so_tiet: pack.so_tiet, an: pack.an, rev: pack.rev, soan: true });
+  if (!(await db.get('phieu_bo_goc/' + m.id))) await db.put('phieu_bo_goc/' + m.id, pack);
+  return J({ ok: true, soan: m, goi: m.id });
 }

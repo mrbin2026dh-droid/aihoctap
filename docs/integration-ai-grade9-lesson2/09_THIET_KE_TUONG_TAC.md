@@ -46,3 +46,11 @@ Mục đích: tạo mốc "lúc đầu em chọn…" để cuối bài (HĐ 4) t
 - Nguyên tắc: học sinh làm trước, bấm Kiểm tra mới thấy đúng hay sai và giải thích dưới từng câu. Đáp án chỉ nằm trong `ai9_b2.dapan.json`; tệp này bị .gitignore chặn và giáo viên tự nhập qua trang giáo viên. Mức Đạt/Khá/Tốt do giáo viên chọn theo các câu tự viết.
 - Nội dung đã duyệt (có đáp án, không lên Git): `data/phieu/ai9_bai2.duyet.md`.
 
+## 22/11/2026: TRÌNH SOẠN BÀI DẠNG MỞ (thay trình soạn cũ)
+- Giáo viên yêu cầu bỏ cách soạn phức tạp. Thay bằng công cụ dùng chung cho mọi bài sau: **Tạo bài → Thêm hoạt động → Thêm câu hỏi**. Mỗi câu có nút Sửa, Lên, Xuống, Xóa và được lưu ngay khi bấm.
+- 8 dạng câu: Trắc nghiệm 1 đáp án (không chọn đáp án đúng thì thành câu khảo sát), Nhiều đáp án đúng, Đúng/Sai từng ý, Xếp vào nhóm, Ghép đôi, Sắp xếp thứ tự, Điền câu trả lời ngắn, Tự luận (thầy cô chấm).
+- Máy chủ tách đáp án và giải thích khỏi bài học sinh (`worker/soan-core.js`, `lessonToPack`). Bài soạn có đáp án lưu ở `phieu_soan/{bài}` và chỉ giáo viên đọc được.
+- Xóa câu hoặc hoạt động: bài học sinh đã làm vẫn giữ, phần đã xóa chỉ bị ẩn. Hộp thoại xóa báo số học sinh đã làm câu đó.
+- Kiểm tra: câu nhiều đáp án chấm theo tập hợp, không phụ thuộc thứ tự tích. Câu điền chấp nhận chữ hoa/thường và khoảng trắng thừa, có phân biệt dấu. Học sinh thấy lời giải thích sau khi bấm Kiểm tra. Câu tự luận không có nút Kiểm tra.
+- Bài mẫu Bài 2 lớp 9 (6 hoạt động, 27 câu, đủ 8 dạng): `data/phieu/ai9_b2.soan.json` (bị .gitignore chặn). Thầy dùng nút "Nhập bài từ tệp" để thay bài `ai9_b2` cũ.
+

@@ -191,6 +191,7 @@ class PackView {
     const card = el('article', '', 'phieu-the');
     card.append(el('p', `${t.ten} · ${i + 1}/${the.length}`, 'phieu-the-so'));
     if (t.noi_dung) card.append(el('p', t.noi_dung, 'phieu-the-nd'));
+    if (t.goi_y) card.append(el('p', t.goi_y, 'meta phieu-goi-y'));
     const done = !!this.st.bai.kiem?.[t.kiem] || !!this.fb?.[t.kiem];
     const fb = this.fb?.[t.kiem];
     const form = el('div', '', 'phieu-form');
@@ -276,13 +277,22 @@ class PackView {
     if (f.type === 'text' || f.type === 'textarea') {
       const lab = el('label', f.label); lab.htmlFor = id;
       const inp = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (el(f.type === 'text' ? 'input' : 'textarea'));
-      if (f.kieu === 'ngay') /** @type {HTMLInputElement} */ (inp).type = 'date';
+      if (f.type === 'text') /** @type {HTMLInputElement} */ (inp).type = f.kieu === 'ngay' ? 'date' : 'text';
       inp.id = id; inp.name = f.id; inp.value = String(ans[f.id] ?? ''); inp.maxLength = f.max || 2000; inp.disabled = off;
       if (f.type === 'textarea') /** @type {HTMLTextAreaElement} */ (inp).rows = 3;
       if (f.required && !isGroup) inp.setAttribute('aria-required', 'true');
       inp.setAttribute('aria-describedby', err.id);
       inp.addEventListener('input', () => onChange(inp.value));
       wrap.append(lab, inp);
+    } else if (f.kieu === 'chon') {
+      const lab = el('label', f.label); lab.htmlFor = id;
+      const sel = /** @type {HTMLSelectElement} */ (el('select'));
+      sel.id = id; sel.name = f.id; sel.disabled = off; sel.setAttribute('aria-describedby', err.id);
+      sel.append(new Option('Chọn…', ''));
+      for (const o of optionsOf(this.pack, f)) sel.append(new Option(o, o));
+      sel.value = String(ans[f.id] ?? '');
+      sel.addEventListener('change', () => onChange(sel.value));
+      wrap.append(lab, sel);
     } else {
       const fs = el('fieldset', '', f.kieu === 'nut' ? 'phieu-choice is-nut' : 'phieu-choice');
       const lg = el('legend', f.label); fs.append(lg);

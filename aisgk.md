@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude viết lại toàn bộ Bài 2 Học AI theo YCCĐ (gói mới ai9_b2, giáo viên duyệt), có Kiểm tra từng phần, nút ẩn bài; thầy cần nhập ai9_b2.json + ai9_b2.dapan.json và ẩn bài cũ ai9_bai2.
+- Yêu cầu mới nhất: Claude làm trình soạn bài Học AI dạng mở (Bài → Hoạt động → Câu hỏi, 8 dạng, lưu từng câu), bỏ trình soạn cũ; bài mẫu Bài 2 ở data/phieu/ai9_b2.soan.json (thầy nhập bằng "Nhập bài từ tệp").
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4649,3 +4649,18 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - Còn lại:
     - Thầy đăng nhập trang giáo viên, nhập `ai9_b2.json` và `ai9_b2.dapan.json`.
     - Ẩn bài cũ `ai9_bai2` nếu đã nhập trước đây.
+
+### 22/11/2026 — Claude: trình soạn bài Học AI dạng mở
+- Giáo viên yêu cầu bỏ trình soạn phức tạp, làm công cụ dùng mãi cho các bài sau: tạo bài, tạo hoạt động, tạo câu hỏi nhiều dạng. Giáo viên đã cho phép push và deploy.
+- Đã làm:
+  - `worker/soan-core.js` (bản sao ở frontend): 8 dạng câu, `checkQuestion`, `lessonToPack` (tách đáp án), `keepRemoved` (ẩn ô của câu đã xóa).
+  - Op `soan` với các việc: tao_bai, sua_bai, them_hd, sua_hd, xoa_hd, chuyen_hd, luu_cau, xoa_cau, chuyen_cau, dem, nhap. Op `soan_doc` để đọc bài soạn.
+  - `sameAnswer` chấm nhiều đáp án theo tập hợp; câu điền chuẩn hoá NFC, giữ dấu.
+  - `frontend/hoc/teacher-soan.js` là trình soạn mới, thay Editor cũ và các nút nhập gói/đáp án cũ.
+  - Màn học sinh có ô thả xuống (ghép đôi, thứ tự) và ô gõ chữ có type="text".
+  - Bài mẫu `ai9_b2.soan.json`.
+- Tệp: `worker/soan-core.js`, `worker/phieu.js`, `frontend/hoc/{soan-core.js, teacher-soan.js, teacher-phieu.js, phieu.js, teacher.css, styles.css, teacher.html, teacher.js, sw.js}`, `tools/package_student_pwa.py`, `.gitignore`, test mới `test_phieu_soan.mjs` và `test_phieu_soan_ui.cjs`; `test_phieu_teacher_ui.cjs` đổi sang thử trình soạn mới.
+- Kiểm thực tế:
+  - soan 100, soan_ui 33, teacher_ui 77 đều PASS.
+  - Các test sau đều PASS: core, worker, b2, ui, b2_ui, mobile_nav, thi_ui, role_isolation, fonts, worker_gate, tutor_all_lessons, gate_g1_g6, ai_usage_limits; `package_student_pwa.py --check` PASS.
+

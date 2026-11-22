@@ -881,3 +881,23 @@ body.qz-hosting{overflow:hidden}
 .teacher-app .phieu-gv-form .t-field{margin:8px 0}
 .teacher-app .phieu-gv-chart{list-style:none;padding:0;margin:8px 0;display:grid;gap:6px}.teacher-app .phieu-gv-chart li{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,40%) 3ch;gap:8px;align-items:center}
 .teacher-app .phieu-gv-chart progress{width:100%;height:14px}.teacher-app .phieu-gv-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+/* Học AI – trình soạn bài dạng mở */
+.teacher-app .sb-card{display:grid;gap:12px;margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:var(--t-radius);background:var(--surface);min-width:0}
+.teacher-app .sb-bai{grid-template-columns:minmax(0,1fr) 160px auto;align-items:end}
+.teacher-app .sb-hd-title{margin:0}.teacher-app .sb-hd-form{display:grid;gap:8px}
+.teacher-app .sb-cau-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:cau}
+.teacher-app .sb-cau{border:1px solid var(--line);border-radius:var(--t-radius);padding:12px;counter-increment:cau}
+.teacher-app .sb-cau-sum{display:grid;gap:4px}.teacher-app .sb-cau-sum::before{content:"Câu " counter(cau);font-weight:700}
+.teacher-app .sb-cau-de{margin:0;overflow-wrap:anywhere}.teacher-app .sb-cau-tools{margin-top:8px}
+.teacher-app .sb-pick{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}.teacher-app .sb-pick-title{grid-column:1/-1;margin:0;font-weight:700}
+.teacher-app .sb-pick-btn{display:grid;gap:4px;text-align:left;min-height:72px}.teacher-app .sb-pick-vd{font-weight:400;font-size:var(--t-small);color:var(--muted)}
+.teacher-app .sb-form{display:grid;gap:12px;border-top:1px dashed var(--line);padding-top:12px}.teacher-app .sb-form-loai{margin:0;font-weight:700}
+.teacher-app .sb-type{display:grid;gap:8px}.teacher-app .sb-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.teacher-app .sb-row input[type=text],.teacher-app .sb-row select{min-height:48px;min-width:0;width:100%}
+.teacher-app .sb-key{font-weight:700;min-width:2ch}.teacher-app .sb-dung{display:inline-flex;gap:6px;align-items:center;min-height:48px}
+.teacher-app .sb-row-tools{display:flex;gap:4px}.teacher-app .sb-nhom{display:grid;gap:8px}
+.teacher-app .sb-check{display:inline-flex;gap:8px;align-items:center;min-height:48px}
+@media(max-width:760px){.teacher-app .sb-bai{grid-template-columns:1fr}.teacher-app .sb-row{grid-template-columns:auto minmax(0,1fr);}.teacher-app .sb-row>:nth-child(n+3){grid-column:2}}
+.teacher-app .sb-dung,.teacher-app .sb-check{display:inline-flex!important;flex-direction:row;align-items:center;gap:8px;white-space:nowrap;width:auto;grid-template-columns:none;font-weight:600}
+.teacher-app .sb-dung input[type=checkbox],.teacher-app .sb-check input[type=checkbox]{width:24px;height:24px;min-height:24px;flex:0 0 24px;margin:0}
+.teacher-app .sb-check{white-space:normal}

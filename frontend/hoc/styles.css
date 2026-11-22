@@ -1985,3 +1985,4 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .phieu-field.can-mark.is-filled>label::after,.phieu-field.can-mark.is-filled legend::after{content:" ✓";color:#24472d;font-weight:700}
 .phieu-ten{font-weight:700;margin:8px 0 0}.phieu-chot{background:var(--paper);border-left:3px solid var(--blue);padding:8px 12px;margin:8px 0}
 .phieu-field .phieu-ok,.phieu-field .phieu-chua{margin-top:6px;font-size:14px}
+.phieu-field select{width:100%;min-height:48px;font-size:16px}.phieu-goi-y{margin:0 0 8px}
