@@ -491,6 +491,7 @@ body.qz-hosting{overflow:hidden}
  .teacher-app #hdr-accounts[aria-current=page]{background:var(--brand);border-color:var(--brand);color:var(--white)}
  .teacher-app #nav-accounts,.teacher-app #nav-exams{display:none!important}
  body:not(.is-class-teacher).teacher-app #nav-materials{display:none!important}
+ body:not(.is-class-teacher).teacher-app #nav-hocai{display:none!important}
  .teacher-app .t-nav-item.is-group-current{background:var(--brand);border-color:var(--brand);color:var(--white)}
  .teacher-app .t-subtabs:not([hidden]){display:flex;gap:4px;margin:0 0 16px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
  .teacher-app .t-subtab{flex:1;min-height:44px;padding:8px 12px;border:0;border-radius:9px;background:transparent;color:var(--ink);font-weight:700;font-size:var(--t-text, 16px)}
@@ -864,3 +865,17 @@ body.qz-hosting{overflow:hidden}
 :root[data-theme=dark] .teacher-app .td-t-rank-2{background:#48505b;color:#eef1f5}
 :root[data-theme=dark] .teacher-app .td-t-rank-3{background:#6b3d1d;color:#ffd5b5}
 @media(max-width:600px){.teacher-app .tools-tabs .t-button{white-space:nowrap;padding-inline:8px;min-width:0}}
+
+/* Học AI – trang giáo viên */
+.teacher-app .phieu-gv-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.teacher-app .phieu-gv-bar .t-field{flex:1 1 220px;min-width:0}
+.teacher-app .phieu-gv-tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.teacher-app .phieu-gv-sec{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:var(--t-radius);background:var(--surface);min-width:0}
+.teacher-app .phieu-gv-row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin:8px 0}
+.teacher-app .phieu-gv-act{margin:12px 0;border:1px solid var(--line);border-radius:var(--t-radius);padding:8px 12px;background:var(--surface)}.teacher-app .phieu-gv-act>summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+.teacher-app .phieu-gv-act th{width:40%;font-weight:600}.teacher-app .phieu-truoc{margin:4px 0 0}
+.teacher-app .phieu-dapan p{margin:4px 0}.teacher-app .phieu-dapan-sub{margin:8px 0 8px 8px}
+.teacher-app .phieu-ed-row{border-top:1px dashed var(--line);padding:8px 0}.teacher-app .phieu-ed-check{display:inline-flex;gap:8px;align-items:center;min-height:44px;margin-right:16px}
+.teacher-app .phieu-ed-field label .t-badge{margin-left:8px}.teacher-app .phieu-ed-bar{position:sticky;bottom:0;background:var(--surface);padding:12px 0;border-top:1px solid var(--line)}
+.teacher-app .phieu-ed-prev{margin:4px 0 12px}.teacher-app .phieu-item{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0}
+.teacher-app .phieu-cards{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))}
+.teacher-app .phieu-gv-form .t-field{margin:8px 0}

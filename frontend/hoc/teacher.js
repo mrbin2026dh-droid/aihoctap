@@ -9,6 +9,7 @@ import './teacher-thi.js?v=20261030c';
 import './teacher-accounts.js?v=20261030c';
 import './teacher-read.js?v=20261030c';
 import './teacher-docs.js?v=20261030c';
+import './teacher-phieu.js?v=20261122a';
 import './teacher-effect.js?v=20261030c';
 import './teacher-quiz.js?v=20261030c';
 import './teacher-tl.js?v=20261030c';

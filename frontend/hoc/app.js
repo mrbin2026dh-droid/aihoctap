@@ -293,9 +293,9 @@ function show(name) {
     studentSettingsActive = false;
     renderStudentSettings(false);
   }
-  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'exams', 'materials', 'result']) node(`${view}-view`).hidden = view !== name;
+  for (const view of ['catalog', 'practice', 'lesson', 'downloads', 'progress', 'exams', 'materials', 'hocai', 'result']) node(`${view}-view`).hidden = view !== name;
   if (session && name !== 'exams' && presence.currentState() !== 'hoc') void presence.setState('hoc');   // rời tab Thi → về Đang học
-  const destination = name === 'lesson' || name === 'result' ? 'catalog' : name;
+  const destination = name === 'lesson' || name === 'result' || name === 'materials' ? 'catalog' : name;
   quiz.refreshBanner(); tl.refreshBanner();
   for (const tab of document.querySelectorAll('button[data-tab]')) {
     if (tab instanceof HTMLButtonElement && tab.dataset.tab === destination) tab.setAttribute('aria-current', 'page');
@@ -1138,6 +1138,20 @@ async function materials() {
   }
 }
 
+/** Mục Học AI: phiếu học tập làm trên máy (tải mô-đun khi mở, bản cũ không bị ảnh hưởng). */
+async function hocAi() {
+  show('hocai');
+  const generation = viewGeneration, box = node('hocai');
+  if (!session) { box.replaceChildren(); empty(box, 'Đăng nhập để học', 'Bài Học AI của khối em sẽ hiện ở đây.'); return; }
+  const mod = await import('./phieu.js');
+  if (generation !== viewGeneration) return;
+  await mod.renderHocAi(box, {
+    name: String(session.identity.name || ''),
+    uid: String(session.identity.uid || ''),
+    token: async () => { if (session && !session.token && session.pin) await workerToken(session.identity.uid, session.pin); return session?.token || ''; },
+    alive: () => generation === viewGeneration && currentView === 'hocai'
+  });
+}
 on('sync', async () => {await sync(); await progress();});
 for (const tab of document.querySelectorAll('button[data-tab]')) tab.addEventListener('click', async () => {
   viewGeneration++;
@@ -1148,6 +1162,7 @@ for (const tab of document.querySelectorAll('button[data-tab]')) tab.addEventLis
     else if (name === 'practice') {show('practice'); renderPractice();}
     else if (name === 'exams') exams();
     else if (name === 'materials') await materials();
+    else if (name === 'hocai') await hocAi();
     else {show('catalog'); renderCatalog();}
   } catch (error) {report(error instanceof Error ? error : new Error('Chưa chuyển được trang.'));}
 });
@@ -1506,7 +1521,7 @@ function openStudentSettings() {
   const wide = window.matchMedia('(min-width: 960px)').matches;
   if (!wide) studentActiveView = '';
   history.pushState({ studentSettings: 1 }, '');
-  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'exams-view', 'materials-view', 'result-view'];
+  const tabs = ['catalog-view', 'practice-view', 'lesson-view', 'downloads-view', 'progress-view', 'exams-view', 'materials-view', 'hocai-view', 'result-view'];
   tabs.forEach(id => { const elem = document.getElementById(id); if (elem) elem.hidden = true; });
   renderStudentSettings();
   window.scrollTo(0, 0);

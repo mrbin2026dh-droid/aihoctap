@@ -2,7 +2,7 @@
 // Khung giao diện giáo viên: menu 4 phân hệ, danh sách → chi tiết, tab, Hồ sơ/Cài đặt, lịch sử trình duyệt.
 // Không gọi máy chủ. Dữ liệu và nghiệp vụ nằm ở teacher.js; tệp này chỉ điều khiển hiển thị và focus.
 
-const TITLES = {overview: 'Tổng quan', lessons: 'Soạn bài', exams: 'Về nhà', sheetexam: 'Thi', materials: 'Tài liệu', accounts: 'Tài khoản', effect: 'Hiệu quả', tools: 'Tiện ích'};
+const TITLES = {overview: 'Tổng quan', lessons: 'Soạn bài', exams: 'Về nhà', sheetexam: 'Thi', materials: 'Tài liệu', hocai: 'Học AI', accounts: 'Tài khoản', effect: 'Hiệu quả', tools: 'Tiện ích'};
 const PANEL_TITLES = {pin: 'Đổi mã PIN', ai: 'Gia sư AI và hạn mức', keys: 'Khóa API'};
 
 /** @type {() => Promise<boolean>} */
@@ -39,10 +39,10 @@ function renderNav() {
 /* Điện thoại: thanh dưới chỉ giữ 5 mục; mục cùng tính năng gộp thành thanh con, Tài khoản lên biểu tượng cạnh bánh răng.
    Lối vào mới luôn bấm hộ NÚT GỐC (#nav-…) để giữ nguyên việc nạp dữ liệu của từng mục. Máy tính không đổi. */
 const MOBILE_GROUPS = /** @type {Record<string, [string, string][]>} */ ({
-  lessons: [['lessons', 'Soạn bài'], ['materials', 'Tài liệu']],
+  lessons: [['lessons', 'Soạn bài'], ['materials', 'Tài liệu'], ['hocai', 'Học AI']],
   sheetexam: [['sheetexam', 'Thi'], ['exams', 'Về nhà']]
 });
-const GROUP_OF = /** @type {Record<string, string>} */ ({ lessons: 'lessons', materials: 'lessons', sheetexam: 'sheetexam', exams: 'sheetexam' });
+const GROUP_OF = /** @type {Record<string, string>} */ ({ lessons: 'lessons', materials: 'lessons', hocai: 'lessons', sheetexam: 'sheetexam', exams: 'sheetexam' });
 function renderMobileGroups() {
   const classTeacher = document.body.classList.contains('is-class-teacher');   // giáo viên lớp: không có Soạn bài, Về nhà → không gộp
   const leader = screen === 'work' && !classTeacher ? GROUP_OF[view] : '';

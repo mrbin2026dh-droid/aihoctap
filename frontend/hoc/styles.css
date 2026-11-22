@@ -1959,3 +1959,18 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .td-rules ul{margin:4px 0 0;padding-left:20px;color:var(--muted);font-size:15px;display:grid;gap:6px}
 @media (max-width:420px){.td-card{padding:16px}.td-you{grid-template-columns:1fr;justify-items:start}.td-you-rank{justify-items:start;grid-auto-flow:column;align-items:baseline;gap:8px}.td-list li{grid-template-columns:28px 1fr auto;gap:8px}.td-b{display:none}.td-pod-name{font-size:14px}}
 @media (forced-colors:active){.td-pod,.td-you,.td-list li.is-me{border:1px solid CanvasText}}
+/* Học AI – phiếu học tập */
+.catalog-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}.catalog-docs{font-size:13px}
+.phieu-head{display:grid;gap:4px;margin-bottom:16px}.phieu-title{font-size:24px;margin:4px 0}.phieu-status{min-height:1.5em;margin:0}
+.phieu-steps{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 20px}.phieu-steps button{font-size:13px;flex:1 1 180px;text-align:left}.phieu-steps button[aria-current=step]{background:var(--blue);color:#fff;border-color:var(--blue)}
+.phieu-act{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;min-width:0}.phieu-act-title{margin:0;font-size:20px}.phieu-task{font-weight:600}.phieu-q{color:var(--muted);font-size:14px}
+.phieu-sub{font-size:16px;margin:20px 0 8px}.phieu-block{border-top:1px solid var(--line);margin-top:16px;padding-top:4px}
+.phieu-cards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}.phieu-items{display:grid;gap:8px}
+.phieu-item{border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0;overflow-wrap:anywhere}.phieu-item p{margin:4px 0}
+.phieu-form{display:grid;gap:4px}.phieu-field{margin:8px 0}.phieu-field textarea{min-height:96px}.phieu-hint{margin:2px 0}
+.phieu-choice{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;min-width:0}.phieu-choice legend{font-weight:600;padding:0 4px}
+.phieu-field [aria-invalid=true]{border-color:var(--danger)}.field-error{color:var(--danger);font-size:13px;margin:4px 0}
+.phieu-group{border-top:1px dashed var(--line);margin-top:20px;padding-top:4px}.phieu-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}.phieu-row label{flex:0 1 160px}
+.phieu-note{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}.phieu-note h3{margin:0 0 4px;font-size:16px}
+.phieu-lock{margin-top:12px}.phieu-foot{justify-content:flex-end}
+@media(max-width:760px){.phieu-act{padding:16px 12px}.phieu-steps button{flex:1 1 100%}.phieu-title{font-size:21px}}

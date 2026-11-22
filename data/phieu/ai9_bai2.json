@@ -1,0 +1,1389 @@
+{
+ "id": "ai9_bai2",
+ "schema": 1,
+ "rev": 1,
+ "ban_goc": true,
+ "mon": "giao_duc_ai",
+ "grade": 9,
+ "thu_tu": 2,
+ "title": "Bài 2. Học tập, thể hiện bản thân và định hướng nghề nghiệp trong thế giới AI",
+ "so_tiet": 2,
+ "ai_tutor": false,
+ "nguon": [
+  "Lop9.Bai02 - Hoc tap, the hien ban than va dinh huong NN trong the gioi AI.docx",
+  "Lop9.Bai02 - Phu luc.docx"
+ ],
+ "yccd": [
+  {
+   "code": "9.A3.1",
+   "text": "Trình bày được những năng lực con người cần rèn luyện trong thế giới có AI, như biết học cách học (rèn luyện khả năng tự học, học suốt đời), phát triển tư duy phản biện (biết phân tích, đánh giá thông tin do AI cung cấp), giữ vững tính sáng tạo và cảm xúc con người (làm những việc AI không thể làm); nâng cao kĩ năng hợp tác và giao tiếp (làm việc hiệu quả với con người và AI)"
+  },
+  {
+   "code": "9.A3.2",
+   "text": "Xác định được mục tiêu học tập cá nhân trong thế giới có AI (ví dụ: học cách sử dụng AI để tìm kiếm và tóm tắt thông tin; sử dụng AI để rèn luyện kĩ năng viết, đọc, vẽ, tư duy logic; luyện tập giao tiếp hoặc học ngôn ngữ mới với công cụ AI; tự đặt mục tiêu phát triển kĩ năng mềm mà AI không thay thế được)"
+  },
+  {
+   "code": "9.A3.3",
+   "text": "Nêu được ví dụ cách sử dụng AI như một công cụ giúp thể hiện bản thân và theo đuổi đam mê"
+  },
+  {
+   "code": "9.A3.4",
+   "text": "Trình bày được ví dụ một số thay đổi mà AI có thể mang lại cho các ngành nghề trong tương lai, từ đó nêu được một số kĩ năng gắn với các ngành nghề cụ thể cần trang bị để làm việc hiệu quả cùng AI"
+  }
+ ],
+ "thang_muc_gv": [
+  "Chưa thấy minh chứng",
+  "Đạt",
+  "Khá",
+  "Tốt"
+ ],
+ "options": {
+  "the_tuyen_dung": [
+   "Thẻ 1. Tự học được cái mới khi công cụ thay đổi",
+   "Thẻ 2. Kiểm tra lại thông tin AI đưa ra trước khi dùng",
+   "Thẻ 3. Nghĩ ra ý tưởng, cách làm riêng",
+   "Thẻ 4. Thấu hiểu cảm xúc của khách",
+   "Thẻ 5. Làm việc nhóm, chia việc với đồng nghiệp",
+   "Thẻ 6. Nói rõ mình cần gì với người và với máy",
+   "Thẻ 7. Tính nhẩm thật nhanh các số lớn",
+   "Thẻ 8. Nhớ thuộc lòng thật nhiều số điện thoại",
+   "Thẻ 9. Gõ phím thật nhanh"
+  ],
+  "nang_luc": [
+   "Học cách học",
+   "Tư duy phản biện",
+   "Sáng tạo",
+   "Cảm xúc con người",
+   "Hợp tác",
+   "Giao tiếp"
+  ],
+  "muc_dung_ai": [
+   "Không dùng AI",
+   "GV trình diễn",
+   "Em dùng công cụ",
+   "Nhóm dùng công cụ",
+   "Công cụ tạo một phần sản phẩm"
+  ],
+  "the_nghe": [
+   "THẺ NGHỀ 1. NÔNG NGHIỆP",
+   "THẺ NGHỀ 2. BÁN HÀNG ONLINE",
+   "THẺ NGHỀ 3. VĂN PHÒNG",
+   "THẺ NGHỀ 4. MAY MẶC",
+   "THẺ NGHỀ 5. DU LỊCH",
+   "THẺ NGHỀ 6. Y TẾ"
+  ]
+ },
+ "blocks": {
+  "pl921": {
+   "type": "cards",
+   "title": "Tuyển dụng năm 2035",
+   "source": "PL9.2.1",
+   "text": [
+    "Một cửa hàng ở quê em cần tuyển nhân viên làm việc cùng các công cụ AI. Tin tuyển dụng chỉ được ghi ba yêu cầu.",
+    "Tình huống giả định."
+   ],
+   "items": [
+    "Thẻ 1. Tự học được cái mới khi công cụ thay đổi",
+    "Thẻ 2. Kiểm tra lại thông tin AI đưa ra trước khi dùng",
+    "Thẻ 3. Nghĩ ra ý tưởng, cách làm riêng",
+    "Thẻ 4. Thấu hiểu cảm xúc của khách",
+    "Thẻ 5. Làm việc nhóm, chia việc với đồng nghiệp",
+    "Thẻ 6. Nói rõ mình cần gì với người và với máy",
+    "Thẻ 7. Tính nhẩm thật nhanh các số lớn",
+    "Thẻ 8. Nhớ thuộc lòng thật nhiều số điện thoại",
+    "Thẻ 9. Gõ phím thật nhanh"
+   ]
+  },
+  "pl923": {
+   "type": "cards",
+   "title": "Bộ thẻ năng lực",
+   "source": "PL9.2.3",
+   "items": [
+    {
+     "ten": "Học cách học",
+     "mo_ta": "(rèn luyện khả năng tự học, học suốt đời)"
+    },
+    {
+     "ten": "Tư duy phản biện",
+     "mo_ta": "(biết phân tích, đánh giá thông tin do AI cung cấp)"
+    },
+    {
+     "ten": "Sáng tạo",
+     "mo_ta": "(giữ vững tính sáng tạo, làm những việc AI không thể làm)"
+    },
+    {
+     "ten": "Cảm xúc con người",
+     "mo_ta": "(giữ vững cảm xúc con người, làm những việc AI không thể làm)"
+    },
+    {
+     "ten": "Hợp tác",
+     "mo_ta": "(làm việc hiệu quả với con người và AI)"
+    },
+    {
+     "ten": "Giao tiếp",
+     "mo_ta": "(làm việc hiệu quả với con người và AI)"
+    }
+   ]
+  },
+  "pl924": {
+   "type": "list",
+   "title": "Sáu tình huống",
+   "source": "PL9.2.4",
+   "text": [
+    "Tình huống giả định; các câu trả lời, gợi ý của AI là mô phỏng."
+   ],
+   "items": [
+    "1. AI tóm tắt bài Lịch sử: “Năm 938, Lý Thường Kiệt chỉ huy quân ta đánh tan quân Nam Hán trên sông Bạch Đằng.”",
+    "2. Nhà trường vừa cho dùng một công cụ AI vẽ sơ đồ. Cô giao tìm hiểu cách dùng công cụ này, mà chưa ai trong lớp biết dùng.",
+    "3. Nhóm làm bài thuyết trình: một bạn muốn để AI viết hết, ba bạn muốn chia việc.",
+    "4. Em gõ cho AI “viết giúp bài hay”, nhận về một bài dài, sai đề.",
+    "5. Em viết bài văn kể về ông. AI gợi ý một đoạn rất trôi chảy về “người ông hiền hậu” nhưng không có chi tiết nào về ông của em.",
+    "6. Lớp cần đặt tên đội bóng. AI đưa 10 cái tên, cái nào cũng giống tên các đội khác."
+   ]
+  },
+  "pl925": {
+   "type": "table",
+   "title": "Bảng mục tiêu mẫu",
+   "source": "PL9.2.5",
+   "columns": [
+    "Mẫu",
+    "Hướng",
+    "Mục tiêu (TÔI SẼ…; BẰNG CÁCH…; TRƯỚC NGÀY…; BIẾT MÌNH ĐẠT VÌ…)",
+    "Không dùng AI"
+   ],
+   "rows": [
+    {
+     "mau": "Mẫu 1",
+     "huong": "Hướng 1: tìm kiếm, tóm tắt thông tin",
+     "muc_tieu": "Tôi sẽ tóm tắt mỗi bài Lịch sử thành năm ý; bằng cách tự tóm tắt trước, sau đó so với bản tóm tắt AI đưa ra và đối chiếu sách giáo khoa để tìm ý sai, ý thiếu; trước ngày …/…/…; biết mình đạt vì vở có ít nhất tám bản tóm tắt, mỗi bản ghi ít nhất một chỗ đã kiểm tra lại.",
+     "khong_dung_ai": "So bản tóm tắt với bạn cùng bàn và phần ghi nhớ cuối bài."
+    },
+    {
+     "mau": "Mẫu 2",
+     "huong": "Hướng 2: rèn kĩ năng viết",
+     "muc_tieu": "Tôi sẽ viết mở bài nghị luận mạch lạc hơn; bằng cách mỗi tuần tự viết một mở bài rồi nhờ AI chỉ ra câu lủng củng, tự sửa và giữ cả bản trước, bản sau; trước ngày …/…/…; biết mình đạt vì có tám cặp bản trước và sau, cô giáo nhận xét bài trên lớp có tiến bộ.",
+     "khong_dung_ai": "Nhờ bạn góp ý theo bảng kiểm của cô."
+    },
+    {
+     "mau": "Mẫu 3",
+     "huong": "Hướng 2: rèn tư duy logic",
+     "muc_tieu": "Tôi sẽ tự giải được bài toán có lời văn; bằng cách tự giải trước, chỉ hỏi AI gợi ý bước tiếp theo khi bí quá 15 phút, không xem lời giải đầy đủ; trước ngày …/…/…; biết mình đạt vì tự giải đúng ít nhất sáu trong tám bài toán có lời văn ở vở bài tập, vở ghi rõ bài nào đã hỏi gợi ý.",
+     "khong_dung_ai": "Hỏi gợi ý bạn, xem ví dụ trong sách."
+    },
+    {
+     "mau": "Mẫu 4",
+     "huong": "Hướng 3: giao tiếp, ngôn ngữ mới",
+     "muc_tieu": "Tôi sẽ nói tiếng Anh về chủ đề trường học tự tin hơn; bằng cách mỗi tuần ba buổi, mỗi buổi 10 phút luyện hội thoại với công cụ AI luyện nói; trước ngày …/…/…; biết mình đạt vì nói được một phút liền mạch trước nhóm mà không nhìn giấy.",
+     "khong_dung_ai": "Luyện hội thoại với bạn cùng nhóm theo chủ đề trong sách."
+    },
+    {
+     "mau": "Mẫu 5",
+     "huong": "Hướng 4: kĩ năng mềm AI không làm thay được",
+     "muc_tieu": "Tôi sẽ lắng nghe tốt hơn khi làm nhóm; bằng cách nhắc lại ý của bạn trước khi nói ý mình trong mọi buổi làm nhóm; trước ngày …/…/…; biết mình đạt vì tới hạn các bạn trong nhóm xác nhận em không ngắt lời bạn.",
+     "khong_dung_ai": "(Mục tiêu này không dùng AI.)"
+    }
+   ],
+   "note": "Mẫu 1–4: ở nhà chỉ dùng công cụ AI GV hoặc nhà trường giới thiệu, có người lớn đồng ý và giám sát; không có điều kiện thì làm theo cột “Không dùng AI”."
+  },
+  "pl926": {
+   "type": "cards",
+   "title": "Bộ thẻ nghề",
+   "source": "PL9.2.6",
+   "items": [
+    {
+     "id": "nghe1",
+     "ten": "THẺ NGHỀ 1. NÔNG NGHIỆP",
+     "doan": [
+      "Chú Tư trồng cây ăn quả, vườn nhà chú có hơn trăm cây. Trước đây, thấy lá cây có đốm, chú nhìn kĩ, hỏi hàng xóm hoặc cán bộ khuyến nông rồi đoán bệnh, có khi đoán sai thì cây hỏng cả vụ. Nay chú chụp ảnh lá bằng một ứng dụng có AI nhận dạng ảnh trên điện thoại, ứng dụng gợi ý tên bệnh có thể gặp và cách xử lí thường dùng. Có lần ảnh chụp lúc trời tối, ứng dụng gợi ý sai bệnh. Chú ra vườn xem lại từng cây, hỏi cán bộ khuyến nông rồi mới quyết định cách chữa.",
+      "Tình huống giả định, ví dụ minh hoạ."
+     ]
+    },
+    {
+     "id": "nghe2",
+     "ten": "THẺ NGHỀ 2. BÁN HÀNG ONLINE",
+     "doan": [
+      "Chị Lan bán bánh tráng của gia đình qua mạng. Trước đây chị tự viết lời giới thiệu, tự trả lời từng tin nhắn hỏi giá, nhiều hôm tới khuya. Nay chị nhờ công cụ AI viết nháp lời giới thiệu, cài tính năng AI trả lời tự động cho câu hỏi lặp lại như giá, phí giao hàng. Có lần lời giới thiệu AI viết ghi “không chất bảo quản” trong khi chị chưa xác minh điều đó; chị phải sửa lại cho đúng sự thật. Khi khách phàn nàn bánh bị vỡ, chị tự gọi điện xin lỗi và quyết định đổi hàng.",
+      "Tình huống giả định, ví dụ minh hoạ."
+     ]
+    },
+    {
+     "id": "nghe3",
+     "ten": "THẺ NGHỀ 3. VĂN PHÒNG",
+     "doan": [
+      "Cô Mai làm nhân viên văn phòng ở một công ti nhỏ đã nhiều năm. Trước đây cô gõ tay từng hoá đơn vào bảng tính, mỗi tháng mất nhiều ngày. Nay phần mềm có AI đọc ảnh hoá đơn và tự điền số vào bảng; việc gõ tay ít đi nhiều, cô có thêm thời gian kiểm tra và làm báo cáo. Có lần phần mềm đọc nhầm số trên một hoá đơn mờ, tổng tiền cả tháng bị lệch. Cô đối chiếu từng dòng với hoá đơn giấy, tìm ra chỗ sai, sửa lại rồi báo cho kế toán trưởng biết.",
+      "Tình huống giả định, ví dụ minh hoạ."
+     ]
+    },
+    {
+     "id": "nghe4",
+     "ten": "THẺ NGHỀ 4. MAY MẶC",
+     "doan": [
+      "Chị Hoa làm thợ máy ở một xưởng may. Trước đây, công nhân soi từng chiếc áo bằng mắt để tìm đường may lỗi; máy hỏng thì cả chuyền dừng. Nay xưởng lắp camera có AI chụp từng sản phẩm và đánh dấu chiếc nghi lỗi; một hệ thống có AI khác theo dõi tiếng ồn, độ rung để báo trước máy nào có thể sắp hỏng. Có lần camera đánh dấu lỗi cả loạt áo chỉ vì vải có hoa văn lạ. Anh tổ trưởng xem lại từng chiếc, thấy áo không lỗi nên cho đi tiếp. Khi hệ thống báo một máy sắp hỏng, chị Hoa tắt máy kiểm tra rồi mới quyết định thay linh kiện.",
+      "Tình huống giả định, ví dụ minh hoạ."
+     ]
+    },
+    {
+     "id": "nghe5",
+     "ten": "THẺ NGHỀ 5. DU LỊCH",
+     "doan": [
+      "Chị Thảo làm hướng dẫn viên du lịch ở một phố cổ. Trước đây, chị tự soạn lịch trình và mang sổ tay từ vựng để nói chuyện với khách nước ngoài. Nay chị dùng ứng dụng dịch có AI để hỏi khách cần gì và nhờ công cụ AI gợi ý lịch trình theo thời tiết. Có lần ứng dụng dịch câu “món này có đậu phộng” thành một câu khác nghĩa, suýt làm một vị khách bị dị ứng ăn phải. Chị Thảo hỏi lại khách, nhờ người phục vụ kiểm tra món. Khi trời đổ mưa lớn, chị tự đổi lịch trình và kể cho khách nghe chuyện về phố cổ.",
+      "Tình huống giả định, ví dụ minh hoạ."
+     ]
+    },
+    {
+     "id": "nghe6",
+     "ten": "THẺ NGHỀ 6. Y TẾ",
+     "doan": [
+      "Bác sĩ Phương làm việc ở một bệnh viện huyện. Trước đây, bác sĩ tự xem từng phim X-quang phổi, mỗi ngày rất nhiều phim. Nay bệnh viện dùng phần mềm có AI hỗ trợ đọc ảnh: phần mềm đánh dấu chỗ nghi bất thường và gợi ý khả năng bệnh. Có lần phần mềm đánh dấu một vết mờ là nghi bệnh, nhưng bác sĩ hỏi kĩ, khám trực tiếp và so với phim cũ thì thấy đó chỉ là vết sẹo cũ. Bác sĩ Phương xem xét, kết luận, giải thích cho người bệnh và chịu trách nhiệm về kết luận đó. Anh điều dưỡng chăm sóc, động viên người bệnh trong những ngày nằm viện.",
+      "Lưu ý: phần mềm chỉ gợi ý cho bác sĩ. Khi ốm hay bị thương, em báo người lớn và đi khám; không tự dùng AI để đoán bệnh.",
+      "Tình huống giả định, ví dụ minh hoạ."
+     ]
+    }
+   ],
+   "khuon_the_dia_phuong": [
+    "Trước đây làm thế nào",
+    "Nay có công cụ dùng AI thì việc gì đổi",
+    "Một lần máy làm sai và người xử lí ra sao"
+   ]
+  },
+  "pl928_1": {
+   "type": "cards",
+   "title": "Ba ví dụ mẫu: AI giúp bạn ấy thể hiện mình (trang 1)",
+   "source": "PL9.2.8",
+   "items": [
+    {
+     "ten": "VÍ DỤ 1. VẼ TRUYỆN TRANH",
+     "doan": [
+      "Bạn ấy thích… Hà thích vẽ truyện tranh về chú mèo nhà mình.",
+      "AI gợi ý (mô phỏng): “Truyện bốn khung: khung 1 mèo nhìn con cá trên bàn; khung 2 mèo rón rén leo lên; khung 3 bà bước vào; khung 4 mèo giả vờ ngủ.”",
+      "Phần của riêng bạn ấy: Hà chọn gợi ý, đổi khung 4 thành chuyện thật của nhà mình, tự vẽ nhân vật, tự đặt lời thoại. Hà đi tiếp sở thích bằng cách mỗi tuần vẽ một truyện, dùng AI để tìm thêm cách bố cục khung."
+     ]
+    },
+    {
+     "ten": "VÍ DỤ 2. VIDEO MÓN ĂN QUÊ",
+     "doan": [
+      "Bạn ấy thích… Tuấn muốn làm video giới thiệu cách gói bánh chưng của bà.",
+      "AI gợi ý (mô phỏng): Dàn ý lời dẫn ba phần: nguyên vật liệu, cách làm, kỉ niệm. Trong phần cách làm có câu: “Gói xong, luộc khoảng 30 phút là bánh chín.”",
+      "Ai thấy chỗ nào cần hỏi lại? (Phần của riêng bạn ấy: xem trang sau.)"
+     ]
+    }
+   ]
+  },
+  "pl928_2": {
+   "type": "cards",
+   "title": "Ba ví dụ mẫu (trang 2)",
+   "source": "PL9.2.8",
+   "items": [
+    {
+     "ten": "VÍ DỤ 2. VIDEO MÓN ĂN QUÊ (TIẾP)",
+     "doan": [
+      "Phần của riêng bạn ấy: Tuấn hỏi bà thì bà luộc bánh nhiều giờ liền, từ chiều tới gần sáng. Tuấn sửa lời dẫn theo cách bà làm, tự quay, tự kể kỉ niệm với bà. Tuấn đi tiếp sở thích bằng cách làm thêm video về các món khác của bà."
+     ]
+    },
+    {
+     "ten": "VÍ DỤ 3. VIẾT LỜI BÀI HÁT",
+     "doan": [
+      "Bạn ấy thích… Linh thích viết lời bài hát.",
+      "AI gợi ý (mô phỏng): Một số từ hợp vần với “mưa”.",
+      "Phần của riêng bạn ấy: Câu chuyện, cảm xúc, việc chọn từ phù hợp và giọng hát là của Linh. Linh đi tiếp sở thích bằng cách mỗi tháng viết một bài, chỉ nhờ AI gợi ý thêm từ khi bí vần."
+     ]
+    }
+   ]
+  }
+ },
+ "reveal": [
+  {
+   "block": "pl925",
+   "by": "gv",
+   "note": "Mở sau bước phân loại năm câu"
+  },
+  {
+   "block": "pl928_2",
+   "after_field": "d_vd2_hoi_lai",
+   "or_by": "gv"
+  }
+ ],
+ "activities": [
+  {
+   "id": "hd1",
+   "title": "Tuyển dụng năm 2035",
+   "tiet": 1,
+   "minutes": 5,
+   "source": "KHBD HĐ 1; PL9.2.1; PL9.2.2 dòng đầu",
+   "nhiem_vu": "Tin tuyển dụng chỉ được ghi ba yêu cầu: chọn ba thẻ và ghi lí do. Không có lựa chọn đúng sai.",
+   "cau_hoi": [
+    "Tin tuyển dụng chỉ được ghi ba yêu cầu: em chọn ba thẻ nào, vì sao?",
+    "Câu hỏi lớn của bài: Khi AI làm được nhiều việc thay người, phần nào là của riêng em? Em cần chuẩn bị gì cho việc học, cho nghề sau này?",
+    "Bằng chứng nào khiến em tin ba thẻ ấy quan trọng? Điều gì có thể làm em đổi lựa chọn?"
+   ],
+   "blocks": [
+    "pl921"
+   ],
+   "fields": [
+    {
+     "id": "hd1_chon",
+     "type": "multi",
+     "label": "Lúc đầu em chọn thẻ số",
+     "options_ref": "the_tuyen_dung",
+     "exact": 3,
+     "lock": "chot_dau_gio",
+     "required": true,
+     "evidence": {
+      "kind": "moc"
+     }
+    },
+    {
+     "id": "hd1_vi",
+     "type": "textarea",
+     "label": "vì",
+     "max": 600,
+     "lock": "chot_dau_gio",
+     "required": true,
+     "evidence": {
+      "kind": "moc"
+     }
+    }
+   ],
+   "lock_button": "Chốt lựa chọn đầu giờ"
+  },
+  {
+   "id": "hd21",
+   "title": "Sáu tình huống, sáu năng lực",
+   "tiet": 1,
+   "minutes": 16,
+   "source": "KHBD HĐ 2.1; PL9.2.2 phần A; PL9.2.3; PL9.2.4",
+   "nhiem_vu": "Nhóm viết thẻ năng lực. Mỗi em làm phần A: với mỗi tình huống, ghi năng lực cần dùng và việc em sẽ làm, rồi tự chấm.",
+   "cau_hoi": [
+    "Vì sao khi có AI, năng lực ghi trên thẻ lại càng cần?",
+    "Bằng chứng nào cho thấy câu tóm tắt ở tình huống 1 sai? Điều gì có thể làm em đổi năng lực đã chọn cho một tình huống?"
+   ],
+   "blocks": [
+    "pl923",
+    "pl924"
+   ],
+   "fields": [
+    {
+     "id": "tnl_nang_luc",
+     "type": "choice",
+     "label": "Thẻ năng lực của nhóm",
+     "mode": "nhom",
+     "options_ref": "nang_luc",
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "tnl_vi",
+     "type": "textarea",
+     "label": "Cần hơn khi có AI vì",
+     "mode": "nhom",
+     "max": 600,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "tnl_voi_nguoi",
+     "type": "textarea",
+     "label": "Với người",
+     "mode": "nhom",
+     "max": 400,
+     "show_if": {
+      "tnl_nang_luc": [
+       "Hợp tác",
+       "Giao tiếp"
+      ]
+     },
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "tnl_voi_ai",
+     "type": "textarea",
+     "label": "Với AI",
+     "mode": "nhom",
+     "max": 400,
+     "show_if": {
+      "tnl_nang_luc": [
+       "Hợp tác",
+       "Giao tiếp"
+      ]
+     },
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "tnl_vi_du",
+     "type": "textarea",
+     "label": "Ví dụ",
+     "mode": "nhom",
+     "max": 400,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "a_t1_nl",
+     "type": "choice",
+     "label": "Tình huống 1: Năng lực cần dùng",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t1_lam",
+     "type": "text",
+     "label": "Tình huống 1: Em sẽ làm gì (một cụm từ)",
+     "max": 160,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t1_em",
+     "type": "scale",
+     "label": "Tình huống 1: Em tự chấm",
+     "options": [
+      "thường làm được",
+      "đôi khi",
+      "chưa làm được"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "a_t2_nl",
+     "type": "choice",
+     "label": "Tình huống 2: Năng lực cần dùng",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t2_lam",
+     "type": "text",
+     "label": "Tình huống 2: Em sẽ làm gì (một cụm từ)",
+     "max": 160,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t2_em",
+     "type": "scale",
+     "label": "Tình huống 2: Em tự chấm",
+     "options": [
+      "thường làm được",
+      "đôi khi",
+      "chưa làm được"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "a_t3_nl",
+     "type": "choice",
+     "label": "Tình huống 3: Năng lực cần dùng",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t3_lam",
+     "type": "text",
+     "label": "Tình huống 3: Em sẽ làm gì (một cụm từ)",
+     "max": 160,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t3_em",
+     "type": "scale",
+     "label": "Tình huống 3: Em tự chấm",
+     "options": [
+      "thường làm được",
+      "đôi khi",
+      "chưa làm được"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "a_t4_nl",
+     "type": "choice",
+     "label": "Tình huống 4: Năng lực cần dùng",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t4_lam",
+     "type": "text",
+     "label": "Tình huống 4: Em sẽ làm gì (một cụm từ)",
+     "max": 160,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t4_em",
+     "type": "scale",
+     "label": "Tình huống 4: Em tự chấm",
+     "options": [
+      "thường làm được",
+      "đôi khi",
+      "chưa làm được"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "a_t5_nl",
+     "type": "choice",
+     "label": "Tình huống 5: Năng lực cần dùng",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t5_lam",
+     "type": "text",
+     "label": "Tình huống 5: Em sẽ làm gì (một cụm từ)",
+     "max": 160,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t5_em",
+     "type": "scale",
+     "label": "Tình huống 5: Em tự chấm",
+     "options": [
+      "thường làm được",
+      "đôi khi",
+      "chưa làm được"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "a_t6_nl",
+     "type": "choice",
+     "label": "Tình huống 6: Năng lực cần dùng",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t6_lam",
+     "type": "text",
+     "label": "Tình huống 6: Em sẽ làm gì (một cụm từ)",
+     "max": 160,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_t6_em",
+     "type": "scale",
+     "label": "Tình huống 6: Em tự chấm",
+     "options": [
+      "thường làm được",
+      "đôi khi",
+      "chưa làm được"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "a_manh_nl",
+     "type": "choice",
+     "label": "Năng lực mạnh nhất của em",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_manh_mc",
+     "type": "textarea",
+     "label": "Minh chứng (việc em đã làm)",
+     "max": 600,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "a_manh_vi",
+     "type": "textarea",
+     "label": "Vì sao năng lực này quan trọng khi có AI?",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_yeu_nl",
+     "type": "choice",
+     "label": "Năng lực yếu nhất của em",
+     "options_ref": "nang_luc",
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "a_yeu_mc",
+     "type": "textarea",
+     "label": "Minh chứng (việc em đã làm)",
+     "max": 600,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "a_yeu_vi",
+     "type": "textarea",
+     "label": "Vì sao năng lực này quan trọng khi có AI?",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hd22",
+   "title": "Đặt mục tiêu học tập khi có AI",
+   "tiet": 1,
+   "minutes": 24,
+   "source": "KHBD HĐ 2.2; PL9.2.2 phần B; PL9.2.5",
+   "nhiem_vu": "B. Hai mục tiêu học tập. Hạn: khoảng tám tuần sau buổi học.",
+   "cau_hoi": [
+    "Với câu “Em muốn giỏi tiếng Anh hơn”, tám tuần nữa sao biết đã đạt?",
+    "Tới hạn, bằng chứng nào cho thấy mục tiêu đã đạt? Điều gì có thể làm em phải sửa mục tiêu?"
+   ],
+   "blocks": [
+    "pl925"
+   ],
+   "peer_review": {
+    "targets": [
+     {
+      "goal": 1,
+      "fields": [
+       "b1_toi_se",
+       "b1_bang_cach",
+       "b1_truoc_ngay",
+       "b1_biet_dat"
+      ],
+      "kiem": [
+       "Đo được, tới hạn biết đạt hay chưa?",
+       "Có hạn cụ thể?",
+       "Có phải kĩ năng AI không làm thay được?"
+      ]
+     },
+     {
+      "goal": 2,
+      "fields": [
+       "b2_huong",
+       "b2_toi_se",
+       "b2_bang_cach",
+       "b2_truoc_ngay",
+       "b2_biet_dat",
+       "b2_khong_ai"
+      ],
+      "kiem": [
+       "Đo được?",
+       "Có hạn?",
+       "Có gắn với việc học khi có AI?"
+      ]
+     }
+    ],
+    "label": "Bạn góp ý",
+    "ok_text": "đạt cả 3",
+    "snapshot": "truoc_gop_y",
+    "evidence": {
+     "code": "9.A3.2",
+     "kind": "cua_nguoi_gop_y"
+    }
+   },
+   "fields": [
+    {
+     "id": "b_nhom1",
+     "type": "heading",
+     "label": "Mục tiêu 1 (kĩ năng mềm)"
+    },
+    {
+     "id": "b1_toi_se",
+     "type": "textarea",
+     "label": "TÔI SẼ",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b1_bang_cach",
+     "type": "textarea",
+     "label": "BẰNG CÁCH",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b1_truoc_ngay",
+     "type": "text",
+     "label": "TRƯỚC NGÀY",
+     "max": 40,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b1_biet_dat",
+     "type": "textarea",
+     "label": "BIẾT MÌNH ĐẠT VÌ",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b_nhom2",
+     "type": "heading",
+     "label": "Mục tiêu 2"
+    },
+    {
+     "id": "b2_huong",
+     "type": "choice",
+     "label": "Mục tiêu 2, hướng",
+     "options": [
+      "Hướng 1",
+      "Hướng 2",
+      "Hướng 3"
+     ],
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b2_toi_se",
+     "type": "textarea",
+     "label": "TÔI SẼ",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b2_bang_cach",
+     "type": "textarea",
+     "label": "BẰNG CÁCH",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b2_truoc_ngay",
+     "type": "text",
+     "label": "TRƯỚC NGÀY",
+     "max": 40,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b2_biet_dat",
+     "type": "textarea",
+     "label": "BIẾT MÌNH ĐẠT VÌ",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "b2_khong_ai",
+     "type": "textarea",
+     "label": "Nếu không dùng AI, em làm bằng cách",
+     "max": 400,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "tu_dg_1",
+     "type": "scale",
+     "label": "1. Em xác định được mục tiêu rõ ràng.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "tu_dg_3",
+     "type": "scale",
+     "label": "3. Em đã xem lại và sửa sản phẩm sau góp ý.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "tc_hoi_1",
+     "type": "textarea",
+     "label": "1. Mấy năm qua, công việc của người được hỏi thay đổi gì vì máy tính, điện thoại hay AI?",
+     "max": 400,
+     "optional_note": "Tuỳ chọn, không bắt buộc: hỏi người lớn trong nhà",
+     "privacy_note": {
+      "text": "Không ghi tên, nơi làm việc, thu nhập của người được hỏi.",
+      "nguon": "de_xuat"
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "tc_hoi_2",
+     "type": "textarea",
+     "label": "2. Việc nào máy vẫn chưa làm được?",
+     "max": 400,
+     "optional_note": "Tuỳ chọn, không bắt buộc: hỏi người lớn trong nhà",
+     "privacy_note": {
+      "text": "Không ghi tên, nơi làm việc, thu nhập của người được hỏi.",
+      "nguon": "de_xuat"
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "tc_hoi_3",
+     "type": "textarea",
+     "label": "3. Người được hỏi đã phải học thêm gì?",
+     "max": 400,
+     "optional_note": "Tuỳ chọn, không bắt buộc: hỏi người lớn trong nhà",
+     "privacy_note": {
+      "text": "Không ghi tên, nơi làm việc, thu nhập của người được hỏi.",
+      "nguon": "de_xuat"
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hd23",
+   "title": "Một nghề đổi thay",
+   "tiet": 2,
+   "minutes": 20,
+   "source": "KHBD HĐ 2.3; PL9.2.6; PL9.2.7",
+   "nhiem_vu": "Em cùng nhóm đọc thẻ nghề rồi điền bảng. Mỗi kĩ năng ở cột 4 có chữ “vì” nối với cột 2 hoặc cột 3.",
+   "cau_hoi": [
+    "Thẻ là tình huống giả định: bằng chứng nào khiến em tin nghề này đang thay đổi như vậy? Em cần hỏi người làm nghề thật điều gì?"
+   ],
+   "luu_y_hs": {
+    "text": "Khi kể về nghề của người thân, em chỉ kể công việc, không ghi tên, nơi làm việc, thu nhập.",
+    "nguon": "de_xuat",
+    "can_cu": "KHBD HĐ 2.3 mục e"
+   },
+   "blocks": [
+    "pl926"
+   ],
+   "fields": [
+    {
+     "id": "n_nghe",
+     "type": "choice",
+     "label": "Tên nghề",
+     "mode": "nhom",
+     "options_ref": "the_nghe",
+     "allow_custom": true,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_pc_c1",
+     "type": "members",
+     "label": "Phân công: cột 1",
+     "mode": "nhom",
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "dong_gop"
+     }
+    },
+    {
+     "id": "n_pc_c2",
+     "type": "members",
+     "label": "Phân công: cột 2",
+     "mode": "nhom",
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "dong_gop"
+     }
+    },
+    {
+     "id": "n_pc_c3",
+     "type": "members",
+     "label": "Phân công: cột 3",
+     "mode": "nhom",
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "dong_gop"
+     }
+    },
+    {
+     "id": "n_pc_c4",
+     "type": "members",
+     "label": "Phân công: cột 4",
+     "mode": "nhom",
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "dong_gop"
+     }
+    },
+    {
+     "id": "n_pc_phan_bien",
+     "type": "members",
+     "label": "Phân công: người phản biện",
+     "mode": "nhom",
+     "max_members": 1,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "dong_gop"
+     }
+    },
+    {
+     "id": "n_c1",
+     "type": "textarea",
+     "label": "(1) Trước đây người làm việc này thế nào?",
+     "mode": "nhom",
+     "max": 800,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_c2",
+     "type": "textarea",
+     "label": "(2) Nay hoặc tới đây có AI, việc gì thay đổi?",
+     "mode": "nhom",
+     "max": 800,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_c3",
+     "type": "textarea",
+     "label": "(3) Việc gì vẫn cần người: quyết định, kiểm tra, giao tiếp, chịu trách nhiệm?",
+     "mode": "nhom",
+     "max": 800,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_c4_tieu_de",
+     "type": "heading",
+     "label": "(4) Hai kĩ năng nghề này cần trang bị (ít nhất một kĩ năng để làm việc cùng AI), vì…",
+     "mode": "nhom"
+    },
+    {
+     "id": "n_c4_kn1",
+     "type": "text",
+     "label": "Cột 4, kĩ năng 1",
+     "mode": "nhom",
+     "max": 200,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_c4_vi1",
+     "type": "textarea",
+     "label": "vì",
+     "mode": "nhom",
+     "max": 400,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_c4_kn2",
+     "type": "text",
+     "label": "Cột 4, kĩ năng 2",
+     "mode": "nhom",
+     "max": 200,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_c4_vi2",
+     "type": "textarea",
+     "label": "vì",
+     "mode": "nhom",
+     "max": 400,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_tram_1",
+     "type": "textarea",
+     "label": "Câu hỏi của khách ở trạm: ① Việc gì trong nghề này đã thay đổi?",
+     "mode": "nhom",
+     "max": 600,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "n_tram_2",
+     "type": "textarea",
+     "label": "Câu hỏi của khách ở trạm: ② Nếu máy làm sai trong việc này thì ai phải phát hiện, ai quyết định và chịu trách nhiệm?",
+     "mode": "nhom",
+     "max": 600,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hd3",
+   "title": "Nghề em quan tâm",
+   "tiet": 2,
+   "minutes": 6,
+   "source": "KHBD HĐ 3; PL9.2.2 phần C",
+   "nhiem_vu": "Hai kĩ năng gắn với nghề này, ít nhất một kĩ năng để làm việc cùng AI (mỗi kĩ năng nêu lí do, nối với thay đổi ở trên)",
+   "cau_hoi": [
+    "Bằng chứng nào khiến em tin nghề ấy sẽ thay đổi như em viết? Điều gì có thể làm thay đổi đó không xảy ra?"
+   ],
+   "blocks": [],
+   "fields": [
+    {
+     "id": "c_nghe",
+     "type": "text",
+     "label": "Nghề em quan tâm",
+     "max": 120,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "c_truoc_day",
+     "type": "textarea",
+     "label": "Một thay đổi AI có thể mang lại. Trước đây",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "c_nay",
+     "type": "textarea",
+     "label": "Nay hoặc tới đây",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "c_kn1",
+     "type": "text",
+     "label": "Kĩ năng 1",
+     "max": 200,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "c_vi1",
+     "type": "textarea",
+     "label": "vì",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "c_kn2",
+     "type": "text",
+     "label": "Kĩ năng 2",
+     "max": 200,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "c_vi2",
+     "type": "textarea",
+     "label": "vì",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hd4",
+   "title": "AI giúp em thể hiện mình",
+   "tiet": 2,
+   "minutes": 19,
+   "source": "KHBD HĐ 4; PL9.2.2 phần D; PL9.2.8",
+   "nhiem_vu": "Đọc các ví dụ mẫu, viết bốn dòng phần D, nhìn lại lựa chọn đầu giờ, tự đánh giá và đánh dấu mức dùng AI.",
+   "cau_hoi": [
+    "Ở ví dụ 2, chỗ nào trong gợi ý của AI cần hỏi lại?",
+    "Nếu hôm nay em được viết tin tuyển dụng ấy, em có đổi lựa chọn không?",
+    "Bằng chứng nào cho thấy gợi ý của AI đúng, sai? Điều gì có thể làm em đổi phần giao cho AI?"
+   ],
+   "blocks": [
+    "pl928_1",
+    "pl928_2"
+   ],
+   "fields": [
+    {
+     "id": "d_vd2_hoi_lai",
+     "type": "textarea",
+     "label": "Ở ví dụ 2, chỗ nào trong gợi ý của AI cần hỏi lại?",
+     "max": 400,
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "d_thich_ai",
+     "type": "textarea",
+     "label": "Em thích… AI có thể giúp em… (khâu nào)",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "d_di_tiep",
+     "type": "textarea",
+     "label": "Nhờ vậy em đi tiếp sở thích này bằng cách",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "d_tu_lam",
+     "type": "textarea",
+     "label": "Phần em tự làm, vì đó là cái của riêng em",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "d_kiem_tra",
+     "type": "textarea",
+     "label": "Khi AI giúp, em cần kiểm tra lại",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "nl_giu_doi",
+     "type": "choice",
+     "label": "Nhìn lại lựa chọn đầu giờ: Bây giờ em",
+     "options": [
+      "giữ",
+      "đổi"
+     ],
+     "required": true,
+     "show_locked": "hd1_chon",
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "nl_chon_moi",
+     "type": "multi",
+     "label": "Các thẻ em chọn bây giờ",
+     "options_ref": "the_tuyen_dung",
+     "exact": 3,
+     "show_if": {
+      "nl_giu_doi": [
+       "đổi"
+      ]
+     },
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "nl_vi",
+     "type": "textarea",
+     "label": "vì",
+     "max": 600,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "tu_dg_2",
+     "type": "scale",
+     "label": "2. Em giải thích được lựa chọn nghề, kĩ năng của mình.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "tu_dg_4",
+     "type": "scale",
+     "label": "4. Em tách được phần AI giúp và phần của riêng em.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "muc_dung_ai",
+     "type": "choice",
+     "label": "Mức dùng AI khi làm phiếu này",
+     "options_ref": "muc_dung_ai",
+     "required": true,
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    }
+   ]
+  }
+ ]
+}

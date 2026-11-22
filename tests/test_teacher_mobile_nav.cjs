@@ -23,7 +23,7 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
    await p.goto('http://localhost:8215/teacher.html');await p.waitForTimeout(400);
    ok(await p.locator('#hdr-accounts').isHidden(),`${name}: chưa đăng nhập → chưa có biểu tượng Tài khoản`);
    await p.fill('#teacher-login [name=pin]','Mat-khau-thu-1');await p.click('#teacher-login button[type=submit]');await p.waitForSelector('#workspace:not([hidden])');await p.waitForTimeout(300);
-   const vis=await p.$$eval('.t-nav-item',els=>els.filter(e=>getComputedStyle(e).display!=='none').map(e=>e.querySelector(getComputedStyle(e.querySelector('.t-nav-mobile')).display!=='none'?'.t-nav-mobile':'.t-nav-desktop').textContent.trim()));
+   const vis=await p.locator('.t-nav-item').evaluateAll(els=>els.filter(e=>getComputedStyle(e).display!=='none').map(e=>e.querySelector(getComputedStyle(e.querySelector('.t-nav-mobile')).display!=='none'?'.t-nav-mobile':'.t-nav-desktop').textContent.trim()));
    if(w<761){
     ok(JSON.stringify(vis)===JSON.stringify(['Tổng quan','Bài học','Thi','Hiệu quả','Tiện ích']),`${name}: thanh dưới còn 5 mục: ${vis.join(' · ')}`);
     ok(await p.isVisible('#hdr-accounts'),`${name}: có biểu tượng Tài khoản cạnh bánh răng`);
@@ -32,7 +32,7 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
     // Bài học → thanh con Soạn bài | Tài liệu
     await p.click('#nav-lessons');await p.waitForSelector('#t-subtabs:not([hidden])');
     const tabs1=await p.evaluate(()=>[...document.querySelectorAll('.t-subtab')].map(x=>x.textContent+(x.getAttribute('aria-current')?'*':'')).join('|'));
-    ok(tabs1==='Soạn bài*|Tài liệu',`${name}: Bài học có thanh con "Soạn bài | Tài liệu", đang ở Soạn bài (${tabs1})`);
+    ok(tabs1==='Soạn bài*|Tài liệu|Học AI',`${name}: Bài học có thanh con "Soạn bài | Tài liệu | Học AI", đang ở Soạn bài (${tabs1})`);
     let before=hits.length;await p.click('.t-subtab >> text=Tài liệu');await p.waitForSelector('#view-materials:not([hidden])');await p.waitForTimeout(300);
     ok(hits.slice(before).length>0,`${name}: bấm "Tài liệu" ở thanh con → nạp dữ liệu Tài liệu như nút gốc (${hits.slice(before).join(',')})`);
     ok(await p.evaluate(()=>document.getElementById('nav-lessons').classList.contains('is-group-current')&&!document.getElementById('nav-lessons').hasAttribute('aria-current')),`${name}: đang ở Tài liệu → mục "Bài học" ở thanh dưới vẫn sáng`);
@@ -51,10 +51,10 @@ const srv=http.createServer((q,r)=>{let p=q.url.split('?')[0];if(p==='/')p='/ind
     const ov=await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);ok(ov,`${name}: không tràn ngang`);
     // Giáo viên lớp: không có Soạn bài/Về nhà → Tài liệu hiện ở thanh dưới, không gộp
     await p.evaluate(()=>document.body.classList.add('is-class-teacher'));await p.click('#nav-sheetexam');await p.waitForTimeout(200);
-    const vis2=await p.$$eval('.t-nav-item',els=>els.filter(e=>getComputedStyle(e).display!=='none').map(e=>e.querySelector('.t-nav-mobile').textContent.trim()));
-    ok(JSON.stringify(vis2)===JSON.stringify(['Thi','Tài liệu','Hiệu quả','Tiện ích'])&&await p.locator('#t-subtabs').isHidden(),`${name}: giáo viên lớp: ${vis2.join(' · ')}, không có thanh con`);
+    const vis2=await p.locator('.t-nav-item').evaluateAll(els=>els.filter(e=>getComputedStyle(e).display!=='none').map(e=>e.querySelector('.t-nav-mobile').textContent.trim()));
+    ok(JSON.stringify(vis2)===JSON.stringify(['Thi','Tài liệu','Học AI','Hiệu quả','Tiện ích'])&&await p.locator('#t-subtabs').isHidden(),`${name}: giáo viên lớp: ${vis2.join(' · ')}, không có thanh con`);
    } else {
-    ok(vis.length===8,`${name}: menu bên trái giữ đủ 8 mục`);
+    ok(vis.length===9,`${name}: menu bên trái giữ đủ 9 mục (thêm Học AI)`);
     ok(await p.locator('#hdr-accounts').isHidden(),`${name}: không có biểu tượng Tài khoản ở thanh trên (đã có trong menu)`);
     await p.click('#nav-materials');await p.waitForTimeout(200);
     ok(await p.locator('#t-subtabs').isHidden()&&(await p.getAttribute('#nav-materials','aria-current'))==='page',`${name}: không có thanh con, mục Tài liệu sáng như cũ`);

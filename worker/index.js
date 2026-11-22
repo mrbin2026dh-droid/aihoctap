@@ -18,6 +18,7 @@ import {
   TutorContract
 } from './contracts.js';
 import {validateStudentInput, MAX_IMPORT_STUDENTS} from './students.js';
+import {handlePhieu} from './phieu.js';
 import {validateExamInput, examState, examTargetsStudent, studentExamView, questionOrder, sessionDeadline, cleanAnswers, gradeExam, canRevealAnswers, isExamId, buildExamResults, GRACE_MS} from './exams.js';
 
 // Base64URL encoding / decoding (RFC 7515)
@@ -3826,6 +3827,12 @@ export default {
       return new Response(JSON.stringify(results), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // Học AI: phiếu học tập (worker/phieu.js)
+    if (url.pathname.startsWith('/api/pwa/phieu') || url.pathname === '/api/pwa/teacher/phieu') {
+      const ph = await handlePhieu(request, env, signingKeys, corsHeaders, { verifyJwtToken, hasTeacherClaims: p => TeacherAuthContract.hasTeacherClaims(p), requireTeacher, getToken: getOrFetchGoogleOAuthToken });
+      if (ph) return ph;
     }
 
     // Bài kiểm tra Thử / Thật

@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Antigravity đã khắc phục tra đáp án (guard.dap_an = true ở 13 bài), deploy Worker 657469ee, đánh giá lại 13 bài đạt chuẩn (xác nhận = 0, khái niệm = 13/13, lỗi = 0), hoàn tất kiểm thử hạn mức H1–H4 với TH9027 và chụp ảnh 07_het_luot_20_cau.png; xem docs/handoff/antigravity-claude-gia-su-han-muc-xong.md.
+- Yêu cầu mới nhất: Người dùng yêu cầu Claude "làm hết" Học AI: Claude đã viết mã giai đoạn 2–5 và 7 (máy chủ, màn học sinh, màn giáo viên, trình soạn gói), chưa commit, chưa deploy; cần kiểm độc lập theo docs/handoff/claude-claude-kiem-doc-lap-hoc-ai.md trước khi push.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4524,3 +4524,46 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Tệp: `worker/index.js`, `tests/sim/eval_tutor_all_lessons.mjs`, `tests/sim/test_quota_limits.cjs`, `tests/sim/out/eval_tutor_all_lessons_2026-10-30-15-42.json`, `docs/handoff/anh/gia-su-30-10/07_het_luot_20_cau.png`, `docs/handoff/antigravity-claude-gia-su-han-muc-xong.md`, `aisgk.md`.
 - Kiểm thực tế: 17/17 test suites offline PASS 100%; 13/13 bài trên bản thật có `guard.dap_an = true`; đánh giá 13 bài thật 104 câu: `lo = 1` (do tiêu đề SGK chứa từ khóa COUNTIF, trích nguyên văn), `xac_nhan = 0`, `loi = 0`; H1–H4 thực tế trên `TH9027`: `used: 20/20`, câu 21 HTTP 429 `AI_LIMIT_REACHED`, ảnh giao diện 167,351 bytes; tuyệt đối không lưu PIN vào Git.
 - Việc dở: Chuyển Claude nghiệm thu báo cáo và hướng dẫn Thầy thực hiện bước H5 (bấm "+5 lượt" trên giao diện giáo viên).
+
+### 22/11/2026 — Claude: phân tích lỗi học sinh đổi mã PIN
+- Đã làm: Đọc mã, xác định nguyên nhân: `SHEET_LOGIN_URL` bật nên `/api/pwa/change-pin` luôn trả 403 "Mã PIN do giáo viên quản lý trong Google Sheet"; `mapErrorMessage` (frontend/hoc/dom.js) không nhận câu này nên hiện "Chưa thực hiện được. Thử lại sau."; lỗi 400 cũng bị nuốt tương tự.
+- Tệp: `docs/handoff/claude-antigravity-doi-pin-hoc-sinh-sheet.md`, `aisgk.md`. Không sửa mã nguồn.
+- Kiểm thực tế: chỉ đọc mã; chưa gọi bản thật, chưa chạy test.
+- Việc dở: Antigravity sửa theo bàn giao (mã lỗi PIN_MANAGED_BY_SHEET, hiện đúng câu lỗi, test FAIL-first), rồi chuyển Claude kiểm.
+
+### 22/11/2026 — Claude: kế hoạch tích hợp Bài 2 Giáo dục AI lớp 9
+- Đã làm: Đọc ứng dụng `AI_Lop9_Bai2_App` (bản demo, Firestore riêng, đăng nhập ẩn danh) và hai docx gốc (giáo án, phụ lục PL9.2.1–9.2.10); đối chiếu từng hoạt động; đề xuất tích hợp vào PWA `frontend/hoc/` (mục "Phiếu học tập") + trang GV (thẻ con trong "Hiệu quả"), route Worker `/api/pwa/phieu/*`, nhánh RTDB `phieu_*` chỉ Worker truy cập, gói nội dung dạng dữ liệu dùng chung cho các bài Giáo dục AI. Không dùng lại xác thực/CSDL của app Bài 2.
+- Tệp: `docs/integration-ai-grade9-lesson2/01_SYSTEM_AUDIT.md` … `07_ROLLBACK_PLAN.md`, `docs/handoff/claude-chatgpt-goi-phieu-ai9-bai2.md`, `aisgk.md`. Không sửa mã nguồn.
+- Kiểm thực tế: chỉ đọc mã và tài liệu; chưa chạy test (chưa có mã). Thiếu phụ lục chung PLC.1–PLC.8.
+- Việc dở: giáo viên trả lời 12 câu (cuối tệp 07); ChatGPT soạn gói JSON; sau đó Antigravity làm theo tệp 05, giai đoạn 2–6.
+
+### 22/11/2026 — Claude: chốt vị trí menu "Học AI"
+- Đã làm: Theo yêu cầu người dùng, đổi vị trí tích hợp sang mục điều hướng mới "Học AI" ở cả trang học sinh (sau "Học") và giáo viên (sau "Soạn bài", 4 thẻ con). Cập nhật 03 và câu 2 của 07.
+- Tệp: `docs/integration-ai-grade9-lesson2/03_INTEGRATION_ARCHITECTURE.md`, `07_ROLLBACK_PLAN.md`, `aisgk.md`. Không sửa mã; chưa kiểm thử.
+- Việc dở: chọn chỗ đặt "Tài liệu" trên điện thoại; trả lời các câu còn lại ở 07.
+- 22/11/2026 Claude: người dùng chốt gộp "Tài liệu" vào trang "Học" (thẻ con) để thanh dưới điện thoại giữ 5 mục; đã ghi vào 03 và 07. Không sửa mã.
+- 22/11/2026 Claude: giáo viên chốt 12 câu xác nhận Bài 2 (thay hẳn phiếu giấy, thang Chưa thấy MC/Đạt/Khá/Tốt, góp ý trên máy chủ phiếu, HS tự chọn nhóm, thẻ nghề địa phương, tự mở + GV mở trang 2, giữ "kĩ", lưu hết năm học, CSV, dữ liệu dùng chung, không dùng PLC); ghi vào handoff claude-chatgpt-goi-phieu-ai9-bai2.md, 05, 07. Không sửa mã.
+
+### 22/11/2026 — Claude: soạn gói nội dung Học AI lớp 9 Bài 2
+- Đã làm: Người dùng giao trực tiếp cho Claude việc của ChatGPT (soạn gói), ghi lệch định tuyến ở đây. Dựng gói học sinh (6 hoạt động, 82 trường, 7 khối học liệu) và gói đáp án GV bằng script lấy nguyên văn từ hai docx; tách mọi phần dành cho GV (PL9.2.9, PL9.2.10, câu bẫy, ma trận IV, kiến thức chốt, điểm kiểm soát) sang tệp đáp án. Ghi yêu cầu "GV sửa được mọi nội dung" vào 03 (bản gốc bất biến, id ổn định, khôi phục) và nâng giai đoạn 7 trong 05 thành bắt buộc.
+- Tệp: `data/phieu/ai9_bai2.json`, `data/phieu/ai9_bai2.dapan.json` (bị .gitignore chặn), `.gitignore`, `docs/integration-ai-grade9-lesson2/03,05,08`, `docs/handoff/claude-antigravity-hoc-ai-gd2.md`, `aisgk.md`.
+- Kiểm thực tế: script kiểm nguyên văn + lộ đáp án + lược đồ: PASS; ca đối chứng chèn lỗi: FAIL 3 đúng mong đợi; `git check-ignore` xác nhận tệp đáp án bị chặn. Chưa có mã, chưa chạy test dự án.
+- Việc dở: Antigravity làm giai đoạn 2 (phieu-core + route HS, FAIL-first), rồi chuyển Claude kiểm.
+
+### 22/11/2026 — Claude: viết mã Học AI (giai đoạn 2–5, 7) theo yêu cầu "làm hết" của người dùng
+- Lệch định tuyến: người dùng giao thẳng cho Claude phần mã vốn của Antigravity. Đây là bản tự kiểm, chưa kiểm độc lập; không đánh [x] trong REQUIREMENTS.
+- Đã làm:
+  - Lõi `worker/phieu-core.js` (bản sao `frontend/hoc/phieu-core.js`) và route `worker/phieu.js`: học sinh lưu nháp, chốt, nộp (bản chụp bất biến), nhóm, góp ý cùng nhóm; giáo viên xem lớp, mở học liệu, đánh giá 4 YCCĐ, trả bài, lịch sử, sửa/khôi phục gói, nạp đáp án. Ghi có điều kiện bằng ETag; công tắc `PHIEU_ENABLED`.
+  - Màn học sinh `phieu.js`: mục "Học AI"; "Tài liệu" chuyển thành nút trong trang Học, menu giữ 5 mục.
+  - Màn giáo viên `teacher-phieu.js`: lớp, CSV an toàn, trình soạn (ẩn thay xóa, đánh dấu đã sửa). Đã đóng dấu lại SW.
+- Tệp mới: `worker/phieu-core.js`, `worker/phieu.js`, `frontend/hoc/phieu-core.js`, `frontend/hoc/phieu.js`, `frontend/hoc/teacher-phieu.js`, 4 test `tests/test_phieu_*`, `docs/handoff/claude-claude-kiem-doc-lap-hoc-ai.md`.
+- Tệp sửa: `worker/index.js`, `wrangler.toml`, `frontend/hoc/{index.html, app.js, styles.css, sw.js, teacher.html, teacher.js, teacher-ui.js, teacher.css}`, `tools/package_student_pwa.py`; test `test_teacher_mobile_nav.cjs` và `test_teacher_thi_ui.cjs` cập nhật kỳ vọng menu (thêm Học AI, cố ý).
+- Kiểm thực tế:
+  - Test mới: test_phieu_core 61 PASS, test_phieu_worker 96 PASS, test_phieu_ui 46 PASS, test_phieu_teacher_ui 41 PASS.
+  - Toàn bộ test node/playwright (trừ live/smoke): bản gốc 91/102, sau sửa 97/106. 9 tệp hỏng sẵn trên bản gốc (test_accounts, gate1_provisioning, login_ui, settings_menu, exam_teacher_monitor, lesson_ai_docs_ui, practical_grading, presence_ui, student_ui_standard).
+  - Ngoài ra PASS: test_role_isolation, test_fonts_vietnamese, package_student_pwa --check.
+  - Chưa thử với RTDB thật (ETag chỉ kiểm trên cơ sở dữ liệu giả).
+- Việc dở:
+  - Kiểm độc lập (phiên Claude mới) → người dùng commit/deploy, nạp gói qua trang giáo viên.
+  - Chưa làm: khóa nhóm, tự xóa dữ liệu cuối năm.
+

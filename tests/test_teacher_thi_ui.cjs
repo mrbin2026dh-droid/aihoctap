@@ -29,7 +29,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
  await pg.goto('http://localhost:8196/teacher.html');await pg.waitForTimeout(400);
  await pg.fill('#teacher-login [name=pin]',PIN);await pg.click('#teacher-login button[type=submit]');await pg.waitForSelector('#workspace:not([hidden])');
  const navs=await pg['$$eval']('.t-nav-item',a=>a.map(x=>x.id));
- ok(navs.join()==='nav-overview,nav-lessons,nav-exams,nav-sheetexam,nav-materials,nav-accounts,nav-effect,nav-tools','menu: ... Về nhà, Thi, ..., Hiệu quả, Tiện ích');
+ ok(navs.join()==='nav-overview,nav-lessons,nav-exams,nav-sheetexam,nav-materials,nav-hocai,nav-accounts,nav-effect,nav-tools','menu: ... Về nhà, Thi, Tài liệu, Học AI, ..., Hiệu quả, Tiện ích');
  ok((await pg.textContent('#nav-exams')).includes('Về nhà'),'menu "Về nhà"');
  await pg.click('#nav-sheetexam');await pg.waitForSelector('#thi-list');await pg.waitForTimeout(400);
  ok(await pg.textContent('#workspace-title')==='Thi','mở menu Thi');
@@ -144,7 +144,7 @@ try{for(const vp of [{width:1280,height:800},{width:390,height:800}]){reset();co
   await pg.click('#nav-overview');await pg.locator('#read-report').scrollIntoViewIfNeeded();await pg.waitForFunction(()=>document.querySelectorAll('#read-body tr').length>=2,null,{timeout:8000});
   ok(paths.some(p=>p.endsWith('/doc_read/tin-hoc-9~b1'))&&!paths.some(p=>/\/doc_read$/.test(p)),'đọc bài: chỉ nghe doc_read của bài đang chọn (không tải cả cây)');
   await pg.waitForFunction(()=>document.getElementById('read-lop').value===document.getElementById('overview-class').value&&document.getElementById('overview-class').value!=='');
-  ok(await pg.locator('#read-lop').isHidden()&&JSON.stringify(await pg.$$eval('#read-lop optgroup',a=>a.map(g=>g.label)))==='["Khối 9","Khối 8"]','đọc bài: dùng chung lớp đã chọn ở đầu Tổng quan (một chỗ chọn lớp), lớp nhóm theo khối');
+  ok(await pg.locator('#read-lop').isHidden()&&JSON.stringify(await pg.locator('#read-lop optgroup').evaluateAll(a=>a.map(g=>g.label)))==='["Khối 9","Khối 8"]','đọc bài: dùng chung lớp đã chọn ở đầu Tổng quan (một chỗ chọn lớp), lớp nhóm theo khối');
   await pg.selectOption('#overview-class','k:9');
   await pg.waitForFunction(()=>/1\/120/.test(document.querySelector('#read-sum-body')?.textContent||''),null,{timeout:8000});
   ok((await pg.textContent('#read-sum-body')).includes('Thế giới kĩ thuật số')&&!(await pg.textContent('#read-sum-body')).includes('Máy tính'),'bảng tổng hợp mọi bài của khối: bài lớp 9 với "1/120 đã đọc hết"; không lẫn bài lớp 8');
