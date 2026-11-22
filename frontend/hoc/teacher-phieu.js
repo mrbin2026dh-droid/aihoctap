@@ -4,7 +4,7 @@
 import { api, ApiError } from './api.js';
 import { el, button, confirmBox, noticeBox, withBusy } from './dom.js';
 import { fieldMap, optionsOf, missingForSubmit, csvSafe, lopKey } from './phieu-core.js?v=20261122e';
-import { createLesson, openBuilder, importLesson } from './teacher-soan.js?v=20261122e';
+import { createLesson, openBuilder, importLesson } from './teacher-soan.js?v=20261122f';
 
 const MUC = [['', 'Chưa đánh giá'], ['chua_thay', 'Chưa thấy minh chứng'], ['dat', 'Đạt'], ['kha', 'Khá'], ['tot', 'Tốt']];
 const MUC_TEN = Object.fromEntries(MUC);
@@ -60,7 +60,21 @@ function renderHome() {
   const tools = el('div', '', 'phieu-gv-tools');
   const ctx = { call, setStatus, admin: st.admin, done: (/** @type {string|undefined} */ goi) => { if (goi) st.goi = goi; void load(); } };
   if (st.admin) tools.append(button('Tạo bài mới', () => createLesson(ctx, $('hocai-class')), 't-button t-primary'));
-  if (st.packs.length) tools.append(button(st.admin ? 'Soạn bài' : 'Xem bài', () => openBuilder(ctx, $('hocai-class'), st.goi), 't-button'));
+  if (st.packs.length) tools.append(button(st.admin ? 'Sửa bài' : 'Xem bài', () => openBuilder(ctx, $('hocai-class'), st.goi), 't-button'));
+  if (st.admin && st.packs.length) {
+    const del = button('Xóa bài', async () => {
+      const p = st.packs.find(x => x.id === st.goi); if (!p) return;
+      let so = 0;
+      try { so = (await call({ op: 'soan', viec: 'dem_bai', goi: p.id })).so || 0; } catch { so = 0; }
+      const ok = await confirmBox({ title: 'Xóa bài?', body: `${p.title} (lớp ${p.grade}) sẽ không còn trong danh sách của thầy cô và học sinh. ${so ? so + ' học sinh đã làm bài này; bài làm của các em vẫn được lưu trên máy chủ.' : 'Chưa học sinh nào làm bài này.'}`, okText: 'Xóa bài', danger: true });
+      if (!ok) return;
+      await withBusy(del, 'Đang xóa…', async () => {
+        try { await call({ op: 'soan', viec: 'xoa_bai', goi: p.id }); st.goi = ''; setStatus('Đã xóa bài.'); await load(); }
+        catch (e) { await noticeBox({ title: 'Chưa xóa được', body: errText(e) }); }
+      });
+    }, 't-button t-danger');
+    tools.append(del);
+  }
   if (st.admin) tools.append(button('Nhập bài từ tệp', () => importLesson(ctx), 't-button'));
   if (st.admin && st.packs.length) {
     const cur = () => st.packs.find(x => x.id === st.goi);

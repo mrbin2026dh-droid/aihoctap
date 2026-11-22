@@ -4667,3 +4667,12 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - 22/11/2026 Claude: deploy Worker `5009bfbc-fe5c-4fa5-9ad4-ab4ba05cf777` (quay lui về `2bc431aa-be27-4ea8-9ac5-c4cdfb85cea9`).
   - Kiểm thật: health 200, catalog 200, phieu 401, soan 401 khi chưa đăng nhập. Pages success: teacher.js?v=20261122e, teacher-soan.js 200.
   - Còn lại: thầy đăng nhập và nhập bài mẫu `data/phieu/ai9_b2.soan.json` bằng "Nhập bài từ tệp".
+
+### 22/11/2026 — Claude: xóa và sửa bài Học AI
+- Giáo viên yêu cầu xóa và chỉnh sửa được các bài đã tạo.
+- Đã làm:
+  - Op `soan` thêm việc `dem_bai` và `xoa_bai`; dùng được cho cả bài làm bằng trình soạn cũ. Xóa nghĩa là bài không còn trong danh sách của giáo viên và học sinh; bài học sinh đã làm, bài soạn và đáp án vẫn giữ trên máy chủ.
+  - Trang giáo viên: nút "Xóa bài" có hộp thoại nêu số học sinh đã làm; nút "Soạn bài" đổi tên thành "Sửa bài".
+- Kiểm thực tế:
+  - soan 109, teacher_ui 85 đều PASS.
+  - Các test sau đều PASS: core, worker, b2, soan_ui, mobile_nav, thi_ui, role_isolation, worker_gate.

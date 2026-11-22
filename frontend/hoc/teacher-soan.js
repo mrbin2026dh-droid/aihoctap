@@ -64,7 +64,7 @@ export async function openBuilder(ctx, box, goi, m) {
     box.replaceChildren(el('p', 'Đang tải bài…', 't-muted')); box.setAttribute('aria-busy', 'true');
     try { m = (await ctx.call({ op: 'soan_doc', goi })).soan; } catch (e) { box.removeAttribute('aria-busy'); box.replaceChildren(el('p', errText(e), 't-muted')); return; }
     box.removeAttribute('aria-busy');
-    if (!m) { box.replaceChildren(el('p', 'Bài này làm bằng trình soạn cũ nên không sửa ở đây được. Hãy nhập bài mẫu từ tệp hoặc tạo bài mới.', 't-muted'), button('Đóng', () => ctx.done(), 't-button')); return; }
+    if (!m) { box.replaceChildren(el('p', 'Bài này làm bằng trình soạn cũ nên không sửa được. Thầy cô có thể bấm Xóa bài, rồi tạo bài mới hoặc nhập bài mẫu từ tệp.', 't-muted'), button('Đóng', () => ctx.done(), 't-button')); return; }
   }
   new Builder(ctx, box, m).render();
 }

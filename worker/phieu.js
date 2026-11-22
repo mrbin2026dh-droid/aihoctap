@@ -302,7 +302,7 @@ async function teacherRoute(request, env, keys, db, J, deps) {
 
   if (op === 'ds') {
     const ds = (await db.get('phieu_ds')) || {};
-    return J({ packs: Object.entries(ds).map(([id, d]) => ({ id, ...d })).sort((a, b) => (a.grade - b.grade) || ((a.thu_tu || 0) - (b.thu_tu || 0))), classes: t.classes, admin: t.admin });
+    return J({ packs: Object.entries(ds).filter(([, d]) => d && !d.da_xoa).map(([id, d]) => ({ id, ...d })).sort((a, b) => (a.grade - b.grade) || ((a.thu_tu || 0) - (b.thu_tu || 0))), classes: t.classes, admin: t.admin });
   }
   if (op === 'cac_lop') {
     const e = needGoi(); if (e) return e;
@@ -422,6 +422,22 @@ const txt = (/** @type {unknown} */ v, max = 300) => String(v ?? '').replace(/\s
 async function soanWrite(db, J, body) {
   const viec = String(body.viec || '');
   const bad = (/** @type {string} */ msg, field = '') => J({ error: 'SOAN_SAI', field, detail: msg }, 400);
+  if (viec === 'dem_bai' || viec === 'xoa_bai') {   // dùng được cho cả bài làm bằng trình soạn cũ
+    const goi = String(body.goi || '');
+    if (!/^[a-z][a-z0-9_]{2,30}$/.test(goi)) return bad('Mã bài không hợp lệ.');
+    const { val: pk, etag: pe } = await db.getE('phieu_bo/' + goi);
+    if (!pk) return J({ error: 'PACK_NOT_FOUND', detail: 'Không tìm thấy bài.' }, 404);
+    if (viec === 'dem_bai') {
+      const all = (await db.get('phieu_bai/' + goi, '?shallow=true')) || {};
+      let so = 0;
+      for (const lop of Object.keys(all)) so += Object.keys((await db.get(`phieu_bai/${goi}/${lop}`, '?shallow=true')) || {}).length;
+      return J({ so });
+    }
+    // Xóa bài: ẩn khỏi danh sách GV và HS; bài học sinh đã làm, bài soạn, đáp án vẫn giữ trên máy chủ
+    if (!(await db.put('phieu_bo/' + goi, { ...pk, an: true, da_xoa: true, rev: (pk.rev || 0) + 1 }, pe || undefined))) return J({ error: 'REV_CONFLICT', detail: 'Thử lại.' }, 409);
+    await db.put('phieu_ds/' + goi, { title: pk.title, grade: pk.grade, thu_tu: pk.thu_tu || 0, so_tiet: pk.so_tiet || 0, an: true, da_xoa: true, rev: (pk.rev || 0) + 1 });
+    return J({ ok: true });
+  }
   let m, etag = '';
   if (viec === 'tao_bai' || viec === 'nhap') {
     if (viec === 'tao_bai') {

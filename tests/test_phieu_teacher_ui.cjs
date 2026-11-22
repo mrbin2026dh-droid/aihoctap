@@ -33,7 +33,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
           else if (v === 'them_hd') soan.activities.push({ id: id('h'), title: body.title, huong_dan: body.huong_dan, questions: [] });
           else if (v === 'luu_cau') { const c = { ...body.cau }; if (c.id) { for (const a of soan.activities) a.questions = a.questions.map(q => q.id === c.id ? c : q); } else { c.id = id('c'); soan.activities.find(a => a.id === body.hd).questions.push(c); } }
           else if (v === 'xoa_cau') for (const a of soan.activities) a.questions = a.questions.filter(q => q.id !== body.cau_id);
-          if (v === 'dem') res = { so: 2 }; else res = { ok: true, soan, goi: soan.id };
+          if (v === 'dem') res = { so: 2 }; else if (v === 'dem_bai') res = { so: 5 }; else if (v === 'xoa_bai') res = { ok: true }; else res = { ok: true, soan, goi: soan.id };
         }
         else res = { ok: true };
       }
@@ -101,6 +101,13 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('#msg-ok'); await pg.waitForTimeout(300);
     ok(ops.some(o => o.op === 'goi_an' && o.an === true && o.goi === 'ai9_bai2'), tag + 'ẩn bài sau xác nhận');
     ok(await pg.isVisible('#hocai-root button:has-text("Hiện bài với học sinh")'), tag + 'nút đổi thành Hiện bài');
+    // Xóa bài: hộp thoại nêu số học sinh đã làm; Hủy không xóa; xác nhận mới xóa
+    await pg.click('#hocai-root button:has-text("Xóa bài")'); await pg.waitForSelector('#msg-dialog[open]');
+    ok((await pg.textContent('#msg-body')).includes('5 học sinh đã làm bài này') && (await pg.textContent('#msg-ok')) === 'Xóa bài', tag + 'xác nhận xóa bài nêu hậu quả');
+    await pg.click('#msg-cancel'); ok(!ops.some(o => o.viec === 'xoa_bai'), tag + 'Hủy không xóa bài');
+    await pg.click('#hocai-root button:has-text("Xóa bài")'); await pg.waitForSelector('#msg-dialog[open]'); await pg.click('#msg-ok'); await pg.waitForTimeout(400);
+    ok(ops.some(o => o.viec === 'xoa_bai' && o.goi === 'ai9_bai2'), tag + 'xóa bài sau xác nhận');
+    ok(await pg.isVisible('#hocai-root button:has-text("Sửa bài")'), tag + 'có nút Sửa bài');
     // Trình soạn dạng mở: tạo bài → hoạt động → câu hỏi (8 dạng), thêm/sửa/xóa từng câu
     await pg.click('#hocai-root button:has-text("Tạo bài mới")');
     await pg.click('#hocai-class button:has-text("Tạo bài")');

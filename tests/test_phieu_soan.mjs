@@ -127,6 +127,16 @@ try {
   eq((await call('GET', '/pwa/phieu/' + goi, null, ta)).body.bai.answers[ids.mot], 'Mở sách kiểm tra', 'xóa hoạt động vẫn giữ bài HS');
   eq((await T({ op: 'soan', viec: 'sua_bai', goi, title: 'Bài thử (sửa)', grade: 9 })).body.soan.title, 'Bài thử (sửa)');
   eq((await T({ op: 'soan', viec: 'la', goi })).status, 400);
+  // Xóa bài: GV lớp không được; đếm HS; xóa thì biến khỏi danh sách GV và HS, bài HS vẫn còn trên máy chủ
+  eq((await T({ op: 'soan', viec: 'xoa_bai', goi }, gv9a)).status, 403, 'GV lớp không xóa bài dùng chung');
+  eq((await T({ op: 'soan', viec: 'dem_bai', goi })).body.so, 1, 'đếm học sinh đã làm bài');
+  eq((await T({ op: 'soan', viec: 'xoa_bai', goi: 'khong_co' })).status, 404);
+  eq((await T({ op: 'soan', viec: 'xoa_bai', goi })).status, 200);
+  ok(!(await T({ op: 'ds' })).body.packs.some(p => p.id === goi), 'bài đã xóa không còn trong danh sách GV');
+  ok(!(await call('GET', '/pwa/phieu', null, ta)).body.packs.some(p => p.id === goi), 'HS không thấy bài đã xóa');
+  eq((await call('GET', '/pwa/phieu/' + goi, null, ta)).status, 404);
+  ok(getAt('phieu_bai/' + goi + '/9a/hsA').answers[ids.mot], 'bài học sinh vẫn còn trên máy chủ');
+  ok(getAt('phieu_soan/' + goi), 'bài soạn vẫn còn để khôi phục khi cần');
   // Nhập bài từ tệp (bài mẫu): thay bài cũ cùng mã, ô cũ được ẩn
   setAt('phieu_bo/ai9_b2', JSON.parse(readFileSync(new URL('../data/phieu/ai9_b2.json', import.meta.url), 'utf8')));
   const mau = { id: 'ai9_b2', title: 'Bài 2 mẫu', grade: 9, activities: [{ id: 'hmau', title: 'Khởi động', questions: [{ ...Q.mot, id: 'cmau1' }] }] };
