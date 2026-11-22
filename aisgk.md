@@ -4525,6 +4525,12 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế: 17/17 test suites offline PASS 100%; 13/13 bài trên bản thật có `guard.dap_an = true`; đánh giá 13 bài thật 104 câu: `lo = 1` (do tiêu đề SGK chứa từ khóa COUNTIF, trích nguyên văn), `xac_nhan = 0`, `loi = 0`; H1–H4 thực tế trên `TH9027`: `used: 20/20`, câu 21 HTTP 429 `AI_LIMIT_REACHED`, ảnh giao diện 167,351 bytes; tuyệt đối không lưu PIN vào Git.
 - Việc dở: Chuyển Claude nghiệm thu báo cáo và hướng dẫn Thầy thực hiện bước H5 (bấm "+5 lượt" trên giao diện giáo viên).
 
+### 30/10/2026 23:40 — Claude — Duyệt sửa tra đáp án (ĐẠT, 3 lưu ý); ẩn tên mục chứa đáp án; giảm độ chậm do AI kiểm duyệt
+- Phán quyết báo cáo hạn mức/tra đáp án: ĐẠT. Hạn mức 20 câu/ngày đã thử thật (câu 21 bị từ chối, ảnh 07). Lưu ý: ca lo=1 là gợi ý thật (tên mục chứa COUNTIF) → đã sửa; thời gian đo trong script có cộng 4 giây chờ; 4 câu "ngoài bài" ở H1 đúng là không có trong bài được hỏi.
+- Đã làm: findLessonQuestion dùng chung; trả lời mẫu khi đang làm câu ghi "Mục N" thay tên mục chứa nội dung đáp án; touchesOptions + giới hạn 3 giây cho AI kiểm duyệt.
+- Kiểm thử: test_tutor_all_lessons 24 PASS (ca tên mục FAIL trên mã cũ, PASS trên mã mới); các bộ Gia sư/Worker khác PASS (sandbox).
+- Việc tiếp: Antigravity deploy, đo tốc độ đúng cách, đánh giá lại, H6 sau 00:05 31/10 (docs/handoff/claude-antigravity-gia-su-toc-do-30-10.md).
+
 ### 22/11/2026 — Claude: phân tích lỗi học sinh đổi mã PIN
 - Đã làm: Đọc mã, xác định nguyên nhân: `SHEET_LOGIN_URL` bật nên `/api/pwa/change-pin` luôn trả 403 "Mã PIN do giáo viên quản lý trong Google Sheet"; `mapErrorMessage` (frontend/hoc/dom.js) không nhận câu này nên hiện "Chưa thực hiện được. Thử lại sau."; lỗi 400 cũng bị nuốt tương tự.
 - Tệp: `docs/handoff/claude-antigravity-doi-pin-hoc-sinh-sheet.md`, `aisgk.md`. Không sửa mã nguồn.

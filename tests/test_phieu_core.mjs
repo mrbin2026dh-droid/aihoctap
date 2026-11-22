@@ -9,7 +9,8 @@ let n = 0; const ok = (cond, msg) => { assert.ok(cond, msg); n++; };
 const eq = (a, b, msg) => { assert.deepEqual(a, b, msg); n++; };
 
 // Bản giao diện phải giống hệt bản Worker
-eq(readFileSync(new URL('../frontend/hoc/phieu-core.js', import.meta.url), 'utf8'), readFileSync(new URL('../worker/phieu-core.js', import.meta.url), 'utf8'), 'hai bản phieu-core giống nhau');
+const lf = u => readFileSync(new URL(u, import.meta.url), 'utf8').split(String.fromCharCode(13, 10)).join(String.fromCharCode(10));   // Windows có thể đổi kiểu xuống dòng khi checkout
+eq(lf('../frontend/hoc/phieu-core.js'), lf('../worker/phieu-core.js'), 'hai bản phieu-core giống nhau');
 
 // C1 gói thật hợp lệ
 eq(C.validatePack(pack), [], 'gói thật hợp lệ');
