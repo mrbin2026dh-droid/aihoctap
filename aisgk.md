@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude làm trình soạn bài Học AI dạng mở (Bài → Hoạt động → Câu hỏi, 8 dạng, lưu từng câu), bỏ trình soạn cũ; bài mẫu Bài 2 ở data/phieu/ai9_b2.soan.json (thầy nhập bằng "Nhập bài từ tệp").
+- Yêu cầu mới nhất: Claude làm thông báo phòng thảo luận/luyện tập to giữa màn hình (có "Để sau") và sửa lỗi học sinh mất lựa chọn/không nhận cập nhật khi thầy cô công bố kết quả.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4724,3 +4724,11 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
 - Kiểm thực tế:
   - tl_core 45, tl_dang_moi 32 (công bố, thu lại, không lộ tên, không lộ đáp án bắt lỗi, câu mới thì xóa) đều PASS.
   - Các test sau đều PASS: tl_live 61, tl_ai, mobile_nav, thi_ui, role_isolation, student/teacher_ui_standard, fonts.
+
+### 22/11/2026 – Claude: thông báo phòng to giữa màn hình, sửa lỗi mất lựa chọn khi màn vẽ lại
+- Rà tranh chấp tài nguyên: ngân sách kết nối (2 luồng trực tiếp, còn lại hỏi định kỳ) ổn; ghi bài không tranh chấp (mỗi em ghi nhánh riêng). Tìm ra 2 lỗi ở `tl-play.js` `draw()`:
+  - (1) Màn vẽ lại khi thầy cô công bố kết quả / chỗ sai / bạn khác gửi làm mất ô tròn, ô tích, ô xếp hạng em đã chọn nhưng chưa gửi → nay giữ lại.
+  - (2) Em bấm chọn xong, con trỏ nằm trên ô chọn nên mọi cập nhật của câu đó bị bỏ qua (coi là "đang gõ") → nay chỉ ô chữ mới tính là đang gõ. Luyện tập (`quiz-play.js`) bấm là gửi ngay nên không mắc lỗi này.
+- Thông báo phòng (thảo luận + luyện tập): lần đầu hiện bảng to giữa màn hình (alertdialog, tiêu điểm vào "Vào phòng", Esc/"Để sau" thu về thanh nhỏ phía dưới). Tệp: `tl-play.js`, `quiz-play.js`, `styles.css`, `sw.js` (đóng dấu lại), `tests/test_tl_dang_moi.cjs`.
+- Kiểm thực tế PASS: tl_dang_moi 38 (đã thử bỏ phần giữ lựa chọn → test FAIL đúng chỗ), tl_live 61, quiz_live 67, live_thao_luan_gui_30_10, role_isolation, fonts, tl_core 45; `package_student_pwa --check` khớp.
+- Việc dở: thầy cô kiểm tay trên điện thoại thật sau khi Pages cập nhật.

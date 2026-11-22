@@ -13,7 +13,7 @@ const SHAPE = /** @type {Record<string,string>} */ ({ A: '▲', B: '◆', C: '�
 /** @type {{ma:string,ten:string,lop:string}|null} */ let me = null;
 /** @type {null|(() => void)} */ let stopLop = null, stopInfo = null;
 /** @type {(() => void)[]} */ let stops = [];
-let room = '', playing = '', dismissed = '';
+let room = '', playing = '', dismissed = '', later = '';
 /** @type {any} */ let info = null, pub = null, mine = null;
 let players = 0;
 /** @type {Record<string,string>} */ let chosen = {};
@@ -77,16 +77,25 @@ function banner() {
   let bn = document.getElementById('lt-banner');
   const inPractice = !document.getElementById('practice-view')?.hidden;
   const show = active() && !!me && dismissed !== room && playing !== room && !inPractice;
-  if (!show) { if (bn) bn.hidden = true; return; }
+  if (!show) { if (bn) { bn.hidden = true; bn.classList.remove('is-big'); } if (!document.querySelector('.lt-banner.is-big:not([hidden])')) document.body.classList.remove('lt-banner-big'); return; }
   if (!bn) {
     bn = t('div', 'lt-banner'); bn.id = 'lt-banner'; bn.setAttribute('role', 'status');
     const mid = t('div', 'lt-banner-mid'); mid.append(t('strong', 'lt-banner-title', ''), t('span', '', 'Thầy cô đang mở luyện tập trên lớp.'));
-    bn.append(t('span', 'lt-banner-dot', ''), mid, b('Vào phòng', 'primary lt-banner-join', () => void join()), b('×', 'lt-banner-x', () => { dismissed = room; banner(); }));
+    bn.append(t('span', 'lt-banner-dot', ''), mid, b('Vào phòng', 'primary lt-banner-join', () => void join()), b('Để sau', 'lt-banner-later', () => { later = room; banner(); }), b('×', 'lt-banner-x', () => { dismissed = room; banner(); }));
+    bn.querySelector('.lt-banner-title')?.setAttribute('id', bn.id + '-title');
+    bn.addEventListener('keydown', e => { if (e.key === 'Escape' && bn?.classList.contains('is-big')) { later = room; banner(); } });
     /** @type {HTMLElement} */ (bn.querySelector('.lt-banner-x')).setAttribute('aria-label', 'Ẩn thông báo luyện tập');
     document.body.append(bn);
   }
   /** @type {HTMLElement} */ (bn.querySelector('.lt-banner-title')).textContent = String(info?.title || 'Luyện tập');
+  // Lần đầu thầy cô mở phòng: bảng to giữa màn hình để học sinh không bỏ lỡ; "Để sau" thu về thanh nhỏ phía dưới.
+  const big = later !== room, wasBig = bn.classList.contains('is-big') && !bn.hidden;
+  bn.classList.toggle('is-big', big);
+  document.body.classList.toggle('lt-banner-big', big);
+  if (big) { bn.setAttribute('role', 'alertdialog'); bn.setAttribute('aria-modal', 'true'); bn.setAttribute('aria-labelledby', bn.id + '-title'); }
+  else { bn.setAttribute('role', 'status'); bn.removeAttribute('aria-modal'); bn.removeAttribute('aria-labelledby'); }
   bn.hidden = false;
+  if (big && !wasBig) /** @type {HTMLElement|null} */ (bn.querySelector('.lt-banner-join'))?.focus();
 }
 /** Gọi khi đổi mục trong app (ẩn thông báo khi đang ở mục Luyện tập). */
 export function refreshBanner() { banner(); }

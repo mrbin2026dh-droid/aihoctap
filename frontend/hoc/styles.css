@@ -2035,3 +2035,18 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .tl-kq-ly{margin:8px 0 0;padding:10px 12px;border-radius:10px;background:#ffffff12;overflow-wrap:anywhere}
 .tl-kq-cloud{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center}
 .tl-kq-word{font-weight:900;color:#ffd166}.tl-kq-w1{font-size:15px}.tl-kq-w2{font-size:19px}.tl-kq-w3{font-size:24px}.tl-kq-w4{font-size:30px}
+/* Thông báo phòng thảo luận/luyện tập: lần đầu hiện bảng to giữa màn hình, "Để sau" thu về thanh nhỏ */
+.lt-banner .lt-banner-later{display:none}
+.lt-banner.is-big{top:50%;bottom:auto;transform:translate(-50%,-50%);z-index:55;width:min(520px,calc(100% - 32px));flex-direction:column;align-items:stretch;gap:16px;padding:32px 24px 24px;text-align:center;border-radius:24px;box-shadow:0 0 0 100vmax rgba(6,20,20,.6),0 24px 48px rgba(0,0,0,.35);animation:lt-big-in .25s ease-out}
+.lt-banner.is-big .lt-banner-dot{align-self:center;width:20px;height:20px}
+.lt-banner.is-big .lt-banner-mid{gap:8px}
+.lt-banner.is-big .lt-banner-mid strong{font-size:clamp(24px,6vw,32px);line-height:1.25;white-space:normal}
+.lt-banner.is-big .lt-banner-mid span{font-size:18px;opacity:.92}
+.lt-banner.is-big .lt-banner-join{min-height:56px;font-size:20px}
+.lt-banner.is-big .lt-banner-later{display:block;min-height:48px;border-radius:12px;background:transparent;color:#fff;border:1px solid #ffffff55;font-size:16px;font-weight:600}
+.lt-banner.is-big .lt-banner-x{display:none}
+body.lt-banner-big{overflow:hidden}
+body.lt-banner-big .help-fab,body.lt-banner-big .help-panel{display:none}
+@keyframes lt-big-in{from{transform:translate(-50%,-46%);opacity:0}to{transform:translate(-50%,-50%);opacity:1}}
+@media(max-width:760px){body.student-app .lt-banner.is-big{bottom:auto}}
+@media(prefers-reduced-motion:reduce){.lt-banner.is-big{animation:none}}

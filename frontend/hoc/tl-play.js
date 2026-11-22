@@ -10,7 +10,7 @@ import { alive } from './live-room.js';
 /** @type {{ma:string,ten:string,lop:string,key:string}|null} */ let me = null;
 /** @type {null|(() => void)} */ let stopLop = null, stopInfo = null, stopQa = null, stopVote = null;
 /** @type {(() => void)[]} */ let stops = [];
-let room = '', playing = '', dismissed = '', probeTimer = 0, tick = 0, lastKey = '', readySeen = '';
+let room = '', playing = '', dismissed = '', later = '', probeTimer = 0, tick = 0, lastKey = '', readySeen = '';
 /** @type {any} */ let info = null, pub = null;
 /** @type {Record<string, string[]>} ý em đã gửi theo trang */ let mine = {};
 /** @type {any} */ let qaY = null, qaVotes = null;
@@ -57,16 +57,25 @@ function banner() {
   let bn = document.getElementById('tl-banner');
   const quizShown = !!document.getElementById('lt-banner') && !document.getElementById('lt-banner')?.hidden;
   const show = active() && !!me && dismissed !== room && playing !== room && document.getElementById('practice-view')?.hidden !== false && !quizShown;
-  if (!show) { if (bn) bn.hidden = true; return; }
+  if (!show) { if (bn) { bn.hidden = true; bn.classList.remove('is-big'); } if (!document.querySelector('.lt-banner.is-big:not([hidden])')) document.body.classList.remove('lt-banner-big'); return; }
   if (!bn) {
     bn = t('div', 'lt-banner tl-banner'); bn.id = 'tl-banner'; bn.setAttribute('role', 'status');
     const mid = t('div', 'lt-banner-mid'); mid.append(t('strong', 'lt-banner-title', ''), t('span', '', 'Thầy cô đang mở thảo luận trên lớp.'));
-    bn.append(t('span', 'lt-banner-dot', ''), mid, b('Vào phòng', 'primary lt-banner-join tl-banner-join', () => void join()), b('×', 'lt-banner-x', () => { dismissed = room; banner(); }));
+    bn.append(t('span', 'lt-banner-dot', ''), mid, b('Vào phòng', 'primary lt-banner-join tl-banner-join', () => void join()), b('Để sau', 'lt-banner-later', () => { later = room; banner(); }), b('×', 'lt-banner-x', () => { dismissed = room; banner(); }));
+    bn.querySelector('.lt-banner-title')?.setAttribute('id', bn.id + '-title');
+    bn.addEventListener('keydown', e => { if (e.key === 'Escape' && bn?.classList.contains('is-big')) { later = room; banner(); } });
     /** @type {HTMLElement} */ (bn.querySelector('.lt-banner-x')).setAttribute('aria-label', 'Ẩn thông báo thảo luận');
     document.body.append(bn);
   }
   /** @type {HTMLElement} */ (bn.querySelector('.lt-banner-title')).textContent = String(info?.title || 'Thảo luận');
+  // Lần đầu thầy cô mở phòng: bảng to giữa màn hình để học sinh không bỏ lỡ; "Để sau" thu về thanh nhỏ phía dưới.
+  const big = later !== room, wasBig = bn.classList.contains('is-big') && !bn.hidden;
+  bn.classList.toggle('is-big', big);
+  document.body.classList.toggle('lt-banner-big', big);
+  if (big) { bn.setAttribute('role', 'alertdialog'); bn.setAttribute('aria-modal', 'true'); bn.setAttribute('aria-labelledby', bn.id + '-title'); }
+  else { bn.setAttribute('role', 'status'); bn.removeAttribute('aria-modal'); bn.removeAttribute('aria-labelledby'); }
   bn.hidden = false;
+  if (big && !wasBig) /** @type {HTMLElement|null} */ (bn.querySelector('.lt-banner-join'))?.focus();
 }
 export function refreshBanner() { banner(); }
 
@@ -134,12 +143,20 @@ function draw(force = false) {
   const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, isQa(s.type) ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0, pub.lo ?? null, pub.kq ?? null, dead]);
   if (key === lastKey) return;
   if (dead) { lastKey = key; unwatchQa(); main.replaceChildren(t('span', 'lt-res-ic tl-end-ic', '✓'), t('h2', 'lt-big', 'Phòng thảo luận đã đóng'), t('p', 'lt-wait', 'Thầy cô đã rời phòng. Ý kiến em gửi đã được lưu.'), b('Đóng', 'primary lt-done', () => close())); return; }
-  // đang gõ dở: không vẽ lại đè lên ô nhập (chỉ vẽ khi đổi trang / đổi trạng thái)
-  const typing = document.activeElement && main.contains(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).matches('input,textarea') && /** @type {HTMLElement} */ (main.querySelector('[data-k]'))?.dataset.k === k && pub.phase === 'open';
+  // đang gõ dở: không vẽ lại đè lên ô nhập (chỉ vẽ khi đổi trang / đổi trạng thái).
+  // Ô tròn/ô tích không tính là gõ dở (lỗi 22/11: em bấm chọn xong, con trỏ nằm trên ô chọn → mọi lần cập nhật bị bỏ qua); lựa chọn chưa gửi được giữ ở dưới.
+  const typing = document.activeElement && main.contains(document.activeElement) && /** @type {HTMLElement} */ (document.activeElement).matches('textarea,input:not([type=radio]):not([type=checkbox])') && /** @type {HTMLElement} */ (main.querySelector('[data-k]'))?.dataset.k === k && pub.phase === 'open';
   if (typing && !force && !isQa(s.type)) return;
   lastKey = key;
   // Hỏi đáp: danh sách câu hỏi đổi liên tục khi bạn khác gửi/bình chọn → giữ nguyên chữ em đang gõ dở và vị trí con trỏ khi vẽ lại.
   /** @type {Record<string,string>} */ const keep = {}; let focusId = '', selA = 0, selB = 0;
+  // Lựa chọn đã bấm nhưng chưa gửi (ô tròn, ô tích, ô chọn hạng): giữ lại khi vẽ lại (bạn khác gửi ý, thầy cô công bố kết quả…)
+  /** @type {Record<string, string[]>} */ const picks = {}; /** @type {Record<string, string>} */ const sels = {};
+  if (!force) {
+    const scope = `.tl-slide[data-k="${CSS.escape(k)}"]`;
+    for (const el of /** @type {NodeListOf<HTMLInputElement>} */ (main.querySelectorAll(`${scope} input[type=radio]:checked, ${scope} input[type=checkbox]:checked`))) (picks[el.name] ||= []).push(el.value);
+    for (const el of /** @type {NodeListOf<HTMLSelectElement>} */ (main.querySelectorAll(`${scope} select`))) if (el.value && el.id) sels[el.id] = el.value;
+  }
   if (!force) for (const el of /** @type {NodeListOf<HTMLInputElement|HTMLTextAreaElement>} */ (main.querySelectorAll(`.tl-slide[data-k="${CSS.escape(k)}"] .tl-input`))) {
     if (el.value) keep[el.id] = el.value;
     if (el === document.activeElement) { focusId = el.id; selA = el.selectionStart ?? el.value.length; selB = el.selectionEnd ?? selA; }
@@ -183,6 +200,8 @@ function draw(force = false) {
   if (pub.kq?.k === k) box.append(kqView(s, pub.kq));
   main.replaceChildren(box);
   for (const [id, v] of Object.entries(keep)) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if (el && main.contains(el)) el.value = v; }
+  for (const [name, vals] of Object.entries(picks)) for (const el of /** @type {NodeListOf<HTMLInputElement>} */ (main.querySelectorAll(`input[name="${CSS.escape(name)}"]`))) if (vals.includes(el.value)) el.checked = true;
+  for (const [id, v] of Object.entries(sels)) { const el = /** @type {HTMLSelectElement|null} */ (document.getElementById(id)); if (el && main.contains(el)) el.value = v; }
   if (focusId) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(focusId)); if (el && main.contains(el)) { el.focus(); try { el.setSelectionRange(selA, selB); } catch { /* bỏ qua */ } } }
 }
 

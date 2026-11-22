@@ -78,7 +78,13 @@ try{
  await login(sp,'HS01');await login(sp2,'HS02');
  await tp.click('.tl-open');await tp.waitForSelector('#tl-host:not([hidden]) .qz-code');const code=(await tp.textContent('#tl-host .qz-code strong')).replace(/\s/g,'');
  await sp.click('button[data-tab="practice"]');await sp.waitForSelector('#practice-list .tl-card',{timeout:8000});await sp.click('.tl-join');await sp.waitForSelector('#tl-play:not([hidden]) .lt-big');
- await sp2.waitForSelector('#tl-banner:not([hidden])',{timeout:8000});await sp2.click('.tl-banner-join');await sp2.waitForSelector('#tl-play:not([hidden]) .lt-big');
+ await sp2.waitForSelector('#tl-banner:not([hidden])',{timeout:8000});
+ {const bn=sp2.locator('#tl-banner');ok(await bn.evaluate(e=>e.classList.contains('is-big')&&e.getAttribute('role')==='alertdialog'),'thông báo thảo luận: bảng to, vai trò hộp thoại');
+  await sp2.waitForTimeout(400);const bx=await bn.boundingBox(),vp=sp2.viewportSize();ok(Math.abs(bx.y+bx.height/2-vp.height/2)<4&&Math.abs(bx.x+bx.width/2-vp.width/2)<4,'bảng nằm giữa màn hình');
+  ok(await sp2.evaluate(()=>document.activeElement?.classList.contains('tl-banner-join')),'nút Vào phòng được đặt tiêu điểm');
+  await shot(sp2,'moi-s-banner-to');
+  await sp2.click('#tl-banner .lt-banner-later');ok(await bn.evaluate(e=>!e.hidden&&!e.classList.contains('is-big')&&e.getAttribute('role')==='status'),'Để sau: thu về thanh nhỏ, vẫn còn nút vào phòng');}
+ await sp2.click('.tl-banner-join');await sp2.waitForSelector('#tl-play:not([hidden]) .lt-big');
  await tp.waitForFunction(()=>document.querySelectorAll('#tl-host .qz-chips li').length===2);
  await tp.click('#tl-start');await sp.waitForSelector('#tl-play .tl-choice',{timeout:15000});await sp2.waitForSelector('#tl-play .tl-choice',{timeout:15000});
  const sent=async()=>tp.waitForFunction(()=>/2\/2 em/.test(document.querySelector('#tl-host .tl-qmeta')?.textContent||''),null,{timeout:8000});
@@ -102,7 +108,13 @@ try{
  await sent();await tp.click('.tl-pick');await tp.waitForSelector('#tl-host .tl-ly-text');
  ok((await tp.textContent('#tl-host .tl-res')).includes('AI chỉ gợi ý')&&(await tp.textContent('#tl-host .tl-res')).includes('Không tự nghĩ'),'màn chiếu: rút lí do của mỗi phía');await shot(tp,'moi-t-tranh');
  await next('cụm AI viết sai');ok(db.tl[code].pub.slide.dung===undefined,'trang phát cho học sinh không có đáp án bắt lỗi');
- await sp.click('.tl-loi-opt >> nth=1');await sp.click('.tl-send');await sp.waitForSelector('.tl-ok');await sp2.click('.tl-loi-opt >> nth=0');await sp2.click('.tl-send');await sp2.waitForSelector('.tl-ok');
+ await sp.click('.tl-loi-opt >> nth=1');await sp.click('.tl-send');await sp.waitForSelector('.tl-ok');
+ await sp2.click('.tl-loi-opt >> nth=0');
+ await tp.click('.tl-kq');await sp2.waitForSelector('.tl-kq-h',{timeout:8000});
+ ok(await sp2.locator('.tl-loi-opt >> nth=0 >> input').isChecked(),'thầy cô công bố kết quả (màn vẽ lại): lựa chọn chưa gửi vẫn giữ');
+ await tp.click('.tl-kq');await sp2.waitForFunction(()=>!document.querySelector('.tl-kq-h'),null,{timeout:8000});
+ ok(await sp2.locator('.tl-loi-opt >> nth=0 >> input').isChecked(),'thu lại kết quả: lựa chọn vẫn giữ');
+ await sp2.click('.tl-send');await sp2.waitForSelector('.tl-ok');
  await sent();ok(!(await tp.locator('#tl-host .tl-loi-cum.is-sai').count()),'chưa công bố thì chưa tô chỗ sai');
  await tp.click('.tl-kq');await sp.waitForSelector('.tl-kq-bar',{timeout:8000});ok(!(await sp.locator('.tl-kq-bar.is-dap').count())&&db.tl[code].pub.kq.lo===undefined,'công bố kết quả bắt lỗi trước khi công bố chỗ sai: chưa lộ đáp án');
  await tp.click('.tl-lo');await tp.waitForSelector('#tl-host .tl-loi-cum.is-sai');ok((await tp.textContent('#tl-host .tl-loi-dap')).includes('1/2 em bấm đúng'),'công bố chỗ sai: số em bấm đúng');
