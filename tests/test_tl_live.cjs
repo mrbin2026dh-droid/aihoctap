@@ -53,7 +53,7 @@ try{
  await tp.click('#tab-tools-tl');await tp.waitForSelector('#tl-sets .tl-empty');ok(await tp.isHidden('#tools-p-quiz')&&(await tp.textContent('#tl-title')).includes('Thảo luận'),'bấm thẻ Thảo luận: chưa có bộ thảo luận');
  await tp.focus('#tab-tools-tl');await tp.keyboard.press('ArrowLeft');ok((await tp.getAttribute('#tab-tools-quiz','aria-selected'))==='true','phím mũi tên chuyển thẻ');await tp.click('#tab-tools-tl');
  await tp.click('#tl-new');await tp.waitForSelector('#tl-lops .qz-lop-pick');
- ok(JSON.stringify(await tp.$$eval('#tl-lops .qz-lop-pick input',a=>a.map(x=>x.value)))==='["9A","9B","9C"]','danh sách lớp lấy từ chỉ mục thi_lop (đủ mọi lớp, không tải cả danh sách học sinh)');
+ ok(JSON.stringify(await tp.locator('#tl-lops .qz-lop-pick input').evaluateAll(a=>a.map(x=>x.value)))==='["9A","9B","9C"]','danh sách lớp lấy từ chỉ mục thi_lop (đủ mọi lớp, không tải cả danh sách học sinh)');
  await tp.click('#tl-save');ok((await tp.getAttribute('#tl-name','aria-invalid'))==='true','thiếu tên → báo dưới trường');
  await tp.fill('#tl-name','Khởi động: Internet');await tp.click('#tl-save');ok((await tp.textContent('#tl-lops-err')).includes('Chọn ít nhất một lớp'),'chưa chọn lớp → báo');
  await tp.click('#tl-lops-all');
@@ -107,7 +107,7 @@ try{
  await sp2.fill('.tl-input >> nth=0','internet');await sp2.press('.tl-input >> nth=0','Enter');await sp2.waitForFunction(()=>document.querySelector('.tl-mine')?.textContent.includes('internet'),null,{timeout:8000});
  ok(true,'gõ xong bấm Enter (con trỏ vẫn ở ô nhập) → màn báo "Em đã gửi" ngay, không cần F5');
  await tp.waitForFunction(()=>document.querySelectorAll('#tl-host .tl-word').length===2&&/2\/2 em/.test(document.querySelector('#tl-host .tl-qmeta')?.textContent||''),null,{timeout:8000});await tp.waitForTimeout(400);
- const sizes=await tp.$$eval('#tl-host .tl-word',a=>Object.fromEntries(a.map(x=>[x.textContent,parseFloat(getComputedStyle(x).fontSize)])));
+ const sizes=await tp.locator('#tl-host .tl-word').evaluateAll(a=>Object.fromEntries(a.map(x=>[x.textContent,parseFloat(getComputedStyle(x).fontSize)])));
  ok(sizes['internet']>sizes['học tập']&&(await tp.textContent('#tl-host .tl-qmeta')).includes('2/2 em đã gửi'),'máy chiếu: đám mây gộp "Internet/internet", từ gửi nhiều to hơn; 2/2 em đã gửi');
  await shot(tp,'t3-cloud');await shot(sp,'s1-cloud');
  await tp.click('#tl-host .tl-word-btn >> text=học tập');await ack();await tp.waitForFunction(()=>document.querySelectorAll('#tl-host .tl-word').length===1);ok(true,'giáo viên bấm một từ → xác nhận → ẩn khỏi màn chiếu');
@@ -115,7 +115,7 @@ try{
  await tp.click('.tl-next');await sp.waitForFunction(()=>document.querySelector('.tl-q')?.textContent.includes('việc học'),null,{timeout:8000});
  ok((await sp.getAttribute('.tl-input','maxlength'))==='200','câu trả lời mở: tối đa 200 ký tự');
  await sp.fill('.tl-input','Tìm tài liệu nhanh');await sp.click('.tl-send');await sp.waitForFunction(()=>document.querySelector('.tl-slide')?.textContent.includes('duyệt'));
- await sp2.fill('.tl-input','Hỏi bài bạn bè');await sp2.evaluate(()=>document.querySelector('.tl-form').requestSubmit());await sp2.waitForFunction(()=>document.querySelector('.tl-slide')?.textContent.includes('duyệt'),null,{timeout:8000});
+ await sp2.waitForFunction(()=>document.querySelector('.tl-q')?.textContent.includes('việc học'),null,{timeout:8000});await sp2.fill('.tl-input','Hỏi bài bạn bè');await sp2.evaluate(()=>document.querySelector('.tl-form').requestSubmit());await sp2.waitForFunction(()=>document.querySelector('.tl-slide')?.textContent.includes('duyệt'),null,{timeout:8000});
  ok(true,'bấm Gửi mà nút không nhận con trỏ (iPhone/iPad, Safari) → màn vẫn báo đã gửi ngay');
  await tp.waitForFunction(()=>/Chờ duyệt \(2\)/.test(document.querySelector('#tl-host .tl-queue h3')?.textContent||''),null,{timeout:8000});
  ok(!(await tp.locator('#tl-host .tl-wall').count())&&!(await tp.textContent('#tl-host .tl-queue')).includes('Nguyễn Văn An'),'ý mới vào hàng chờ duyệt, chưa lên màn chiếu, không hiện tên');

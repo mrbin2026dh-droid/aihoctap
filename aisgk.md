@@ -4708,3 +4708,7 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - test_tl_core 40, test_tl_dang_moi 25 (DOM, đủ 6 dạng) đều PASS.
   - Các test sau đều PASS: tl_ai, teacher_mobile_nav, thi_ui, role_isolation, fonts, phieu_teacher_ui, phieu_soan_ui, student/teacher_ui_standard.
   - test_tl_live FAIL ở bước câu trả lời mở (giả lập requestSubmit). Bản mã trước thay đổi cũng FAIL giống hệt và đôi lúc PASS, nên đây là lỗi có từ trước, cần xử lí riêng.
+- 22/11/2026 Claude: sửa test_tl_live (lỗi chập chờn có từ trước).
+  - Nguyên nhân: sau khi giáo viên chuyển sang câu 2, test chỉ chờ học sinh 1 sang câu mới. Học sinh 2 còn ở câu 1 (đám mây còn ô thứ hai) nên test gõ nhầm vào ô của câu 1. Ứng dụng không có lỗi.
+  - Sửa: chờ học sinh 2 sang câu 2 rồi mới gõ.
+  - Kiểm thực tế: chạy 4 lần liên tiếp, cả 4 lần TL LIVE OK 61.
