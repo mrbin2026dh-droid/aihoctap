@@ -4643,3 +4643,9 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - Test Học AI: core 70, worker 120, b2 137, ui 76, b2_ui 42, teacher_ui 59 đều PASS.
   - Các test sau đều PASS: teacher_mobile_nav, teacher_thi_ui, role_isolation, fonts, worker_gate, tutor_all_lessons, gate_g1_g6, ai_usage_limits; `package_student_pwa.py --check` PASS.
 
+- 22/11/2026 Claude: deploy Worker `2bc431aa-be27-4ea8-9ac5-c4cdfb85cea9` (quay lui về `58e1d465-fcbd-41e6-90c0-d13ddbaae814`).
+  - Kiểm thật: health 200, catalog 200, phieu 401, goi_an 401 khi chưa đăng nhập.
+  - Pages lần đầu lỗi phía GitHub ("No artifacts named github-pages"); chạy lại thì success. Bản thật có teacher.js?v=20261122d và phieu.js mới.
+  - Còn lại:
+    - Thầy đăng nhập trang giáo viên, nhập `ai9_b2.json` và `ai9_b2.dapan.json`.
+    - Ẩn bài cũ `ai9_bai2` nếu đã nhập trước đây.
