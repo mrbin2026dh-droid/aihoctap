@@ -60,6 +60,21 @@ function renderHome() {
   const tools = el('div', '', 'phieu-gv-tools');
   tools.append(button(st.admin ? 'Sửa nội dung bài' : 'Xem nội dung bài', () => openEditor(st.goi), 't-button'));
   if (st.admin) tools.append(button('Nhập bài mới từ tệp', () => importPack(), 't-button'));
+  if (st.admin && st.packs.length) {
+    const cur = () => st.packs.find(x => x.id === st.goi);
+    const hide = button(cur()?.an ? 'Hiện bài với học sinh' : 'Ẩn bài với học sinh', async () => {
+      const p = cur(); if (!p) return;
+      const an = !p.an;
+      const ok = await confirmBox({ title: an ? 'Ẩn bài với học sinh?' : 'Hiện bài với học sinh?', body: `${p.title} (lớp ${p.grade}). ${an ? 'Học sinh sẽ không thấy bài này nữa. Bài các em đã làm vẫn được giữ.' : 'Học sinh khối ' + p.grade + ' sẽ thấy lại bài này.'}`, okText: an ? 'Ẩn bài' : 'Hiện bài', danger: an });
+      if (!ok) return;
+      await withBusy(hide, 'Đang lưu…', async () => {
+        try { await call({ op: 'goi_an', goi: p.id, an }); p.an = an; setStatus(an ? 'Đã ẩn bài với học sinh.' : 'Đã hiện bài với học sinh.'); }
+        catch (e) { await noticeBox({ title: 'Chưa lưu được', body: errText(e) }); }
+      });
+      renderHome();
+    }, 't-button');
+    tools.append(hide);
+  }
   const list = el('div', ''); list.id = 'hocai-class';
   box.replaceChildren(bar, tools, status, list);
   if (!st.packs.length) { list.append(el('p', st.admin ? 'Chưa có bài. Bấm "Nhập bài mới từ tệp" để đưa gói bài lên (ví dụ data/phieu/ai9_bai2.json).' : 'Chưa có bài Học AI.', 't-muted')); view.disabled = true; return; }
@@ -77,7 +92,7 @@ function renderHome() {
     } catch (e) { s2.replaceChildren(new Option('Chưa tải được lớp', '')); setStatus(errText(e)); }
     s2.disabled = false;
   };
-  s1.addEventListener('change', () => { st.goi = s1.value; void fillClasses(); });
+  s1.addEventListener('change', () => { st.goi = s1.value; renderHome(); });
   void fillClasses().then(() => { if (st.lop && s2.value === st.lop) void openClass(view); });
 }
 
@@ -139,22 +154,34 @@ function renderClass() {
     sec1.append(ul, el('p', '★ là 3 thẻ nhiều bài chọn nhất. Chưa nói đúng sai, cuối bài cả lớp xem lại.', 't-muted'));
     parts.push(sec1);
   }
-  // Hoạt động 2.1: lần đầu (trước khi xem giải thích) các máy chọn năng lực nào
-  const nl = pack.options?.nang_luc || [];
-  const ths = (pack.activities || []).flatMap((/** @type {any} */ a) => (a.buoc || []).flatMap((/** @type {any} */ b) => b.the || []));
-  if (ths.length && nl.length) {
+  // Các phần có nút Kiểm tra: lần đầu (trước khi xem giải thích) lớp làm đúng bao nhiêu, câu nào hay sai nhất
+  const ths = (pack.activities || []).filter((/** @type {any} */ a) => !a.an).flatMap((/** @type {any} */ a) => (a.buoc || []).flatMap((/** @type {any} */ b) => (b.the || []).filter((/** @type {any} */ t) => t.kiem && !t.chi_ghi).map((/** @type {any} */ t) => ({ ...t, hd: a.title }))));
+  if (ths.length) {
     const sec2 = el('section', '', 'phieu-gv-sec');
-    sec2.append(el('h3', 'Hoạt động 2.1: lần đầu các máy chọn năng lực nào'));
+    sec2.append(el('h3', 'Kết quả Kiểm tra lần đầu (trước khi học sinh xem giải thích)'));
+    if (!d.dapan?.kiem) sec2.append(el('p', 'Chưa nạp tệp đáp án nên chưa tính được đúng sai.', 't-muted'));
     const wrap = el('div', '', 't-table-wrap'); const tb = el('table', '', 't-table');
-    tb.append(el('caption', 'Lấy câu trả lời trước khi học sinh xem giải thích. Dùng để chọn tình huống cần giảng thêm.'));
-    const tr = el('tr'); for (const h of ['Tình huống', ...nl, 'Năng lực chính']) { const th = el('th', h); th.setAttribute('scope', 'col'); tr.append(th); }
+    tb.append(el('caption', 'Dùng để chọn chỗ cần giảng thêm. Không dùng để cho điểm.'));
+    const tr = el('tr'); for (const h of ['Phần', 'Đã kiểm tra', 'Đúng hết ngay lần đầu', 'Câu nhiều bài sai nhất']) { const th = el('th', h); th.setAttribute('scope', 'col'); tr.append(th); }
     const thead = el('thead'); thead.append(tr); tb.append(thead);
     const body = el('tbody');
+    const fmap = fieldMap(pack);
     for (const t of ths) {
-      const nlId = (t.fields || []).find((/** @type {string} */ x) => x.endsWith('_nl')); if (!nlId) continue;
-      const row = el('tr'); const th = el('th', t.ten); th.setAttribute('scope', 'row'); row.append(th);
-      for (const n of nl) row.append(el('td', String(hs.filter(s => (s.kiem?.[t.kiem]?.[nlId] ?? s.answers?.[nlId]) === n).length)));
-      row.append(el('td', String(d.dapan?.kiem?.[t.kiem]?.nl || '')));
+      const da = d.dapan?.kiem?.[t.kiem]?.dap_an || {};
+      const lam = hs.filter(s => s.kiem?.[t.kiem]);
+      /** @type {Record<string, number>} */ const sai = {};
+      let dungHet = 0;
+      for (const s of lam) {
+        const first = s.kiem[t.kiem];
+        const ids = Object.keys(da).filter(id => first[id] !== undefined);
+        const bad = ids.filter(id => JSON.stringify(first[id]) !== JSON.stringify(da[id]));
+        if (ids.length && !bad.length) dungHet++;
+        for (const id of bad) sai[id] = (sai[id] || 0) + 1;
+      }
+      const worst = Object.entries(sai).sort((x, y) => y[1] - x[1])[0];
+      const row = el('tr'); const th = el('th', `${t.hd} – ${t.ten}`); th.setAttribute('scope', 'row'); row.append(th);
+      row.append(el('td', String(lam.length)), el('td', Object.keys(da).length ? `${dungHet}/${lam.length}` : '—'),
+        el('td', worst ? `${String(fmap.get(worst[0])?.label || worst[0]).slice(0, 70)} (${worst[1]} bài)` : '—'));
       body.append(row);
     }
     tb.append(body); wrap.append(tb); sec2.append(wrap); parts.push(sec2);

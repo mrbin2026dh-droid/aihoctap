@@ -32,3 +32,17 @@ Mục đích: tạo mốc "lúc đầu em chọn…" để cuối bài (HĐ 4) t
 - Giáo viên phải **nhập lại** `ai9_bai2.json` và `ai9_bai2.dapan.json` (gói đáp án nay có phần `kiem`).
 
 ## Hoạt động 2.2 — chưa phân tích
+
+## 22/11/2026: VIẾT LẠI TOÀN BỘ BÀI THEO YCCĐ (giáo viên duyệt)
+- Giáo viên nhận xét các tình huống trong giáo án gốc khó hiểu với học sinh lớp 9 và với cả giáo viên. Giáo viên yêu cầu viết lại, chỉ cần đúng 4 yêu cầu cần đạt.
+- Gói mới: `data/phieu/ai9_b2.json`, mã bài `ai9_b2`. Gói cũ chuyển thành dữ liệu test `tests/fixtures/phieu_ai9_bai2_cu.json`.
+- Năm phần và phần cuối:
+  - Phần 1 (khởi động): xếp 8 việc vào "Máy, AI làm tốt" hay "Người vẫn phải làm".
+  - Phần 2 (9.A3.1): 6 tình huống, chọn A/B/C "em nên làm gì", rồi máy gọi tên năng lực.
+  - Phần 3 (9.A3.2): phân biệt mục tiêu rõ ràng hay chưa rõ, viết mục tiêu 4 phần, lưu bản đầu, tự kiểm tra rồi sửa.
+  - Phần 4 (9.A3.4): chọn một trong 6 nghề, xếp 4 việc máy/người, viết thay đổi và kĩ năng.
+  - Phần 5 (9.A3.3): bấm câu AI gợi ý sai (luộc bánh 30 phút), viết sở thích.
+  - Cuối bài: tự đánh giá rồi nộp.
+- Nguyên tắc: học sinh làm trước, bấm Kiểm tra mới thấy đúng hay sai và giải thích dưới từng câu. Đáp án chỉ nằm trong `ai9_b2.dapan.json`; tệp này bị .gitignore chặn và giáo viên tự nhập qua trang giáo viên. Mức Đạt/Khá/Tốt do giáo viên chọn theo các câu tự viết.
+- Nội dung đã duyệt (có đáp án, không lên Git): `data/phieu/ai9_bai2.duyet.md`.
+

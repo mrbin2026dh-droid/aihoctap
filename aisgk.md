@@ -54,7 +54,7 @@ Mọi AI (Antigravity, Codex và agent khác) bắt buộc đọc tệp này cù
 
 
 
-- Yêu cầu mới nhất: Claude làm lại HĐ 1 và HĐ 2.1 Học AI theo thực tế 2–3 em/máy (bước, thẻ tình huống có Kiểm tra, bỏ câu hỏi GV khỏi màn HS, biểu đồ/thống kê cho GV); thầy cần nhập lại gói + đáp án; HĐ 2.2 trở đi chưa làm (xem docs/integration-ai-grade9-lesson2/09_THIET_KE_TUONG_TAC.md).
+- Yêu cầu mới nhất: Claude viết lại toàn bộ Bài 2 Học AI theo YCCĐ (gói mới ai9_b2, giáo viên duyệt), có Kiểm tra từng phần, nút ẩn bài; thầy cần nhập ai9_b2.json + ai9_b2.dapan.json và ẩn bài cũ ai9_bai2.
 
 - Mốc Git quan sát trong phiên: nhánh `main`, HEAD đã đồng bộ với `origin/main` trên `https://github.com/mrbin2026dh-droid/aihoctap.git`.
 
@@ -4629,3 +4629,17 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - `wrangler deploy` → Worker `58e1d465-fcbd-41e6-90c0-d13ddbaae814` (quay lui về `96397ac9-92e3-4dac-a5dd-0e67672295ec`).
   - Kiểm thật: health 200, catalog 200, `/api/pwa/phieu` 401, `/kiem` 401 khi chưa đăng nhập (route đã có).
   - Còn lại: thầy đăng nhập trang giáo viên và nhập lại `ai9_bai2.json` và `ai9_bai2.dapan.json`.
+
+### 22/11/2026 — Claude: viết lại Bài 2 Học AI theo YCCĐ (gói ai9_b2)
+- Giáo viên duyệt nội dung mới (`data/phieu/ai9_bai2.duyet.md`, không lên Git). Giáo viên yêu cầu Claude làm hết và đã cho phép deploy.
+- Đã làm:
+  - Gói `ai9_b2` (64 ô, 5 phần và tự đánh giá) và gói đáp án `ai9_b2.dapan.json` (bị chặn khỏi Git).
+  - Route `kiem` dùng chung: đúng/sai từng câu kèm giải thích; câu chốt chỉ hiện khi đúng hết; `chi_ghi` để lưu bản đầu; không bắt trả lời ô đang ẩn hoặc ô tự chọn.
+  - Op `goi_an` cho giáo viên quản trị ẩn hoặc hiện bài.
+  - Màn học sinh: nút chọn nhanh, ô ngày, dấu ✓, phản hồi dưới từng câu.
+  - Trang giáo viên: bảng "Kết quả Kiểm tra lần đầu" và nút Ẩn/Hiện bài có xác nhận.
+- Gói cũ chuyển thành `tests/fixtures/phieu_ai9_bai2_cu.json`. Đáp án cũ đổi sang định dạng `kiem` mới.
+- Kiểm thực tế:
+  - Test Học AI: core 70, worker 120, b2 137, ui 76, b2_ui 42, teacher_ui 59 đều PASS.
+  - Các test sau đều PASS: teacher_mobile_nav, teacher_thi_ui, role_isolation, fonts, worker_gate, tutor_all_lessons, gate_g1_g6, ai_usage_limits; `package_student_pwa.py --check` PASS.
+

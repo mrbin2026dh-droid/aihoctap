@@ -80,6 +80,7 @@ class PackView {
     /** @type {Record<string, number>|undefined} */ this.stepOf = undefined;
     /** @type {Record<string, number>|undefined} */ this.cardPos = undefined;
     /** @type {Record<string, any>|undefined} */ this.fb = undefined;
+    this.markFilled = false;
   }
   editable() { return ['draft', 'returned'].includes(this.st.bai.status); }
   locked(/** @type {string} */ id) { return !!this.st.bai.locked?.[id]; }
@@ -163,6 +164,7 @@ class PackView {
       sec.append(nav);
     }
     const b = list[i];
+    this.markFilled = !!b.danh_dau;
     if (b.mo_dau) sec.append(el('p', b.mo_dau, 'phieu-mo-dau'));
     if (b.huong_dan?.length) {
       const box = el('div', '', 'phieu-hd'); box.append(el('p', 'Em làm:', 'phieu-hd-title'));
@@ -190,17 +192,24 @@ class PackView {
     card.append(el('p', `${t.ten} · ${i + 1}/${the.length}`, 'phieu-the-so'));
     if (t.noi_dung) card.append(el('p', t.noi_dung, 'phieu-the-nd'));
     const done = !!this.st.bai.kiem?.[t.kiem] || !!this.fb?.[t.kiem];
+    const fb = this.fb?.[t.kiem];
     const form = el('div', '', 'phieu-form');
+    let shown = 0;
     for (const id of t.fields || []) {
       const f = this.fm.get(id); if (!f) continue;
       if ((t.sau_kiem || []).includes(id) && !done) continue;
-      form.append(this.field({ ...f, label: String(f.label).replace(/^Tình huống \d+: /, '') }, this.answers, false));
+      const node = this.field({ ...f, label: String(f.label).replace(/^Tình huống \d+: /, '') }, this.answers, false);
+      const kq = fb?.ket_qua?.find((/** @type {any} */ x) => x.field === id);
+      if (kq) node.append(el('p', (kq.dung ? 'Đúng. ' : 'Chưa đúng. ') + kq.giai_thich, kq.dung ? 'phieu-ok' : 'phieu-chua'));
+      if (!node.hidden) shown++;
+      form.append(node);
     }
+    if (!shown) form.append(el('p', 'Em làm bước trước rồi quay lại đây.', 'inline-note'));
     card.append(form);
     const out = el('div', '', 'phieu-fb'); out.setAttribute('role', 'status');
     if (this.fb?.[t.kiem]) this.showFeedback(out, this.fb[t.kiem]);
     if (t.kiem && this.editable()) {
-      const kt = button(done ? 'Kiểm tra lại' : 'Kiểm tra', () => this.check(a, t, kt), 'primary phieu-kiem');
+      const kt = button(t.nut ? (done ? `${t.nut} lại` : t.nut) : (done ? 'Kiểm tra lại' : 'Kiểm tra'), () => this.check(a, t, kt), 'primary phieu-kiem');
       card.append(kt);
     }
     card.append(out);
@@ -213,8 +222,8 @@ class PackView {
   }
   /** Gửi kiểm tra một thẻ. @param {any} a @param {any} t @param {HTMLButtonElement} btn */
   async check(a, t, btn) {
-    const need = (t.fields || []).filter((/** @type {string} */ id) => this.fm.has(id) && !(t.sau_kiem || []).includes(id) && !id.endsWith('_loi'));
-    const miss = need.filter((/** @type {string} */ id) => !String(this.answers[id] ?? '').trim());
+    const need = (t.fields || []).filter((/** @type {string} */ id) => this.fm.has(id) && isShown(this.fm.get(id), this.answers) && !(t.sau_kiem || []).includes(id) && !(t.tu_chon || []).includes(id) && !id.endsWith('_loi'));
+    const miss = need.filter((/** @type {string} */ id) => { const v = this.answers[id]; return Array.isArray(v) ? !v.length : !String(v ?? '').trim(); });
     if (miss.length) { for (const id of miss) this.showErr([id], 'Em hãy trả lời ô này trước.'); /** @type {HTMLElement|null} */ (this.box.querySelector('[aria-invalid="true"]'))?.focus(); return; }
     let got = null;
     await withBusy(btn, 'Đang kiểm tra…', async () => {
@@ -231,15 +240,20 @@ class PackView {
     (this.fb ||= {})[t.kiem] = r;
     this.render(a.id);
     /** @type {HTMLElement|null} */ (this.box.querySelector('.phieu-fb'))?.focus();
+    if (r.chi_ghi) this.setStatus('Đã lưu bản đầu. Sang bước tiếp theo để tự kiểm tra và sửa.');
   }
   /** @param {HTMLElement} out @param {any} r */
   showFeedback(out, r) {
     out.tabIndex = -1;
-    if (r.loi) out.append(el('p', (r.loi.dung ? 'Đúng chỗ sai. ' : 'Chưa đúng chỗ sai. ') + r.loi.giai_thich, r.loi.dung ? 'phieu-ok' : 'phieu-chua'));
-    if (r.dung === true) out.append(el('p', `Đúng: ${r.nl_chinh}. ${r.giai_thich}`, 'phieu-ok'));
-    else if (r.dung === false) out.append(el('p', `Năng lực chính ở đây là ${r.nl_chinh}. ${r.giai_thich}`, 'phieu-chua'));
-    out.append(el('p', 'Em có thể sửa câu trả lời, rồi tự chấm ở ô bên trên.', 'meta'));
+    if (r.chi_ghi) { out.append(el('p', 'Đã lưu bản đầu. Thầy cô sẽ xem cả bản đầu và bản em sửa.', 'phieu-ok')); return; }
+    const kq = r.ket_qua || [];
+    const dung = kq.filter((/** @type {any} */ x) => x.dung).length;
+    if (kq.length > 1) out.append(el('p', `Em đúng ${dung}/${kq.length}. Xem giải thích dưới từng câu.`, dung === kq.length ? 'phieu-ok' : 'phieu-chua'));
+    if (r.ten) out.append(el('p', `Kiến thức: ${r.ten}.`, 'phieu-ten'));
+    if (r.chot) out.append(el('p', r.chot, 'phieu-chot'));
+    if (dung < kq.length) out.append(el('p', 'Em sửa lại rồi bấm Kiểm tra lại.', 'meta'));
   }
+
 
   /**
    * Một trường. @param {any} f @param {Record<string, any>} ans @param {boolean} isGroup
@@ -256,10 +270,13 @@ class PackView {
     const note = [];
     if (!isGroup && this.locked(f.id)) note.push('đã chốt');
     if (f.type === 'multi' && f.exact) note.push(`chọn đúng ${f.exact}`);
-    const onChange = (/** @type {any} */ v) => { if (isGroup) this.setGroup(f.id, v); else this.set(f.id, v); err.hidden = true; err.textContent = ''; wrap.querySelectorAll('[aria-invalid]').forEach(x => x.setAttribute('aria-invalid', 'false')); };
+    const filled = (/** @type {any} */ v) => wrap.classList.toggle('is-filled', Array.isArray(v) ? v.length > 0 : String(v ?? '').trim() !== '');
+    if (this.markFilled) { wrap.classList.add('can-mark'); filled(ans[f.id]); }
+    const onChange = (/** @type {any} */ v) => { if (this.markFilled) filled(v); if (isGroup) this.setGroup(f.id, v); else this.set(f.id, v); err.hidden = true; err.textContent = ''; wrap.querySelectorAll('[aria-invalid]').forEach(x => x.setAttribute('aria-invalid', 'false')); };
     if (f.type === 'text' || f.type === 'textarea') {
       const lab = el('label', f.label); lab.htmlFor = id;
       const inp = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (el(f.type === 'text' ? 'input' : 'textarea'));
+      if (f.kieu === 'ngay') /** @type {HTMLInputElement} */ (inp).type = 'date';
       inp.id = id; inp.name = f.id; inp.value = String(ans[f.id] ?? ''); inp.maxLength = f.max || 2000; inp.disabled = off;
       if (f.type === 'textarea') /** @type {HTMLTextAreaElement} */ (inp).rows = 3;
       if (f.required && !isGroup) inp.setAttribute('aria-required', 'true');
@@ -267,7 +284,7 @@ class PackView {
       inp.addEventListener('input', () => onChange(inp.value));
       wrap.append(lab, inp);
     } else {
-      const fs = el('fieldset', '', 'phieu-choice');
+      const fs = el('fieldset', '', f.kieu === 'nut' ? 'phieu-choice is-nut' : 'phieu-choice');
       const lg = el('legend', f.label); fs.append(lg);
       fs.setAttribute('aria-describedby', err.id);
       const multi = f.type === 'multi' || f.type === 'members';

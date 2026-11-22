@@ -7,7 +7,7 @@
 //   phieu_bai/{goi}/{lop}/{uid}   bài cá nhân        phieu_ls/{goi}/{uid}/{rev}   bản chụp khi nộp (không ghi đè)
 //   phieu_nhom/{goi}/{lop}/{nX}   phiếu nhóm         phieu_gopy/{goi}/{lop}/{uid nhận}/{uid góp}  góp ý của bạn
 //   phieu_gv/{goi}/{lop}/{uid}    đánh giá của GV
-import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, cardOf, validatePack, fieldMap, activeFieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
+import { checkDraft, checkGroup, checkEdit, missingForSubmit, studentView, cardOf, isShown, validatePack, fieldMap, activeFieldMap, lopKey, safeUid, nhomKey, MUC_GV } from './phieu-core.js';
 
 const GOI_RE = /^[a-z0-9_]{3,40}$/;
 
@@ -201,25 +201,34 @@ async function checkCard(db, J, pack, goi, me, bai, path, etag, body) {
   const card = cardOf(pack, key);
   if (!card) return J({ error: 'THE_SAI', detail: 'Không có phần kiểm tra này.' }, 404);
   const ans = bai.answers || {};
-  const need = (card.fields || []).filter(id => !(card.sau_kiem || []).includes(id) && !id.endsWith('_loi'));
-  const miss = need.filter(id => !String(ans[id] ?? '').trim());
+  const fm = fieldMap(pack);
+  // Ô cần trả lời trước khi kiểm tra: ô đang hiện của thẻ, trừ ô hiện sau kiểm tra và ô không bắt buộc kiểm tra
+  const shown = (card.fields || []).filter(id => fm.has(id) && isShown(fm.get(id), ans));
+  const need = shown.filter(id => !(card.sau_kiem || []).includes(id) && !(card.tu_chon || []).includes(id) && !id.endsWith('_loi'));
+  const miss = need.filter(id => { const v = ans[id]; return Array.isArray(v) ? !v.length : !String(v ?? '').trim(); });
   if (miss.length) return J({ error: 'MISSING', fields: miss, detail: 'Em hãy trả lời trước rồi mới kiểm tra.' }, 400);
-  const k = await db.get(`phieu_dapan/${goi}/kiem/${key}`);
-  if (!k || typeof k !== 'object') return J({ error: 'NO_KEY', detail: 'Thầy cô chưa nạp phần giải thích.' }, 404);
-  const nlId = (card.fields || []).find(id => id.endsWith('_nl'));
-  const loiId = (card.fields || []).find(id => id.endsWith('_loi'));
+  let k = null;
+  if (!card.chi_ghi) {
+    k = await db.get(`phieu_dapan/${goi}/kiem/${key}`);
+    if (!k || typeof k !== 'object' || !k.dap_an) return J({ error: 'NO_KEY', detail: 'Thầy cô chưa nạp phần giải thích.' }, 404);
+  }
   let rev = bai.rev;
   if (!bai.kiem?.[key] && ['draft', 'returned'].includes(bai.status)) {
     const first = { at: Date.now() };
     for (const id of card.fields || []) if (ans[id] !== undefined) first[id] = ans[id];
     if (await db.put(path, { ...bai, kiem: { ...(bai.kiem || {}), [key]: first }, rev: bai.rev + 1 }, etag || undefined)) rev = bai.rev + 1;
   }
-  const out = { the: key, rev, nl_chinh: String(k.nl || ''), dung: nlId ? ans[nlId] === k.nl : null, giai_thich: String(k.giai_thich || '') };
-  if (loiId && k.loi) {
-    const chon = ans[loiId];
-    out.loi = chon ? { dung: chon === k.loi, giai_thich: chon === k.loi ? String(k.loi_giai || '') : 'Cụm này khớp với sách. Em mở sách Lịch sử kiểm tra lại người chỉ huy trận Bạch Đằng năm 938.' } : null;
+  if (card.chi_ghi) return J({ the: key, rev, chi_ghi: true, ket_qua: [] });
+  const ket_qua = [];
+  for (const id of shown) {
+    if (!Object.hasOwn(k.dap_an, id) || ans[id] === undefined || ans[id] === '') continue;
+    const dung = JSON.stringify(ans[id]) === JSON.stringify(k.dap_an[id]);
+    const gt = k.giai_thich && Object.hasOwn(k.giai_thich, id) ? k.giai_thich[id] : '';
+    const sai = k.goi_y_sai && Object.hasOwn(k.goi_y_sai, id) ? k.goi_y_sai[id] : '';
+    ket_qua.push({ field: id, dung, giai_thich: String(dung || !sai ? gt : sai) });
   }
-  return J(out);
+  const tatCa = ket_qua.length > 0 && ket_qua.every(x => x.dung);
+  return J({ the: key, rev, ket_qua, ten: String(k.ten || ''), chot: tatCa || k.chot_luon ? String(k.chot || '') : '' });
 }
 
 /** Góp ý của bạn cùng nhóm cho mục tiêu (phần B). GET ?uid= xem mục tiêu của bạn; POST lưu góp ý. */
@@ -370,6 +379,15 @@ async function teacherRoute(request, env, keys, db, J, deps) {
     await db.put('phieu_bo/' + goi, saved);
     await db.put('phieu_ds/' + goi, { title: saved.title, grade: saved.grade, thu_tu: saved.thu_tu || 0, so_tiet: saved.so_tiet || 0, an: !!saved.an, rev: saved.rev });
     return J({ ok: true, rev: saved.rev });
+  }
+  if (op === 'goi_an') {
+    const e = adminOnly() || needGoi(); if (e) return e;
+    const { val: cur, etag } = await db.getE('phieu_bo/' + goi);
+    if (!cur) return J({ error: 'PACK_NOT_FOUND', detail: 'Không tìm thấy bài.' }, 404);
+    const an = body.an === true;
+    if (!(await db.put('phieu_bo/' + goi, { ...cur, an, rev: (cur.rev || 0) + 1 }, etag || undefined))) return J({ error: 'REV_CONFLICT', detail: 'Thử lại.' }, 409);
+    await db.put('phieu_ds/' + goi, { title: cur.title, grade: cur.grade, thu_tu: cur.thu_tu || 0, so_tiet: cur.so_tiet || 0, an, rev: (cur.rev || 0) + 1 });
+    return J({ ok: true, an });
   }
   if (op === 'dapan_luu') {
     const e = adminOnly() || needGoi(); if (e) return e;

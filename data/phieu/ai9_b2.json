@@ -1,0 +1,1309 @@
+{
+ "id": "ai9_b2",
+ "schema": 1,
+ "rev": 1,
+ "ban_goc": true,
+ "mon": "giao_duc_ai",
+ "grade": 9,
+ "thu_tu": 2,
+ "title": "Bài 2. Học tập, thể hiện bản thân và định hướng nghề nghiệp trong thế giới AI",
+ "so_tiet": 2,
+ "ai_tutor": false,
+ "nguon": [
+  "Viết lại theo YCCĐ 9.A3.1–9.A3.4, giáo viên duyệt 22/11/2026"
+ ],
+ "yccd": [
+  {
+   "code": "9.A3.1",
+   "text": "Trình bày được những năng lực con người cần rèn luyện trong thế giới có AI, như biết học cách học (rèn luyện khả năng tự học, học suốt đời), phát triển tư duy phản biện (biết phân tích, đánh giá thông tin do AI cung cấp), giữ vững tính sáng tạo và cảm xúc con người (làm những việc AI không thể làm); nâng cao kĩ năng hợp tác và giao tiếp (làm việc hiệu quả với con người và AI)"
+  },
+  {
+   "code": "9.A3.2",
+   "text": "Xác định được mục tiêu học tập cá nhân trong thế giới có AI (ví dụ: học cách sử dụng AI để tìm kiếm và tóm tắt thông tin; sử dụng AI để rèn luyện kĩ năng viết, đọc, vẽ, tư duy logic; luyện tập giao tiếp hoặc học ngôn ngữ mới với công cụ AI; tự đặt mục tiêu phát triển kĩ năng mềm mà AI không thay thế được)"
+  },
+  {
+   "code": "9.A3.3",
+   "text": "Nêu được ví dụ cách sử dụng AI như một công cụ giúp thể hiện bản thân và theo đuổi đam mê"
+  },
+  {
+   "code": "9.A3.4",
+   "text": "Trình bày được ví dụ một số thay đổi mà AI có thể mang lại cho các ngành nghề trong tương lai, từ đó nêu được một số kĩ năng gắn với các ngành nghề cụ thể cần trang bị để làm việc hiệu quả cùng AI"
+  }
+ ],
+ "thang_muc_gv": [
+  "Chưa thấy minh chứng",
+  "Đạt",
+  "Khá",
+  "Tốt"
+ ],
+ "options": {},
+ "blocks": {},
+ "reveal": [],
+ "activities": [
+  {
+   "id": "p1",
+   "title": "Máy giỏi việc gì, người giỏi việc gì?",
+   "tiet": 1,
+   "minutes": 5,
+   "buoc": [
+    {
+     "tieu_de": "Xếp 8 việc",
+     "huong_dan": [
+      "Đọc từng việc.",
+      "Chọn: máy, AI làm tốt hay người vẫn phải làm.",
+      "Bấm Kiểm tra để xem giải thích."
+     ],
+     "the": [
+      {
+       "ten": "Tám việc",
+       "fields": [
+        "p1_v1",
+        "p1_v2",
+        "p1_v3",
+        "p1_v4",
+        "p1_v5",
+        "p1_v6",
+        "p1_v7",
+        "p1_v8"
+       ],
+       "kiem": "p1"
+      }
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "id": "p1_v1",
+     "type": "choice",
+     "label": "Tính nhanh 4 567 × 8 912",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v2",
+     "type": "choice",
+     "label": "Nhớ 500 số điện thoại",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v3",
+     "type": "choice",
+     "label": "Dịch một câu tiếng Anh sang tiếng Việt",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v4",
+     "type": "choice",
+     "label": "Tìm lỗi chính tả trong bài văn",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v5",
+     "type": "choice",
+     "label": "Kiểm tra thông tin AI đưa ra có đúng không",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v6",
+     "type": "choice",
+     "label": "An ủi một bạn đang buồn",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v7",
+     "type": "choice",
+     "label": "Nghĩ ra ý tưởng riêng cho báo tường của lớp",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p1_v8",
+     "type": "choice",
+     "label": "Quyết định nộp bài nào và chịu trách nhiệm",
+     "options": [
+      "Máy, AI làm tốt",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    }
+   ],
+   "blocks": []
+  },
+  {
+   "id": "p2",
+   "title": "Sáu tình huống: Em nên làm gì?",
+   "tiet": 1,
+   "minutes": 15,
+   "buoc": [
+    {
+     "tieu_de": "Sáu tình huống",
+     "huong_dan": [
+      "Đọc tình huống.",
+      "Chọn cách em sẽ làm.",
+      "Bấm Kiểm tra để biết đó là năng lực gì."
+     ],
+     "the": [
+      {
+       "ten": "Tình huống 1",
+       "noi_dung": "Em nhờ AI tóm tắt bài Lịch sử. AI viết: “Năm 938, Lý Thường Kiệt chỉ huy quân ta thắng trận Bạch Đằng.”",
+       "fields": [
+        "p2_t1"
+       ],
+       "kiem": "p2_t1"
+      },
+      {
+       "ten": "Tình huống 2",
+       "noi_dung": "Trường cho dùng một ứng dụng AI vẽ sơ đồ. Cả lớp chưa ai biết dùng, cô dặn tuần sau nộp sơ đồ.",
+       "fields": [
+        "p2_t2"
+       ],
+       "kiem": "p2_t2"
+      },
+      {
+       "ten": "Tình huống 3",
+       "noi_dung": "Nhóm em làm thuyết trình. Một bạn nói: “Cứ để AI làm hết, mình chỉ việc đọc.”",
+       "fields": [
+        "p2_t3"
+       ],
+       "kiem": "p2_t3"
+      },
+      {
+       "ten": "Tình huống 4",
+       "noi_dung": "Em gõ cho AI: “viết giúp bài hay”. AI trả về một bài dài, sai đề.",
+       "fields": [
+        "p2_t4"
+       ],
+       "kiem": "p2_t4"
+      },
+      {
+       "ten": "Tình huống 5",
+       "noi_dung": "Em viết bài văn kể về ông. AI viết hộ một đoạn rất hay về “người ông hiền hậu”, nhưng không có chi tiết nào về ông của em.",
+       "fields": [
+        "p2_t5"
+       ],
+       "kiem": "p2_t5"
+      },
+      {
+       "ten": "Tình huống 6",
+       "noi_dung": "Lớp cần đặt tên đội bóng. AI đưa 10 cái tên, cái nào cũng giống tên các đội khác.",
+       "fields": [
+        "p2_t6"
+       ],
+       "kiem": "p2_t6"
+      }
+     ]
+    },
+    {
+     "tieu_de": "Em viết",
+     "huong_dan": [
+      "Chọn năng lực em thấy cần nhất.",
+      "Viết vì sao năng lực đó cần khi có AI.",
+      "Kể một việc em đã làm cho thấy em có năng lực đó."
+     ],
+     "fields": [
+      "p2_nl",
+      "p2_vi",
+      "p2_viec"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "id": "p2_t1",
+     "type": "choice",
+     "label": "Em nên làm gì?",
+     "options": [
+      "A. Chép ngay vào vở cho nhanh.",
+      "B. Mở sách giáo khoa kiểm tra lại.",
+      "C. Hỏi AI thêm một lần rồi chép."
+     ],
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p2_t2",
+     "type": "choice",
+     "label": "Em nên làm gì?",
+     "options": [
+      "A. Tự xem hướng dẫn, làm thử, hỏi bạn khi bí.",
+      "B. Chờ cô dạy rồi mới làm.",
+      "C. Bỏ qua, vẽ tay cho chắc."
+     ],
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p2_t3",
+     "type": "choice",
+     "label": "Em nên làm gì?",
+     "options": [
+      "A. Đồng ý cho nhanh.",
+      "B. Mỗi người tự làm riêng, không cần bàn.",
+      "C. Bàn với nhóm: AI gợi ý ý tưởng, mỗi bạn làm một phần, cả nhóm kiểm tra lại."
+     ],
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p2_t4",
+     "type": "choice",
+     "label": "Em nên làm gì?",
+     "options": [
+      "A. Nộp luôn vì bài dài.",
+      "B. Gõ lại rõ ràng: đề bài là gì, dài bao nhiêu, viết cho ai.",
+      "C. Cho rằng AI kém và thôi không dùng."
+     ],
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p2_t5",
+     "type": "choice",
+     "label": "Em nên làm gì?",
+     "options": [
+      "A. Dùng luôn vì văn hay.",
+      "B. Nhờ AI viết dài hơn.",
+      "C. Tự kể kỉ niệm thật của em với ông."
+     ],
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p2_t6",
+     "type": "choice",
+     "label": "Em nên làm gì?",
+     "options": [
+      "A. Dùng gợi ý làm điểm xuất phát, cả lớp nghĩ và sửa thành tên riêng.",
+      "B. Chọn bừa một tên AI đưa.",
+      "C. Hỏi AI thêm 10 tên nữa."
+     ],
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p2_nl",
+     "type": "choice",
+     "label": "Năng lực em thấy cần nhất khi có AI",
+     "options": [
+      "Học cách học",
+      "Tư duy phản biện",
+      "Sáng tạo",
+      "Cảm xúc con người",
+      "Hợp tác",
+      "Giao tiếp"
+     ],
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p2_vi",
+     "type": "textarea",
+     "label": "Vì sao năng lực này cần khi có AI?",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p2_viec",
+     "type": "textarea",
+     "label": "Một việc em đã làm cho thấy em có năng lực đó",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.1",
+      "kind": "bo_tro"
+     }
+    }
+   ],
+   "blocks": []
+  },
+  {
+   "id": "p3",
+   "title": "Đặt mục tiêu học tập rõ ràng",
+   "tiet": 1,
+   "minutes": 20,
+   "buoc": [
+    {
+     "tieu_de": "Câu nào rõ ràng?",
+     "mo_dau": "Một mục tiêu rõ ràng có 4 phần: Làm gì – Làm cách nào – Đến ngày nào – Làm sao biết đã đạt.",
+     "huong_dan": [
+      "Đọc từng câu.",
+      "Chọn: rõ ràng hay chưa rõ.",
+      "Bấm Kiểm tra để xem giải thích."
+     ],
+     "the": [
+      {
+       "ten": "Bốn câu mục tiêu",
+       "fields": [
+        "p3_c1",
+        "p3_c2",
+        "p3_c3",
+        "p3_c4"
+       ],
+       "kiem": "p3_c"
+      }
+     ]
+    },
+    {
+     "tieu_de": "Viết mục tiêu",
+     "huong_dan": [
+      "Viết mục tiêu của em vào 4 ô đầu. Ô nào đã viết sẽ có dấu ✓.",
+      "Hạn khoảng 8 tuần sau buổi học.",
+      "Bấm Lưu bản đầu."
+     ],
+     "danh_dau": true,
+     "the": [
+      {
+       "ten": "Mục tiêu của em",
+       "fields": [
+        "p3_lam",
+        "p3_cach",
+        "p3_ngay",
+        "p3_dat",
+        "p3_khong_ai"
+       ],
+       "kiem": "p3_ban_dau",
+       "chi_ghi": true,
+       "tu_chon": [
+        "p3_khong_ai"
+       ],
+       "nut": "Lưu bản đầu"
+      }
+     ]
+    },
+    {
+     "tieu_de": "Tự kiểm tra và sửa",
+     "huong_dan": [
+      "Tích các câu em đã làm được.",
+      "Câu nào chưa tích thì sửa mục tiêu ở bên dưới."
+     ],
+     "danh_dau": true,
+     "fields": [
+      "p3_tu_kiem",
+      "p3_lam",
+      "p3_cach",
+      "p3_ngay",
+      "p3_dat"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "id": "p3_c1",
+     "type": "choice",
+     "label": "“Em sẽ học giỏi hơn.”",
+     "options": [
+      "Rõ ràng",
+      "Chưa rõ"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p3_c2",
+     "type": "choice",
+     "label": "“Em sẽ giỏi tiếng Anh.”",
+     "options": [
+      "Rõ ràng",
+      "Chưa rõ"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p3_c3",
+     "type": "choice",
+     "label": "“Em sẽ nói tiếng Anh 1 phút về trường em mà không nhìn giấy; mỗi tuần 3 buổi, mỗi buổi 10 phút luyện nói với ứng dụng AI; trước ngày 15/1; biết đạt khi nói được trước nhóm.”",
+     "options": [
+      "Rõ ràng",
+      "Chưa rõ"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p3_c4",
+     "type": "choice",
+     "label": "“Em sẽ tự giải 6/8 bài toán có lời văn; tự giải trước, chỉ hỏi AI gợi ý bước tiếp khi bí quá 15 phút; trước ngày 20/1; biết đạt khi vở ghi đúng 6 bài.”",
+     "options": [
+      "Rõ ràng",
+      "Chưa rõ"
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p3_lam",
+     "type": "textarea",
+     "label": "Em sẽ (làm gì)",
+     "max": 300,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p3_cach",
+     "type": "textarea",
+     "label": "Bằng cách (có hoặc không dùng AI)",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p3_ngay",
+     "type": "text",
+     "label": "Trước ngày",
+     "kieu": "ngay",
+     "max": 20,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p3_dat",
+     "type": "textarea",
+     "label": "Em biết mình đạt khi (có con số hoặc sản phẩm)",
+     "max": 300,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p3_khong_ai",
+     "type": "textarea",
+     "label": "Nếu không dùng được AI, em làm bằng cách",
+     "max": 300,
+     "evidence": {
+      "code": "9.A3.2",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "p3_tu_kiem",
+     "type": "multi",
+     "label": "Em tự kiểm tra mục tiêu của mình",
+     "options": [
+      "Đến hạn, em biết chắc mình đạt hay chưa.",
+      "Có ngày cụ thể.",
+      "Đây là điều em thật sự muốn làm."
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    }
+   ],
+   "blocks": []
+  },
+  {
+   "id": "p4",
+   "title": "Một nghề thay đổi thế nào khi có AI?",
+   "tiet": 2,
+   "minutes": 15,
+   "buoc": [
+    {
+     "tieu_de": "Chọn nghề",
+     "huong_dan": [
+      "Chọn một nghề em biết hoặc người thân đang làm."
+     ],
+     "fields": [
+      "p4_nghe"
+     ]
+    },
+    {
+     "tieu_de": "Máy hay người?",
+     "huong_dan": [
+      "Đọc 4 việc của nghề em chọn.",
+      "Chọn: máy, AI làm được hay người vẫn phải làm.",
+      "Bấm Kiểm tra."
+     ],
+     "the": [
+      {
+       "ten": "Bốn việc của nghề",
+       "fields": [
+        "p4_ban_hang_1",
+        "p4_ban_hang_2",
+        "p4_ban_hang_3",
+        "p4_ban_hang_4",
+        "p4_trong_trot_1",
+        "p4_trong_trot_2",
+        "p4_trong_trot_3",
+        "p4_trong_trot_4",
+        "p4_tho_may_1",
+        "p4_tho_may_2",
+        "p4_tho_may_3",
+        "p4_tho_may_4",
+        "p4_giao_hang_1",
+        "p4_giao_hang_2",
+        "p4_giao_hang_3",
+        "p4_giao_hang_4",
+        "p4_giao_vien_1",
+        "p4_giao_vien_2",
+        "p4_giao_vien_3",
+        "p4_giao_vien_4",
+        "p4_y_ta_1",
+        "p4_y_ta_2",
+        "p4_y_ta_3",
+        "p4_y_ta_4"
+       ],
+       "kiem": "p4"
+      }
+     ]
+    },
+    {
+     "tieu_de": "Em viết",
+     "huong_dan": [
+      "Viết nghề này thay đổi thế nào khi có AI.",
+      "Viết một kĩ năng người làm nghề này cần học và vì sao."
+     ],
+     "fields": [
+      "p4_thay_doi",
+      "p4_ky_nang",
+      "p4_vi"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "id": "p4_nghe",
+     "type": "choice",
+     "label": "Nghề em chọn",
+     "options": [
+      "Bán hàng",
+      "Trồng trọt",
+      "Thợ may",
+      "Giao hàng",
+      "Giáo viên",
+      "Y tá"
+     ],
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "bo_tro"
+     }
+    },
+    {
+     "id": "p4_ban_hang_1",
+     "type": "choice",
+     "label": "Tính tiền, in hoá đơn",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Bán hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_ban_hang_2",
+     "type": "choice",
+     "label": "Gợi ý nên nhập thêm hàng gì theo số đã bán",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Bán hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_ban_hang_3",
+     "type": "choice",
+     "label": "Tư vấn khi khách còn phân vân",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Bán hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_ban_hang_4",
+     "type": "choice",
+     "label": "Quyết định nhập hàng và chịu lỗ lãi",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Bán hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_trong_trot_1",
+     "type": "choice",
+     "label": "Tưới nước theo giờ đã hẹn",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Trồng trọt"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_trong_trot_2",
+     "type": "choice",
+     "label": "Chụp ảnh lá để đoán bệnh cây",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Trồng trọt"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_trong_trot_3",
+     "type": "choice",
+     "label": "Ra vườn xem lại cây khi AI đoán bệnh",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Trồng trọt"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_trong_trot_4",
+     "type": "choice",
+     "label": "Quyết định phun thuốc gì, bao nhiêu",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Trồng trọt"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_tho_may_1",
+     "type": "choice",
+     "label": "Cắt vải theo mẫu có sẵn bằng máy cắt",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Thợ may"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_tho_may_2",
+     "type": "choice",
+     "label": "Gợi ý mẫu áo đang được ưa chuộng",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Thợ may"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_tho_may_3",
+     "type": "choice",
+     "label": "Hỏi khách thích kiểu gì, mặc vào dịp nào",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Thợ may"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_tho_may_4",
+     "type": "choice",
+     "label": "Chỉnh áo cho vừa dáng từng người",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Thợ may"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_hang_1",
+     "type": "choice",
+     "label": "Tìm đường đi ngắn nhất",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giao hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_hang_2",
+     "type": "choice",
+     "label": "Nhắn cho khách giờ hàng đến",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giao hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_hang_3",
+     "type": "choice",
+     "label": "Xử lí khi khách vắng nhà hoặc đổi địa chỉ",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giao hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_hang_4",
+     "type": "choice",
+     "label": "Giữ hàng cẩn thận, giao tận tay",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giao hàng"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_vien_1",
+     "type": "choice",
+     "label": "Chấm nhanh bài trắc nghiệm",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giáo viên"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_vien_2",
+     "type": "choice",
+     "label": "Gợi ý thêm câu hỏi luyện tập",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giáo viên"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_vien_3",
+     "type": "choice",
+     "label": "Động viên học sinh đang buồn, nản",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giáo viên"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_giao_vien_4",
+     "type": "choice",
+     "label": "Quyết định cách dạy hợp với lớp mình",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Giáo viên"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_y_ta_1",
+     "type": "choice",
+     "label": "Đo nhịp tim, huyết áp tự động",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Y tá"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_y_ta_2",
+     "type": "choice",
+     "label": "Nhắc lịch uống thuốc",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Y tá"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_y_ta_3",
+     "type": "choice",
+     "label": "Hỏi han, theo dõi khi bệnh nhân mệt",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Y tá"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_y_ta_4",
+     "type": "choice",
+     "label": "Kiểm tra đúng thuốc, đúng người trước khi tiêm",
+     "options": [
+      "Máy, AI làm được",
+      "Người vẫn phải làm"
+     ],
+     "kieu": "nut",
+     "show_if": {
+      "p4_nghe": [
+       "Y tá"
+      ]
+     },
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p4_thay_doi",
+     "type": "textarea",
+     "label": "Trước đây người làm nghề này…; nay có AI thì…",
+     "max": 500,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p4_ky_nang",
+     "type": "text",
+     "label": "Kĩ năng người làm nghề này cần học (nên là kĩ năng làm việc cùng AI)",
+     "max": 200,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p4_vi",
+     "type": "textarea",
+     "label": "Vì sao cần kĩ năng đó?",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.4",
+      "kind": "toi_thieu"
+     }
+    }
+   ],
+   "blocks": []
+  },
+  {
+   "id": "p5",
+   "title": "AI giúp em làm điều em thích",
+   "tiet": 2,
+   "minutes": 15,
+   "buoc": [
+    {
+     "tieu_de": "Đọc ví dụ",
+     "mo_dau": "Tuấn thích nấu ăn, muốn làm video món bánh chưng của bà. Tuấn hỏi AI cách làm, AI gợi ý ba câu dưới đây.",
+     "huong_dan": [
+      "Đọc ba câu AI gợi ý.",
+      "Bấm vào câu em thấy cần kiểm tra lại.",
+      "Bấm Kiểm tra."
+     ],
+     "the": [
+      {
+       "ten": "AI gợi ý",
+       "fields": [
+        "p5_cau"
+       ],
+       "kiem": "p5"
+      }
+     ]
+    },
+    {
+     "tieu_de": "Em viết",
+     "huong_dan": [
+      "Viết một sở thích của em.",
+      "AI có thể giúp em ở khâu nào?",
+      "Phần nào em tự làm, vì đó là của riêng em?"
+     ],
+     "fields": [
+      "p5_thich",
+      "p5_ai_giup",
+      "p5_tu_lam",
+      "p5_kiem_lai"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "id": "p5_cau",
+     "type": "choice",
+     "label": "Bấm vào câu cần kiểm tra lại",
+     "options": [
+      "(1) Ngâm gạo nếp qua đêm.",
+      "(2) Gói bánh bằng lá dong.",
+      "(3) Luộc bánh khoảng 30 phút là chín."
+     ],
+     "kieu": "nut",
+     "evidence": {
+      "kind": "khong_cham"
+     }
+    },
+    {
+     "id": "p5_thich",
+     "type": "textarea",
+     "label": "Em thích",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p5_ai_giup",
+     "type": "textarea",
+     "label": "AI có thể giúp em ở khâu",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p5_tu_lam",
+     "type": "textarea",
+     "label": "Phần em tự làm, vì đó là của riêng em",
+     "max": 400,
+     "required": true,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "toi_thieu"
+     }
+    },
+    {
+     "id": "p5_kiem_lai",
+     "type": "textarea",
+     "label": "Khi AI giúp, em cần kiểm tra lại",
+     "max": 400,
+     "required": false,
+     "evidence": {
+      "code": "9.A3.3",
+      "kind": "bo_tro"
+     }
+    }
+   ],
+   "blocks": []
+  },
+  {
+   "id": "p6",
+   "title": "Tự đánh giá và nộp bài",
+   "tiet": 2,
+   "minutes": 2,
+   "buoc": [
+    {
+     "tieu_de": "Tự đánh giá",
+     "huong_dan": [
+      "Chọn một mức cho mỗi câu.",
+      "Bấm Nộp bài ở cuối trang."
+     ],
+     "fields": [
+      "td_1",
+      "td_2",
+      "td_3",
+      "td_4"
+     ]
+    }
+   ],
+   "fields": [
+    {
+     "id": "td_1",
+     "type": "scale",
+     "label": "Em kể được các năng lực cần khi có AI.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "td_2",
+     "type": "scale",
+     "label": "Em đặt được một mục tiêu rõ ràng.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "td_3",
+     "type": "scale",
+     "label": "Em nêu được một nghề thay đổi và kĩ năng cần học.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    },
+    {
+     "id": "td_4",
+     "type": "scale",
+     "label": "Em tách được phần AI giúp và phần của riêng em.",
+     "options": [
+      "Chưa chắc",
+      "Làm được",
+      "Làm tốt"
+     ],
+     "evidence": {
+      "kind": "tu_danh_gia"
+     }
+    }
+   ],
+   "blocks": []
+  }
+ ]
+}

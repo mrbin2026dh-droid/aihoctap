@@ -1981,3 +1981,7 @@ button[aria-busy=true]:not(.icon-btn):not(.t-icon-btn):not(.sync-btn)::before{co
 .phieu-the{border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0;background:var(--surface)}.phieu-the-so{font-size:13px;color:var(--muted);margin:0}.phieu-the-nd{font-size:17px;font-weight:600;margin:8px 0 12px}
 .phieu-fb:focus{outline:none}.phieu-ok{background:#e4efdf;color:#24472d;padding:10px 12px;border-radius:8px}.phieu-chua{background:#faf0da;color:#66450f;padding:10px 12px;border-radius:8px}
 .phieu-the-nav{display:flex;justify-content:space-between;gap:8px;margin-top:12px}.phieu-the-tiep{margin-left:auto}.phieu-next{margin-top:16px}.phieu-kiem{margin-top:8px}
+.phieu-choice.is-nut{display:flex;flex-wrap:wrap;gap:8px}.phieu-choice.is-nut legend{flex-basis:100%}.phieu-choice.is-nut .option{flex:1 1 180px;margin:0}
+.phieu-field.can-mark.is-filled>label::after,.phieu-field.can-mark.is-filled legend::after{content:" ✓";color:#24472d;font-weight:700}
+.phieu-ten{font-weight:700;margin:8px 0 0}.phieu-chot{background:var(--paper);border-left:3px solid var(--blue);padding:8px 12px;margin:8px 0}
+.phieu-field .phieu-ok,.phieu-field .phieu-chua{margin-top:6px;font-size:14px}

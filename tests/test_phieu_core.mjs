@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as C from '../worker/phieu-core.js';
 
-const pack = JSON.parse(readFileSync(new URL('../data/phieu/ai9_bai2.json', import.meta.url), 'utf8'));
+const pack = JSON.parse(readFileSync(new URL('./fixtures/phieu_ai9_bai2_cu.json', import.meta.url), 'utf8'));
 const clone = x => JSON.parse(JSON.stringify(x));
 let n = 0; const ok = (cond, msg) => { assert.ok(cond, msg); n++; };
 const eq = (a, b, msg) => { assert.deepEqual(a, b, msg); n++; };

@@ -50,3 +50,4 @@ docs/design/poster-10-khoi/.verify/
 
 # Đáp án GV Giáo dục AI (PL9.x.9): không đưa lên repo công khai
 data/phieu/*.dapan.json
+data/phieu/*.duyet.md

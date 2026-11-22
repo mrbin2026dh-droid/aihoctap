@@ -2,7 +2,7 @@
 // Chạy: NODE_PATH=$(npm root -g) node tests/test_phieu_teacher_ui.cjs
 const { chromium } = require('playwright'); const http = require('http'), fs = require('fs'), path = require('path'); const assert = require('assert');
 const root = path.resolve(__dirname, '../frontend/hoc');
-const pack = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/phieu/ai9_bai2.json'), 'utf8'));
+const pack = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'fixtures/phieu_ai9_bai2_cu.json'), 'utf8'));
 const srv = http.createServer((q, r) => { let p = q.url.split('?')[0]; if (p === '/') p = '/index.html'; const f = path.join(root, p); if (!fs.existsSync(f)) { r.statusCode = 404; return r.end(); }
   r.setHeader('content-type', { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2' }[path.extname(f)] || 'x'); r.end(fs.readFileSync(f)); }).listen(8132);
 const B = 'http://localhost:8132';
@@ -23,7 +23,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
         ops.push(body);
         if (body.op === 'ds') res = { packs: [{ id: 'ai9_bai2', title: pack.title, grade: 9, rev: 1 }], admin: true, classes: null };
         else if (body.op === 'cac_lop') res = { classes: ['9a'] };
-        else if (body.op === 'lop') res = { pack, bai, nhom: { n2: { members: { hsA: 'Nguyễn An' }, answers: { n_c1: 'Trước đây ghi tay' }, by: { n_c1: 'hsA' } } }, gv: {}, mo: {}, gopy: {}, dapan: { id: 'ai9_bai2', nguyen_tac: ['Đáp án chỉ giáo viên thấy'], kiem: { a_t1: { nl: 'Tư duy phản biện' } } } };
+        else if (body.op === 'lop') res = { pack, bai, nhom: { n2: { members: { hsA: 'Nguyễn An' }, answers: { n_c1: 'Trước đây ghi tay' }, by: { n_c1: 'hsA' } } }, gv: {}, mo: {}, gopy: {}, dapan: { id: 'ai9_bai2', nguyen_tac: ['Đáp án chỉ giáo viên thấy'], kiem: { a_t1: { dap_an: { a_t1_nl: 'Tư duy phản biện' } } } } };
         else if (body.op === 'lich_su') res = { ls: { 5: { answers: bai.hsA.answers } } };
         else if (body.op === 'goi_doc') res = { pack: { ...pack, rev: 1 }, goc: pack, dapan: null, admin: true };
         else if (body.op === 'goi_luu') res = { ok: true, rev: 2 };
@@ -50,7 +50,8 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     ok((await pg.textContent('#hocai-class')).includes('Nguyễn An'), tag + 'danh sách lớp');
     ok((await pg.textContent('#hocai-class')).includes('Hoạt động 1: cả lớp chọn thẻ nào (1 bài đã chốt)'), tag + 'biểu đồ chọn thẻ HĐ 1');
     ok(await pg.locator('.phieu-gv-chart progress').count() === 9 && (await pg.textContent('.phieu-gv-chart')).includes('★'), tag + '9 thanh, đánh sao thẻ nhiều nhất');
-    ok((await pg.textContent('#hocai-class')).includes('lần đầu các máy chọn năng lực nào'), tag + 'thống kê HĐ 2.1');
+    ok((await pg.textContent('#hocai-class')).includes('Kết quả Kiểm tra lần đầu'), tag + 'thống kê Kiểm tra');
+    ok((await pg.textContent('#hocai-class table')).includes('0/1'), tag + 'đếm đúng ngay lần đầu');
     // Mở học liệu: Hủy không gửi, xác nhận mới gửi
     const openBtn = pg.locator('#hocai-class button', { hasText: 'Mở cho lớp' }).first();
     await openBtn.click(); await pg.waitForSelector('#msg-dialog[open]');
@@ -83,8 +84,16 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.click('#msg-cancel'); ok(!ops.some(o => o.op === 'tra_bai'), tag + 'Hủy không trả');
     await pg.click('.phieu-gv-form button:has-text("Trả bài")'); await pg.waitForSelector('#msg-dialog[open]'); await pg.click('#msg-ok'); await pg.waitForTimeout(300);
     ok(ops.some(o => o.op === 'tra_bai' && o.uid === 'hsA'), tag + 'trả bài sau xác nhận');
-    // Trình soạn: sửa nhãn → đánh dấu đã sửa → lưu có xác nhận
+    // Ẩn bài với học sinh: có xác nhận
     await pg.click('#hocai-class button:has-text("Về danh sách lớp")');
+    await pg.click('#hocai-root button:has-text("Ẩn bài với học sinh")'); await pg.waitForSelector('#msg-dialog[open]');
+    await pg.click('#msg-cancel'); ok(!ops.some(o => o.op === 'goi_an'), tag + 'Hủy không ẩn');
+    await pg.click('#hocai-root button:has-text("Ẩn bài với học sinh")'); await pg.waitForSelector('#msg-dialog[open]');
+    ok((await pg.textContent('#msg-ok')) === 'Ẩn bài', tag + 'nút xác nhận mang tên hành động');
+    await pg.click('#msg-ok'); await pg.waitForTimeout(300);
+    ok(ops.some(o => o.op === 'goi_an' && o.an === true && o.goi === 'ai9_bai2'), tag + 'ẩn bài sau xác nhận');
+    ok(await pg.isVisible('#hocai-root button:has-text("Hiện bài với học sinh")'), tag + 'nút đổi thành Hiện bài');
+    // Trình soạn: sửa nhãn → đánh dấu đã sửa → lưu có xác nhận
     await pg.click('#hocai-root button:has-text("Sửa nội dung bài")');
     await pg.waitForSelector('#ed-title');
     await pg.locator('#hocai-class details.phieu-gv-act > summary', { hasText: '1. Tuyển dụng năm 2035' }).click();

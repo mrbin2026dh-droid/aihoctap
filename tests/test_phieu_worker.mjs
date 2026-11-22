@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import worker, { createFirebaseCustomToken, MockDONamespace } from '../worker/index.js';
 
-const pack = JSON.parse(readFileSync(new URL('../data/phieu/ai9_bai2.json', import.meta.url), 'utf8'));
+const pack = JSON.parse(readFileSync(new URL('./fixtures/phieu_ai9_bai2_cu.json', import.meta.url), 'utf8'));
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; }; const eq = (a, b, m) => { assert.deepEqual(a, b, m); n++; };
 
 // ---------- RTDB giả có ETag ----------
@@ -138,16 +138,17 @@ try {
     const d1 = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: g.body.bai.rev, answers: { a_t1_nl: 'Học cách học', a_t1_lam: 'Hỏi bạn', a_t1_loi: 'Năm 938' } }, ta); eq(d1.status, 200);
     reads.length = 0;
     eq((await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta)).body.error, 'NO_KEY', 'chưa nạp giải thích');
-    setAt('phieu_dapan/ai9_bai2/kiem', { a_t1: { nl: 'Tư duy phản biện', giai_thich: 'Đối chiếu sách', loi: 'Lý Thường Kiệt', loi_giai: 'GIAI_LOI' } });
+    setAt('phieu_dapan/ai9_bai2/kiem', { a_t1: { dap_an: { a_t1_nl: 'Tư duy phản biện', a_t1_loi: 'Lý Thường Kiệt' }, giai_thich: { a_t1_nl: 'Đối chiếu sách', a_t1_loi: 'GIAI_LOI' }, goi_y_sai: { a_t1_loi: 'SAI_LOI' }, ten: 'Tư duy phản biện' } });
     reads.length = 0;
     const k1 = await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta);
-    eq(k1.status, 200, JSON.stringify(k1.body)); eq(k1.body.dung, false); eq(k1.body.nl_chinh, 'Tư duy phản biện'); eq(k1.body.loi.dung, false);
+    eq(k1.status, 200, JSON.stringify(k1.body)); const kq = id => k1.body.ket_qua.find(x => x.field === id);
+    eq(kq('a_t1_nl').dung, false); eq(k1.body.ten, 'Tư duy phản biện'); eq(kq('a_t1_loi').dung, false); eq(kq('a_t1_loi').giai_thich, 'SAI_LOI', 'chọn sai thì hiện gợi ý sai');
     ok(!JSON.stringify(k1.body).includes('GIAI_LOI'), 'chọn sai chỗ lỗi thì chưa lộ lời giải chỗ lỗi');
     ok(reads.filter(p => p.startsWith('phieu_dapan')).every(p => p === 'phieu_dapan/ai9_bai2/kiem/a_t1'), 'chỉ đọc đúng mục kiểm tra của thẻ');
     eq(k1.body.rev, d1.body.rev + 1, 'trả rev mới');
     const d2 = await call('PUT', '/pwa/phieu/ai9_bai2/draft', { rev: k1.body.rev, answers: { a_t1_nl: 'Tư duy phản biện', a_t1_loi: 'Lý Thường Kiệt' } }, ta); eq(d2.status, 200, 'sửa sau kiểm tra được');
     const k2 = await call('POST', '/pwa/phieu/ai9_bai2/kiem', { the: 'a_t1' }, ta);
-    eq(k2.body.dung, true); eq(k2.body.loi.giai_thich, 'GIAI_LOI');
+    ok(k2.body.ket_qua.every(x => x.dung), 'sửa xong thì đúng'); eq(k2.body.ket_qua.find(x => x.field === 'a_t1_loi').giai_thich, 'GIAI_LOI');
     eq(getAt('phieu_bai/ai9_bai2/9a/hsA').kiem.a_t1.a_t1_nl, 'Học cách học', 'giữ câu trả lời lần đầu'); }
   // Nộp
   const r0 = getAt('phieu_bai/ai9_bai2/9a/hsA').rev, LS1 = String(r0 + 2);

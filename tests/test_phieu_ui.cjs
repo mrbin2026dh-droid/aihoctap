@@ -1,7 +1,7 @@
 // Học AI – giao diện học sinh (DOM thật). Chạy: NODE_PATH=$(npm root -g) node tests/test_phieu_ui.cjs
 const { chromium } = require('playwright'); const http = require('http'), fs = require('fs'), path = require('path'); const assert = require('assert');
 const root = path.resolve(__dirname, '../frontend/hoc');
-const pack = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/phieu/ai9_bai2.json'), 'utf8'));
+const pack = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'fixtures/phieu_ai9_bai2_cu.json'), 'utf8'));
 const srv = http.createServer((q, r) => { let p = q.url.split('?')[0]; if (p === '/') p = '/index.html'; const f = path.join(root, p); if (!fs.existsSync(f)) { r.statusCode = 404; return r.end(); }
   r.setHeader('content-type', { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.json': 'application/json' }[path.extname(f)] || 'x'); r.end(fs.readFileSync(f)); }).listen(8131);
 const B = 'http://localhost:8131';
@@ -22,7 +22,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
       else if (u === '/api/pwa/phieu') res = { packs: [{ id: 'ai9_bai2', title: pack.title, grade: 9, so_tiet: 2, thu_tu: 2 }] };
       else if (u === '/api/pwa/phieu/ai9_bai2') res = { pack: view(), bai, nhom: null, gopy: {}, gv: null };
       else if (u.endsWith('/draft')) { if (body.rev !== bai.rev) { st = 409; res = { error: 'REV_CONFLICT', detail: 'x' }; } else { bai = { ...bai, answers: { ...bai.answers, ...body.answers }, rev: bai.rev + 1 }; res = { rev: bai.rev }; } }
-      else if (u.endsWith('/kiem')) res = { the: body.the, rev: bai.rev, nl_chinh: 'Tư duy phản biện', dung: false, giai_thich: 'GIAI_THICH_THU', loi: null };
+      else if (u.endsWith('/kiem')) res = { the: body.the, rev: bai.rev, ket_qua: [{ field: 'a_t1_nl', dung: false, giai_thich: 'GIAI_THICH_THU' }], ten: 'Tư duy phản biện', chot: '' };
       else if (u.endsWith('/lock')) { bai = { ...bai, locked: { hd1_chon: 1, hd1_vi: 1 }, rev: bai.rev + 1 }; res = { rev: bai.rev, locked: bai.locked }; }
       r.fulfill({ status: st, contentType: 'application/json', body: JSON.stringify(res) });
     });
@@ -89,7 +89,8 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     await pg.fill('#pf-a_t1_lam', 'Hỏi bạn');
     await pg.click('.phieu-kiem');
     await pg.waitForSelector('.phieu-chua');
-    ok((await pg.textContent('.phieu-fb')).includes('GIAI_THICH_THU'), tag + 'hiện giải thích sau khi kiểm tra');
+    ok((await pg.textContent('[data-field=a_t1_nl]')).includes('GIAI_THICH_THU'), tag + 'hiện giải thích ngay dưới câu');
+    ok((await pg.textContent('.phieu-fb')).includes('Kiến thức: Tư duy phản biện'), tag + 'gọi tên kiến thức');
     ok(calls.some(c => c.u.endsWith('/kiem') && c.body.the === 'a_t1'), tag + 'gửi đúng mã thẻ');
     ok(await pg.locator('[data-field=a_t1_em]').count() === 1, tag + 'hiện ô tự chấm');
     await pg.click('.phieu-the-tiep');
