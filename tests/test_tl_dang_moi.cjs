@@ -90,6 +90,11 @@ try{
  for(const [pg,picks] of [[sp,'ABA'],[sp2,'ABB']]){for(const [i,c] of [...picks].entries())await pg.click(`.tl-cot-row >> nth=${i} >> .tl-cot-opt >> nth=${c==='A'?0:1}`);await pg.click('.tl-send');await pg.waitForSelector('.tl-ok');}
  await sent();await tp.waitForFunction(()=>document.querySelectorAll('#tl-host .tl-cot-row').length===3,null,{timeout:8000});
  ok((await tp.textContent('#tl-host .tl-cot-row >> nth=0')).includes('A 2 · B 0')&&(await tp.textContent('#tl-host .tl-cot-row >> nth=2')).includes('A 1 · B 1'),'màn chiếu: tỉ lệ A/B từng dòng');await shot(tp,'moi-t-cot');
+ ok(!(await sp.locator('.tl-kq').count()),'chưa công bố: học sinh chưa thấy kết quả cả lớp');
+ await tp.click('.tl-kq');await sp.waitForSelector('.tl-kq',{timeout:8000});await sp2.waitForSelector('.tl-kq',{timeout:8000});
+ ok((await sp.textContent('.tl-kq')).includes('Kết quả cả lớp')&&(await sp.textContent('.tl-kq-cot-row >> nth=0')).includes('A 2 · B 0'),'công bố: máy học sinh hiện kết quả cả lớp giống màn chiếu');
+ ok(!JSON.stringify(db.tl[code].pub.kq).match(/hs0[12]|Nguyễn|Trần/),'kết quả công bố không có tên, mã học sinh');await shot(sp,'moi-s-kq-cot');
+ await tp.click('.tl-kq');await sp.waitForFunction(()=>!document.querySelector('.tl-kq'),null,{timeout:8000});ok(true,'thu lại kết quả: máy học sinh ẩn kết quả');
  await next('gian lận');
  await sp.click('.tl-choice >> nth=1');await sp.click('.tl-send');ok((await sp.textContent('.tl-form')).includes('lí do'),'tranh luận: phải ghi lí do');
  await sp.fill('.tl-input','AI chỉ gợi ý, em vẫn tự quay video');await sp.click('.tl-send');await sp.waitForSelector('.tl-ok');
@@ -99,9 +104,11 @@ try{
  await next('cụm AI viết sai');ok(db.tl[code].pub.slide.dung===undefined,'trang phát cho học sinh không có đáp án bắt lỗi');
  await sp.click('.tl-loi-opt >> nth=1');await sp.click('.tl-send');await sp.waitForSelector('.tl-ok');await sp2.click('.tl-loi-opt >> nth=0');await sp2.click('.tl-send');await sp2.waitForSelector('.tl-ok');
  await sent();ok(!(await tp.locator('#tl-host .tl-loi-cum.is-sai').count()),'chưa công bố thì chưa tô chỗ sai');
+ await tp.click('.tl-kq');await sp.waitForSelector('.tl-kq-bar',{timeout:8000});ok(!(await sp.locator('.tl-kq-bar.is-dap').count())&&db.tl[code].pub.kq.lo===undefined,'công bố kết quả bắt lỗi trước khi công bố chỗ sai: chưa lộ đáp án');
  await tp.click('.tl-lo');await tp.waitForSelector('#tl-host .tl-loi-cum.is-sai');ok((await tp.textContent('#tl-host .tl-loi-dap')).includes('1/2 em bấm đúng'),'công bố chỗ sai: số em bấm đúng');
- await sp.waitForSelector('.tl-loi-dap',{timeout:8000});ok((await sp.textContent('.tl-loi-dap')).includes('Em đã tìm đúng'),'học sinh thấy đáp án sau khi công bố');await shot(sp,'moi-s-loi');
- await next('Xếp năng lực');await sp.selectOption('.tl-xh-sel >> nth=0','1');await sp.selectOption('.tl-xh-sel >> nth=1','1');await sp.selectOption('.tl-xh-sel >> nth=2','2');
+ await sp.waitForSelector('.tl-loi-dap',{timeout:8000});ok((await sp.textContent('.tl-loi-dap')).includes('Em đã tìm đúng'),'học sinh thấy đáp án sau khi công bố');
+ await sp.waitForSelector('.tl-kq-bar.is-dap',{timeout:8000});ok((await sp.textContent('.tl-kq-bar.is-dap')).includes('Lý Thường Kiệt'),'kết quả công bố cập nhật theo: đánh dấu chỗ sai');await shot(sp,'moi-s-loi');
+ await next('Xếp năng lực');ok(!(await sp.locator('.tl-kq').count()),'sang câu mới: kết quả câu trước không còn trên máy học sinh');await sp.selectOption('.tl-xh-sel >> nth=0','1');await sp.selectOption('.tl-xh-sel >> nth=1','1');await sp.selectOption('.tl-xh-sel >> nth=2','2');
  await sp.click('.tl-send');ok((await sp.textContent('.tl-form')).includes('trùng hạng'),'xếp hạng: không cho trùng hạng');
  await sp.selectOption('.tl-xh-sel >> nth=0','2');await sp.selectOption('.tl-xh-sel >> nth=2','3');await sp.click('.tl-send');await sp.waitForSelector('.tl-ok');
  for(const [i,v] of ['3','1','2'].entries())await sp2.selectOption(`.tl-xh-sel >> nth=${i}`,v);await sp2.click('.tl-send');await sp2.waitForSelector('.tl-ok');

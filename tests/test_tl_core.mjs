@@ -1,7 +1,7 @@
 // Lõi Thảo luận (kiểu Mentimeter): đám mây từ khóa, lọc từ ngữ, bình chọn, thang điểm, hỏi đáp, gỡ ý, Excel, tổng hợp.
 // Chạy: node tests/test_tl_core.mjs
 import assert from 'node:assert/strict';
-import { badWord, cloud, cloudSize, pollCounts, scaleStats, scaleValue, entriesOf, visible, qaRank, slideError, cleanSlide, parseTlRows, TL_COLUMNS, summarize, localNotes, fold, MAX_LEN, TYPES, isQa, cotStats, cotValue, tranhParse, loiCounts, rankStats, rankValue, pubSlide } from '../frontend/hoc/tl-core.js';
+import { badWord, cloud, cloudSize, pollCounts, scaleStats, scaleValue, entriesOf, visible, qaRank, slideError, cleanSlide, parseTlRows, TL_COLUMNS, summarize, localNotes, fold, MAX_LEN, TYPES, isQa, cotStats, cotValue, tranhParse, loiCounts, rankStats, rankValue, pubSlide, publicResult } from '../frontend/hoc/tl-core.js';
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; console.log('ok  ', m); };
 
 const c = cloud(['Internet', 'internet ', 'INTERNET!', 'Học tập', 'học  tập', 'Giải trí', 'đm', 'cấm'], ['cấm']);
@@ -76,4 +76,14 @@ ok(localNotes([sXh], [summarize(sXh, entriesOf({ a: { 0: { v: '2|1|3', t: 1 } } 
   const r = parseTlRows(rows);
   ok(r.errors.length === 0 && r.slides.length === 4, 'Excel: đọc được các dạng mới ' + JSON.stringify(r.errors));
   ok(r.slides[1].items.length === 4 && r.slides[2].dung === 1 && r.slides[3].ref === 0 && r.slides[3].opts.join() === 'Tự học,Tính nhanh', 'Excel: cột, cụm sai (*), câu hỏi lại'); }
+// ---- Kết quả công bố lên máy học sinh: ẩn danh, chỉ ý đã duyệt, không lộ đáp án bắt lỗi khi chưa công bố ----
+{ const L = entriesOf({ hs01: { 0: { v: 'Ý tốt', t: 1 } }, hs02: { 0: { v: 'Ý chưa duyệt', t: 2 } } });
+  const o = cleanSlide({ type: 'open', text: 'Ý kiến?' });
+  const r = publicResult(o, L, { ok: { 'hs01~0': true } }, { k: 's1' });
+  ok(r.k === 's1' && r.open.join() === 'Ý tốt' && !JSON.stringify(r).includes('hs01'), 'công bố câu mở: chỉ ý đã duyệt, không có mã học sinh');
+  const rl = publicResult(sLoi, entriesOf({ a: { 0: { v: '1', t: 1 } } }), {}, { k: 's3' });
+  ok(!('lo' in rl) && !('dung' in rl) && rl.counts.join() === '0,1,0', 'công bố bắt lỗi: chưa công bố chỗ sai thì không có đáp án');
+  ok(publicResult(sLoi, [], {}, { lo: 1 }).lo === 1, 'công bố bắt lỗi sau khi thầy công bố chỗ sai');
+  ok(publicResult(sLai, entriesOf({ a: { 0: { v: '0', t: 1 } } }), {}, { before: [0, 2] }).before.join() === '0,2', 'công bố hỏi lại: kèm kết quả trước');
+  ok(publicResult(sCot, entriesOf({ a: { 0: { v: 'ABA', t: 1 } } }), {}).cot[0].a === 1, 'công bố xếp hai cột'); }
 console.log('TL CORE OK ' + n);

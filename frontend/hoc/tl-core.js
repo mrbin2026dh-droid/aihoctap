@@ -210,6 +210,26 @@ export function summarize(s, list, st = {}) {
   if (isQa(s.type)) return { type: s.type, people, qa: qaRank(approved, st.votes || {}, st.done || {}) };
   return { type: s.type, people, open: approved };
 }
+/**
+ * Kết quả công bố lên máy học sinh: chỉ số liệu và ý đã duyệt, KHÔNG có tên/mã học sinh; gọn để ghi vào pub (đọc công khai).
+ * @param {Slide} s @param {{id:string,ma:string,v:string,t:number}[]} list
+ * @param {{an?:Record<string,unknown>,ok?:Record<string,unknown>,anw?:string[],votes?:any,done?:any,cam?:string[]}} st
+ * @param {{k?:string, before?:number[]|null, pick?:string[]|null, lo?:number|null}} [extra]
+ */
+export function publicResult(s, list, st = {}, extra = {}) {
+  const sum = /** @type {any} */ (summarize(s, list, st));
+  /** @type {Record<string, any>} */ const r = { k: extra.k || '', type: s.type, people: sum.people };
+  if (s.type === 'cloud') r.cloud = (sum.cloud || []).slice(0, 30);
+  if (isPoll(s.type)) { r.counts = sum.counts; if (s.type === 'lai') r.before = extra.before || null; }
+  if (s.type === 'scale') r.avg = (sum.scale || []).map((/** @type {any} */ x) => x.avg);
+  if (s.type === 'cot') r.cot = sum.cot;
+  if (s.type === 'tranh') { r.sides = sum.sides; r.pick = extra.pick || null; }
+  if (s.type === 'loi') { r.counts = sum.counts; if (extra.lo !== undefined && extra.lo !== null) r.lo = extra.lo; }
+  if (s.type === 'xh') r.rank = { n: sum.rank.n, order: sum.rank.order, avg: sum.rank.avg };
+  if (isQa(s.type)) r.qa = (sum.qa || []).slice(0, 15).map((/** @type {any} */ q) => ({ v: String(q.v).slice(0, 200), votes: q.votes, done: q.done }));
+  if (s.type === 'open') r.open = (sum.open || []).slice(-20).map((/** @type {any} */ e) => String(e.v).slice(0, 200));
+  return r;
+}
 /** Nhận xét tính sẵn (khi AI chưa trả lời được). @param {Slide[]} slides @param {ReturnType<typeof summarize>[]} sums */
 export function localNotes(slides, sums) {
   return slides.map((s, i) => {

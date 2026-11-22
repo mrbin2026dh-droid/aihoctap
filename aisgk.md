@@ -4712,3 +4712,15 @@ Dán cho họ: "Chạy npx wrangler deploy (aihoctap-gate) từ commit mới nh�
   - Nguyên nhân: sau khi giáo viên chuyển sang câu 2, test chỉ chờ học sinh 1 sang câu mới. Học sinh 2 còn ở câu 1 (đám mây còn ô thứ hai) nên test gõ nhầm vào ô của câu 1. Ứng dụng không có lỗi.
   - Sửa: chờ học sinh 2 sang câu 2 rồi mới gõ.
   - Kiểm thực tế: chạy 4 lần liên tiếp, cả 4 lần TL LIVE OK 61.
+
+### 22/11/2026 — Claude: Thảo luận: nút "Công bố cho học sinh" (kết quả cả lớp hiện trên máy học sinh)
+- Giáo viên báo khó: học sinh không xem được kết quả cả lớp, thầy phải chuyển màn hình chiếu liên tục.
+- Đã làm:
+  - `tl-core.js`: thêm `publicResult` gói kết quả ẩn danh (chỉ số liệu và ý đã duyệt, không tên/mã; Bắt lỗi chỉ có đáp án khi thầy đã bấm "Công bố chỗ sai").
+  - `teacher-tl.js`: nút "Công bố cho học sinh" / "Thu lại kết quả" ghi vào `pub/kq`; khi đang công bố thì tự cập nhật khoảng 1 lần/giây; sang câu mới thì xóa.
+  - `tl-play.js`: hiện "Kết quả cả lớp" cho mọi dạng câu.
+  - CSS; đổi mã `?v=` thành 20261122h. Không sửa luật Firebase: `pub` đã do máy có khóa phòng ghi.
+- Về mặt sư phạm: kết quả ẩn mặc định; giáo viên công bố sau khi học sinh trả lời (nên sau "Dừng nhận ý kiến") để tránh các em chọn theo số đông; ẩn danh.
+- Kiểm thực tế:
+  - tl_core 45, tl_dang_moi 32 (công bố, thu lại, không lộ tên, không lộ đáp án bắt lỗi, câu mới thì xóa) đều PASS.
+  - Các test sau đều PASS: tl_live 61, tl_ai, mobile_nav, thi_ui, role_isolation, student/teacher_ui_standard, fonts.

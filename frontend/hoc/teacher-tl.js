@@ -12,7 +12,7 @@ import { api } from './api.js';
 import * as ui from './teacher-ui.js?v=20261122b';
 import { confirmBox } from './dom.js';
 import * as fx from './quiz-fx.js';
-import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible, isQa, isPoll, cotStats, tranhParse, loiCounts, rankStats, pubSlide } from './tl-core.js?v=20261122g';
+import { MAX_SLIDES, TL_COLUMNS, TYPES, badWord, cleanSlide, cloud, cloudSize, entriesOf, localNotes, parseTlRows, pollCounts, qaRank, scaleStats, slideError, summarize, visible, isQa, isPoll, cotStats, tranhParse, loiCounts, rankStats, pubSlide, publicResult } from './tl-core.js?v=20261122h';
 import { setClasses } from './quiz-core.js';
 import { HB_MS, STALE_MS } from './live-room.js';
 
@@ -380,8 +380,8 @@ async function goSlide(i) {
   room.i = i; room.phase = 'open'; room.hide = false;
   const s = room.set.slides[i], k = K(i), st = stOf(i);
   room.y = {}; room.votes = {}; room.yStop?.(); room.vStop?.(); room.vStop = undefined;
-  room.pick = null; room.lo = false; room.yRef = null;
-  await write({ [P('phase')]: 'open', [P('i')]: i, [P('slide')]: { k, ...pubSlide(s) }, [P('lo')]: null, [P('hide')]: false, [P('ok')]: st.ok, [P('an')]: st.an, [P('anw')]: st.anw, [P('done')]: st.done, [P('ready')]: null }).catch(() => {});
+  room.pick = null; room.lo = false; room.yRef = null; room.kq = false; clearTimeout(room.kqT);
+  await write({ [P('phase')]: 'open', [P('i')]: i, [P('slide')]: { k, ...pubSlide(s) }, [P('lo')]: null, [P('kq')]: null, [P('hide')]: false, [P('ok')]: st.ok, [P('an')]: st.an, [P('anw')]: st.anw, [P('done')]: st.done, [P('ready')]: null }).catch(() => {});
   room.yStop = store.listen(`tl/${room.room}/y/${k}`, d => { if (!room || room.i !== i) return; room.y = d || {}; noteNew(); schedule(); }, undefined, { prio: 3 });
   if (s.type === 'lai' && Number(s.ref) >= 0) { store.get(`tl/${room.room}/y/${K(Number(s.ref))}`).then(d => { if (room && room.i === i) { room.yRef = d || {}; schedule(); } }).catch(() => {}); }
   if (isQa(s.type)) room.vStop = store.listen(`tl/${room.room}/vote/${k}`, d => { if (!room || room.i !== i) return; room.votes = d || {}; schedule(); }, undefined, { prio: 2 });
@@ -525,8 +525,22 @@ function queue() {
   }
   box.append(ul); return box;
 }
+/** Công bố kết quả lên máy học sinh (ẩn danh, chỉ ý đã duyệt); khi đang công bố thì cập nhật theo ý mới, tối đa ~1 lần/giây. */
+function pushKq(now = false) {
+  if (!room || !room.kq) return;
+  clearTimeout(room.kqT);
+  room.kqT = setTimeout(() => {
+    if (!room || !room.kq) return;
+    const s = room.set.slides[room.i];
+    const r = publicResult(s, entriesOf(room.y), { ...stOf(room.i), votes: room.votes, cam: room.set.cam || [] }, {
+      k: K(room.i), pick: room.pick || null, lo: room.lo ? s.dung : null,
+      before: s.type === 'lai' ? pollCounts(entriesOf(room.yRef || {}).map(e => e.v), (s.opts || []).length) : null });
+    void write({ [P('kq')]: r }).catch(() => {});
+  }, now ? 0 : 1000);
+}
 function drawSlide() {
   if (!room || room.i < 0) return;
+  pushKq();
   const s = room.set.slides[room.i], list = entriesOf(room.y), people = new Set(list.map(e => e.ma)).size, total = Object.keys(room.players).length;
   $('tl-h-kicker').textContent = `Câu ${room.i + 1}/${room.set.slides.length} · ${TYPES[s.type]}${room.phase === 'closed' ? ' · Đã dừng nhận' : ''}`;
   const keepScroll = main.scrollTop;
@@ -547,7 +561,13 @@ function drawSlide() {
     room.pick = [0, 1].map(i => t[i].length ? t[i][Math.floor(Math.random() * t[i].length)] : ''); drawSlide();
   }));
   if (s.type === 'loi') { const lo = btn(room.lo ? 'Ẩn chỗ sai' : 'Công bố chỗ sai', 'tl-lo', async () => { if (!room) return; room.lo = !room.lo; await write({ [P('lo')]: room.lo ? s.dung : null }).catch(() => {}); drawSlide(); }); lo.setAttribute('aria-pressed', String(!!room.lo)); extra.push(lo); }
-  foot.replaceChildren(prev, toggle, hideB, ...extra, next, ...(last ? [] : [btn('Kết thúc', 'qz-stop tl-stop', () => void endTalk())]));
+  const kqB = btn(room.kq ? 'Thu lại kết quả' : 'Công bố cho học sinh', 'tl-kq', async () => {
+    if (!room) return; room.kq = !room.kq;
+    if (room.kq) pushKq(true); else { clearTimeout(room.kqT); await write({ [P('kq')]: null }).catch(() => {}); }
+    drawSlide();
+  });
+  kqB.setAttribute('aria-pressed', String(!!room.kq)); kqB.title = 'Hiện kết quả cả lớp (ẩn danh) trên máy học sinh';
+  foot.replaceChildren(prev, toggle, hideB, kqB, ...extra, next, ...(last ? [] : [btn('Kết thúc', 'qz-stop tl-stop', () => void endTalk())]));
 }
 async function toggleOpen() { if (!room) return; room.phase = room.phase === 'closed' ? 'open' : 'closed'; await write({ [P('phase')]: room.phase }).catch(() => {}); drawSlide(); }
 async function toggleHide() { if (!room) return; room.hide = !room.hide; await write({ [P('hide')]: room.hide }).catch(() => {}); drawSlide(); }

@@ -131,7 +131,7 @@ function draw(force = false) {
   const main = /** @type {HTMLElement} */ (o.querySelector('.tl-main'));
   const s = pub.slide || {}, k = String(s.k || '');
   const dead = pub.phase !== 'end' && !alive(playing, pub);
-  const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, isQa(s.type) ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0, pub.lo ?? null, dead]);
+  const key = JSON.stringify([pub.phase, k, mine[k]?.length ?? -1, isQa(s.type) ? [qaY, qaVotes, pub.ok, pub.an, pub.done] : 0, pub.lo ?? null, pub.kq ?? null, dead]);
   if (key === lastKey) return;
   if (dead) { lastKey = key; unwatchQa(); main.replaceChildren(t('span', 'lt-res-ic tl-end-ic', '✓'), t('h2', 'lt-big', 'Phòng thảo luận đã đóng'), t('p', 'lt-wait', 'Thầy cô đã rời phòng. Ý kiến em gửi đã được lưu.'), b('Đóng', 'primary lt-done', () => close())); return; }
   // đang gõ dở: không vẽ lại đè lên ô nhập (chỉ vẽ khi đổi trang / đổi trạng thái)
@@ -153,7 +153,7 @@ function draw(force = false) {
   const box = t('div', 'tl-slide'); box.dataset.k = k;
   box.append(t('span', 'lt-idx', `Câu ${Number(pub.i) + 1}/${pub.n}`), t('p', 'lt-q tl-q', String(s.text || '')));
   if (isQa(s.type)) watchQa(k);
-  if (pub.phase === 'closed' && !isQa(s.type)) { box.append(t('p', 'tl-note', 'Thầy cô đã dừng nhận ý kiến cho câu này. Nhìn lên màn chiếu nhé.')); main.replaceChildren(box); return; }
+  if (pub.phase === 'closed' && !isQa(s.type)) { box.append(t('p', 'tl-note', pub.kq?.k === k ? 'Thầy cô đã dừng nhận ý kiến cho câu này.' : 'Thầy cô đã dừng nhận ý kiến cho câu này. Nhìn lên màn chiếu nhé.')); if (pub.kq?.k === k) box.append(kqView(s, pub.kq)); main.replaceChildren(box); return; }
   const sent = mine[k], max = Number(s.max) || 1;
   if (s.type === 'cloud' || s.type === 'open' || isQa(s.type)) {
     if (sent.length) { const ul = t('ul', 'tl-mine'); ul.setAttribute('aria-label', 'Ý em đã gửi'); for (const v of sent) ul.append(t('li', '', v)); box.append(t('p', 'tl-ok', s.type === 'qa' ? 'Câu hỏi em đã gửi:' : s.type === 'tuong' ? 'Ý tưởng em đã gửi:' : 'Em đã gửi:'), ul); }
@@ -180,6 +180,7 @@ function draw(force = false) {
     if (sent.length) box.append(t('p', 'tl-ok', 'Em đã xếp hạng. Nhìn lên màn chiếu xem thứ tự chung của lớp nhé.'));
     else box.append(xhForm(s, k));
   }
+  if (pub.kq?.k === k) box.append(kqView(s, pub.kq));
   main.replaceChildren(box);
   for (const [id, v] of Object.entries(keep)) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if (el && main.contains(el)) el.value = v; }
   if (focusId) { const el = /** @type {HTMLInputElement|null} */ (document.getElementById(focusId)); if (el && main.contains(el)) { el.focus(); try { el.setSelectionRange(selA, selB); } catch { /* bỏ qua */ } } }
@@ -268,6 +269,55 @@ function scaleForm(s, k) {
     void send(k, 0, v, err, btn);
   });
   f.append(err, btn); return f;
+}
+/**
+ * Kết quả cả lớp do thầy cô công bố (ẩn danh): vẽ gọn trên điện thoại, cùng nội dung với màn chiếu.
+ * @param {any} s trang hiện tại @param {any} r pub.kq
+ */
+function kqView(s, r) {
+  const sec = t('section', 'tl-kq'); sec.setAttribute('aria-label', 'Kết quả cả lớp');
+  sec.append(t('h3', 'tl-kq-h', 'Kết quả cả lớp'), t('p', 'tl-kq-n', `${r.people || 0} em đã gửi`));
+  /** @param {string[]} labels @param {number[]} c @param {number} [mark] */
+  const bars = (labels, c, mark = -1) => {
+    const tot = (c || []).reduce((a, b) => a + b, 0), max = Math.max(1, ...(c || [0])), ul = t('ul', 'tl-kq-bars');
+    labels.forEach((o, j) => {
+      const n = (c || [])[j] || 0, li = t('li', 'tl-kq-bar' + (j === mark ? ' is-dap' : ''));
+      const fill = t('span', 'tl-kq-fill'); fill.style.setProperty('--w', Math.round(100 * n / max) + '%');
+      li.append(fill, t('span', 'tl-kq-label', (j === mark ? '✓ ' : '') + o), t('strong', 'tl-kq-num', `${n} · ${tot ? Math.round(100 * n / tot) : 0}%`)); ul.append(li);
+    });
+    return ul;
+  };
+  if (s.type === 'poll') sec.append(bars(s.opts || [], r.counts));
+  else if (s.type === 'lai') { sec.append(t('h4', 'tl-kq-sub', 'Trước'), bars(s.opts || [], r.before || []), t('h4', 'tl-kq-sub', 'Bây giờ'), bars(s.opts || [], r.counts)); }
+  else if (s.type === 'loi') { sec.append(bars(s.items || [], r.counts, r.lo ?? -1)); if (r.lo !== undefined && r.lo !== null) sec.append(t('p', 'tl-loi-dap', `Chỗ sai: "${(s.items || [])[Number(r.lo)] || ''}"`)); }
+  else if (s.type === 'tranh') {
+    sec.append(bars(s.opts || [], r.sides));
+    if (r.pick) [0, 1].forEach(i => { if (r.pick[i]) sec.append(t('p', 'tl-kq-ly', `${(s.opts || [])[i]}: “${r.pick[i]}”`)); });
+  } else if (s.type === 'cot') {
+    const A = (s.opts || [])[0] || 'A', B = (s.opts || [])[1] || 'B';
+    sec.append(t('p', 'tl-kq-n', `A · ${A}   |   B · ${B}`));
+    const ul = t('ul', 'tl-kq-cot');
+    (s.items || []).forEach((/** @type {string} */ it, /** @type {number} */ j) => {
+      const c = (r.cot || [])[j] || { a: 0, b: 0 }, tot = c.a + c.b, pa = tot ? Math.round(100 * c.a / tot) : 0;
+      const li = t('li', 'tl-kq-cot-row'); const bar = t('span', 'tl-kq-cot-bar'); bar.style.setProperty('--a', pa + '%'); bar.setAttribute('aria-hidden', 'true');
+      li.append(t('span', 'tl-kq-label', it), bar, t('strong', 'tl-kq-num', `A ${c.a} · B ${c.b}`)); ul.append(li);
+    });
+    sec.append(ul);
+  } else if (s.type === 'xh') {
+    const ol = t('ol', 'tl-kq-xh'); for (const j of r.rank?.order || []) ol.append(t('li', '', (s.items || [])[j] || ''));
+    sec.append(t('p', 'tl-kq-n', 'Thứ tự chung của lớp (trên cùng là quan trọng nhất)'), ol);
+  } else if (s.type === 'scale') {
+    const ul = t('ul', 'tl-kq-list'); (s.items || []).forEach((/** @type {string} */ it, /** @type {number} */ j) => ul.append(t('li', '', `${it}: ${String((r.avg || [])[j] || 0).replace('.', ',')}/5`))); sec.append(ul);
+  } else if (s.type === 'cloud') {
+    const ul = t('ul', 'tl-kq-cloud'); const max = Math.max(1, ...(r.cloud || []).map((/** @type {any} */ w) => w.n));
+    for (const w of r.cloud || []) { const li = t('li', 'tl-kq-word tl-kq-w' + Math.min(4, Math.ceil(4 * w.n / max)), w.w); li.title = `${w.n} lần`; ul.append(li); }
+    sec.append(ul);
+  } else if (isQa(s.type)) {
+    const ul = t('ul', 'tl-kq-list'); for (const q of r.qa || []) ul.append(t('li', q.done ? 'is-done' : '', `${s.type === 'tuong' ? '♥' : '▲'} ${q.votes} · ${q.v}`)); sec.append(ul);
+  } else if (s.type === 'open') {
+    const ul = t('ul', 'tl-kq-list'); for (const v of r.open || []) ul.append(t('li', '', v)); sec.append(ul);
+  }
+  return sec;
 }
 /** Nút gửi + chỗ báo lỗi dùng chung. @param {string} label */
 function sendBar(label) { const err = t('p', 'tl-err', ''); err.setAttribute('role', 'alert'); const btn = /** @type {HTMLButtonElement} */ (t('button', 'primary tl-send', label)); btn.type = 'submit'; return { err, btn }; }
